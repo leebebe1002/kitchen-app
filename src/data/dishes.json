@@ -1,0 +1,702 @@
+{
+    "dishes": [
+        {
+            "id": "yogurt_bowl",
+            "name": "🥣 燕麥希臘優格碗",
+            "categories": [
+                "breakfast",
+                "brunch",
+                "snack"
+            ],
+            "recommendedProteins": [
+                "greek_yogurt",
+                "plain_yogurt"
+            ],
+            "recommendedVeggies": [
+                "frozen_berry"
+            ],
+            "recommendedCarbs": [
+                "granola"
+            ],
+            "recommendedSauces": [
+                "maple_syrup",
+                "matcha_powder",
+                "cocoa_powder",
+                "sesame_powder"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "greek_yogurt",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "plain_yogurt",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "frozen_berry",
+                    "amount": 60,
+                    "unit": "g"
+                },
+                {
+                    "id": "granola",
+                    "amount": 15,
+                    "unit": "g"
+                },
+                {
+                    "id": "matcha_powder",
+                    "amount": 2,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    {
+                        "id": "greek_yogurt",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "plain_yogurt",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "frozen_berry",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "granola",
+                        "amount": 15,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "matcha_powder",
+                        "amount": 2,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cocoa_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sesame_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "maple_syrup",
+                        "amount": 3,
+                        "unit": "g"
+                    }
+                ],
+                "jason": [
+                    {
+                        "id": "greek_yogurt",
+                        "amount": 160,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "plain_yogurt",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "frozen_berry",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "granola",
+                        "amount": 35,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "matcha_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cocoa_powder",
+                        "amount": 5,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sesame_powder",
+                        "amount": 5,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "maple_syrup",
+                        "amount": 5,
+                        "unit": "g"
+                    }
+                ],
+                "ariel": [
+                    {
+                        "id": "greek_yogurt",
+                        "amount": 120,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "plain_yogurt",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "frozen_berry",
+                        "amount": 70,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "granola",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "matcha_powder",
+                        "amount": 2,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cocoa_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sesame_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "maple_syrup",
+                        "amount": 3,
+                        "unit": "g"
+                    }
+                ]
+            },
+            "sopSteps": [
+                "1. 依個人碗內配額，將希臘優格與一般優格以黃金比例舀入碗中。",
+                "2. 將個人專屬風味粉（Bebe 抹茶粉 2g、Jason 黑芝麻粉 5g、樂樂 可可粉 3g）直接加入雙拼優格中拌勻，化成絲滑抹醬質地。",
+                "3. 分別鋪上個人份量的綜合燕麥果與微退冰冷凍莓果。",
+                "4. 淋上少許純楓糖漿提味即可享用！建議先進食莓果與風味優格，最後吃燕麥，平緩晨間血糖上升曲線！"
+            ]
+        },
+        {
+            "id": "brunch_set",
+            "name": "🥪 陽光美式早午餐",
+            "categories": [
+                "brunch",
+                "lunch"
+            ],
+            "recommendedProteins": [
+                "sous_vide_chicken",
+                "chicken_thigh",
+                "egg",
+                "bacon",
+                "shrimp",
+                "beef_slice"
+            ],
+            "recommendedVeggies": [
+                "greens",
+                "cherry_tomatoes"
+            ],
+            "recommendedCarbs": [
+                "bagel",
+                "potato"
+            ],
+            "recommendedSauces": [
+                "balsamic",
+                "olive_oil",
+                "lemon_juice",
+                "italian_herbs",
+                "greek_yogurt",
+                "sesame_sauce",
+                "yuzu_vinegar"
+            ],
+            "sauceOptions": [
+                {
+                    "name": "🍇 經典巴薩米克油醋",
+                    "formula": "巴薩米克醋 1.5 大匙 ＋ 初榨橄欖油 1 匙 ＋ 黑胡椒少許"
+                },
+                {
+                    "name": "🍋 地中海檸檬香草油醋",
+                    "formula": "現擠檸檬汁 1 大匙 ＋ 初榨橄欖油 1 匙 ＋ 義大利綜合香料少許 ＋ 黑胡椒"
+                },
+                {
+                    "name": "🥣 希臘優格蒜香白醬 (高蛋白低卡)",
+                    "formula": "希臘優格 2 大匙 ＋ 檸檬汁 1 茶匙 ＋ 蒜泥 1/4 茶匙 ＋ 義大利綜合香料 ＋ 黑胡椒"
+                },
+                {
+                    "name": "🍊 和風柚子胡麻淋醬 (減油版)",
+                    "formula": "無糖純芝麻醬 1 茶匙 ＋ 柚子醋 1 大匙 ＋ 溫開水 1 匙化開"
+                }
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "sous_vide_chicken",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "bagel",
+                    "amount": 1,
+                    "unit": "個"
+                },
+                {
+                    "id": "greens",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "cherry_tomatoes",
+                    "amount": 50,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    { "id": "sous_vide_chicken", "amount": 70, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "bagel", "amount": 1, "unit": "個" },
+                    { "id": "greens", "amount": 50, "unit": "g" },
+                    { "id": "cherry_tomatoes", "amount": 40, "unit": "g" }
+                ],
+                "ariel": [
+                    { "id": "sous_vide_chicken", "amount": 80, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "bagel", "amount": 1, "unit": "個" },
+                    { "id": "greens", "amount": 50, "unit": "g" },
+                    { "id": "cherry_tomatoes", "amount": 50, "unit": "g" }
+                ],
+                "jason": [
+                    { "id": "sous_vide_chicken", "amount": 120, "unit": "g" },
+                    { "id": "egg", "amount": 2, "unit": "顆" },
+                    { "id": "bagel", "amount": 1, "unit": "個" },
+                    { "id": "greens", "amount": 60, "unit": "g" },
+                    { "id": "cherry_tomatoes", "amount": 60, "unit": "g" }
+                ]
+            },
+            "sopSteps": [
+                "1. 烤麵包/馬鈴薯：全麥貝果烤 2-3 分鐘至外酥內軟；若選馬鈴薯可先蒸熟後香煎至金黃。",
+                "2. 生菜冷盤：綜合生菜洗淨瀝乾，小番茄對切，擺入大淺盤側邊。",
+                "3. 蛋白質快煎：雞胸/去骨雞腿排/培根香煎至熟透金黃；接著少油煎出嫩滑太陽蛋或炒蛋。",
+                "4. 裝盤淋醬：將碳水主食、肉類、嫩蛋、生菜彩蔬整齊鋪盤，淋上所選特調淋醬即完成！"
+            ]
+        },
+        {
+            "id": "poke_bowl",
+            "name": "🥑 夏威夷波奇碗",
+            "categories": [
+                "lunch",
+                "dinner",
+                "brunch"
+            ],
+            "recommendedProteins": [
+                "tuna",
+                "shrimp",
+                "sous_vide_chicken",
+                "tofu",
+                "edamame"
+            ],
+            "recommendedVeggies": [
+                "greens",
+                "cucumber",
+                "cherry_tomatoes",
+                "kimchi",
+                "avocado_mash"
+            ],
+            "recommendedCarbs": [
+                "brown_rice",
+                "corn"
+            ],
+            "recommendedSauces": [
+                "spicy_mayo",
+                "balsamic"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "tuna",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "shrimp",
+                    "amount": 60,
+                    "unit": "g"
+                },
+                {
+                    "id": "edamame",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "cucumber",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "avocado_mash",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "brown_rice",
+                    "amount": 120,
+                    "unit": "g"
+                }
+            ],
+            "sopSteps": [
+                "1. 將推薦食材洗淨備妥。",
+                "2. 依個人喜好熟化並組合裝盤即完成！"
+            ]
+        },
+        {
+            "id": "salad",
+            "name": "🥗 彩虹生菜沙拉",
+            "categories": [
+                "lunch",
+                "dinner",
+                "brunch"
+            ],
+            "recommendedProteins": [
+                "sous_vide_chicken",
+                "chicken_thigh",
+                "salmon",
+                "shrimp",
+                "tuna",
+                "edamame",
+                "egg"
+            ],
+            "recommendedVeggies": [
+                "greens",
+                "cucumber",
+                "zucchini",
+                "cherry_tomatoes"
+            ],
+            "recommendedCarbs": [
+                "corn",
+                "potato",
+                "sweet_potato"
+            ],
+            "recommendedSauces": [
+                "balsamic",
+                "olive_oil",
+                "truffle_olive_oil",
+                "smoked_sea_salt"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "sous_vide_chicken",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "greens",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "cherry_tomatoes",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "cucumber",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "olive_oil",
+                    "amount": 10,
+                    "unit": "g"
+                }
+            ],
+            "sopSteps": [
+                "1. 將推薦食材洗淨備妥。",
+                "2. 依個人喜好熟化並組合裝盤即完成！"
+            ]
+        },
+        {
+            "id": "bibimbap",
+            "name": "🍛 韓式拌飯",
+            "categories": [
+                "lunch",
+                "dinner"
+            ],
+            "recommendedProteins": [
+                "beef_slice",
+                "pork_shoulder",
+                "egg"
+            ],
+            "recommendedVeggies": [
+                "spinach",
+                "bean_sprouts",
+                "zucchini",
+                "mushroom",
+                "kimchi",
+                "carrot",
+                "nori_strips",
+                "black_fungus",
+                "baby_corn"
+            ],
+            "recommendedCarbs": [
+                "brown_rice"
+            ],
+            "recommendedSauces": [
+                "bibimbap_secret"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "beef_slice",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "spinach",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "bean_sprouts",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "zucchini",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "mushroom",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "kimchi",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "brown_rice",
+                    "amount": 120,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    { "id": "beef_slice", "amount": 80, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "zucchini", "amount": 70, "unit": "g" },
+                    { "id": "mushroom", "amount": 50, "unit": "g" },
+                    { "id": "spinach", "amount": 40, "unit": "g" },
+                    { "id": "kimchi", "amount": 30, "unit": "g" },
+                    { "id": "brown_rice", "amount": 110, "unit": "g" }
+                ],
+                "ariel": [
+                    { "id": "beef_slice", "amount": 80, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "bean_sprouts", "amount": 50, "unit": "g" },
+                    { "id": "spinach", "amount": 50, "unit": "g" },
+                    { "id": "zucchini", "amount": 50, "unit": "g" },
+                    { "id": "kimchi", "amount": 30, "unit": "g" },
+                    { "id": "brown_rice", "amount": 130, "unit": "g" }
+                ],
+                "jason": [
+                    { "id": "beef_slice", "amount": 130, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "bean_sprouts", "amount": 60, "unit": "g" },
+                    { "id": "spinach", "amount": 60, "unit": "g" },
+                    { "id": "mushroom", "amount": 50, "unit": "g" },
+                    { "id": "kimchi", "amount": 40, "unit": "g" },
+                    { "id": "brown_rice", "amount": 160, "unit": "g" }
+                ]
+            },
+            "sopSteps": [
+                "1. 燙青菜與豆芽：滾水加少許鹽，將黃豆芽與菠菜分別燙熟，撈出擠乾水分，用少許鹽與香油抓勻。",
+                "2. 炒配菜與肉類：熱鍋下油，將紅蘿蔔絲、香菇絲炒軟起鍋；接著將醃好的豬肉片下鍋炒熟至香氣溢出。",
+                "3. 煎蛋：煎 1 顆半熟太陽蛋。",
+                "4. 組合享用：碗內盛入熱白飯，鋪上各色蔬菜與肉片，中間放上太陽蛋，淋上特製拌飯醬，全部拌勻即完成！"
+            ],
+            "sauceFormula": [
+                {
+                    "name": "韓式辣椒醬",
+                    "baseAmount": 1,
+                    "unit": "大匙"
+                },
+                {
+                    "name": "白醋/蘋果醋",
+                    "baseAmount": 0.5,
+                    "unit": "大匙"
+                },
+                {
+                    "name": "韓式香油",
+                    "baseAmount": 0.5,
+                    "unit": "大匙"
+                },
+                {
+                    "name": "蒜末",
+                    "baseAmount": 0.5,
+                    "unit": "茶匙"
+                },
+                {
+                    "name": "溫水",
+                    "baseAmount": 0.5,
+                    "unit": "大匙"
+                }
+            ],
+            "sauceInstruction": "將上述醬料食材在大碗中充份混合均勻備用。"
+        },
+        {
+            "id": "ramen_meal",
+            "name": "🍜 營養滿滿泡麵",
+            "categories": [
+                "lunch",
+                "dinner",
+                "late_night"
+            ],
+            "recommendedProteins": [
+                "pork_shoulder",
+                "egg",
+                "tofu"
+            ],
+            "recommendedVeggies": [
+                "cabbage",
+                "baby_cabbage",
+                "chinese_cabbage",
+                "broccoli",
+                "kimchi",
+                "cucumber",
+                "mushroom"
+            ],
+            "recommendedCarbs": [
+                "shin_ramen_light",
+                "green_pepper_noodle"
+            ],
+            "recommendedSauces": [],
+            "defaultIngredients": [
+                {
+                    "id": "shin_ramen_light",
+                    "amount": 1,
+                    "unit": "包"
+                },
+                {
+                    "id": "pork_shoulder",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "cabbage",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "mushroom",
+                    "amount": 30,
+                    "unit": "g"
+                }
+            ],
+            "sopSteps": [
+                "1. 水滾後放入高麗菜、黑木耳與辛拉麵非油炸麵體煮 3 分鐘。",
+                "2. 打入荷包蛋煮至半熟，加入豬梅花肉片刷熟。",
+                "3. 倒入半包蔬菜調味包（控制鈉含量），起鍋撒上蔥花即完成！"
+            ]
+        },
+        {
+            "id": "hotpot",
+            "name": "🍲 暖心火鍋",
+            "categories": [
+                "dinner",
+                "lunch"
+            ],
+            "recommendedProteins": [
+                "pork_shoulder",
+                "beef_chuck",
+                "tofu",
+                "frozen_tofu",
+                "shrimp_paste",
+                "egg",
+                "crab_stick"
+            ],
+            "recommendedVeggies": [
+                "cabbage",
+                "chinese_cabbage",
+                "baby_cabbage",
+                "black_fungus",
+                "mushroom",
+                "beech_mushroom",
+                "baby_corn"
+            ],
+            "recommendedCarbs": [
+                "udon_noodles",
+                "prince_noodles",
+                "steamed_noodle",
+                "brown_rice"
+            ],
+            "recommendedSauces": [
+                "shacha_sauce",
+                "soy_sauce"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "pork_shoulder",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "beef_chuck",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "tofu",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "cabbage",
+                    "amount": 150,
+                    "unit": "g"
+                },
+                {
+                    "id": "black_fungus",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "udon_noodles",
+                    "amount": 1,
+                    "unit": "包"
+                }
+            ],
+            "sopSteps": [
+                "1. 將推薦食材洗淨備妥。",
+                "2. 依個人喜好熟化並組合裝盤即完成！"
+            ]
+        }
+    ]
+}

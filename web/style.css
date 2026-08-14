@@ -1,0 +1,551 @@
+:root {
+    /* 色彩權威矩陣 (Color System & Tokens) - 最新指定配色 */
+    --color-base: #F5F5F5; /* 輕盈奶灰背景 (#F5F5F5) */
+    --color-surface: #FFFFFF; /* 卡片純白 (#FFFFFF) */
+    --color-primary: #FFCA60; /* 暖陽金黃 (Bebe / Highlight #FFCA60) */
+    --color-secondary: #E16262; /* 珊瑚朱紅 (Ariel / Alert / 刪除 #E16262) */
+    --color-accent: #7DC7CC; /* 柔綠湖藍 (Jason / 達標 #7DC7CC) */
+    --color-mint-active: #7DC7CC; /* 主選取態：湖水薄荷綠 (#7DC7CC) */
+    --color-warm-gray: #ECECEC; /* 官方中性色：柔灰面料 (#ECECEC) */
+    --color-gray-divider: #ECECEC; /* 無庫存膠囊邊框與分割線灰 (#ECECEC) */
+    --color-cart-gray: #B3B3B3; /* 購物車原始 Icon 灰 (#B3B3B3) */
+    --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
+    --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
+    --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
+    
+    /* 圓角 */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-full: 9999px;
+    
+    /* 陰影 */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.04);
+    --shadow-floating: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important;
+    overscroll-behavior: none; /* 全域禁用彈簧回彈露底 */
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden !important;
+    overscroll-behavior: none; /* 全域禁用彈簧回彈露底 */
+    background-color: var(--color-base);
+    color: var(--color-text-main);
+    font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none; /* 鎖定空白處文字選取拖曳 */
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: pan-y; /* 嚴格限制僅允許垂直滾動，防止左右晃動 */
+}
+
+/* 僅允許輸入框與可編輯區選取 */
+input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: auto;
+    user-select: auto;
+}
+
+/* 核心版面設定：避免 Header 佔用過多空間 (黃金首頁原則) */
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    overflow-x: hidden !important;
+    position: relative;
+    box-sizing: border-box;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 16px));
+    touch-action: pan-y;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px 16px;
+}
+
+.header h1 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.btn-icon {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.btn-icon:active {
+    transform: scale(0.96);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    padding: 0 16px;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.tab-btn.active {
+    background: var(--color-text-main);
+    color: var(--color-surface);
+}
+
+/* 視圖內容區 */
+.view-content {
+    flex: 1;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+    padding: 0 14px 120px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-x: hidden;
+}
+
+.view-calculator, .view-tracker, .view-pantry {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* 共用卡片樣式 */
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-soft);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* 膠囊 (Capsules) */
+.capsule-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.capsule {
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.capsule:active {
+    transform: scale(0.95);
+}
+
+/* Page 1 單膠囊：有庫存 Default (白底淺灰邊框) */
+.capsule.in-stock,
+.capsule.page1-capsule {
+    background: #FFFFFF;
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text-main);
+    font-weight: 600;
+}
+
+/* Page 1 單膠囊：被選取 (淡湖藍底 湖藍框 #7DC7CC) */
+.capsule.selected:not(.out-stock) {
+    background: #EAF6F7 !important;
+    border: 1.5px solid var(--color-mint-active) !important;
+    color: #19585C !important;
+    font-weight: 600;
+}
+
+/* Page 1 單膠囊：缺貨 Disabled (暖柔灰底，完全停用不可點擊) */
+.capsule.out-stock,
+.capsule.disabled {
+    background: var(--color-warm-gray) !important;
+    border: 1px solid var(--color-gray-divider) !important;
+    color: var(--color-cart-gray) !important;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ----------------------------------------------------
+   第三頁【智慧冰箱】分割式膠囊 (Split Capsule Button)
+   ---------------------------------------------------- */
+.split-capsule {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-gray-divider);
+    overflow: hidden;
+    user-select: none;
+    transition: all 0.15s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background: var(--color-warm-gray);
+}
+.split-capsule.in-stock-bg {
+    background: #FFFFFF;
+    border-color: var(--color-border);
+}
+.split-capsule.out-stock-bg {
+    background: var(--color-warm-gray);
+    border-color: var(--color-gray-divider);
+}
+
+/* 左半部：庫存點擊區 (70%) */
+.split-left {
+    padding: 8px 12px 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    flex: 1;
+}
+.split-left.in-stock {
+    background: #FFFFFF;
+    color: var(--color-text-main);
+    font-weight: 600;
+}
+.split-left.out-stock {
+    background: var(--color-warm-gray);
+    color: var(--color-cart-gray);
+    font-weight: 500;
+}
+.split-left:active {
+    transform: scale(0.97);
+}
+
+/* 中間極細垂直分割線 (圖二) */
+.split-divider {
+    width: 1px;
+    height: 18px;
+    background-color: var(--color-gray-divider);
+    flex-shrink: 0;
+}
+
+/* 右半部：採買點擊區 (30%) */
+.split-right {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.split-right:active {
+    transform: scale(0.90);
+}
+
+/* 右半部: Default (沒有要買) - 淡灰色原色線條 🛒 (圖三) */
+.split-right .cart-icon-default {
+    color: var(--color-cart-gray);
+    display: flex;
+    align-items: center;
+}
+
+/* 右半部: Selected (要買已放入) - 亮薄荷綠圓底 + 白 🛒 (圖四) */
+.split-right .cart-icon-selected {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--color-mint-active);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(125, 199, 204, 0.4);
+}
+
+/* 下拉選單 */
+.select-box {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: #FFFFFF url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 16px center;
+    background-size: 12px;
+    color: #333333 !important;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+}
+
+/* 浮動底欄 (Bottom Floating Action Bar - 統一毛玻璃防干擾背景) */
+.fab-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100vw;
+    background: rgba(245, 245, 245, 0.92); /* #F5F5F5 92% 半透明毛玻璃 */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--color-border);
+    padding: 10px 14px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 12px));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+.fab-container .btn-primary {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 4px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    gap: 4px;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    background: var(--color-text-main);
+    color: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-floating);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+}
+
+.btn-primary:active {
+    transform: scale(0.97);
+}
+
+.btn-primary.accent {
+    background: var(--color-primary); /* #FFCA60 暖陽金黃 */
+    color: var(--color-text-main); /* #333333 炭黑文字 */
+}
+
+/* 彈窗遮罩與 75% 搜尋抽屜 (Modal & Bottom Drawer) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.drawer-content {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 480px;
+    max-height: 88vh;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px 20px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain; /* 隔離卡片滾動，防止外層主頁面連帶彈跳 */
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    animation: drawerSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 防止 iOS Safari 在聚焦輸入框時自動縮放放大頁面 */
+input, select, textarea {
+    font-size: 16px !important;
+}
+
+@keyframes drawerSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-border);
+    background: #F5F5F5;
+    font-size: 1rem;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--color-accent);
+    background: #FFFFFF;
+}
+
+/* 狀態標籤 (三色) */
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--color-base);
+}
+.status-tag.safe { color: var(--color-accent); }
+.status-tag.under { color: var(--color-text-main); }
+.status-tag.over { color: var(--color-secondary); }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* AI Scanning & Loading Animations */
+.ai-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid #C4E9EC;
+    border-top: 2.5px solid #19585C;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.ai-spinner-lg {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #C4E9EC;
+    border-top: 4px solid #19585C;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    display: inline-block;
+    box-shadow: 0 4px 16px rgba(25, 88, 92, 0.15);
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(125, 199, 204, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(125, 199, 204, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(125, 199, 204, 0); }
+}
+
+@keyframes scanLine {
+    0% { top: 0%; opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { top: 88%; opacity: 0.3; }
+}
+
+.ai-scan-box {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    animation: pulseGlow 1.8s infinite;
+}
+
+.ai-scan-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #7DC7CC, #19585C, #7DC7CC, transparent);
+    box-shadow: 0 0 10px #7DC7CC;
+    animation: scanLine 1.4s ease-in-out infinite alternate;
+}
+
+/* 鎖定 Modal / Bottom Drawer 開啟時的背景頁面捲動穿透 (Body Scroll Lock) */
+body.modal-open {
+    overflow: hidden !important;
+}

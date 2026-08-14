@@ -1,0 +1,48 @@
+{
+  "supplies": [
+    {
+      "id": "supp_paper_towel",
+      "name": "廚房紙巾",
+      "brand": "Kirkland 科克蘭",
+      "price": 369,
+      "priceUnit": "12捲/包",
+      "store": "Costco 好市多",
+      "photoUrl": "assets/supplies/paper_towel.jpg",
+      "packQuantity": 12,
+      "unitName": "捲"
+    },
+    {
+      "id": "supp_dish_soap",
+      "name": "洗碗精",
+      "brand": "Joy",
+      "price": 289,
+      "priceUnit": "2入/組",
+      "store": "Costco 好市多",
+      "photoUrl": "assets/supplies/dish_soap.jpg",
+      "packQuantity": 2,
+      "unitName": "瓶"
+    },
+    {
+      "id": "supp_trash_bag",
+      "name": "垃圾袋 (大)",
+      "brand": "妙潔",
+      "price": 129,
+      "priceUnit": "3卷/包",
+      "store": "全聯",
+      "photoUrl": "assets/supplies/trash_bag.jpg",
+      "packQuantity": 3,
+      "unitName": "卷"
+    },
+    {
+      "id": "supp_plastic_wrap",
+      "name": "保鮮膜",
+      "brand": "南亞",
+      "price": 99,
+      "priceUnit": "1支",
+      "store": "全聯",
+      "photoUrl": "assets/supplies/plastic_wrap.jpg",
+      "packQuantity": 1,
+      "unitName": "支"
+    }
+  ]
+}

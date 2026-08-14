@@ -1,0 +1,13 @@
+# SSL Certificate and Keys
+*.pem
+cert.pem
+key.pem
+
+# System & Temp
+.DS_Store
+__pycache__/
+*.pyc
+*.log
+
+# Backups
+backups/
