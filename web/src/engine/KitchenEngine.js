@@ -51,31 +51,81 @@ export default class KitchenEngine {
     }
 
     async fetchJson(filename, key, defaultValue) {
+        // 1. Try local storage first if available (for cloud static usage)
+        const localKey = 'kitchen_v2_' + filename;
+        const cached = localStorage.getItem(localKey);
+        
         try {
-            const response = await fetch(`/api/data/${filename}`);
+            // Try API endpoint first, then relative static fallbacks for GitHub Pages / Cloud
+            let response = null;
+            try {
+                response = await fetch(`/api/data/${filename}`);
+            } catch (e) {}
+
+            if (!response || !response.ok) {
+                try {
+                    response = await fetch(`../src/data/${filename}`);
+                } catch (e) {}
+            }
+            if (!response || !response.ok) {
+                try {
+                    response = await fetch(`./src/data/${filename}`);
+                } catch (e) {}
+            }
+            if (!response || !response.ok) {
+                try {
+                    response = await fetch(`/src/data/${filename}`);
+                } catch (e) {}
+            }
             if (response.ok) {
-                this.data[key] = await response.json();
+                const fetchedData = await response.json();
+                if (cached) {
+                    try {
+                        this.data[key] = JSON.parse(cached);
+                    } catch (e) {
+                        this.data[key] = fetchedData;
+                    }
+                } else {
+                    this.data[key] = fetchedData;
+                }
+            } else if (cached) {
+                this.data[key] = JSON.parse(cached);
             } else {
-                console.warn(`Failed to fetch ${filename}, using default.`);
                 this.data[key] = defaultValue;
             }
         } catch (e) {
-            console.error(`Error fetching ${filename}:`, e);
-            this.data[key] = defaultValue;
+            if (cached) {
+                try {
+                    this.data[key] = JSON.parse(cached);
+                } catch (err) {
+                    this.data[key] = defaultValue;
+                }
+            } else {
+                this.data[key] = defaultValue;
+            }
         }
     }
 
     async saveJson(filename, dataObj) {
+        const localKey = 'kitchen_v2_' + filename;
+        // Always persist to localStorage for instant offline access
+        try {
+            localStorage.setItem(localKey, JSON.stringify(dataObj));
+        } catch (e) {
+            console.warn("LocalStorage save error", e);
+        }
+
         try {
             const response = await fetch(`/api/data/${filename}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dataObj)
             });
-            if (!response.ok) throw new Error("Server error");
+            if (!response.ok) {
+                console.log(`Cloud mode: persisted ${filename} to localStorage.`);
+            }
         } catch (e) {
-            console.error(`Error saving ${filename}:`, e);
-            alert(`儲存 ${filename} 失敗，請確認 server.py 正在運行！`);
+            console.log(`Cloud mode: persisted ${filename} to localStorage.`);
         }
     }
 
