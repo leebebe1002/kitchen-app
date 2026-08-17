@@ -1,6 +1,65 @@
 {
     "dishes": [
         {
+            "id": "whey_protein_shake",
+            "name": "🥛 搖搖乳清蛋白",
+            "categories": [
+                "breakfast",
+                "snack",
+                "late_night"
+            ],
+            "recommendedProteins": [
+                "whey_protein",
+                "full_fat_milk_250"
+            ],
+            "recommendedVeggies": [
+                "frozen_berry"
+            ],
+            "recommendedCarbs": [
+                "granola"
+            ],
+            "recommendedSauces": [
+                "matcha_powder",
+                "cocoa_powder",
+                "sesame_powder",
+                "maple_syrup"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "whey_protein",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "full_fat_milk_250",
+                    "amount": 200,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    { "id": "whey_protein", "amount": 25, "unit": "g" },
+                    { "id": "full_fat_milk_250", "amount": 200, "unit": "g" },
+                    { "id": "matcha_powder", "amount": 2, "unit": "g" }
+                ],
+                "ariel": [
+                    { "id": "whey_protein", "amount": 25, "unit": "g" },
+                    { "id": "full_fat_milk_250", "amount": 200, "unit": "g" },
+                    { "id": "cocoa_powder", "amount": 3, "unit": "g" }
+                ],
+                "jason": [
+                    { "id": "whey_protein", "amount": 35, "unit": "g" },
+                    { "id": "full_fat_milk_250", "amount": 250, "unit": "g" },
+                    { "id": "sesame_powder", "amount": 5, "unit": "g" }
+                ]
+            },
+            "sopSteps": [
+                "1. 在搖搖杯中加入常溫水或鮮奶約 200-250ml。",
+                "2. 倒入 1 份乳清蛋白粉及個人喜好風味粉（抹茶/可可/芝麻）。",
+                "3. 蓋緊杯蓋搖晃 15-20 秒至完全均勻無結塊即可享用！"
+            ]
+        },
+        {
             "id": "yogurt_bowl",
             "name": "🥣 燕麥希臘優格碗",
             "categories": [
@@ -304,6 +363,8 @@
             "recommendedProteins": [
                 "tuna",
                 "shrimp",
+                "chicken_thigh",
+                "egg",
                 "sous_vide_chicken",
                 "tofu",
                 "edamame"
@@ -312,49 +373,55 @@
                 "greens",
                 "cucumber",
                 "cherry_tomatoes",
-                "kimchi",
-                "avocado_mash"
+                "kimchi"
             ],
             "recommendedCarbs": [
                 "brown_rice",
                 "corn"
             ],
             "recommendedSauces": [
-                "spicy_mayo",
+                "avocado_mash",
+                "sriracha_mayo",
                 "balsamic"
             ],
             "defaultIngredients": [
-                {
-                    "id": "tuna",
-                    "amount": 80,
-                    "unit": "g"
-                },
-                {
-                    "id": "shrimp",
-                    "amount": 60,
-                    "unit": "g"
-                },
-                {
-                    "id": "edamame",
-                    "amount": 40,
-                    "unit": "g"
-                },
-                {
-                    "id": "cucumber",
-                    "amount": 50,
-                    "unit": "g"
-                },
-                {
-                    "id": "avocado_mash",
-                    "amount": 40,
-                    "unit": "g"
-                },
-                {
-                    "id": "brown_rice",
-                    "amount": 120,
-                    "unit": "g"
-                }
+                { "id": "shrimp", "amount": 80, "unit": "g" },
+                { "id": "egg", "amount": 1, "unit": "顆" },
+                { "id": "greens", "amount": 80, "unit": "g" },
+                { "id": "kimchi", "amount": 35, "unit": "g" },
+                { "id": "brown_rice", "amount": 80, "unit": "g" },
+                { "id": "corn", "amount": 30, "unit": "g" },
+                { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
             ],
+            "memberPortions": {
+                "bebe": [
+                    { "id": "shrimp", "amount": 80, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "greens", "amount": 80, "unit": "g" },
+                    { "id": "kimchi", "amount": 35, "unit": "g" },
+                    { "id": "brown_rice", "amount": 80, "unit": "g" },
+                    { "id": "corn", "amount": 30, "unit": "g" },
+                    { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
+                ],
+                "ariel": [
+                    { "id": "shrimp", "amount": 80, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "greens", "amount": 60, "unit": "g" },
+                    { "id": "kimchi", "amount": 30, "unit": "g" },
+                    { "id": "brown_rice", "amount": 100, "unit": "g" },
+                    { "id": "corn", "amount": 40, "unit": "g" },
+                    { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
+                ],
+                "jason": [
+                    { "id": "shrimp", "amount": 120, "unit": "g" },
+                    { "id": "egg", "amount": 2, "unit": "顆" },
+                    { "id": "greens", "amount": 80, "unit": "g" },
+                    { "id": "kimchi", "amount": 50, "unit": "g" },
+                    { "id": "brown_rice", "amount": 140, "unit": "g" },
+                    { "id": "corn", "amount": 40, "unit": "g" },
+                    { "id": "sriracha_mayo", "amount": 15, "unit": "g" }
+                ]
+            },
             "sopSteps": [
                 "1. 將推薦食材洗淨備妥。",
                 "2. 依個人喜好熟化並組合裝盤即完成！"

@@ -820,7 +820,7 @@ export default {
 
                 <!-- 4. 🧂 醬料調味 -->
                 <div v-if="getCategoryInZone('fridge', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料調味</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -982,7 +982,7 @@ export default {
 
                 <!-- 4. 🧂 醬料調味 -->
                 <div v-if="getCategoryInZone('freezer', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料調味</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1144,7 +1144,7 @@ export default {
 
                 <!-- 4. 🧂 醬料調味 -->
                 <div v-if="getCategoryInZone('pantry', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料調味</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1273,6 +1273,9 @@ export default {
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'Costco' }" @click="shoppingStoreFilter = 'Costco'">
                             Costco
+                        </button>
+                        <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '義美' }" @click="shoppingStoreFilter = '義美'">
+                            義美
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC' }" @click="shoppingStoreFilter = 'EC'">
                             EC 電商
@@ -1605,8 +1608,7 @@ export default {
                                 <option value="proteins">🥩 蛋白質</option>
                                 <option value="veggies">🥗 蔬菜水果</option>
                                 <option value="carbs">🍚 碳水類</option>
-                                <option value="sauces">🧂 醬料調味</option>
-                                <option value="fats">🥑 油脂類</option>
+                                <option value="sauces">🧂 醬料與油脂</option>
                             </select>
                         </div>
                     </div>
@@ -1734,7 +1736,7 @@ export default {
                             </button>
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="store in ['全聯', 'Costco', 'EC', '傳統市場', '其他']" 
+                            <button v-for="store in ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他']" 
                                     :key="store"
                                     class="capsule"
                                     :class="isStoreSelected(selectedFood, store) ? 'selected' : 'in-stock'"

@@ -85,6 +85,143 @@
                     "meals": []
                 }
             }
+        },
+        {
+            "date": "2026-08-14",
+            "diners": {
+                "bebe": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                },
+                "ariel": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                },
+                "jason": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                }
+            }
+        },
+        {
+            "date": "2026-08-16",
+            "diners": {
+                "bebe": {
+                    "totals": {
+                        "kcal": 385,
+                        "protein": 22.5,
+                        "carbs": 48,
+                        "fat": 11.5,
+                        "sodium": 650
+                    },
+                    "meals": [
+                        {
+                            "id": "meal_1786852111346_bebe",
+                            "dishName": "晨間廚房 嫩煎雞柳帕瑪森軟法 (少醬少美乃滋)",
+                            "time": "上午11:48",
+                            "source": "nlp_ai",
+                            "nutrients": {
+                                "kcal": 385,
+                                "protein": 22.5,
+                                "carbs": 48,
+                                "fat": 11.5,
+                                "sodium": 650
+                            },
+                            "aiNote": "十一粒 AI 語意精算：帕瑪森軟法麵包體約250大卡，搭配低脂嫩煎雞柳與生菜，已扣除大部分美乃滋與醬料熱量，整體清爽且蛋白質適中。",
+                            "photoUrl": null
+                        }
+                    ]
+                },
+                "ariel": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                },
+                "jason": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                }
+            }
+        },
+        {
+            "date": "2026-08-17",
+            "diners": {
+                "bebe": {
+                    "totals": {
+                        "kcal": 102,
+                        "protein": 1.3,
+                        "carbs": 26,
+                        "fat": 0.3,
+                        "sodium": 1
+                    },
+                    "meals": [
+                        {
+                            "id": "meal_1786937885071_bebe",
+                            "dishName": "香蕉 (中型1根)",
+                            "time": "上午11:38",
+                            "source": "nlp_ai",
+                            "nutrients": {
+                                "kcal": 102,
+                                "protein": 1.3,
+                                "carbs": 26,
+                                "fat": 0.3,
+                                "sodium": 1
+                            },
+                            "aiNote": "以市售中型香蕉（去皮可食重約100-110克）估算，富含碳水化合物、鉀離子與膳食纖維，非常適合運動前後快速補充能量。",
+                            "photoUrl": null
+                        }
+                    ]
+                },
+                "ariel": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                },
+                "jason": {
+                    "totals": {
+                        "kcal": 0,
+                        "protein": 0,
+                        "carbs": 0,
+                        "fat": 0,
+                        "sodium": 0
+                    },
+                    "meals": []
+                }
+            }
         }
     ]
 }

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Family Kitchen 2.0 - Design System Showcase</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/web/style.css?v=20260816_DS_SHOWCASE">
+    <style>
+        :root {
+            --ds-bg: #F8F6F0;
+            --ds-card: #FFFFFF;
+            --ds-border: #ECECEC;
+            --ds-text: #333333;
+            --ds-muted: #8C867A;
+            --ds-yellow: #FFCA60;
+            --ds-coral: #E16262;
+            --ds-mint: #7DC7CC;
+        }
+
+        body {
+            background-color: var(--ds-bg);
+            color: var(--ds-text);
+            font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+            padding: 20px 16px 80px 16px;
+            max-width: 480px;
+            margin: 0 auto;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .ds-header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .ds-badge {
+            display: inline-block;
+            background: rgba(255, 202, 96, 0.25);
+            color: #8C6200;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+        .ds-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--ds-text);
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+        .ds-subtitle {
+            font-size: 0.85rem;
+            color: var(--ds-muted);
+        }
+
+        .ds-section {
+            background: var(--ds-card);
+            border-radius: 20px;
+            padding: 20px 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border: 1px solid var(--ds-border);
+        }
+        .ds-sec-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--ds-text);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ds-sec-desc {
+            font-size: 0.78rem;
+            color: var(--ds-muted);
+            margin-bottom: 16px;
+        }
+
+        .ds-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ds-item-card {
+            background: #FAF8F5;
+            border-radius: 14px;
+            padding: 12px 14px;
+            border: 1px solid #F0EEE9;
+        }
+        .ds-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .ds-item-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--ds-text);
+        }
+        .ds-item-code {
+            font-size: 0.72rem;
+            font-family: monospace;
+            color: var(--ds-muted);
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .ds-item-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Swatches */
+        .swatch-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .swatch-card {
+            background: #FFF;
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid var(--ds-border);
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .swatch-card:active {
+            transform: scale(0.95);
+        }
+        .swatch-box {
+            width: 100%;
+            height: 36px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .swatch-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--ds-text);
+            white-space: nowrap;
+        }
+        .swatch-hex {
+            font-size: 0.68rem;
+            color: var(--ds-muted);
+            font-family: monospace;
+        }
+
+        /* Interactive Note */
+        .interactive-tip {
+            font-size: 0.72rem;
+            color: #059669;
+            background: #ECFDF5;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .back-nav {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--ds-border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--ds-text);
+            text-decoration: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+    <a href="/web/" class="back-nav">⬅️ 返回媽廚</a>
+
+    <header class="ds-header">
+        <div class="ds-badge">FAMILY KITCHEN 2.0</div>
+        <h1 class="ds-title">🎨 設計系統視覺手冊</h1>
+        <p class="ds-subtitle">按鈕・膠囊・色票・微互動 即時視覺指南</p>
+    </header>
+
+    <!-- 1. 核心色票矩陣 -->
+    <section class="ds-section">
+        <div class="ds-sec-title">🎨 1. 核心調色盤 (Color Palette)</div>
+        <div class="ds-sec-desc">全系統主要品牌色、人物識別色與狀態色彩</div>
+        
+        <div class="swatch-row">
+            <div class="swatch-card" onclick="copyHex('#FFCA60')">
+                <div class="swatch-box" style="background: #FFCA60;"></div>
+                <div class="swatch-label">暖陽金黃</div>
+                <div class="swatch-hex">#FFCA60</div>
+            </div>
+            <div class="swatch-card" onclick="copyHex('#7DC7CC')">
+                <div class="swatch-box" style="background: #7DC7CC;"></div>
+                <div class="swatch-label">湖水薄荷</div>
+                <div class="swatch-hex">#7DC7CC</div>
+            </div>
+            <div class="swatch-card" onclick="copyHex('#E16262')">
+                <div class="swatch-box" style="background: #E16262;"></div>
+                <div class="swatch-label">珊瑚朱紅</div>
+                <div class="swatch-hex">#E16262</div>
+            </div>
+        </div>
+        <div class="swatch-row">
+            <div class="swatch-card" onclick="copyHex('#333333')">
+                <div class="swatch-box" style="background: #333333;"></div>
+                <div class="swatch-label">深炭黑主色</div>
+                <div class="swatch-hex">#333333</div>
+            </div>
+            <div class="swatch-card" onclick="copyHex('#ECECEC')">
+                <div class="swatch-box" style="background: #ECECEC;"></div>
+                <div class="swatch-label">柔灰中性色</div>
+                <div class="swatch-hex">#ECECEC</div>
+            </div>
+            <div class="swatch-card" onclick="copyHex('#F8F6F0')">
+                <div class="swatch-box" style="background: #F8F6F0;"></div>
+                <div class="swatch-label">暖奶米灰底</div>
+                <div class="swatch-hex">#F8F6F0</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. 備料頁：單觸控烹調膠囊 -->
+    <section class="ds-section">
+        <div class="ds-sec-title">💊 2. 備料計算頁【單觸控烹調膠囊】</div>
+        <div class="ds-sec-desc">第一頁食材選取專用，點擊體驗即時切換反饋</div>
+
+        <div class="interactive-tip">✨ 提示：下方膠囊可直接點擊測試選取狀態！</div>
+
+        <div class="ds-grid">
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">A. 常態・有庫存 (Default In-Stock)</span>
+                    <span class="ds-item-code">#FFF 底 + #ECECEC 邊框</span>
+                </div>
+                <div class="ds-item-preview">
+                    <div class="capsule in-stock" onclick="toggleSingle(this)">
+                        🥩 雞胸肉
+                    </div>
+                    <div class="capsule in-stock" onclick="toggleSingle(this)">
+                        🥦 菠菜
+                    </div>
+                </div>
+            </div>
+
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">B. 選中・準備下鍋 (Selected Active)</span>
+                    <span class="ds-item-code">#EAF6F7 底 + #7DC7CC 邊框</span>
+                </div>
+                <div class="ds-item-preview">
+                    <div class="capsule in-stock selected" onclick="toggleSingle(this)">
+                        🥩 雞胸肉 (已選中)
+                    </div>
+                </div>
+            </div>
+
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">C. 缺貨・無庫存 (Out of Stock)</span>
+                    <span class="ds-item-code">#ECECEC 暖柔灰底 + 🛒 購物車</span>
+                </div>
+                <div class="ds-item-preview">
+                    <div class="capsule out-stock" onclick="alert('短按：加入採買清單 🛒\n長按 750ms：查看 100g 營養詳情')">
+                        🍁 楓糖漿 <span style="font-size: 0.8rem;">🛒</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 智慧冰箱頁：雙分割式膠囊 -->
+    <section class="ds-section">
+        <div class="ds-sec-title">🧊 3. 智慧冰箱頁【雙分割式膠囊】</div>
+        <div class="ds-sec-desc">左側 70% 切換庫存 ｜ 右側 30% 切換採買清單</div>
+
+        <div class="interactive-tip">✨ 提示：點擊左半邊切換庫存、點擊右半邊切換購物車！</div>
+
+        <div class="ds-grid">
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">4 大狀態全組合展示 (Split Capsule)</span>
+                    <span class="ds-item-code">Left 70% | Right 30%</span>
+                </div>
+                <div class="ds-item-preview" style="gap: 12px;">
+                    <!-- 狀態 1: 有庫存 + 未買 -->
+                    <div class="split-capsule in-stock-bg" id="split1">
+                        <div class="split-left in-stock" onclick="toggleSplitLeft('split1')">🥩 豬梅花肉片</div>
+                        <div class="split-divider"></div>
+                        <div class="split-right" onclick="toggleSplitRight('split1')">
+                            <span class="cart-icon-default">🛒</span>
+                        </div>
+                    </div>
+
+                    <!-- 狀態 2: 有庫存 + 想囤貨已買 -->
+                    <div class="split-capsule in-stock-bg" id="split2">
+                        <div class="split-left in-stock" onclick="toggleSplitLeft('split2')">🥚 雞蛋</div>
+                        <div class="split-divider"></div>
+                        <div class="split-right" onclick="toggleSplitRight('split2')">
+                            <span class="cart-icon-selected">🛒</span>
+                        </div>
+                    </div>
+
+                    <!-- 狀態 3: 缺貨 + 已加入採買 -->
+                    <div class="split-capsule out-stock-bg" id="split3">
+                        <div class="split-left out-stock" onclick="toggleSplitLeft('split3')">🥑 酪梨泥</div>
+                        <div class="split-divider"></div>
+                        <div class="split-right" onclick="toggleSplitRight('split3')">
+                            <span class="cart-icon-selected">🛒</span>
+                        </div>
+                    </div>
+
+                    <!-- 狀態 4: 缺貨 + 未加入採買 -->
+                    <div class="split-capsule out-stock-bg" id="split4">
+                        <div class="split-left out-stock" onclick="toggleSplitLeft('split4')">🧀 帕瑪森起司</div>
+                        <div class="split-divider"></div>
+                        <div class="split-right" onclick="toggleSplitRight('split4')">
+                            <span class="cart-icon-default">🛒</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 用餐人數與分類標籤膠囊 -->
+    <section class="ds-section">
+        <div class="ds-sec-title">👥 4. 用餐人數 ＆ 篩選標籤膠囊</div>
+        <div class="ds-sec-desc">人數勾選切換與分類標籤 Pill</div>
+
+        <div class="ds-grid">
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">用餐人數膠囊 (Diners Capsules)</span>
+                    <span class="ds-item-code">Active vs Inactive</span>
+                </div>
+                <div class="ds-item-preview">
+                    <div class="capsule in-stock selected" onclick="toggleSingle(this)">
+                        😊 Bebe ✓
+                    </div>
+                    <div class="capsule in-stock" onclick="toggleSingle(this)">
+                        ❤️ 樂樂
+                    </div>
+                    <div class="capsule in-stock" onclick="toggleSingle(this)">
+                        🪨 Jason
+                    </div>
+                </div>
+            </div>
+
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">篩選分頁標籤 (Tab Pills)</span>
+                    <span class="ds-item-code">Active (#333) vs Inactive (#F5F5)</span>
+                </div>
+                <div class="ds-item-preview">
+                    <button class="tab-btn active" style="padding: 6px 14px;">全部</button>
+                    <button class="tab-btn" style="background: #F5F5F5; padding: 6px 14px;">🥩 蛋白質</button>
+                    <button class="tab-btn" style="background: #F5F5F5; padding: 6px 14px;">🥦 蔬菜</button>
+                    <button class="tab-btn" style="background: #F5F5F5; padding: 6px 14px;">🍚 碳水</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. 核心操作按鈕體系 -->
+    <section class="ds-section">
+        <div class="ds-sec-title">🔘 5. 全域按鈕體系 (Button Matrix)</div>
+        <div class="ds-sec-desc">毛玻璃底部常駐按鈕、小工具鈕與警示按鈕</div>
+
+        <div class="ds-grid">
+            <!-- 核心 CTA -->
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">A. 暖陽金黃 CTA 主按鈕 (Accent Action)</span>
+                    <span class="ds-item-code">#FFCA60 底 + #333333 炭黑字</span>
+                </div>
+                <div class="ds-item-preview" style="width: 100%;">
+                    <button class="btn-primary accent" style="width: 100%; justify-content: center;" onclick="alert('點擊：執行計算或記錄')">
+                        🧮 計算全家備料份量
+                    </button>
+                </div>
+            </div>
+
+            <!-- 炭黑主按鈕 -->
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">B. 深炭黑核心按鈕 (Primary Solid)</span>
+                    <span class="ds-item-code">#333333 底 + #FFFFFF 白字</span>
+                </div>
+                <div class="ds-item-preview" style="width: 100%;">
+                    <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="alert('點擊：重設或拍照')">
+                        📸 拍照 AI 智能記錄
+                    </button>
+                </div>
+            </div>
+
+            <!-- 輔助白底按鈕 -->
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">C. 輔助白底按鈕 (Secondary Outline)</span>
+                    <span class="ds-item-code">#FFF 底 + #ECECEC 框 + #333 字</span>
+                </div>
+                <div class="ds-item-preview" style="width: 100%; gap: 8px;">
+                    <button class="btn-icon" style="flex: 1; justify-content: center; padding: 10px 14px; border-radius: 12px;">
+                        ➕ 新增食材
+                    </button>
+                    <button class="btn-icon" style="flex: 1; justify-content: center; padding: 10px 14px; border-radius: 12px;">
+                        🛒 採買清單 (3)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5g 微調步進鈕 -->
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">D. 5g 步進器微調按鈕 (Portion Stepper)</span>
+                    <span class="ds-item-code">[ - ] 80g [ + ] (100g)</span>
+                </div>
+                <div class="ds-item-preview" style="background: #FFF; padding: 8px 12px; border-radius: 12px; border: 1px solid #ECECEC; width: 100%; justify-content: space-between;">
+                    <span style="font-size: 0.88rem; font-weight: 600;">🥩 嫩煎雞柳</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn-icon" style="padding: 2px 8px; font-size: 0.85rem;" onclick="stepVal(-5)">-</button>
+                        <span id="stepDisplay" style="font-weight: 700; font-size: 0.95rem; min-width: 38px; text-align: center;">80g</span>
+                        <button class="btn-icon" style="padding: 2px 8px; font-size: 0.85rem;" onclick="stepVal(5)">+</button>
+                        <span style="color: var(--ds-muted); font-size: 0.78rem;">(100g)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 危險與警示 -->
+            <div class="ds-item-card">
+                <div class="ds-item-header">
+                    <span class="ds-item-name">E. 刪除與危險操作 (Danger Action)</span>
+                    <span class="ds-item-code">#FFF5F5 底 + #E16262 珊瑚紅字</span>
+                </div>
+                <div class="ds-item-preview" style="width: 100%;">
+                    <button style="width: 100%; background: #FFF5F5; border: 1px solid #FCA5A5; color: #E16262; padding: 10px 14px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer;" onclick="alert('確定要刪除嗎？')">
+                        🗑️ 永久刪除此食材
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. 浮動毛玻璃底欄實裝模擬 -->
+    <section class="ds-section" style="margin-bottom: 40px;">
+        <div class="ds-sec-title">✨ 6. 底部毛玻璃浮動列實境 (Live FAB)</div>
+        <div class="ds-sec-desc">全螢幕滿版毛玻璃，大拇指橫排單行佈局</div>
+
+        <div style="background: #E8E5DD; border-radius: 16px; padding: 16px; position: relative; overflow: hidden;">
+            <p style="font-size: 0.78rem; color: #666; margin-bottom: 20px; text-align: center;">👇 頁面滾動時後方內容被毛玻璃優雅虛化</p>
+            <div style="background: rgba(245, 245, 245, 0.92); backdrop-filter: blur(12px); border-radius: 14px; padding: 8px; border: 1px solid #ECECEC; display: flex; gap: 8px;">
+                <button class="btn-primary accent" style="flex: 1; padding: 10px 6px; font-size: 0.85rem; border-radius: 10px; justify-content: center;">
+                    🍳 計算
+                </button>
+                <button class="btn-primary" style="flex: 1; padding: 10px 6px; font-size: 0.85rem; border-radius: 10px; justify-content: center;">
+                    🔄 重設
+                </button>
+                <button class="btn-primary accent" style="flex: 1; padding: 10px 6px; font-size: 0.85rem; border-radius: 10px; justify-content: center;">
+                    📝 紀錄
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function toggleSingle(el) {
+            el.classList.toggle('selected');
+        }
+
+        function toggleSplitLeft(id) {
+            const el = document.getElementById(id);
+            const left = el.querySelector('.split-left');
+            if (left.classList.contains('in-stock')) {
+                left.classList.remove('in-stock');
+                left.classList.add('out-stock');
+                el.classList.remove('in-stock-bg');
+                el.classList.add('out-stock-bg');
+            } else {
+                left.classList.remove('out-stock');
+                left.classList.add('in-stock');
+                el.classList.remove('out-stock-bg');
+                el.classList.add('in-stock-bg');
+            }
+        }
+
+        function toggleSplitRight(id) {
+            const el = document.getElementById(id);
+            const right = el.querySelector('.split-right');
+            const icon = right.querySelector('span');
+            if (icon.classList.contains('cart-icon-selected')) {
+                icon.className = 'cart-icon-default';
+            } else {
+                icon.className = 'cart-icon-selected';
+            }
+        }
+
+        let curVal = 80;
+        function stepVal(delta) {
+            curVal = Math.max(10, curVal + delta);
+            document.getElementById('stepDisplay').innerText = curVal + 'g';
+        }
+
+        function copyHex(hex) {
+            navigator.clipboard.writeText(hex);
+            alert(`已複製色碼：${hex} 📋`);
+        }
+    </script>
+</body>
+</html>

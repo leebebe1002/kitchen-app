@@ -23,13 +23,14 @@ export default class KitchenEngine {
             this.fetchJson('pantry_inventory.json', 'pantryInventory', {}),
             this.fetchJson('dishes.json', 'rawDishes', {dishes:[]}),
             this.fetchJson('daily_logs.json', 'dailyLogs', {}),
+            this.fetchJson('favorite_foods.json', 'rawFavoriteFoods', {favorites:[]}),
             this.fetchJson('config.json', 'config', {})
         ]);
         
         // Flatten ingredients
         this.data.ingredients = [];
         if (this.data.rawIngredients) {
-            ['proteins', 'veggies', 'carbs', 'sauces', 'fats'].forEach(cat => {
+            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
                     this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
                 }
@@ -38,6 +39,9 @@ export default class KitchenEngine {
         
         // Flatten dishes
         this.data.dishes = this.data.rawDishes?.dishes || [];
+        
+        // Favorite foods
+        this.data.favoriteFoods = this.data.rawFavoriteFoods?.favorites || [];
         
         // Initialize pantry if empty
         if (!this.data.pantryInventory.foodStockStatus) this.data.pantryInventory.foodStockStatus = {};
@@ -104,7 +108,7 @@ export default class KitchenEngine {
         this.data.ingredients = this.data.ingredients.filter(ing => ing.id !== id);
         // Remove from rawIngredients categories
         if (this.data.rawIngredients) {
-            ['proteins', 'veggies', 'carbs', 'sauces', 'fats'].forEach(cat => {
+            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
                     this.data.rawIngredients[cat] = this.data.rawIngredients[cat].filter(ing => ing.id !== id);
                 }
@@ -137,7 +141,9 @@ export default class KitchenEngine {
                 } else {
                     const ing = this.getIngredientById(item.targetId);
                     if (ing?.preferredStore) defaultStore = ing.preferredStore;
-                    else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon'].includes(item.targetId)) {
+                    else if (ing?.brand?.includes('義美') || item.name.includes('義美') || item.name.includes('豆奶') || item.name.includes('芝麻粉')) {
+                        defaultStore = '義美';
+                    } else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon'].includes(item.targetId)) {
                         defaultStore = 'Costco';
                     } else {
                         defaultStore = '全聯';
@@ -325,12 +331,13 @@ export default class KitchenEngine {
     }
 
     async deleteMeal(date, member, mealId) {
-        if (!this.data.dailyLogs || !this.data.dailyLogs.logs) return;
+        if (!this.data.dailyLogs?.logs) return;
         const dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
         if (!dayEntry || !dayEntry.diners || !dayEntry.diners[member]) return;
-        
+
         dayEntry.diners[member].meals = dayEntry.diners[member].meals.filter(m => m.id !== mealId);
-        
+
+        // Recalculate totals
         const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
         dayEntry.diners[member].meals.forEach(m => {
             const n = m.nutrients || m.nutrition || {};
@@ -340,11 +347,28 @@ export default class KitchenEngine {
             totals.fat += (n.fat || 0);
             totals.sodium += (n.sodium || 0);
         });
+
         Object.keys(totals).forEach(k => {
             totals[k] = Math.round(totals[k] * 10) / 10;
         });
         dayEntry.diners[member].totals = totals;
-        
+
         await this.saveJson('daily_logs.json', this.data.dailyLogs);
+    }
+
+    // --- Favorite Foods Methods ---
+    getFavoriteFoods() {
+        return this.data.favoriteFoods || [];
+    }
+
+    async saveFavoriteFood(foodItem) {
+        if (!this.data.favoriteFoods) this.data.favoriteFoods = [];
+        const existingIndex = this.data.favoriteFoods.findIndex(f => f.name === foodItem.name);
+        if (existingIndex >= 0) {
+            this.data.favoriteFoods[existingIndex] = foodItem;
+        } else {
+            this.data.favoriteFoods.push(foodItem);
+        }
+        await this.saveJson('favorite_foods.json', { favorites: this.data.favoriteFoods });
     }
 }

@@ -37,142 +37,49 @@ export default {
             aiNote: '估算自信度 88%，包含大油炒高麗菜與排骨裹粉。'
         });
 
-        // 智慧台灣在地美食/點心/飲料/正餐 NLP 語意解析引擎
-        const parseFoodNLP = (rawInput) => {
-            let text = (rawInput || '').trim();
-            if (!text) return null;
 
-            // 1. 抽取數量倍率 (支援: 1個, 2顆, 半碗, 3份, 1杯, 2塊, 1大碗...)
-            let multiplier = 1;
-            let qtyLabel = '';
-
-            const numMap = { '半': 0.5, '一': 1, '兩': 2, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
-            const qtyRegex = /(?:吃了|喝了|來了|點了|買了)?\s*([0-9]+|半|一|兩|二|三|四|五|六|七|八|九|十)\s*(個|顆|份|杯|碗|大碗|小碗|塊|包|盤|條|捲|片|盒|支|根|粒)?/i;
-            const matchQty = text.match(qtyRegex);
-            if (matchQty) {
-                const numStr = matchQty[1];
-                const unitStr = matchQty[2] || '';
-                const parsedNum = !isNaN(Number(numStr)) ? Number(numStr) : (numMap[numStr] || 1);
-                multiplier = parsedNum;
-                qtyLabel = `${parsedNum}${unitStr}`;
-            }
-
-            // 清理語意前綴詞，提取純餐點名
-            let cleanText = text
-                .replace(/^(我|剛剛|今天|早上|中午|晚上|下午|剛才)?(吃了|喝了|點了|買了|來了)/g, '')
-                .replace(/^一個|^1個|^兩顆|^2顆|^半碗|^一份|^1份|^一杯|^1杯|^一條|^1根/g, '')
-                .replace(/[，。！!~]/g, '')
-                .trim();
-
-            if (!cleanText) cleanText = text;
-
-            // 2. 本地龐大真實食物知識庫
-            const foodKnowledge = [
-                // 甜點 / 麻糬 / 糕點
-                { keys: ['花生麻糬', '花生大麻糬', '花生米麻糬'], name: '花生大麻糬', kcal: 185, p: 3.8, c: 32.0, f: 5.2, na: 45, note: '十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。' },
-                { keys: ['紅豆麻糬', '紅豆大麻糬'], name: '紅豆大麻糬', kcal: 165, p: 2.8, c: 35.0, f: 1.5, na: 30, note: '十一粒 AI 推算：含糯米皮與蜜紅豆餡。' },
-                { keys: ['芝麻麻糬', '芝麻大麻糬'], name: '芝麻大麻糬', kcal: 190, p: 4.2, c: 30.0, f: 6.2, na: 35, note: '十一粒 AI 推算：含糯米碳水與黑芝麻健康油脂。' },
-                { keys: ['麻糬', '大麻糬', '客家麻糬'], name: '手作麻糬', kcal: 175, p: 3.2, c: 33.0, f: 4.0, na: 40, note: '十一粒 AI 推算：含糯米碳水與沾粉餡料。' },
-                { keys: ['車輪餅', '紅豆餅', '奶油餅', '芋頭餅'], name: '車輪餅', kcal: 165, p: 3.2, c: 28.0, f: 4.5, na: 95, note: '十一粒 AI 推算：外皮麵粉碳水與內餡。' },
-                { keys: ['蛋塔', '葡式蛋塔'], name: '葡式蛋塔', kcal: 220, p: 3.8, c: 22.0, f: 13.0, na: 110, note: '十一粒 AI 推算：千層酥皮與濃郁蛋奶餡。' },
-                { keys: ['地瓜球', 'QQ蛋'], name: '地瓜球 (1份)', kcal: 180, p: 1.0, c: 36.0, f: 4.0, na: 20, note: '十一粒 AI 推算：地瓜粉與油炸碳水。' },
-                { keys: ['肉桂捲'], name: '美式肉桂捲', kcal: 380, p: 5.5, c: 56.0, f: 15.0, na: 280, note: '十一粒 AI 推算：高碳水與肉桂糖霜。' },
-                { keys: ['生乳捲', '蛋糕', '起司蛋糕'], name: '精緻蛋糕/生乳捲', kcal: 260, p: 4.5, c: 28.0, f: 14.5, na: 130, note: '十一粒 AI 推算：海綿蛋糕與鮮奶油脂肪。' },
-                { keys: ['布丁', '統一布丁'], name: '焦糖雞蛋布丁', kcal: 110, p: 2.0, c: 22.0, f: 2.2, na: 65, note: '十一粒 AI 推算：雞蛋布丁與焦糖糖漿。' },
-
-                // 台灣小吃 / 炸物 / 麵食
-                { keys: ['鹹酥雞', '鹽酥雞'], name: '台灣鹹酥雞 (1份)', kcal: 460, p: 28.0, c: 24.0, f: 28.0, na: 820, note: '十一粒 AI 推算：裹粉炸雞肉蛋白質與油脂。' },
-                { keys: ['蔥油餅', '蔥抓餅'], name: '香煎蔥油餅', kcal: 360, p: 7.5, c: 45.0, f: 16.0, na: 480, note: '十一粒 AI 推算：麵粉碳水與煎製油脂。' },
-                { keys: ['水煎包', '生煎包'], name: '鮮肉水煎包', kcal: 190, p: 6.5, c: 24.0, f: 8.0, na: 320, note: '十一粒 AI 推算：麵皮碳水與豬肉餡。' },
-                { keys: ['肉包', '鮮肉包', '包子'], name: '鮮肉大包子', kcal: 280, p: 9.5, c: 38.0, f: 10.0, na: 420, note: '十一粒 AI 推算：老麵外皮與調味豬肉餡。' },
-                { keys: ['茶葉蛋'], name: '超商茶葉蛋', kcal: 75, p: 6.5, c: 1.2, f: 5.0, na: 180, note: '十一粒 AI 推算：優質蛋白質與蛋黃脂肪。' },
-                { keys: ['地瓜', '烤地瓜', '蒸地瓜'], name: '香甜烤地瓜', kcal: 160, p: 2.2, c: 36.0, f: 0.4, na: 35, note: '十一粒 AI 推算：高纖低脂優質複合碳水。' },
-                { keys: ['水餃', '高麗菜水餃', '韭菜水餃'], name: '手工水餃 (10顆)', kcal: 550, p: 28.0, c: 55.0, f: 25.0, na: 950, note: '十一粒 AI 推算：水餃麵皮與豬肉內餡。' },
-                { keys: ['鍋貼', '八方雲集鍋貼'], name: '招牌鍋貼 (10顆)', kcal: 750, p: 30.0, c: 70.0, f: 40.0, na: 1200, note: '十一粒 AI 推算：油煎酥脆外皮與內餡。' },
-                { keys: ['牛肉麵', '紅燒牛肉麵'], name: '紅燒牛肉麵', kcal: 680, p: 36.0, c: 78.0, f: 24.0, na: 1950, note: '十一粒 AI 推算：牛腱肉塊、麵條與紅燒高湯。' },
-                { keys: ['清燉牛肉麵'], name: '清燉牛肉麵', kcal: 560, p: 36.0, c: 74.0, f: 14.0, na: 1400, note: '十一粒 AI 推算：牛腱肉與清爽高湯。' },
-                { keys: ['排骨便當', '炸排骨飯', '便當'], name: '便當店炸排骨便當', kcal: 780, p: 32.0, c: 92.0, f: 32.0, na: 1150, note: '十一粒 AI 推算：大份炸排骨、米飯與3樣時蔬配菜。' },
-                { keys: ['雞腿便當', '炸雞腿便當'], name: '便當店大雞腿便當', kcal: 850, p: 38.0, c: 90.0, f: 36.0, na: 1280, note: '十一粒 AI 推算：酥炸大雞腿與米飯配菜。' },
-                { keys: ['健康餐盒', '舒肥雞胸便當', '低卡餐盒'], name: '舒肥雞胸健康餐盒', kcal: 520, p: 40.0, c: 60.0, f: 12.0, na: 580, note: '十一粒 AI 推算：舒肥雞胸、紫米飯與水煮清炒蔬菜。' },
-                { keys: ['魯肉飯', '滷肉飯', '肉燥飯'], name: '傳統滷肉飯 (小碗)', kcal: 420, p: 12.0, c: 58.0, f: 16.0, na: 560, note: '十一粒 AI 推算：白米飯與帶皮五花肉燥。' },
-
-                // 飲料 / 咖啡
-                { keys: ['燕麥拿鐵', '燕麥奶拿鐵'], name: '大杯無糖燕麥拿鐵', kcal: 180, p: 4.5, c: 24.0, f: 6.5, na: 120, note: '十一粒 AI 推算：大杯燕麥奶 320ml，無添加糖漿。' },
-                { keys: ['拿鐵', '鮮奶拿鐵', '咖啡拿鐵', '咖啡'], name: '大杯無糖鮮奶拿鐵', kcal: 170, p: 9.0, c: 14.0, f: 8.5, na: 140, note: '十一粒 AI 推算：濃縮咖啡與全脂鮮奶。' },
-                { keys: ['美式', '美式咖啡', '黑咖啡'], name: '大杯冰美式黑咖啡', kcal: 15, p: 0.8, c: 2.0, f: 0.2, na: 10, note: '十一粒 AI 推算：純濃縮咖啡與水，極低熱量。' },
-                { keys: ['珍珠奶茶', '珍奶'], name: '珍珠奶茶 (大杯/微糖)', kcal: 450, p: 4.0, c: 72.0, f: 16.0, na: 150, note: '十一粒 AI 推算：黑糖珍珠粉圓與奶茶。' },
-                { keys: ['綠茶', '無糖綠茶', '四季春', '烏龍茶', '紅茶'], name: '無糖原葉純茶 (大杯)', kcal: 0, p: 0, c: 0, f: 0, na: 10, note: '十一粒 AI 推算：無糖茶飲，0 卡路里。' },
-                { keys: ['豆漿', '無糖豆漿'], name: '無糖濃豆漿 (400ml)', kcal: 130, p: 13.0, c: 6.0, f: 6.0, na: 40, note: '十一粒 AI 推算：黃豆植物蛋白質與優質脂肪。' },
-
-                // 水果 / 輕食
-                { keys: ['香蕉'], name: '香蕉 (1根)', kcal: 105, p: 1.3, c: 27.0, f: 0.3, na: 1, note: '十一粒 AI 推算：天然果糖與鉀離子補給。' },
-                { keys: ['蘋果'], name: '紅蘋果 (1顆)', kcal: 80, p: 0.4, c: 21.0, f: 0.2, na: 2, note: '十一粒 AI 推算：豐富水溶性膳食纖維。' },
-                { keys: ['芭樂', '珍珠芭樂'], name: '珍珠芭樂 (半顆)', kcal: 60, p: 1.4, c: 14.0, f: 0.2, na: 5, note: '十一粒 AI 推算：高維生素 C 低升糖水果。' }
-            ];
-
-            // 尋找最佳匹配項
-            let matched = null;
-            for (const item of foodKnowledge) {
-                if (item.keys.some(k => cleanText.includes(k) || k.includes(cleanText))) {
-                    matched = item;
-                    break;
-                }
-            }
-
-            if (matched) {
-                const finalName = multiplier > 1 && qtyLabel ? `${matched.name} x ${multiplier}` : (qtyLabel ? `${cleanText} (${qtyLabel})` : matched.name);
-                return {
-                    dishName: finalName,
-                    kcal: Math.round(matched.kcal * multiplier),
-                    protein: Math.round(matched.p * multiplier * 10) / 10,
-                    carbs: Math.round(matched.c * multiplier * 10) / 10,
-                    fat: Math.round(matched.f * multiplier * 10) / 10,
-                    sodium: Math.round(matched.na * multiplier),
-                    aiNote: matched.note + (multiplier > 1 ? ` (已按 ${multiplier} 份倍數計算)` : '')
-                };
-            }
-
-            // 3. 智慧語意回退 (Dynamic Semantic Synthesis)
-            let estKcal = 250 * multiplier;
-            let estP = 10 * multiplier;
-            let estC = 30 * multiplier;
-            let estF = 8 * multiplier;
-            let estNa = 300 * multiplier;
-            let noteDetail = '十一粒 AI 語意推算';
-
-            if (cleanText.includes('麻糬') || cleanText.includes('餅') || cleanText.includes('甜') || cleanText.includes('糖') || cleanText.includes('糕')) {
-                estKcal = 190 * multiplier; estP = 3.5 * multiplier; estC = 35 * multiplier; estF = 5 * multiplier; estNa = 50 * multiplier;
-                noteDetail += '：點心甜品類，主要含碳水化合物與油脂。';
-            } else if (cleanText.includes('肉') || cleanText.includes('雞') || cleanText.includes('魚') || cleanText.includes('蛋') || cleanText.includes('排')) {
-                estKcal = 320 * multiplier; estP = 26 * multiplier; estC = 8 * multiplier; estF = 18 * multiplier; estNa = 450 * multiplier;
-                noteDetail += '：優質蛋白質肉類，含適量脂肪與鈉。';
-            } else if (cleanText.includes('麵') || cleanText.includes('飯') || cleanText.includes('粉') || cleanText.includes('粥') || cleanText.includes('餃')) {
-                estKcal = 420 * multiplier; estP = 12 * multiplier; estC = 68 * multiplier; estF = 10 * multiplier; estNa = 650 * multiplier;
-                noteDetail += '：主食主餐類，主要含複合碳水與調味。';
-            } else if (cleanText.includes('茶') || cleanText.includes('水') || cleanText.includes('咖啡')) {
-                estKcal = 30 * multiplier; estP = 1 * multiplier; estC = 5 * multiplier; estF = 0.5 * multiplier; estNa = 15 * multiplier;
-                noteDetail += '：飲品類，極低熱量。';
-            } else {
-                noteDetail += '：已為您辨識餐點名稱，數值可直接點擊微調。';
-            }
-
-            const dishDisplayName = qtyLabel ? `${cleanText} (${qtyLabel})` : cleanText;
-            return {
-                dishName: dishDisplayName,
-                kcal: Math.round(estKcal),
-                protein: Math.round(estP * 10) / 10,
-                carbs: Math.round(estC * 10) / 10,
-                fat: Math.round(estF * 10) / 10,
-                sodium: Math.round(estNa),
-                aiNote: noteDetail
-            };
-        };
 
         const targetProfile = computed(() => {
             return engine.profiles[currentMember.value] || {
                 name: 'Bebe', targetKcal: 1350, targetProtein: 105, targetCarbs: 140, targetFat: 40, targetSodium: 1500
             };
         });
+
+        const favoriteFoods = computed(() => engine.getFavoriteFoods());
+
+        const selectFavoriteFood = (fav) => {
+            capturedPhotoUrl.value = null;
+            resultForm.value = {
+                dishName: fav.name,
+                kcal: Number(fav.nutrients?.kcal) || 0,
+                protein: Number(fav.nutrients?.protein) || 0,
+                carbs: Number(fav.nutrients?.carbs) || 0,
+                fat: Number(fav.nutrients?.fat) || 0,
+                sodium: Number(fav.nutrients?.sodium) || 0,
+                aiNote: fav.aiNote || '常用快捷精確數據'
+            };
+            modalStep.value = 'result';
+            isAiAnalyzing.value = false;
+        };
+
+        const saveAsFavorite = async () => {
+            const newFav = {
+                id: 'fav_' + Date.now(),
+                name: resultForm.value.dishName,
+                icon: '⭐️',
+                category: '客製常用',
+                nutrients: {
+                    kcal: Number(resultForm.value.kcal) || 0,
+                    protein: Number(resultForm.value.protein) || 0,
+                    carbs: Number(resultForm.value.carbs) || 0,
+                    fat: Number(resultForm.value.fat) || 0,
+                    sodium: Number(resultForm.value.sodium) || 0
+                },
+                aiNote: resultForm.value.aiNote
+            };
+            await engine.saveFavoriteFood(newFav);
+            alert(`🎉 已成功將【${resultForm.value.dishName}】收錄為常用快捷餐點！`);
+        };
 
         const memberLog = computed(() => {
             return engine.getDailyLog(currentDate.value, currentMember.value);
@@ -199,14 +106,23 @@ export default {
             };
         });
 
-        // Progress percentage for 3 graphical progress bars
+        // Progress percentage for graphical dashboard (熱量大膠囊 + 3個圓環)
         const percent = computed(() => {
             const p = targetProfile.value;
             const t = totals.value;
+            const rawKcal = p.targetKcal > 0 ? Math.round((t.kcal / p.targetKcal) * 100) : 0;
+            const rawProtein = p.targetProtein > 0 ? Math.round((t.protein / p.targetProtein) * 100) : 0;
+            const rawCarbs = p.targetCarbs > 0 ? Math.round((t.carbs / p.targetCarbs) * 100) : 0;
+            const rawFat = p.targetFat > 0 ? Math.round((t.fat / p.targetFat) * 100) : 0;
             return {
-                kcal: Math.min(100, Math.max(0, (t.kcal / p.targetKcal) * 100)),
-                protein: Math.min(100, Math.max(0, (t.protein / p.targetProtein) * 100)),
-                carbs: Math.min(100, Math.max(0, (t.carbs / p.targetCarbs) * 100))
+                rawKcal,
+                rawProtein,
+                rawCarbs,
+                rawFat,
+                kcal: Math.min(100, rawKcal),
+                protein: Math.min(100, rawProtein),
+                carbs: Math.min(100, rawCarbs),
+                fat: Math.min(100, rawFat)
             };
         });
 
@@ -235,12 +151,19 @@ export default {
         const albumInput = ref(null);
 
         // --- Camera & Modal Flow (畫面 B / 畫面 C) ---
+        const currentFacingMode = ref('environment');
+
+        const toggleFacingMode = async () => {
+            currentFacingMode.value = currentFacingMode.value === 'environment' ? 'user' : 'environment';
+            stopCameraStream();
+            await startCameraStream();
+        };
 
         const startCameraStream = async () => {
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: { ideal: 'environment' } },
+                        video: { facingMode: { ideal: currentFacingMode.value } },
                         audio: false
                     });
                     mediaStream = stream;
@@ -308,6 +231,21 @@ export default {
             }
         };
 
+        // Direct Camera & Album Triggers
+        const triggerCameraSelect = () => {
+            if (nativeCameraInput.value) {
+                nativeCameraInput.value.value = '';
+                nativeCameraInput.value.click();
+            }
+        };
+
+        const triggerAlbumSelect = () => {
+            if (albumInput.value) {
+                albumInput.value.value = '';
+                albumInput.value.click();
+            }
+        };
+
         // Handle Native Mobile Camera Snap
         const handleNativeCameraSnap = (event) => {
             const file = event.target.files && event.target.files[0];
@@ -344,39 +282,101 @@ export default {
             }
         };
 
-        // Process AI Analysis
-        const processPhotoResult = (hintText = '', isVoice = false) => {
+        // 📸 真正的 Gemini Vision API 視覺辨識
+        const processPhotoResult = async (hintText = '') => {
             showAiModal.value = true;
             isAiAnalyzing.value = true;
             modalStep.value = 'result';
-            if (isVoice) {
-                capturedPhotoUrl.value = null; // Clear old photo if doing voice analysis!
+
+            if (capturedPhotoUrl.value) {
+                try {
+                    const res = await fetch('/api/analyze-meal-photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            image: capturedPhotoUrl.value
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success' && data.result) {
+                        resultForm.value = {
+                            dishName: data.result.dishName || '拍照餐點',
+                            kcal: Number(data.result.kcal) || 0,
+                            protein: Number(data.result.protein) || 0,
+                            carbs: Number(data.result.carbs) || 0,
+                            fat: Number(data.result.fat) || 0,
+                            sodium: Number(data.result.sodium) || 0,
+                            aiNote: data.result.aiNote || '十一粒 AI 視覺辨識估算完成，數據可點擊手動微調。'
+                        };
+                        isAiAnalyzing.value = false;
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Vision API request failed:', e);
+                }
             }
 
-            setTimeout(() => {
-                const parsed = parseFoodNLP(hintText) || {
-                    dishName: '外食健康餐盒 / 排骨便當',
-                    kcal: 580,
-                    protein: 32,
-                    carbs: 65,
-                    fat: 18,
-                    sodium: 720,
-                    aiNote: '十一粒 AI 視覺估算：含主菜蛋白質、米飯與時蔬配菜，數據可直接點擊微調。'
-                };
-
-                resultForm.value = parsed;
-                isAiAnalyzing.value = false;
-            }, 600);
+            // 若視覺辨識異常時的備援
+            resultForm.value = {
+                dishName: hintText || '外食拍照餐點',
+                kcal: 520,
+                protein: 30,
+                carbs: 60,
+                fat: 16,
+                sodium: 680,
+                aiNote: '十一粒 AI 視覺估算：含主菜與配菜，數值皆可直接點擊手動微調。'
+            };
+            isAiAnalyzing.value = false;
         };
 
-        // Trigger Voice/Text Analysis
-        const triggerVoiceAnalysis = () => {
+        // 🎙️ 真正的 Gemini LLM 自然語言深度語意解析
+        const triggerVoiceAnalysis = async () => {
             const text = (voiceText.value || '').trim();
             if (!text) {
                 alert('請輸入或說出你吃了什麼！');
                 return;
             }
-            processPhotoResult(text, true);
+
+            showAiModal.value = true;
+            isAiAnalyzing.value = true;
+            modalStep.value = 'result';
+            capturedPhotoUrl.value = null; // 清除照片
+
+            try {
+                const res = await fetch('/api/analyze-food-nlp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await res.json();
+                if (data.status === 'success' && data.result) {
+                    resultForm.value = {
+                        dishName: data.result.dishName || text,
+                        kcal: Number(data.result.kcal) || 0,
+                        protein: Number(data.result.protein) || 0,
+                        carbs: Number(data.result.carbs) || 0,
+                        fat: Number(data.result.fat) || 0,
+                        sodium: Number(data.result.sodium) || 0,
+                        aiNote: data.result.aiNote || '十一粒 AI 語意精算完成，數據可點擊手動微調。'
+                    };
+                    isAiAnalyzing.value = false;
+                    return;
+                }
+            } catch (e) {
+                console.log('NLP API request failed:', e);
+            }
+
+            // 網路離線時的備援
+            resultForm.value = {
+                dishName: text,
+                kcal: 450,
+                protein: 20,
+                carbs: 55,
+                fat: 15,
+                sodium: 600,
+                aiNote: '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。'
+            };
+            isAiAnalyzing.value = false;
         };
 
         // 畫面 C: 確認寫入今日紀錄
@@ -384,11 +384,12 @@ export default {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 
+            const isFromPhoto = Boolean(capturedPhotoUrl.value);
             const meal = {
                 id: 'meal_' + Date.now() + '_' + currentMember.value,
                 dishName: resultForm.value.dishName,
                 time: timeStr,
-                source: modalStep.value === 'voice' ? 'nlp_ai' : 'photo_ai',
+                source: isFromPhoto ? 'photo_ai' : 'nlp_ai',
                 nutrients: {
                     kcal: Number(resultForm.value.kcal) || 0,
                     protein: Number(resultForm.value.protein) || 0,
@@ -432,11 +433,19 @@ export default {
             deleteMeal,
             openAiModal,
             closeAiModal,
+            currentFacingMode,
+            toggleFacingMode,
             triggerShutter,
+            triggerCameraSelect,
+            triggerAlbumSelect,
+            processPhotoResult,
             handleNativeCameraSnap,
             handleAlbumUpload,
             triggerVoiceAnalysis,
-            confirmSaveRecord
+            confirmSaveRecord,
+            favoriteFoods,
+            selectFavoriteFood,
+            saveAsFavorite
         };
     },
     template: `
@@ -462,72 +471,112 @@ export default {
                 </button>
             </div>
 
-            <!-- 01 Daily Progress Dashboard (熱量、蛋白質、碳水為圖示進度條，其餘為文字) -->
-            <div class="card" style="margin-bottom: 24px; background: #FFFFFF;">
-                <div class="section-title" style="margin-bottom: 18px;">
-                    全天達標進度 ({{ targetProfile.name }})
+            <!-- 01 Daily Progress Dashboard (新版暖黃韓系極簡圖表：頂部長膠囊熱量條 + 3個圓環進度圈 + 鈉含量文字) -->
+            <div class="card" style="margin-bottom: 24px; background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 20px; padding: 20px 18px 16px;">
+                <!-- Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="font-weight: 700; font-size: 1rem; color: var(--color-text-main);">
+                        全天達標進度 ({{ targetProfile.name }})
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: #6D4C00; background: #FFF9E6; padding: 4px 10px; border-radius: 20px; border: 1px solid #FFE082;">
+                        <span>{{ remaining.kcal >= 0 ? '剩餘 ' + remaining.kcal + ' kcal' : '超標 ' + Math.abs(remaining.kcal) + ' kcal' }}</span>
+                        <span>🔔</span>
+                    </div>
                 </div>
                 
-                <!-- 1. 🔥 熱量 (Calories) Progress Bar -->
-                <div style="margin-bottom: 18px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
-                        <span style="font-weight: 600;">🔥 熱量 (Calories)</span>
-                        <span :style="{ color: remaining.kcal >= 0 ? 'var(--color-accent)' : '#EF4444', fontWeight: 600 }">
-                            {{ remaining.kcal >= 0 ? '🟢 剩 ' + remaining.kcal + ' kcal' : '🔴 超標 ' + Math.abs(remaining.kcal) + ' kcal' }}
-                        </span>
-                    </div>
-                    <div style="width: 100%; height: 10px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-                        <div :style="{ width: percent.kcal + '%', height: '100%', background: percent.kcal > 100 ? '#EF4444' : 'var(--color-primary)', transition: 'width 0.3s' }"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">
-                        <span>已攝取 {{ totals.kcal }} kcal</span>
-                        <span>目標 {{ targetProfile.targetKcal }} kcal</span>
-                    </div>
-                </div>
-
-                <!-- 2. 🥩 蛋白質 (Protein) Progress Bar -->
-                <div style="margin-bottom: 18px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
-                        <span style="font-weight: 600;">🥩 蛋白質 (Protein)</span>
-                        <span :style="{ color: remaining.protein >= 0 ? 'var(--color-accent)' : '#10B981', fontWeight: 600 }">
-                            {{ remaining.protein > 0 ? '🟢 剩 ' + remaining.protein + ' g' : '🟢 已達標 (' + totals.protein + 'g)' }}
-                        </span>
-                    </div>
-                    <div style="width: 100%; height: 10px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-                        <div :style="{ width: percent.protein + '%', height: '100%', background: '#10B981', transition: 'width 0.3s' }"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">
-                        <span>已攝取 {{ totals.protein }} g</span>
-                        <span>目標 {{ targetProfile.targetProtein }} g</span>
+                <!-- 1. 頂部大長條膠囊進度條 (🔥 熱量 Calories) -->
+                <div style="margin-bottom: 22px;">
+                    <div class="calorie-capsule-bar" style="position: relative; width: 100%; height: 38px; background: #FFF5D6; border-radius: 9999px; overflow: hidden; display: flex; align-items: center;">
+                        <!-- 進度填充層 (系統黃色漸層) -->
+                        <div :style="{ 
+                            width: percent.kcal + '%', 
+                            height: '100%', 
+                            background: percent.rawKcal > 100 ? 'linear-gradient(90deg, #FFB020 0%, #E16262 100%)' : 'linear-gradient(90deg, #FFD54F 0%, #FFB300 100%)', 
+                            borderRadius: '9999px',
+                            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
+                        }"></div>
+                        <!-- 文字置中 -->
+                        <div style="position: absolute; width: 100%; text-align: center; font-weight: 800; font-size: 1.05rem; color: #5A3E00; pointer-events: none; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(255,255,255,0.4);">
+                            {{ percent.rawKcal }}% <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.85;">({{ totals.kcal }} / {{ targetProfile.targetKcal }} kcal)</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. 🍚 碳水主食 (Carbs) Progress Bar -->
-                <div style="margin-bottom: 18px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
-                        <span style="font-weight: 600;">🍚 碳水主食 (Carbs)</span>
-                        <span :style="{ color: remaining.carbs >= 0 ? 'var(--color-accent)' : '#EF4444', fontWeight: 600 }">
-                            {{ remaining.carbs >= 0 ? '🟢 剩 ' + remaining.carbs + ' g' : '🔴 超標 ' + Math.abs(remaining.carbs) + ' g' }}
-                        </span>
+                <!-- 2. 下方三個圓環進度圈 (蛋白質 Proteins、碳水 Carbohydrates、脂肪 Fats) -->
+                <div style="display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 18px; text-align: center;">
+                    <!-- 蛋白質 Proteins -->
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                        <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
+                            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                <!-- 背景底圈 -->
+                                <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <!-- 進度圈 (系統黃色漸層效果) -->
+                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                      :stroke-dasharray="percent.protein + ', 100'"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                                      style="transition: stroke-dasharray 0.4s ease;" />
+                            </svg>
+                            <!-- 圈內百分比文字 -->
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawProtein }}%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">蛋白質</div>
+                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.protein }}g / {{ targetProfile.targetProtein }}g</div>
                     </div>
-                    <div style="width: 100%; height: 10px; background: #F3F4F6; border-radius: var(--radius-full); overflow: hidden;">
-                        <div :style="{ width: percent.carbs + '%', height: '100%', background: '#3B82F6', transition: 'width 0.3s' }"></div>
+
+                    <!-- 碳水 Carbohydrates -->
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                        <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
+                            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                <!-- 背景底圈 -->
+                                <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <!-- 進度圈 -->
+                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                      :stroke-dasharray="percent.carbs + ', 100'"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      style="transition: stroke-dasharray 0.4s ease;" />
+                            </svg>
+                            <!-- 圈內百分比文字 -->
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawCarbs }}%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">碳水</div>
+                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.carbs }}g / {{ targetProfile.targetCarbs }}g</div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-text-muted); margin-top: 4px;">
-                        <span>已攝取 {{ totals.carbs }} g</span>
-                        <span>目標 {{ targetProfile.targetCarbs }} g</span>
+
+                    <!-- 脂肪 Fats -->
+                    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                        <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
+                            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                                <!-- 背景底圈 -->
+                                <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <!-- 進度圈 -->
+                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                      :stroke-dasharray="percent.fat + ', 100'"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      style="transition: stroke-dasharray 0.4s ease;" />
+                            </svg>
+                            <!-- 圈內百分比文字 -->
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawFat }}%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">脂肪</div>
+                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.fat }}g / {{ targetProfile.targetFat }}g</div>
                     </div>
                 </div>
 
-                <!-- 4. 其他營養素（脂肪、鈉以純文字呈現） -->
-                <div style="border-top: 1px dashed var(--color-border); padding-top: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 0.82rem; color: var(--color-text-main);">
-                    <div>
-                        <span style="font-weight: 600;">🥑 脂肪：</span>
-                        <span>{{ totals.fat }}g / {{ targetProfile.targetFat }}g</span>
+                <!-- 3. 底部鈉含量文字呈現 -->
+                <div style="border-top: 1px dashed #F0E6D2; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <div style="display: flex; align-items: center; gap: 6px; color: var(--color-text-main);">
+                        <span>🧂 <strong>今日鈉攝取：</strong></span>
+                        <span style="font-weight: 600; color: #6D4C00;">{{ totals.sodium }} mg</span>
+                        <span style="color: var(--color-text-muted); font-size: 0.78rem;">(上限 {{ targetProfile.targetSodium }} mg)</span>
                     </div>
-                    <div>
-                        <span style="font-weight: 600;">🧂 鈉：</span>
-                        <span>{{ totals.sodium }}mg / {{ targetProfile.targetSodium }}mg</span>
+                    <div :style="{ color: remaining.sodium >= 0 ? '#10B981' : '#E16262', fontWeight: 600, fontSize: '0.8rem' }">
+                        {{ remaining.sodium >= 0 ? '🟢 剩 ' + remaining.sodium + ' mg' : '🔴 超標 ' + Math.abs(remaining.sodium) + ' mg' }}
                     </div>
                 </div>
             </div>
@@ -554,7 +603,7 @@ export default {
                             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 <h4 style="margin: 0; font-size: 1rem; word-break: break-word;">{{ meal.dishName }}</h4>
                                 <span v-if="meal.source === 'photo_ai'" style="font-size: 0.68rem; background: #EEF2FF; color: #4F46E5; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;">📷 拍照</span>
-                                <span v-else-if="meal.source === 'nlp_ai'" style="font-size: 0.68rem; background: #FEF3C7; color: #B45309; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;">💬 語音</span>
+                                <span v-else style="font-size: 0.68rem; background: #FEF3C7; color: #B45309; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;">💬 快捷/輸入</span>
                             </div>
                             <span style="font-size: 0.78rem; color: var(--color-text-muted);">🕒 {{ meal.time }}</span>
                         </div>
@@ -588,12 +637,13 @@ export default {
                 </div>
             </div>
 
-            <!-- Bottom Floating Action Bar -->
+            <!-- 隱藏原生手機相機與相簿 input (常駐於 DOM 確保點擊立即直接喚起系統相簿/相機) -->
+            <input type="file" accept="image/*" capture="environment" ref="nativeCameraInput" @change="handleNativeCameraSnap" style="display: none;">
+            <input type="file" accept="image/*" ref="albumInput" @change="handleAlbumUpload" style="display: none;">
+
+            <!-- Bottom Floating Action Bar (主畫面保持俐落雙控制鈕) -->
             <div class="fab-container">
-                <label class="btn-primary" style="margin: 0; cursor: pointer;">
-                    📷 拍照記錄
-                    <input type="file" accept="image/*" capture="environment" @change="handleNativeCameraSnap" style="display: none;">
-                </label>
+                <button class="btn-primary" @click="openAiModal('camera')">📷 拍照記錄</button>
                 <button class="btn-primary accent" @click="openAiModal('voice')">🎙️ 語音/文字輸入</button>
             </div>
 
@@ -603,22 +653,20 @@ export default {
                     
                     <!-- 畫面 B：【開頁即拍自訂相機畫面】 -->
                     <div v-if="modalStep === 'camera'">
-                        <!-- Hidden Real Camera & Album Inputs -->
-                        <input type="file" accept="image/*" capture="environment" ref="nativeCameraInput" @change="handleNativeCameraSnap" style="display: none;">
-                        <input type="file" accept="image/*" ref="albumInput" @change="handleAlbumUpload" style="display: none;">
-
                         <!-- Header -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                             <button class="btn-icon" @click="closeAiModal" style="border: none; font-weight: 600; font-size: 0.95rem; color: var(--color-text-muted);">
                                 ✕ 關閉
                             </button>
-                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-muted);">📷 拍照 AI 補記</span>
-                            <span style="width: 40px;"></span>
+                            <span style="font-size: 0.9rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
+                            <button class="btn-icon" @click="toggleFacingMode" style="border: none; font-size: 0.92rem; color: var(--color-text-muted);" title="翻轉鏡頭">
+                                🔄 鏡頭
+                            </button>
                         </div>
 
                         <!-- Camera Live Viewfinder Area (點擊即拍) -->
                         <div @click="triggerShutter('')" 
-                             style="background: #111827; border-radius: 20px; height: 320px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); cursor: pointer;">
+                             style="background: #111827; border-radius: 20px; height: 320px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 18px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); cursor: pointer;">
                             <!-- Video Stream -->
                             <video ref="videoRef" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;"></video>
                             
@@ -636,58 +684,71 @@ export default {
                             </div>
                         </div>
 
-                        <!-- Shutter Action Bar -->
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 12px;">
-                            <!-- Big White Shutter Button -->
-                            <button @click="triggerShutter('')" 
-                                    style="width: 74px; height: 74px; border-radius: 50%; background: #FFFFFF; border: 5px solid var(--color-primary); box-shadow: 0 4px 14px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s;"
-                                    title="拍攝辨識 (快門)">
-                                <div style="width: 54px; height: 54px; border-radius: 50%; background: #F3F4F6;"></div>
-                            </button>
-                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted);">
-                                ⚪ 點擊拍攝辨識 (快門)
-                            </span>
-
-                            <!-- Bottom Row: 相簿選擇 ＋ 語音/文字輸入 -->
-                            <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 12px; margin-top: 6px;">
-                                <label class="btn-icon" style="cursor: pointer; font-size: 0.85rem; padding: 8px 14px;">
-                                    <span>🖼️ 從相簿選擇照片</span>
-                                    <input type="file" accept="image/*" @change="handleAlbumUpload" style="display: none;">
-                                </label>
-                                <button class="btn-icon" @click="modalStep = 'voice'" style="font-size: 0.85rem; padding: 8px 14px;">
-                                    🎙️ 語音 / 文字輸入
+                        <!-- 經典相機底部三聯控制列 (左：相簿選取、中：快門拍攝、右：語音文字) -->
+                        <div style="display: flex; justify-content: space-around; align-items: center; width: 100%; padding: 4px 10px 10px;">
+                            <!-- 左側：相簿選取按鈕 -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 72px;">
+                                <button class="btn-icon" @click="triggerAlbumSelect" 
+                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
+                                        title="從相簿選取照片">
+                                    🖼️
                                 </button>
+                                <span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted);">相簿選取</span>
+                            </div>
+
+                            <!-- 中間：經典大快門按鈕 -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <button @click="triggerShutter('')" 
+                                        style="width: 74px; height: 74px; border-radius: 50%; background: #FFFFFF; border: 5px solid var(--color-primary); box-shadow: 0 4px 16px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s;"
+                                        title="拍攝辨識 (快門)">
+                                    <div style="width: 54px; height: 54px; border-radius: 50%; background: #F3F4F6;"></div>
+                                </button>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">拍攝快門</span>
+                            </div>
+
+                            <!-- 右側：語音/文字輸入按鈕 -->
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 72px;">
+                                <button class="btn-icon" @click="modalStep = 'voice'" 
+                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
+                                        title="語音或文字手動補記">
+                                    🎙️
+                                </button>
+                                <span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted);">語音/文字</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 語音 / 文字輸入子畫面 -->
                     <div v-if="modalStep === 'voice'">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <button class="btn-icon" @click="modalStep = 'camera'" style="border: none; font-size: 0.9rem;">
-                                ◀️ 返回相機
-                            </button>
-                            <span style="font-weight: 700; font-size: 1rem;">🎙️ 語音 / 文字輸入</span>
-                            <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1rem;">✕</button>
+                        <!-- Header (乾淨標題與關閉按鈕) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main);">🎙️ 語音 / 文字輸入</span>
+                            <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem; color: var(--color-text-muted);">✕</button>
                         </div>
 
                         <div style="margin-bottom: 16px;">
                             <textarea v-model="voiceText" 
-                                      placeholder="請直接輸入或說出你吃了什麼 (例如：剛剛喝了一杯大杯無糖燕麥拿鐵，吃了一份雞肉三明治)..." 
+                                      placeholder="請直接輸入或說出你吃了什麼 (例如：麥克雙牛堡、大杯無糖燕麥拿鐵)..." 
                                       rows="4" 
                                       class="search-input" 
                                       style="resize: none; font-size: 0.95rem; line-height: 1.5;"></textarea>
                         </div>
 
-                        <!-- Quick Prompts -->
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;">
-                            <button class="capsule" style="font-size: 0.8rem;" @click="voiceText = '大杯星巴克無糖燕麥拿鐵'">☕ 燕麥拿鐵</button>
-                            <button class="capsule" style="font-size: 0.8rem;" @click="voiceText = '便當店炸排骨便當半碗飯'">🍱 排骨便當</button>
-                            <button class="capsule" style="font-size: 0.8rem;" @click="voiceText = '炙燒雞肉全麥三明治加蛋'">🥪 雞肉三明治</button>
+                        <!-- 常用餐點快捷 (直接點擊 0 毫秒帶出精確數據確認卡) -->
+                        <div style="margin-bottom: 22px;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px;">⭐ 常用餐點快捷 (點擊秒出精確數據)：</div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button v-for="fav in favoriteFoods" :key="fav.id" 
+                                        class="capsule" 
+                                        style="font-size: 0.85rem; padding: 6px 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer;" 
+                                        @click="selectFavoriteFood(fav)">
+                                    {{ fav.icon || '🍔' }} {{ fav.name }}
+                                </button>
+                            </div>
                         </div>
 
                         <button class="btn-primary accent" @click="triggerVoiceAnalysis" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
-                            ✨ AI 智能辨識
+                            ✨ Gemini AI 深度智能解析
                         </button>
                     </div>
 
@@ -711,10 +772,15 @@ export default {
 
                         <!-- Result Card -->
                         <div v-else>
-                            <!-- Real Captured Photo Display -->
+                            <!-- Real Captured Photo Display with Retake Button -->
                             <div v-if="capturedPhotoUrl" style="margin-bottom: 14px; position: relative;">
-                                <img :src="capturedPhotoUrl" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; border: 1px solid var(--color-border); box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                                <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #FFF; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">📷 實拍照片</span>
+                                <img :src="capturedPhotoUrl" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block;">
+                                <!-- 頂部右上角：重拍按鈕 -->
+                                <button @click="openAiModal('camera')" 
+                                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.72); color: #FFF; border: 1px solid rgba(255,255,255,0.3); font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    🔄 重拍照片
+                                </button>
+                                <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.65); color: #FFF; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">📷 實拍照片</span>
                             </div>
 
                             <!-- Dish Name Row -->
@@ -778,10 +844,15 @@ export default {
                                 💡 <strong>AI 說明：</strong>{{ resultForm.aiNote }}
                             </div>
 
-                            <!-- CTA Button (一鍵歸入今日時間軸) -->
-                            <button class="btn-primary accent" @click="confirmSaveRecord" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem; font-weight: 700;">
-                                ✅ 確認寫入今日紀錄
-                            </button>
+                            <!-- CTA Button (一鍵歸入今日時間軸 + 收藏常用) -->
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-primary" @click="saveAsFavorite" style="flex: 1; justify-content: center; padding: 14px; font-size: 0.95rem; font-weight: 700; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer;">
+                                    ⭐ 存為常用
+                                </button>
+                                <button class="btn-primary accent" @click="confirmSaveRecord" style="flex: 2; justify-content: center; padding: 14px; font-size: 1rem; font-weight: 700;">
+                                    ✅ 確認寫入紀錄
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,98 @@ export default {
     props: ['engine', 'onNavigate'],
     setup(props) {
         const engine = props.engine;
-        const selectedDish = ref(engine.data?.dishes?.[0]?.id || 'yogurt_bowl');
+        const userHasManuallySelected = ref(false);
+
+        // 判定當前時段與推薦標籤
+        const getTimeSlotInfo = () => {
+            const now = new Date();
+            const hour = now.getHours();
+            const min = now.getMinutes();
+            const totalMin = hour * 60 + min;
+
+            // 07:00 - 11:59: 早餐時段 (優格、早午餐、乳清蛋白)
+            if (totalMin >= 7 * 60 && totalMin < 12 * 60) {
+                return {
+                    id: 'breakfast',
+                    name: '晨光早餐',
+                    icon: '🌅',
+                    recommendedDishIds: ['yogurt_bowl', 'brunch_set', 'whey_protein_shake']
+                };
+            }
+            // 12:00 - 14:59: 中餐時段 (波奇碗、生菜沙拉、泡麵、早午餐、優格碗、火鍋)
+            else if (totalMin >= 12 * 60 && totalMin < 15 * 60) {
+                return {
+                    id: 'lunch',
+                    name: '元氣中餐',
+                    icon: '☀️',
+                    recommendedDishIds: ['poke_bowl', 'salad', 'ramen_meal', 'brunch_set', 'yogurt_bowl', 'hotpot']
+                };
+            }
+            // 15:00 - 16:59: 午後輕食 (優格碗、早午餐、乳清蛋白、生菜沙拉)
+            else if (totalMin >= 15 * 60 && totalMin < 17 * 60) {
+                return {
+                    id: 'snack',
+                    name: '午後輕食',
+                    icon: '☕',
+                    recommendedDishIds: ['yogurt_bowl', 'brunch_set', 'whey_protein_shake', 'salad']
+                };
+            }
+            // 17:00 - 21:59: 晚餐時段 (波奇碗、拌飯、泡麵、火鍋)
+            else if (totalMin >= 17 * 60 && totalMin < 22 * 60) {
+                return {
+                    id: 'dinner',
+                    name: '溫馨晚餐',
+                    icon: '🌙',
+                    recommendedDishIds: ['poke_bowl', 'bibimbap', 'ramen_meal', 'hotpot']
+                };
+            }
+            // 22:00 - 06:59: 宵夜 / 深夜食堂 (泡麵、優格碗、乳清蛋白)
+            else {
+                return {
+                    id: 'late_night',
+                    name: '深夜食堂',
+                    icon: '✨',
+                    recommendedDishIds: ['ramen_meal', 'yogurt_bowl', 'whey_protein_shake']
+                };
+            }
+        };
+
+        const currentSlot = ref(getTimeSlotInfo());
+
+        const dishesList = computed(() => {
+            return (engine && engine.data && engine.data.dishes && engine.data.dishes.length > 0) ? engine.data.dishes : [];
+        });
+
+        // 計算當前時段推薦料理（精確依使用者指定的各餐料理順序排列）
+        const recommendedDishes = computed(() => {
+            const list = dishesList.value || [];
+            const slot = currentSlot.value;
+            if (!slot || !slot.recommendedDishIds || list.length === 0) return list;
+
+            const recList = [];
+            slot.recommendedDishIds.forEach(id => {
+                const found = list.find(d => d.id === id);
+                if (found) recList.push(found);
+            });
+            return recList.length > 0 ? recList : list;
+        });
+
+        // 其他料理清單
+        const otherDishes = computed(() => {
+            const list = dishesList.value || [];
+            const recIds = new Set(recommendedDishes.value.map(d => d.id));
+            return list.filter(d => !recIds.has(d.id));
+        });
+
+        const getBestDefaultDishId = () => {
+            const rec = recommendedDishes.value;
+            if (rec && rec.length > 0) return rec[0].id;
+            const list = dishesList.value;
+            if (list && list.length > 0) return list[0].id;
+            return 'yogurt_bowl';
+        };
+
+        const selectedDish = ref(getBestDefaultDishId());
         const showSOP = ref(false);
         const hideOutOfStock = ref(false);
         const isCalculated = ref(false);
@@ -43,8 +134,7 @@ export default {
             { id: 'proteins', label: '🥩 蛋白質' },
             { id: 'veggies', label: '🥦 蔬菜水果' },
             { id: 'carbs', label: '🍚 碳水主食' },
-            { id: 'sauces', label: '🧂 醬料調味' },
-            { id: 'fats', label: '🥑 油脂類' }
+            { id: 'sauces', label: '🧂 醬料與油脂' }
         ];
 
         // Master selected ingredients in Section 02 (The Single Filter for all calculations)
@@ -69,10 +159,6 @@ export default {
             if (diners.value.ariel) members.push('ariel');
             if (diners.value.jason) members.push('jason');
             return members;
-        });
-
-        const dishesList = computed(() => {
-            return (engine && engine.data && engine.data.dishes && engine.data.dishes.length > 0) ? engine.data.dishes : [];
         });
 
         const currentDish = computed(() => {
@@ -136,7 +222,7 @@ export default {
                 { label: '蛋白質', items: filterStock(currentDish.value.recommendedProteins) },
                 { label: '蔬菜', items: filterStock(currentDish.value.recommendedVeggies) },
                 { label: '碳水', items: filterStock(currentDish.value.recommendedCarbs) },
-                { label: '醬料', items: filterStock(currentDish.value.recommendedSauces) }
+                { label: '醬料與油脂', items: filterStock(currentDish.value.recommendedSauces) }
             ];
             
             return groups.filter(g => g.items.length > 0);
@@ -152,69 +238,91 @@ export default {
                 ...(currentDish.value?.recommendedCarbs || []),
                 ...(currentDish.value?.recommendedSauces || [])
             ];
-            
-            let list = engine.data.ingredients || [];
-            
-            // Filter by Nutrient Category Tab
-            if (cat !== 'all') {
-                list = list.filter(ing => ing.category === cat);
-            }
-            
-            // Filter by Search Query
-            if (q) {
-                list = list.filter(ing => (ing.name || '').toLowerCase().includes(q) || (ing.id || '').includes(q));
-            }
-            
-            return list.map(ing => ({
-                ...ing,
-                isAlreadyInDish: currentRecommended.includes(ing.id),
-                hasStock: engine.checkStock(ing.id)
-            }));
+
+            return (engine.data?.ingredients || []).filter(ing => {
+                // Filter out already existing items in this dish
+                if (currentRecommended.includes(ing.id)) return false;
+
+                // Category filter
+                if (cat !== 'all' && ing.category !== cat) return false;
+
+                // Search query
+                if (q && !ing.name.toLowerCase().includes(q) && !(ing.category || '').toLowerCase().includes(q)) {
+                    return false;
+                }
+                return true;
+            });
         });
 
+        // Reset and populate ingredients when dish changes
         const onDishChange = () => {
-            isCalculated.value = false;
-            if (currentDish.value) {
-                const dish = currentDish.value;
-                const members = ['bebe', 'ariel', 'jason'];
+            const dish = currentDish.value;
+            if (dish) {
+                // 1. 只有「預設食材 (defaultIngredients) 且 有庫存」或「推薦食材中有庫存者」才納入初始選取
+                const initialMaster = [];
                 
-                // 1. Initialize master selected ingredients (ONLY in-stock ingredients are selected by default)
-                let initialMaster = [];
+                // 若料理有明訂 defaultIngredients，以 defaultIngredients 且有庫存者為準
                 if (dish.defaultIngredients && dish.defaultIngredients.length > 0) {
-                    initialMaster = dish.defaultIngredients.map(i => i.id);
-                } else {
-                    initialMaster = [
+                    dish.defaultIngredients.forEach(item => {
+                        if (checkStock(item.id) && !initialMaster.includes(item.id)) {
+                            initialMaster.push(item.id);
+                        }
+                    });
+                }
+                
+                // 若上述無任何有庫存者，則從推薦清單中挑選有庫存者
+                if (initialMaster.length === 0) {
+                    const allRec = [
                         ...(dish.recommendedProteins || []),
                         ...(dish.recommendedVeggies || []),
-                        ...(dish.recommendedCarbs || [])
+                        ...(dish.recommendedCarbs || []),
+                        ...(dish.recommendedFats || []),
+                        ...(dish.recommendedSauces || [])
                     ];
+                    allRec.forEach(id => {
+                        if (checkStock(id) && !initialMaster.includes(id)) {
+                            initialMaster.push(id);
+                        }
+                    });
                 }
-                // Strictly exclude out-of-stock items from active cooking selection
-                selectedMasterIngredients.value = initialMaster.filter(id => checkStock(id));
 
-                // 2. Initialize member portion configs for all ingredients
-                members.forEach(member => {
+                selectedMasterIngredients.value = initialMaster;
+
+                // 2. Setup member ingredients
+                ['bebe', 'ariel', 'jason'].forEach(member => {
                     if (dish.memberPortions && dish.memberPortions[member]) {
                         memberIngredients.value[member] = JSON.parse(JSON.stringify(dish.memberPortions[member]));
-                    } else if (dish.defaultIngredients && dish.defaultIngredients.length > 0) {
-                        memberIngredients.value[member] = JSON.parse(JSON.stringify(dish.defaultIngredients));
                     } else {
+                        // Build defaults from defaultIngredients or standard list
                         const newIngredients = [];
-                        const addIngredients = (list) => {
-                            if (!list) return;
-                            list.forEach(id => {
-                                const ing = engine.getIngredientById(id);
-                                if (ing) {
-                                    let defaultAmount = 100;
-                                    if (ing.isCount) {
-                                        defaultAmount = 1;
-                                    } else if (ing.category === 'sauces') {
-                                        defaultAmount = 10;
-                                    }
-                                    const defaultUnit = ing.unitLabel || (ing.isCount ? '顆' : 'g');
+                        const addIngredients = (arr) => {
+                            if (!arr) return;
+                            arr.forEach(id => {
+                                const defItem = dish.defaultIngredients?.find(i => i.id === id);
+                                const ingData = engine.getIngredientById(id);
+                                const defaultUnit = ingData ? ingData.unitLabel || (ingData.isCount ? '顆' : 'g') : 'g';
+                                if (defItem) {
                                     newIngredients.push({
-                                        id: ing.id,
-                                        amount: defaultAmount,
+                                        id: id,
+                                        amount: defItem.amount,
+                                        unit: defItem.unit || defaultUnit
+                                    });
+                                } else {
+                                    let safeAmount = 50;
+                                    if (ingData) {
+                                        if (ingData.isCount || defaultUnit === '顆' || defaultUnit === '包' || defaultUnit === '條') {
+                                            safeAmount = 1;
+                                        } else if (ingData.category === 'sauces') {
+                                            safeAmount = 10;
+                                        } else if (ingData.category === 'proteins' || ingData.category === 'carbs') {
+                                            safeAmount = 80;
+                                        } else if (ingData.category === 'veggies') {
+                                            safeAmount = 50;
+                                        }
+                                    }
+                                    newIngredients.push({
+                                        id: id,
+                                        amount: safeAmount,
                                         unit: defaultUnit
                                     });
                                 }
@@ -233,10 +341,10 @@ export default {
             }
         };
 
-        // 監聽計算屬性 dishesList：確保非同步資料載入完成時 100% 自動選取第一道料理並初始化
+        // 監聽計算屬性 dishesList：確保非同步資料載入完成時依當前時段自動推薦第一道料理並初始化
         watch(dishesList, (newList) => {
-            if (newList && newList.length > 0 && !selectedDish.value) {
-                selectedDish.value = newList[0].id;
+            if (newList && newList.length > 0 && (!selectedDish.value || !userHasManuallySelected.value)) {
+                selectedDish.value = getBestDefaultDishId();
             }
             if (selectedDish.value) {
                 onDishChange();
@@ -250,18 +358,18 @@ export default {
         });
 
         onMounted(() => {
-            if (dishesList.value.length > 0 && !selectedDish.value) {
-                selectedDish.value = dishesList.value[0].id;
+            if (dishesList.value.length > 0 && (!selectedDish.value || !userHasManuallySelected.value)) {
+                selectedDish.value = getBestDefaultDishId();
             }
             if (selectedDish.value) {
                 onDishChange();
             }
         });
 
-        // Get only the active ingredients for a member (must be in selectedMasterIngredients)
+        // Get only the active ingredients for a member (STRICTLY only selected in-stock ingredients)
         const getMemberActiveIngredients = (member) => {
             const list = memberIngredients.value[member] || [];
-            return list.filter(item => selectedMasterIngredients.value.includes(item.id));
+            return list.filter(item => selectedMasterIngredients.value.includes(item.id) && checkStock(item.id));
         };
 
         // Get original portion for reference display (e.g. "100g")
@@ -284,6 +392,7 @@ export default {
             const totals = {};
             
             selectedMasterIngredients.value.forEach(ingId => {
+                if (!checkStock(ingId)) return;
                 activeMembers.value.forEach(member => {
                     const list = memberIngredients.value[member] || [];
                     const item = list.find(i => i.id === ingId);
@@ -315,7 +424,7 @@ export default {
 
         // Check if master ingredient is selected in Section 02
         const isIngredientSelected = (id) => {
-            return selectedMasterIngredients.value.includes(id);
+            return selectedMasterIngredients.value.includes(id) && checkStock(id);
         };
 
         // Toggle master ingredient in Section 02 (Only for in-stock items)
@@ -574,6 +683,20 @@ export default {
         const openIngredientDetail = (id) => {
             const ing = engine.getIngredientById(id);
             if (ing) {
+                // 確保 per100g 結構健全，防止無 per100g 的食材（如蛋、培根）引發 template 報錯崩潰
+                if (!ing.per100g) {
+                    if (ing.perUnit) {
+                        ing.per100g = {
+                            kcal: Math.round((ing.perUnit.kcal || 0) * 1.8),
+                            protein: Math.round((ing.perUnit.protein || 0) * 1.8 * 10) / 10,
+                            carbs: Math.round((ing.perUnit.carbs || 0) * 1.8 * 10) / 10,
+                            fat: Math.round((ing.perUnit.fat || 0) * 1.8 * 10) / 10,
+                            sodium: Math.round((ing.perUnit.sodium || 0) * 1.8)
+                        };
+                    } else {
+                        ing.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+                    }
+                }
                 selectedIngredient.value = ing;
                 showIngredientDetailModal.value = true;
             }
@@ -589,21 +712,35 @@ export default {
 
         const handleDisabledClick = (id) => {
             if (longPressTimer) clearTimeout(longPressTimer);
-            if (!isLongPressTriggered) {
-                openIngredientDetail(id);
-            }
+            // 短按無庫存食材不觸發彈窗，只有長按 750ms (startIngredientPress) 才會開啟詳細資料卡片
             isLongPressTriggered = false;
         };
 
         const saveIngredientChanges = async (ing) => {
-            if (!ing) return;
-            const cat = ing.category || 'proteins';
-            if (engine.data.rawIngredients && engine.data.rawIngredients[cat]) {
-                const idx = engine.data.rawIngredients[cat].findIndex(item => item.id === ing.id);
-                if (idx !== -1) {
-                    engine.data.rawIngredients[cat][idx] = { ...engine.data.rawIngredients[cat][idx], ...ing };
-                    await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+            if (!ing || !ing.id) return;
+            let found = false;
+            if (engine.data.rawIngredients) {
+                const categories = ['proteins', 'veggies', 'carbs', 'sauces', 'fats'];
+                for (const cat of categories) {
+                    if (Array.isArray(engine.data.rawIngredients[cat])) {
+                        const idx = engine.data.rawIngredients[cat].findIndex(item => item.id === ing.id);
+                        if (idx !== -1) {
+                            engine.data.rawIngredients[cat][idx] = { ...engine.data.rawIngredients[cat][idx], ...ing };
+                            found = true;
+                            break;
+                        }
+                    }
                 }
+            }
+            if (found) {
+                await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+                // 重新同步扁平化食材清單
+                engine.data.ingredients = [];
+                ['proteins', 'veggies', 'carbs', 'sauces', 'fats'].forEach(cat => {
+                    if (engine.data.rawIngredients[cat]) {
+                        engine.data.ingredients = engine.data.ingredients.concat(engine.data.rawIngredients[cat]);
+                    }
+                });
             }
         };
 
@@ -702,7 +839,10 @@ export default {
             openIngredientDetail,
             handleIngredientClick,
             handleDisabledClick,
-            goToTracker,
+            currentSlot,
+            recommendedDishes,
+            otherDishes,
+            userHasManuallySelected,
             activeMembers,
             dishesList,
             totalPortions,
@@ -736,11 +876,23 @@ export default {
     template: `
         <div class="view-calculator">
             <!-- 01 DISH -->
-            <div class="section-title">01 DISH 選擇料理</div>
-            <select v-model="selectedDish" @change="onDishChange" class="select-box" style="margin-bottom: 24px;">
-                <option v-for="dish in dishesList" :key="dish.id" :value="dish.id">
-                    {{ dish.name }}
-                </option>
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>01 DISH 選擇料理</span>
+                <span style="font-size: 0.8rem; font-weight: 500; color: var(--color-primary); background: rgba(59, 130, 246, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25);">
+                    {{ currentSlot.icon }} {{ currentSlot.name }}推薦
+                </span>
+            </div>
+            <select v-model="selectedDish" @change="userHasManuallySelected = true; onDishChange();" class="select-box" style="margin-bottom: 24px;">
+                <optgroup :label="'⏰ ' + currentSlot.name + '推薦料理'">
+                    <option v-for="dish in recommendedDishes" :key="'rec_' + dish.id" :value="dish.id">
+                        {{ dish.name }}
+                    </option>
+                </optgroup>
+                <optgroup label="🍲 所有料理清單" v-if="otherDishes.length > 0">
+                    <option v-for="dish in otherDishes" :key="'other_' + dish.id" :value="dish.id">
+                        {{ dish.name }}
+                    </option>
+                </optgroup>
             </select>
 
             <div v-if="currentDish">
@@ -939,11 +1091,10 @@ export default {
                             <div style="flex: 1;">
                                 <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">分類</label>
                                 <select v-model="quickForm.category" class="select-box" style="padding: 8px 12px; font-size: 0.9rem; background: #FFF;">
-                                    <option value="proteins">蛋白質</option>
-                                    <option value="veggies">蔬菜水果</option>
-                                    <option value="carbs">碳水主食</option>
-                                    <option value="sauces">醬料調味</option>
-                                    <option value="fats">🥑 油脂類</option>
+                                    <option value="proteins">🥩 蛋白質</option>
+                                    <option value="veggies">🥦 蔬菜水果</option>
+                                    <option value="carbs">🍚 碳水主食</option>
+                                    <option value="sauces">🧂 醬料與油脂</option>
                                 </select>
                             </div>
                             <div style="flex: 1;">
@@ -1118,7 +1269,7 @@ export default {
                             </button>
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="store in ['全聯', 'Costco', 'EC', '傳統市場', '其他']" 
+                            <button v-for="store in ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他']" 
                                     :key="store"
                                     class="capsule"
                                     :class="isStoreSelected(selectedIngredient, store) ? 'selected' : 'in-stock'"

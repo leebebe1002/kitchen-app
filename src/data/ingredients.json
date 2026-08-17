@@ -1,6 +1,20 @@
 {
     "proteins": [
         {
+            "id": "whey_protein",
+            "name": "乳清蛋白粉",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 385,
+                "protein": 77,
+                "fat": 5.5,
+                "carbs": 7,
+                "sodium": 160
+            },
+            "storageZone": "pantry"
+        },
+        {
             "id": "tuna",
             "name": "水煮鮪魚",
             "brand": "Kirkland 科克蘭",
@@ -442,7 +456,12 @@
                 "carbs": 9.6,
                 "sodium": 69
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "preferredStore": "全聯/傳統市場"
         },
         {
             "id": "onion",
@@ -498,24 +517,15 @@
                 "carbs": 11.5,
                 "sodium": 1
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco"
         },
         {
             "id": "nori_strips",
             "name": "海苔絲",
-            "category": "veggies",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
-            }
-        },
-        {
-            "id": "avocado_mash",
-            "name": "酪梨泥",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
@@ -749,23 +759,6 @@
             }
         },
         {
-            "id": "ing_1786625984502",
-            "name": "辛",
-            "category": "carbs",
-            "storageZones": [
-                "pantry"
-            ],
-            "storageZone": "pantry",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 160,
-                "protein": 3,
-                "carbs": 35,
-                "fat": 1,
-                "sodium": 10
-            }
-        },
-        {
             "id": "ing_1786627813968",
             "name": "農心 非油炸辛拉麵",
             "category": "carbs",
@@ -978,13 +971,11 @@
                 "fat": 5,
                 "sodium": 50
             }
-        }
-    ],
-    "fats": [
+        },
         {
             "id": "olive_oil",
             "name": "橄欖油",
-            "category": "fats",
+            "category": "sauces",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 884,
@@ -998,7 +989,7 @@
         {
             "id": "truffle_olive_oil",
             "name": "松露橄欖油",
-            "category": "fats",
+            "category": "sauces",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 884,
@@ -1013,7 +1004,7 @@
             "id": "sriracha_mayo",
             "name": "J-Lek是拉差美乃滋",
             "brand": "J-Lek",
-            "category": "fats",
+            "category": "sauces",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 450,
@@ -1022,39 +1013,15 @@
                 "carbs": 12,
                 "sodium": 1200
             },
+            "storageZones": [
+                "fridge"
+            ],
             "storageZone": "fridge"
-        },
-        {
-            "id": "spicy_mayo",
-            "name": "辣美乃滋",
-            "category": "fats",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
-            }
-        },
-        {
-            "id": "sesame_sauce",
-            "name": "無糖純芝麻醬",
-            "category": "fats",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 595,
-                "protein": 17,
-                "fat": 53,
-                "carbs": 21,
-                "sodium": 10
-            },
-            "storageZone": "pantry"
         },
         {
             "id": "ing_1786610449768",
             "name": "無糖花生醬",
-            "category": "fats",
+            "category": "sauces",
             "storageZones": [
                 "pantry"
             ],
@@ -1067,6 +1034,27 @@
                 "fat": 50,
                 "sodium": 312
             }
+        },
+        {
+            "id": "avocado_mash",
+            "name": "酪梨泥",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 160,
+                "protein": 2.0,
+                "fat": 14.7,
+                "carbs": 8.5,
+                "sodium": 7
+            },
+            "storageZones": [
+                "freezer"
+            ],
+            "storageZone": "freezer",
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco"
         }
     ]
 }

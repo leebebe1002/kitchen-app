@@ -1,0 +1,18 @@
+{
+    "favorites": [
+        {
+            "id": "fav_mcd_double_beef_custom",
+            "name": "麥克雙牛堡 (客製)",
+            "icon": "🍔",
+            "category": "速食快餐",
+            "nutrients": {
+                "kcal": 414,
+                "protein": 24.0,
+                "carbs": 31.0,
+                "fat": 22.0,
+                "sodium": 506.5
+            },
+            "aiNote": "麥當勞官方精確數據：無芥末醬、無酸黃瓜、無番茄醬。"
+        }
+    ]
+}
