@@ -416,8 +416,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         clean_path = self.path.split('?')[0]
-        if clean_path == '/':
-            self.path = '/web/index.html'
+        if clean_path == '/' or clean_path == '/index.html':
+            self.send_response(302)
+            self.send_header('Location', '/web/index.html')
+            self.end_headers()
+            return
         elif clean_path.startswith('/api/data/'):
             filename = os.path.basename(clean_path)
             self.path = f'/src/data/{filename}'
