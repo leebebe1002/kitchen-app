@@ -55,39 +55,36 @@ export default class KitchenEngine {
         const localKey = 'kitchen_v2_' + filename;
         const cached = localStorage.getItem(localKey);
         
+        const t = Date.now();
         try {
             // Try API endpoint first, then relative static fallbacks for GitHub Pages / Cloud
             let response = null;
             try {
-                response = await fetch(`/api/data/${filename}`);
+                response = await fetch(`/api/data/${filename}?t=${t}`);
             } catch (e) {}
 
             if (!response || !response.ok) {
                 try {
-                    response = await fetch(`../src/data/${filename}`);
+                    response = await fetch(`../src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
             if (!response || !response.ok) {
                 try {
-                    response = await fetch(`./src/data/${filename}`);
+                    response = await fetch(`./src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
             if (!response || !response.ok) {
                 try {
-                    response = await fetch(`/src/data/${filename}`);
+                    response = await fetch(`/src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
-            if (response.ok) {
+            if (response && response.ok) {
                 const fetchedData = await response.json();
-                if (cached) {
-                    try {
-                        this.data[key] = JSON.parse(cached);
-                    } catch (e) {
-                        this.data[key] = fetchedData;
-                    }
-                } else {
-                    this.data[key] = fetchedData;
-                }
+                this.data[key] = fetchedData;
+                // Update local storage with fresh server data
+                try {
+                    localStorage.setItem(localKey, JSON.stringify(fetchedData));
+                } catch (e) {}
             } else if (cached) {
                 this.data[key] = JSON.parse(cached);
             } else {
