@@ -764,6 +764,74 @@
                 "1. 將推薦食材洗淨備妥。",
                 "2. 依個人喜好熟化並組合裝盤即完成！"
             ]
+        },
+        {
+            "id": "home_cooking",
+            "name": "🥘 幸福家常菜",
+            "categories": [
+                "lunch",
+                "dinner"
+            ],
+            "recommendedProteins": [
+                "salmon",
+                "egg",
+                "pork_shoulder"
+            ],
+            "recommendedVeggies": [
+                "cabbage",
+                "black_fungus",
+                "carrot"
+            ],
+            "recommendedCarbs": [
+                "brown_rice"
+            ],
+            "recommendedSauces": [
+                "olive_oil"
+            ],
+            "defaultIngredients": [
+                { "id": "salmon", "amount": 100, "unit": "g" },
+                { "id": "egg", "amount": 1, "unit": "顆" },
+                { "id": "pork_shoulder", "amount": 50, "unit": "g" },
+                { "id": "cabbage", "amount": 120, "unit": "g" },
+                { "id": "black_fungus", "amount": 40, "unit": "g" },
+                { "id": "carrot", "amount": 30, "unit": "g" },
+                { "id": "brown_rice", "amount": 80, "unit": "g" }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    { "id": "salmon", "amount": 100, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "pork_shoulder", "amount": 50, "unit": "g" },
+                    { "id": "cabbage", "amount": 120, "unit": "g" },
+                    { "id": "black_fungus", "amount": 40, "unit": "g" },
+                    { "id": "carrot", "amount": 30, "unit": "g" },
+                    { "id": "brown_rice", "amount": 60, "unit": "g" }
+                ],
+                "ariel": [
+                    { "id": "salmon", "amount": 100, "unit": "g" },
+                    { "id": "egg", "amount": 1, "unit": "顆" },
+                    { "id": "pork_shoulder", "amount": 50, "unit": "g" },
+                    { "id": "cabbage", "amount": 100, "unit": "g" },
+                    { "id": "black_fungus", "amount": 30, "unit": "g" },
+                    { "id": "carrot", "amount": 30, "unit": "g" },
+                    { "id": "brown_rice", "amount": 80, "unit": "g" }
+                ],
+                "jason": [
+                    { "id": "salmon", "amount": 150, "unit": "g" },
+                    { "id": "egg", "amount": 2, "unit": "顆" },
+                    { "id": "pork_shoulder", "amount": 100, "unit": "g" },
+                    { "id": "cabbage", "amount": 150, "unit": "g" },
+                    { "id": "black_fungus", "amount": 50, "unit": "g" },
+                    { "id": "carrot", "amount": 40, "unit": "g" },
+                    { "id": "brown_rice", "amount": 140, "unit": "g" }
+                ]
+            },
+            "sopSteps": [
+                "1. 鮭魚皮朝下乾煎至金黃焦香，逼出天然魚油後盛盤備用。",
+                "2. 蛋液加溫水 (1:2) 與薄鹽醬油拌勻過篩，放入電鍋蒸成滑嫩蒸蛋。",
+                "3. 原鍋利用少許魚油或橄欖油爆香蒜末，下豬肉片、紅蘿蔔絲與黑木耳絲快炒。",
+                "4. 加入高麗菜大火翻炒至清脆甜美，起鍋盛盤，搭配現煮多穀糙米飯即可享用！"
+            ]
         }
     ]
 }
