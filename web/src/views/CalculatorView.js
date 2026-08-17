@@ -40,13 +40,13 @@ export default {
                     recommendedDishIds: ['yogurt_bowl', 'brunch_set', 'whey_protein_shake', 'salad']
                 };
             }
-            // 17:00 - 21:59: 晚餐時段 (波奇碗、拌飯、泡麵、火鍋)
+            // 17:00 - 21:59: 晚餐時段 (幸福家常飯、波奇碗、拌飯、泡麵、火鍋)
             else if (totalMin >= 17 * 60 && totalMin < 22 * 60) {
                 return {
                     id: 'dinner',
                     name: '溫馨晚餐',
                     icon: '🌙',
-                    recommendedDishIds: ['poke_bowl', 'bibimbap', 'ramen_meal', 'hotpot']
+                    recommendedDishIds: ['home_cooking', 'poke_bowl', 'bibimbap', 'ramen_meal', 'hotpot']
                 };
             }
             // 22:00 - 06:59: 宵夜 / 深夜食堂 (泡麵、優格碗、乳清蛋白)
@@ -66,16 +66,24 @@ export default {
             return (engine && engine.data && engine.data.dishes && engine.data.dishes.length > 0) ? engine.data.dishes : [];
         });
 
-        // 計算當前時段推薦料理（精確依使用者指定的各餐料理順序排列）
+        // 計算當前時段推薦料理（依時段優先序 ＋ 動態比對料理 categories）
         const recommendedDishes = computed(() => {
             const list = dishesList.value || [];
             const slot = currentSlot.value;
-            if (!slot || !slot.recommendedDishIds || list.length === 0) return list;
+            if (!slot || list.length === 0) return list;
 
             const recList = [];
-            slot.recommendedDishIds.forEach(id => {
-                const found = list.find(d => d.id === id);
-                if (found) recList.push(found);
+            if (slot.recommendedDishIds) {
+                slot.recommendedDishIds.forEach(id => {
+                    const found = list.find(d => d.id === id);
+                    if (found && !recList.includes(found)) recList.push(found);
+                });
+            }
+            // 自動動態納入任何 categories 包含當前時段的料理
+            list.forEach(dish => {
+                if (dish.categories && dish.categories.includes(slot.id)) {
+                    if (!recList.includes(dish)) recList.push(dish);
+                }
             });
             return recList.length > 0 ? recList : list;
         });

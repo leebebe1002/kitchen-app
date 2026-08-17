@@ -38,6 +38,8 @@
         "bibimbap_secret": true,
         "balsamic": true,
         "olive_oil": true,
+        "avocado_oil": true,
+        "unsalted_butter": true,
         "sesame_powder": true,
         "matcha_powder": true,
         "cocoa_powder": true,

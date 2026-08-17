@@ -1055,6 +1055,50 @@
                 "Costco"
             ],
             "preferredStore": "Costco"
+        },
+        {
+            "id": "avocado_oil",
+            "name": "酪梨油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 884,
+                "protein": 0,
+                "fat": 100,
+                "carbs": 0,
+                "sodium": 0
+            },
+            "storageZones": [
+                "fridge",
+                "pantry"
+            ],
+            "storageZone": "fridge",
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco"
+        },
+        {
+            "id": "unsalted_butter",
+            "name": "無鹽奶油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 717,
+                "protein": 0.9,
+                "fat": 81.1,
+                "carbs": 0.1,
+                "sodium": 11
+            },
+            "storageZones": [
+                "fridge"
+            ],
+            "storageZone": "fridge",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "preferredStore": "Costco"
         }
     ]
 }

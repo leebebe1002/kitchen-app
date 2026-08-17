@@ -767,9 +767,8 @@
         },
         {
             "id": "home_cooking",
-            "name": "🥘 幸福家常菜",
+            "name": "🥘 幸福家常飯",
             "categories": [
-                "lunch",
                 "dinner"
             ],
             "recommendedProteins": [
@@ -786,7 +785,9 @@
                 "brown_rice"
             ],
             "recommendedSauces": [
-                "olive_oil"
+                "olive_oil",
+                "avocado_oil",
+                "unsalted_butter"
             ],
             "defaultIngredients": [
                 { "id": "salmon", "amount": 100, "unit": "g" },
