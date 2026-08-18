@@ -1350,15 +1350,12 @@ export default {
                         </div>
                     </div>
 
-                    <!-- 3. 黃金熱區三按鈕 (手機底部大拇指好按) -->
-                    <div style="display: flex; gap: 8px; justify-content: space-between; border-top: 1px solid var(--color-border); padding-top: 16px;">
-                        <button class="btn-icon" @click="showShoppingModal = false" style="flex: 1; padding: 12px; font-weight: 600;">
-                            ⬅️ 返回智慧冰箱
-                        </button>
-                        <button class="btn-icon" @click="clearPurchased" style="flex: 1; padding: 12px; font-weight: 600; color: #047857; background: #ECFDF5; border-color: #A7F3D0;">
+                    <!-- 3. 底部快捷按鈕 (清除已買食材 & 複製清單) -->
+                    <div style="display: flex; gap: 10px; justify-content: space-between; border-top: 1px solid var(--color-border); padding-top: 16px;">
+                        <button class="btn-icon" @click="clearPurchased" style="flex: 1; padding: 12px; font-weight: 600; color: #047857; background: #ECFDF5; border-color: #A7F3D0; border-radius: 12px;">
                             🧹 清除已買食材
                         </button>
-                        <button class="btn-primary accent" @click="copyShoppingListText" style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.9rem;">
+                        <button class="btn-primary accent" @click="copyShoppingListText" style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.95rem; border-radius: 12px;">
                             📋 複製清單
                         </button>
                     </div>
