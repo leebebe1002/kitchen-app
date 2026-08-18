@@ -368,6 +368,14 @@ export default {
                 }
                 engine.data.rawIngredients[addForm.value.category].push(newIng);
                 engine.data.ingredients.push(newIng);
+                try {
+                    const customKey = 'kitchen_v2_custom_ingredients';
+                    const customList = JSON.parse(localStorage.getItem(customKey) || '[]');
+                    if (!customList.some(i => i.id === newId)) {
+                        customList.push(newIng);
+                        localStorage.setItem(customKey, JSON.stringify(customList));
+                    }
+                } catch (e) {}
                 await engine.saveJson('ingredients.json', engine.data.rawIngredients);
                 await engine.toggleStock(newId, true);
                 const zoneLabels = newIng.storageZones.map(z => zoneNames[z] || z).join('、');

@@ -27,7 +27,10 @@ export default class KitchenEngine {
             this.fetchJson('config.json', 'config', {})
         ]);
         
-        // Flatten ingredients
+        // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
+        this.mergeCustomUserIngredients();
+
+        // 2. 攤平食材列表
         this.data.ingredients = [];
         if (this.data.rawIngredients) {
             ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
@@ -37,27 +40,41 @@ export default class KitchenEngine {
             });
         }
         
-        // Flatten dishes
+        // 3. 攤平料理列表
         this.data.dishes = this.data.rawDishes?.dishes || [];
         
-        // Favorite foods
+        // 4. 常用料理
         this.data.favoriteFoods = this.data.rawFavoriteFoods?.favorites || [];
         
-        // Initialize pantry if empty
+        // 5. 初始化庫存保護結構 (確保所有食材皆有狀態，且預設保留使用者打勾)
         if (!this.data.pantryInventory.foodStockStatus) this.data.pantryInventory.foodStockStatus = {};
+        if (!this.data.pantryInventory.supplyStockStatus) this.data.pantryInventory.supplyStockStatus = {};
+        if (!this.data.pantryInventory.shoppingList) this.data.pantryInventory.shoppingList = [];
         if (!this.data.pantryInventory.foodCart) this.data.pantryInventory.foodCart = [];
         
-        console.log("KitchenEngine Initialized", this.data);
+        console.log("KitchenEngine Initialized with State Protection", this.data);
+    }
+
+    // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態永遠不被 Git 沖掉)
+    isUserStateFile(filename) {
+        return ['pantry_inventory.json', 'daily_logs.json', 'config.json'].includes(filename);
     }
 
     async fetchJson(filename, key, defaultValue) {
-        // 1. Try local storage first if available (for cloud static usage)
         const localKey = 'kitchen_v2_' + filename;
         const cached = localStorage.getItem(localKey);
+        let cachedData = null;
+        if (cached) {
+            try {
+                cachedData = JSON.parse(cached);
+            } catch (e) {}
+        }
         
+        const isUserState = this.isUserStateFile(filename);
         const t = Date.now();
+
         try {
-            // Try API endpoint first, then relative static fallbacks for GitHub Pages / Cloud
+            // 嘗試從 API 或靜態檔案下載
             let response = null;
             try {
                 response = await fetch(`/api/data/${filename}?t=${t}`);
@@ -78,28 +95,82 @@ export default class KitchenEngine {
                     response = await fetch(`/src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
+
             if (response && response.ok) {
-                const fetchedData = await response.json();
-                this.data[key] = fetchedData;
-                // Update local storage with fresh server data
-                try {
-                    localStorage.setItem(localKey, JSON.stringify(fetchedData));
-                } catch (e) {}
-            } else if (cached) {
-                this.data[key] = JSON.parse(cached);
+                const serverData = await response.json();
+                
+                if (isUserState && cachedData) {
+                    // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/飲食記錄) 優先採用手機本地，並智慧增量合併
+                    const mergedData = this.mergeUserState(filename, cachedData, serverData);
+                    this.data[key] = mergedData;
+                    try {
+                        localStorage.setItem(localKey, JSON.stringify(mergedData));
+                    } catch (e) {}
+                } else {
+                    // 靜態資料庫 (食譜/食材庫)：以伺服器最新版為主
+                    this.data[key] = serverData;
+                    try {
+                        localStorage.setItem(localKey, JSON.stringify(serverData));
+                    } catch (e) {}
+                }
+            } else if (cachedData) {
+                this.data[key] = cachedData;
             } else {
                 this.data[key] = defaultValue;
             }
         } catch (e) {
-            if (cached) {
-                try {
-                    this.data[key] = JSON.parse(cached);
-                } catch (err) {
-                    this.data[key] = defaultValue;
-                }
+            if (cachedData) {
+                this.data[key] = cachedData;
             } else {
                 this.data[key] = defaultValue;
             }
+        }
+    }
+
+    // 智慧增量合併使用者狀態
+    mergeUserState(filename, localData, serverData) {
+        if (filename === 'pantry_inventory.json') {
+            const merged = { ...serverData, ...localData };
+            // 保留使用者手機的 foodStockStatus 打勾狀態
+            merged.foodStockStatus = {
+                ...(serverData?.foodStockStatus || {}),
+                ...(localData?.foodStockStatus || {})
+            };
+            merged.supplyStockStatus = {
+                ...(serverData?.supplyStockStatus || {}),
+                ...(localData?.supplyStockStatus || {})
+            };
+            // 採買清單以本地為準
+            merged.shoppingList = Array.isArray(localData?.shoppingList) ? localData.shoppingList : (serverData?.shoppingList || []);
+            merged.foodCart = Array.isArray(localData?.foodCart) ? localData.foodCart : (serverData?.foodCart || []);
+            return merged;
+        } else if (filename === 'daily_logs.json') {
+            return { ...(serverData || {}), ...(localData || {}) };
+        } else if (filename === 'config.json') {
+            return { ...(serverData || {}), ...(localData || {}) };
+        }
+        return localData || serverData;
+    }
+
+    // 保留使用者手動新增的自訂食材
+    mergeCustomUserIngredients() {
+        const customKey = 'kitchen_v2_custom_ingredients';
+        const customStr = localStorage.getItem(customKey);
+        if (!customStr) return;
+        try {
+            const customList = JSON.parse(customStr);
+            if (Array.isArray(customList) && this.data.rawIngredients) {
+                customList.forEach(customIng => {
+                    const cat = customIng.category || 'veggies';
+                    if (!this.data.rawIngredients[cat]) this.data.rawIngredients[cat] = [];
+                    const exists = this.data.rawIngredients[cat].some(i => i.id === customIng.id);
+                    if (!exists) {
+                        this.data.rawIngredients[cat].push(customIng);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn("Error merging custom user ingredients", e);
         }
     }
 
