@@ -370,7 +370,8 @@ export default {
                 engine.data.ingredients.push(newIng);
                 await engine.saveJson('ingredients.json', engine.data.rawIngredients);
                 await engine.toggleStock(newId, true);
-                alert(`🎉 成功新增食材【${name}】至 ${zoneNames[addForm.value.storageZone]}！`);
+                const zoneLabels = newIng.storageZones.map(z => zoneNames[z] || z).join('、');
+                alert(`🎉 成功新增食材【${name}】至 ${zoneLabels}！`);
             } else {
                 const newId = 'supp_' + Date.now();
                 const newSup = {
@@ -433,12 +434,8 @@ export default {
             }
         };
 
-        const openAddModalWithCamera = () => {
+        const openAddModalDirectly = () => {
             showAddModal.value = true;
-            // 如果是在手機上，點擊「📸 拍照/新增」時優先呼叫原生相機拍攝！
-            if (cameraInputRef.value && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                cameraInputRef.value.click();
-            }
         };
 
         const compressImage = (dataUrl, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
@@ -752,7 +749,7 @@ export default {
             cancelAiAnalyzing,
             triggerCamera,
             triggerAlbum,
-            openAddModalWithCamera,
+            openAddModalDirectly,
             handleCameraSnap,
             getCategoryInZone,
             checkFoodStock,
@@ -1345,12 +1342,12 @@ export default {
                     </svg>
                     <span>採買清單</span>
                 </button>
-                <button class="btn-primary accent" @click="openAddModalWithCamera" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
+                <button class="btn-primary accent" @click="openAddModalDirectly" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    <span>拍照/新增</span>
+                    <span>新增食材</span>
                 </button>
             </div>
 
@@ -1626,28 +1623,42 @@ export default {
 
                     <!-- 規格資料 -->
                     <div style="background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 14px; margin-bottom: 18px; font-size: 0.9rem; line-height: 1.8;">
-                        <div><strong>🧻 項目名稱：</strong>{{ selectedSupply.name }}</div>
-                        <div><strong>🏷️ 常用品牌：</strong>{{ selectedSupply.brand || '無' }}</div>
+                        <div><strong>項目名稱：</strong>{{ selectedSupply.name }}</div>
+                        <div><strong>常用品牌：</strong>{{ selectedSupply.brand || '無' }}</div>
                         <div>
-                            <strong>💰 參考價格：</strong>
+                            <strong>參考價格：</strong>
                             <span style="font-weight: 700; color: var(--color-primary);">NT$ {{ selectedSupply.price }}</span> / {{ selectedSupply.priceUnit }}
                             <span v-if="selectedSupply.packQuantity" style="font-size: 0.8rem; color: #047857; margin-left: 6px; font-weight: 600;">
                                 (平均 NT$ {{ (selectedSupply.price / selectedSupply.packQuantity).toFixed(1) }}/{{ selectedSupply.unitName || '單位' }})
                             </span>
                         </div>
-                        <div><strong>🏬 常用通路：</strong>{{ selectedSupply.store || '賣場' }}</div>
+                        <div><strong>常用通路：</strong>{{ selectedSupply.store || '賣場' }}</div>
                     </div>
 
                     <!-- Actions -->
                     <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn-icon" @click="updateSupplyPhoto" style="padding: 10px; font-weight: 600; justify-content: center;">
-                            📸 拍攝/更新商品包裝照片
+                        <button class="btn-icon" @click="updateSupplyPhoto" style="padding: 10px; font-weight: 600; justify-content: center; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <span>拍攝/更新商品包裝照片</span>
                         </button>
-                        <button class="btn-primary accent" @click="copyLineMessage(selectedSupply)" style="justify-content: center; padding: 12px; font-weight: 700;">
-                            📤 一鍵複製代購訊息 (規格+價格) 至 LINE
+                        <button class="btn-primary accent" @click="copyLineMessage(selectedSupply)" style="justify-content: center; padding: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>一鍵複製代購訊息 (規格+價格) 至 LINE</span>
                         </button>
-                        <button class="btn-icon" @click="deleteSupplyItem(selectedSupply.id)" style="color: #EF4444; border: none; justify-content: center; font-size: 0.85rem; margin-top: 4px;">
-                            🗑️ 永久刪除此雜項 (不再回購)
+                        <button class="btn-icon" @click="deleteSupplyItem(selectedSupply.id)" style="color: #EF4444; border: none; justify-content: center; font-size: 0.85rem; margin-top: 4px; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            <span>永久刪除此雜項 (不再回購)</span>
                         </button>
                     </div>
                 </div>
@@ -1662,10 +1673,10 @@ export default {
                          style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 100; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
                         <div class="ai-spinner-lg" style="margin-bottom: 18px;"></div>
                         <div style="font-size: 1.05rem; font-weight: 700; color: #19585C; margin-bottom: 6px;">
-                            🤖 Gemini AI 正在分析照片中...
+                            Gemini AI 正在分析照片中...
                         </div>
                         <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500; margin-bottom: 24px; max-width: 240px; line-height: 1.5;">
-                            正在讀取標籤與換算每 100g 數據，已為您封鎖畫面防止誤觸 ✨
+                            正在讀取標籤與換算每 100g 數據，已為您封鎖畫面防止誤觸
                         </div>
                         <button class="btn-icon" 
                                 @click="cancelAiAnalyzing" 
@@ -1675,15 +1686,29 @@ export default {
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">📸 拍攝辨識 / 新增食材與雜項</h3>
-                        <button class="btn-icon" @click="showAddModal = false" style="border: none; font-size: 1.1rem;">✕</button>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">拍攝辨識 / 新增食材與雜項</h3>
+                        </div>
+                        <button class="btn-icon" @click="showAddModal = false" style="border: none; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
                     </div>
 
                     <!-- 1. AI 辨識區 (不動)：API Key 狀態與實拍圖片預覽+雷射動態掃描卡片 -->
                     <div style="background: #EAF6F7; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; margin-bottom: 14px;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #19585C; display: flex; align-items: center; justify-content: space-between;">
-                            <span>🔑 AI 圖片辨識狀態：{{ engine.data.config?.gemini_api_key ? '🟢 已開啟 API 辨識' : '🟡 未設定 API Key' }}</span>
-                            <button class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 2px 8px; font-size: 0.75rem;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 2l-2 2m-1.5 1.5L14 9a5 5 0 1 0 1.5 1.5L22 4l-1-2z"></path>
+                                </svg>
+                                <span>AI 圖片辨識狀態：</span>
+                                <span :style="{ color: engine.data.config?.gemini_api_key ? '#059669' : '#D97706', fontWeight: 800 }">
+                                    {{ engine.data.config?.gemini_api_key ? '● 已開啟 API 辨識' : '○ 未設定 API Key' }}
+                                </span>
+                            </span>
+                            <button class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
                                 {{ showApiKeyInput ? '收起' : '設定 Key' }}
                             </button>
                         </div>
@@ -1693,8 +1718,13 @@ export default {
                             </div>
                             <div style="display: flex; gap: 6px;">
                                 <input type="password" v-model="geminiApiKeyInput" placeholder="貼上 AIZA... API Key" class="search-input" style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF;">
-                                <button class="btn-primary" @click="saveApiKey" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 10px;">
-                                    💾 儲存啟用
+                                <button class="btn-primary" @click="saveApiKey" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                        <polyline points="7 3 7 8 15 8"></polyline>
+                                    </svg>
+                                    <span>儲存啟用</span>
                                 </button>
                             </div>
                         </div>
@@ -1710,15 +1740,15 @@ export default {
                                 <span class="ai-spinner"></span>
                                 <div>
                                     <div style="font-size: 0.85rem; color: #19585C; font-weight: 700;">
-                                        🤖 Gemini AI 辨識中...
+                                        Gemini AI 辨識中...
                                     </div>
                                     <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; margin-top: 2px;">
-                                        正在讀取標籤與換算 100g 數據，請稍候 3~5 秒 ✨
+                                        正在讀取標籤與換算 100g 數據，請稍候 3~5 秒
                                     </div>
                                 </div>
                             </div>
                             <div v-else style="font-size: 0.85rem; color: #065F46; font-weight: 700;">
-                                ✨ Gemini Vision 辨識成功！
+                                Gemini Vision 辨識成功！
                                 <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; margin-top: 2px;">
                                     已為您自動帶入品名與每 100g 營養成份，可手動微調。
                                 </div>
@@ -1735,19 +1765,24 @@ export default {
                     <!-- 3. 營養成份 (每 100g / 按單份 雙軌營養規格編輯卡片) -->
                     <div v-if="addForm.type === 'food' && addForm.per100g" style="background: #F9FAFB; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">
-                                📊 營養成份：
+                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                </svg>
+                                <span>營養成份：</span>
                             </label>
                             <div style="display: flex; gap: 4px; background: #E5E7EB; padding: 2px; border-radius: 8px; font-size: 0.75rem;">
                                 <button class="btn-icon" 
                                         @click="addFormDisplayBasis = 'serving'" 
                                         :style="{ background: addFormDisplayBasis === 'serving' ? '#FFFFFF' : 'transparent', fontWeight: addFormDisplayBasis === 'serving' ? '700' : '500', color: addFormDisplayBasis === 'serving' ? '#19585C' : '#6B7280', padding: '3px 8px', border: 'none', borderRadius: '6px', cursor: 'pointer' }">
-                                    🔘 按單份 ({{ addForm.servingSize || 10 }}{{ addForm.servingUnit || 'g' }})
+                                    按單份 ({{ addForm.servingSize || 10 }}{{ addForm.servingUnit || 'g' }})
                                 </button>
                                 <button class="btn-icon" 
                                         @click="addFormDisplayBasis = '100g'" 
                                         :style="{ background: addFormDisplayBasis === '100g' ? '#FFFFFF' : 'transparent', fontWeight: addFormDisplayBasis === '100g' ? '700' : '500', color: addFormDisplayBasis === '100g' ? '#19585C' : '#6B7280', padding: '3px 8px', border: 'none', borderRadius: '6px', cursor: 'pointer' }">
-                                    ⚪ 按每 100g
+                                    按每 100g
                                 </button>
                             </div>
                         </div>
@@ -1775,7 +1810,7 @@ export default {
                                 <input type="number" v-model.number="addForm.perServing.protein" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🍚 碳水(g/單份):</span>
+                                <span style="color: var(--color-text-muted);">碳水(g/單份):</span>
                                 <input type="number" v-model.number="addForm.perServing.carbs" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                             <div>
@@ -1794,7 +1829,7 @@ export default {
                                 <input type="number" v-model.number="addForm.per100g.protein" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🍚 碳水(g/100g):</span>
+                                <span style="color: var(--color-text-muted);">碳水(g/100g):</span>
                                 <input type="number" v-model.number="addForm.per100g.carbs" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                             <div>
@@ -1826,19 +1861,19 @@ export default {
                             <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 6px;">存放分區：</label>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                                 <button class="capsule" 
-                                        :class="isAddFormZoneSelected('fridge') ? 'selected' : 'in-stock'"
+                                        :class="isAddFormZoneSelected('fridge') ? 'selected' : 'in-stock'" 
                                         @click="toggleAddFormZone('fridge')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
                                     冷藏區
                                 </button>
                                 <button class="capsule" 
-                                        :class="isAddFormZoneSelected('freezer') ? 'selected' : 'in-stock'"
+                                        :class="isAddFormZoneSelected('freezer') ? 'selected' : 'in-stock'" 
                                         @click="toggleAddFormZone('freezer')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
                                     冷凍區
                                 </button>
                                 <button class="capsule" 
-                                        :class="isAddFormZoneSelected('pantry') ? 'selected' : 'in-stock'"
+                                        :class="isAddFormZoneSelected('pantry') ? 'selected' : 'in-stock'" 
                                         @click="toggleAddFormZone('pantry')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
                                     常溫區
@@ -1850,8 +1885,8 @@ export default {
                             <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">營養分類：</label>
                             <select v-model="addForm.category" class="select-box" style="padding: 8px 12px; font-weight: 600; width: 100%;">
                                 <option value="proteins">蛋白質</option>
-                                <option value="veggies">🥗 蔬菜水果</option>
-                                <option value="carbs">🍚 碳水類</option>
+                                <option value="veggies">蔬菜水果</option>
+                                <option value="carbs">碳水類</option>
                                 <option value="sauces">醬料與油脂</option>
                             </select>
                         </div>
@@ -1870,14 +1905,28 @@ export default {
 
                     <!-- 1. 精簡底欄並排：相機實拍 AI | 相簿選圖 | 儲存建檔 (無取消按鈕) -->
                     <div style="display: flex; gap: 8px; margin-top: 20px;">
-                        <button class="btn-icon" @click="triggerCamera" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600;">
-                            📸 AI 實拍
+                        <button class="btn-icon" @click="triggerCamera" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <span>AI 實拍</span>
                         </button>
-                        <button class="btn-icon" @click="triggerAlbum" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600;">
-                            🖼️ 相簿選圖
+                        <button class="btn-icon" @click="triggerAlbum" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span>相簿選圖</span>
                         </button>
-                        <button class="btn-primary accent" @click="saveNewItem" style="flex: 1.4; justify-content: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700;">
-                            💾 儲存建檔
+                        <button class="btn-primary accent" @click="saveNewItem" style="flex: 1.4; justify-content: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            <span>儲存建檔</span>
                         </button>
                     </div>
                 </div>
@@ -1945,10 +1994,10 @@ export default {
                         </div>
                     </div>
 
-                    <!-- 📍 存放分區 (可複選/切換：冷藏區、冷凍區、常溫區) -->
+                    <!-- 存放分區 (可複選/切換：冷藏區、冷凍區、常溫區) -->
                     <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
-                            📍 存放分區：
+                            存放分區：
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                             <button v-for="z in [{key:'fridge', label:'冷藏區'}, {key:'freezer', label:'冷凍區'}, {key:'pantry', label:'常溫區'}]" 
@@ -1965,7 +2014,7 @@ export default {
                     <!-- 3. 常用採買通路 (統一系統膠囊UI) & 4. 純 🛒 圖示按鈕 -->
                     <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">🏬 常用採買通路：</span>
+                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">常用採買通路：</span>
                             <!-- 4. 加入採買清單：純 🛒 圖示按鈕 -->
                             <button class="btn-icon" 
                                     @click="toggleFoodCart(selectedFood)" 
@@ -1991,16 +2040,31 @@ export default {
                         </div>
                     </div>
 
-                    <!-- 5. 底部 3 按鈕：更新外包裝照片 | 🗑️ 刪除食材 | 💾 儲存 -->
+                    <!-- 5. 底部 3 按鈕：更新外包裝照片 | 刪除食材 | 儲存 -->
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon" @click="triggerCamera" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600;">
-                            📸 外包裝照片
+                        <button class="btn-icon" @click="triggerCamera" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            <span>外包裝照片</span>
                         </button>
-                        <button class="btn-icon" @click="deleteFoodIngredient(selectedFood.id)" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #EF4444; background: #FEF2F2; border-color: #FCA5A5;">
-                            🗑️ 刪除食材
+                        <button class="btn-icon" @click="deleteFoodIngredient(selectedFood.id)" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #EF4444; background: #FEF2F2; border-color: #FCA5A5; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            <span>刪除食材</span>
                         </button>
-                        <button class="btn-primary" @click="saveAndCloseFoodModal(selectedFood)" style="flex: 1; justify-content: center; padding: 10px 6px; font-size: 0.85rem; font-weight: 600;">
-                            💾 儲存
+                        <button class="btn-primary" @click="saveAndCloseFoodModal(selectedFood)" style="flex: 1; justify-content: center; padding: 10px 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            <span>儲存</span>
                         </button>
                     </div>
                 </div>

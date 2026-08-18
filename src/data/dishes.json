@@ -12,12 +12,8 @@
                 "whey_protein",
                 "full_fat_milk_250"
             ],
-            "recommendedVeggies": [
-                "frozen_berry"
-            ],
-            "recommendedCarbs": [
-                "granola"
-            ],
+            "recommendedVeggies": [],
+            "recommendedCarbs": [],
             "recommendedSauces": [
                 "matcha_powder",
                 "cocoa_powder",
@@ -117,7 +113,9 @@
                 "maple_syrup",
                 "matcha_powder",
                 "cocoa_powder",
-                "sesame_powder"
+                "sesame_powder",
+                "chia_seeds",
+                "brown_sugar_syrup"
             ],
             "defaultIngredients": [
                 {
@@ -302,7 +300,8 @@
             ],
             "recommendedCarbs": [
                 "bagel",
-                "potato"
+                "potato",
+                "sweet_potato"
             ],
             "recommendedSauces": [
                 "balsamic",
@@ -310,8 +309,8 @@
                 "lemon_juice",
                 "italian_herbs",
                 "greek_yogurt",
-                "sesame_sauce",
-                "yuzu_vinegar"
+                "yuzu_vinegar",
+                "truffle_olive_oil"
             ],
             "sauceOptions": [
                 {
@@ -469,7 +468,8 @@
                 "greens",
                 "cucumber",
                 "cherry_tomatoes",
-                "kimchi"
+                "kimchi",
+                "zucchini"
             ],
             "recommendedCarbs": [
                 "brown_rice",
@@ -945,16 +945,19 @@
                 "broccoli",
                 "kimchi",
                 "cucumber",
-                "mushroom"
+                "mushroom",
+                "beech_mushroom"
             ],
             "recommendedCarbs": [
-                "shin_ramen_light",
-                "green_pepper_noodle"
+                "steamed_noodle",
+                "green_pepper_noodle",
+                "shin_ramen",
+                "potato_ramen"
             ],
             "recommendedSauces": [],
             "defaultIngredients": [
                 {
-                    "id": "shin_ramen_light",
+                    "id": "steamed_noodle",
                     "amount": 1,
                     "unit": "包"
                 },
@@ -994,12 +997,15 @@
             ],
             "recommendedProteins": [
                 "pork_shoulder",
-                "beef_chuck",
+                "beef_slice",
                 "tofu",
                 "frozen_tofu",
                 "shrimp_paste",
                 "egg",
-                "crab_stick"
+                "crab_stick",
+                "egg_dumpling",
+                "taro_meatball",
+                "mushroom_meatball"
             ],
             "recommendedVeggies": [
                 "cabbage",
@@ -1008,17 +1014,18 @@
                 "black_fungus",
                 "mushroom",
                 "beech_mushroom",
-                "baby_corn"
+                "baby_corn",
+                "broccoli"
             ],
             "recommendedCarbs": [
-                "udon_noodles",
-                "prince_noodles",
                 "steamed_noodle",
+                "prince_noodles",
                 "brown_rice"
             ],
             "recommendedSauces": [
                 "shacha_sauce",
-                "soy_sauce"
+                "soy_sauce",
+                "yuzu_vinegar"
             ],
             "defaultIngredients": [
                 {
@@ -1027,7 +1034,7 @@
                     "unit": "g"
                 },
                 {
-                    "id": "beef_chuck",
+                    "id": "beef_slice",
                     "amount": 80,
                     "unit": "g"
                 },
@@ -1047,7 +1054,7 @@
                     "unit": "g"
                 },
                 {
-                    "id": "udon_noodles",
+                    "id": "steamed_noodle",
                     "amount": 1,
                     "unit": "包"
                 }

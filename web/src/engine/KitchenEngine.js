@@ -134,7 +134,37 @@ export default class KitchenEngine {
     }
     
     getIngredientById(id) {
-        return this.data.ingredients.find(ing => ing.id === id);
+        if (!id) return null;
+        // 1. 精準 ID 匹配
+        let found = this.data.ingredients.find(ing => ing.id === id);
+        if (found) return found;
+        
+        // 2. 智慧名稱匹配 (例如 id='shin_ramen' 但庫存裡有名稱為 '辛拉麵')
+        const normalized = id.toLowerCase().replace(/[-_]/g, '');
+        found = this.data.ingredients.find(ing => {
+            const ingIdNorm = ing.id.toLowerCase().replace(/[-_]/g, '');
+            const ingNameNorm = (ing.name || '').toLowerCase().replace(/[\s\(\)（）\-_]/g, '');
+            return ingIdNorm === normalized || ingNameNorm === normalized || ing.name === id;
+        });
+        if (found) return found;
+        
+        // 3. 常見別名字典 (Alias Map)
+        const aliasMap = {
+            'shin_ramen': ['辛拉麵', '農心 非油炸辛拉麵', '農心非油炸辛拉麵', '辛拉麵(非油炸)', 'shin_ramen_light'],
+            'taro_meatball': ['芋頭貢丸'],
+            'mushroom_meatball': ['香菇貢丸'],
+            'angel_hair_pasta': ['義大利（天使）', '義大利麵', '天使麵'],
+            'horseradish_mayo': ['辣根蛋黃醬'],
+            'sugar_free_peanut_butter': ['無糖花生醬'],
+            'bibimbap_secret': ['韓式辣醬', '自製韓式拌飯醬']
+        };
+        for (const [canonicalId, aliases] of Object.entries(aliasMap)) {
+            if (id === canonicalId || aliases.includes(id)) {
+                found = this.data.ingredients.find(ing => ing.id === canonicalId || aliases.includes(ing.name) || aliases.includes(ing.id));
+                if (found) return found;
+            }
+        }
+        return null;
     }
 
     checkStock(id) {

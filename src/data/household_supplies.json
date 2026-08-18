@@ -24,7 +24,7 @@
     },
     {
       "id": "supp_trash_bag",
-      "name": "垃圾袋 (大)",
+      "name": "垃圾袋（14L)",
       "brand": "妙潔",
       "price": 129,
       "priceUnit": "3卷/包",
@@ -34,15 +34,26 @@
       "unitName": "卷"
     },
     {
-      "id": "supp_plastic_wrap",
-      "name": "保鮮膜",
-      "brand": "南亞",
-      "price": 99,
-      "priceUnit": "1支",
+      "id": "supp_box_tissues",
+      "name": "盒裝面紙",
+      "brand": "舒潔 / Kirkland",
+      "price": 219,
+      "priceUnit": "24包/箱",
+      "store": "Costco 好市多",
+      "photoUrl": "assets/supplies/box_tissues.jpg",
+      "packQuantity": 24,
+      "unitName": "包"
+    },
+    {
+      "id": "supp_jieshuang",
+      "name": "潔霜",
+      "brand": "潔霜",
+      "price": 89,
+      "priceUnit": "1瓶",
       "store": "全聯",
-      "photoUrl": "assets/supplies/plastic_wrap.jpg",
+      "photoUrl": "assets/supplies/jieshuang.jpg",
       "packQuantity": 1,
-      "unitName": "支"
+      "unitName": "瓶"
     }
   ]
 }
