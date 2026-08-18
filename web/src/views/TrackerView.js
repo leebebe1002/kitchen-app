@@ -452,22 +452,45 @@ export default {
         <div class="view-tracker">
             <!-- Date & Family Member Switcher -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
-                <button class="btn-icon" @click="changeDate(-1)">◀️</button>
+                <button class="btn-icon" @click="changeDate(-1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
                 <span style="font-weight: 700; font-size: 1.05rem;">
                     {{ currentDate }} {{ isToday ? '(今天)' : '' }}
                 </span>
-                <button class="btn-icon" @click="changeDate(1)">▶️</button>
+                <button class="btn-icon" @click="changeDate(1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
             </div>
             
             <div class="capsule-group" style="margin-bottom: 24px;">
-                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'">
-                    😊 Bebe
+                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                    <span>Bebe</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'">
-                    ❤️ 樂樂
+                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span>樂樂</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'">
-                    🪨 Jason
+                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
+                        <line x1="9" y1="4" x2="11" y2="12"></line>
+                        <line x1="11" y1="12" x2="19" y2="19"></line>
+                        <line x1="11" y1="12" x2="3" y2="11"></line>
+                    </svg>
+                    <span>Jason</span>
                 </button>
             </div>
 
@@ -478,9 +501,8 @@ export default {
                     <div style="font-weight: 700; font-size: 1rem; color: var(--color-text-main);">
                         全天達標進度 ({{ targetProfile.name }})
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: #6D4C00; background: #FFF9E6; padding: 4px 10px; border-radius: 20px; border: 1px solid #FFE082;">
+                    <div style="display: flex; align-items: center; font-size: 0.82rem; font-weight: 700; color: #E16262; background: #FDF2F2; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(225, 98, 98, 0.35);">
                         <span>{{ remaining.kcal >= 0 ? '剩餘 ' + remaining.kcal + ' kcal' : '超標 ' + Math.abs(remaining.kcal) + ' kcal' }}</span>
-                        <span>🔔</span>
                     </div>
                 </div>
                 
@@ -571,12 +593,19 @@ export default {
                 <!-- 3. 底部鈉含量文字呈現 -->
                 <div style="border-top: 1px dashed #F0E6D2; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
                     <div style="display: flex; align-items: center; gap: 6px; color: var(--color-text-main);">
-                        <span>🧂 <strong>今日鈉攝取：</strong></span>
-                        <span style="font-weight: 600; color: #6D4C00;">{{ totals.sodium }} mg</span>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 3h6v3H9z"></path>
+                            <path d="M8 6l-2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2L16 6"></path>
+                            <circle cx="12" cy="11" r="0.8" fill="currentColor"></circle>
+                            <circle cx="10" cy="15" r="0.8" fill="currentColor"></circle>
+                            <circle cx="14" cy="15" r="0.8" fill="currentColor"></circle>
+                        </svg>
+                        <strong>今日鈉攝取：</strong>
+                        <span style="font-weight: 700; color: var(--color-text-main);">{{ totals.sodium }} mg</span>
                         <span style="color: var(--color-text-muted); font-size: 0.78rem;">(上限 {{ targetProfile.targetSodium }} mg)</span>
                     </div>
-                    <div :style="{ color: remaining.sodium >= 0 ? '#10B981' : '#E16262', fontWeight: 600, fontSize: '0.8rem' }">
-                        {{ remaining.sodium >= 0 ? '🟢 剩 ' + remaining.sodium + ' mg' : '🔴 超標 ' + Math.abs(remaining.sodium) + ' mg' }}
+                    <div :style="{ color: remaining.sodium >= 0 ? 'var(--color-accent)' : 'var(--color-secondary)', fontWeight: 700, fontSize: '0.85rem' }">
+                        {{ remaining.sodium >= 0 ? '剩 ' + remaining.sodium + ' mg' : '超標 ' + Math.abs(remaining.sodium) + ' mg' }}
                     </div>
                 </div>
             </div>
@@ -587,9 +616,9 @@ export default {
             <!-- Empty State -->
             <div v-if="meals.length === 0" 
                  style="text-align: center; padding: 36px 16px; color: var(--color-text-muted); background: #FFFDF8; border-radius: 12px; border: 1px dashed var(--color-border); font-size: 0.9rem; margin-bottom: 24px;">
-                🥣 {{ isToday ? '今日' : currentDate }} 尚無任何飲食紀錄<br>
-                <span style="font-size: 0.8rem; color: #9CA3AF; margin-top: 6px; display: inline-block;">
-                    可在第一頁備料計算後點擊「📝 紀錄」或點擊下方按鈕 AI 補記！
+                {{ isToday ? '今日' : currentDate }} 尚無任何飲食紀錄<br>
+                <span style="font-size: 0.8rem; color: #9CA3AF; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
+                    可在第一頁備料計算後點擊「<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>紀錄」或點擊下方按鈕 AI 補記！
                 </span>
             </div>
 
@@ -643,8 +672,22 @@ export default {
 
             <!-- Bottom Floating Action Bar (主畫面保持俐落雙控制鈕) -->
             <div class="fab-container">
-                <button class="btn-primary" @click="openAiModal('camera')">📷 拍照記錄</button>
-                <button class="btn-primary accent" @click="openAiModal('voice')">🎙️ 語音/文字輸入</button>
+                <button class="btn-primary" @click="openAiModal('camera')" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>拍照記錄</span>
+                </button>
+                <button class="btn-primary accent" @click="openAiModal('voice')" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span>語音/文字輸入</span>
+                </button>
             </div>
 
             <!-- 全螢幕 / 抽屜 AI 辨識視窗 (100% 還原 畫面 B & 畫面 C) -->

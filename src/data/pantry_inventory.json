@@ -82,7 +82,7 @@
             "targetId": "corn",
             "name": "金黃玉米粒(無加糖)",
             "sourceDish": "常備食材",
-            "store": "全聯",
+            "store": "Costco",
             "isPurchased": false
         },
         {
@@ -91,7 +91,7 @@
             "targetId": "avocado_mash",
             "name": "酪梨泥",
             "sourceDish": "常備食材",
-            "store": "全聯",
+            "store": "義美",
             "isPurchased": false
         },
         {
@@ -100,7 +100,7 @@
             "targetId": "full_fat_milk_250",
             "name": "全脂鮮奶",
             "sourceDish": "常備食材",
-            "store": "全聯",
+            "store": "義美",
             "isPurchased": false
         },
         {
@@ -109,7 +109,7 @@
             "targetId": "edamame",
             "name": "毛豆",
             "sourceDish": "常備食材",
-            "store": "全聯",
+            "store": "義美",
             "isPurchased": false
         },
         {

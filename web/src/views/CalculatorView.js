@@ -887,16 +887,16 @@ export default {
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>01 DISH 選擇料理</span>
                 <span style="font-size: 0.8rem; font-weight: 500; color: var(--color-primary); background: rgba(59, 130, 246, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25);">
-                    {{ currentSlot.icon }} {{ currentSlot.name }}推薦
+                    {{ currentSlot.name }}推薦
                 </span>
             </div>
             <select v-model="selectedDish" @change="userHasManuallySelected = true; onDishChange();" class="select-box" style="margin-bottom: 24px;">
-                <optgroup :label="'⏰ ' + currentSlot.name + '推薦料理'">
+                <optgroup :label="currentSlot.name + '推薦料理'">
                     <option v-for="dish in recommendedDishes" :key="'rec_' + dish.id" :value="dish.id">
                         {{ dish.name }}
                     </option>
                 </optgroup>
-                <optgroup label="🍲 所有料理清單" v-if="otherDishes.length > 0">
+                <optgroup label="所有料理清單" v-if="otherDishes.length > 0">
                     <option v-for="dish in otherDishes" :key="'other_' + dish.id" :value="dish.id">
                         {{ dish.name }}
                     </option>
@@ -908,10 +908,20 @@ export default {
                 <div class="section-title">
                     <span>02 食材選取</span>
                     <div style="display: flex; gap: 6px;">
-                        <button class="btn-icon" style="padding: 4px 8px; font-size: 0.78rem;" @click="hideOutOfStock = !hideOutOfStock">
-                            👁️ {{ hideOutOfStock ? '顯示全部' : '快篩' }}
+                        <button class="btn-icon" style="padding: 4px 10px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;" @click="hideOutOfStock = !hideOutOfStock">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <span>{{ hideOutOfStock ? '顯示全部' : '快篩' }}</span>
                         </button>
-                        <button class="btn-icon" style="padding: 4px 8px; font-size: 0.78rem;" @click="openAddModal">➕ 新增食材</button>
+                        <button class="btn-icon" style="padding: 4px 10px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;" @click="openAddModal">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>新增食材</span>
+                        </button>
                     </div>
                 </div>
                 
@@ -958,14 +968,32 @@ export default {
                 <!-- DINERS -->
                 <div class="section-title">人數與計算橫列</div>
                 <div class="capsule-group" style="margin-bottom: 24px; align-items: center;">
-                    <label class="capsule" :class="{ 'selected': diners.bebe }">
-                        <input type="checkbox" v-model="diners.bebe" style="display:none;"> 😊 Bebe
+                    <label class="capsule" :class="{ 'selected': diners.bebe }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" v-model="diners.bebe" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                        <span>Bebe</span>
                     </label>
-                    <label class="capsule" :class="{ 'selected': diners.ariel }">
-                        <input type="checkbox" v-model="diners.ariel" style="display:none;"> ❤️ 樂樂
+                    <label class="capsule" :class="{ 'selected': diners.ariel }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" v-model="diners.ariel" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        <span>樂樂</span>
                     </label>
-                    <label class="capsule" :class="{ 'selected': diners.jason }">
-                        <input type="checkbox" v-model="diners.jason" style="display:none;"> 🪨 Jason
+                    <label class="capsule" :class="{ 'selected': diners.jason }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" v-model="diners.jason" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
+                            <line x1="9" y1="4" x2="11" y2="12"></line>
+                            <line x1="11" y1="12" x2="19" y2="19"></line>
+                            <line x1="11" y1="12" x2="3" y2="11"></line>
+                        </svg>
+                        <span>Jason</span>
                     </label>
                     <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; margin-left: auto; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -990,7 +1018,13 @@ export default {
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
-                        <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem;">📋 複製食譜</button>
+                        <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>複製食譜</span>
+                        </button>
                     </div>
                     
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
@@ -1003,8 +1037,12 @@ export default {
                         </li>
                     </ul>
 
-                    <button class="btn-icon" @click="showSOP = !showSOP" style="width: 100%; justify-content: center;">
-                        📖 檢視食譜 SOP 步驟 {{ showSOP ? '∧' : 'v' }}
+                    <button class="btn-icon" @click="showSOP = !showSOP" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        <span>檢視食譜 SOP 步驟 {{ showSOP ? '∧' : 'v' }}</span>
                     </button>
                     <div v-if="showSOP" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border); font-size: 0.95rem; color: #2D3748; font-weight: 500; line-height: 1.8;">
                         <p v-if="selectedDish">
@@ -1059,14 +1097,27 @@ export default {
             </div>
 
             <div class="fab-container" v-if="selectedDish && isCalculated">
-                <button class="btn-primary" style="background: #FFFFFF; color: var(--color-text-main); border: 1px solid var(--color-border);" @click="openAddModal">
-                    ➕ 加食材
+                <button class="btn-primary" style="background: #FFFFFF; color: var(--color-text-main); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; gap: 6px;" @click="openAddModal">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>加食材</span>
                 </button>
-                <button class="btn-primary" @click="resetToGoldenDefaults">
-                    🔄 重設
+                <button class="btn-primary" @click="resetToGoldenDefaults" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    <span>重設</span>
                 </button>
-                <button class="btn-primary accent" @click="recordMeal">
-                    📝 紀錄
+                <button class="btn-primary accent" @click="recordMeal" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>紀錄</span>
                 </button>
             </div>
 

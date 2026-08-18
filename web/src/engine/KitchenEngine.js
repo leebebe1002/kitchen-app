@@ -180,21 +180,22 @@ export default class KitchenEngine {
         if (index !== -1) {
             this.data.pantryInventory.shoppingList.splice(index, 1);
         } else {
-            let defaultStore = item.store;
-            if (!defaultStore) {
-                if (item.type === 'supply') {
-                    const sup = this.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                    defaultStore = sup?.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
+            let defaultStore = null;
+            if (item.type === 'supply') {
+                const sup = this.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
+                defaultStore = sup?.store || item.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
+            } else {
+                const ing = this.getIngredientById(item.targetId);
+                if (ing?.preferredStore) {
+                    defaultStore = ing.preferredStore;
+                } else if (item.store) {
+                    defaultStore = item.store;
+                } else if (ing?.brand?.includes('義美') || item.name?.includes('義美') || item.name?.includes('豆奶') || item.name?.includes('芝麻粉')) {
+                    defaultStore = '義美';
+                } else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon', 'avocado_mash', 'avocado_oil', 'unsalted_butter', 'corn'].includes(item.targetId)) {
+                    defaultStore = 'Costco';
                 } else {
-                    const ing = this.getIngredientById(item.targetId);
-                    if (ing?.preferredStore) defaultStore = ing.preferredStore;
-                    else if (ing?.brand?.includes('義美') || item.name.includes('義美') || item.name.includes('豆奶') || item.name.includes('芝麻粉')) {
-                        defaultStore = '義美';
-                    } else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon'].includes(item.targetId)) {
-                        defaultStore = 'Costco';
-                    } else {
-                        defaultStore = '全聯';
-                    }
+                    defaultStore = '全聯';
                 }
             }
             this.data.pantryInventory.shoppingList.push({
@@ -202,7 +203,7 @@ export default class KitchenEngine {
                 type: item.type || 'food',
                 targetId: item.targetId,
                 name: item.name,
-                sourceDish: item.sourceDish || '常購備品',
+                sourceDish: item.sourceDish || '常備食材',
                 store: defaultStore || '全聯',
                 isPurchased: false
             });

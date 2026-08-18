@@ -12,7 +12,11 @@
                 "carbs": 7,
                 "sodium": 160
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "tuna",
@@ -27,7 +31,11 @@
                 "carbs": 0,
                 "sodium": 321
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "shrimp",
@@ -41,7 +49,12 @@
                 "carbs": 0,
                 "sodium": 280
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "sous_vide_chicken",
@@ -59,6 +72,11 @@
             "storageZones": [
                 "fridge",
                 "freezer"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
             ]
         },
         {
@@ -73,7 +91,11 @@
                 "carbs": 0.4,
                 "sodium": 56
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "egg",
@@ -88,7 +110,12 @@
                 "carbs": 0.6,
                 "sodium": 70
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "tofu",
@@ -102,7 +129,11 @@
                 "carbs": 1.9,
                 "sodium": 7
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "greek_yogurt",
@@ -116,7 +147,11 @@
                 "carbs": 3.6,
                 "sodium": 36
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "plain_yogurt",
@@ -130,7 +165,12 @@
                 "carbs": 4.7,
                 "sodium": 46
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "bacon",
@@ -145,7 +185,12 @@
                 "carbs": 0.2,
                 "sodium": 190
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "chicken_thigh",
@@ -159,7 +204,11 @@
                 "carbs": 0,
                 "sodium": 75
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "beef_slice",
@@ -173,7 +222,11 @@
                 "carbs": 0,
                 "sodium": 60
             },
-            "storageZone": "freezer"
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "shrimp_paste",
@@ -186,7 +239,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "frozen_tofu",
@@ -199,7 +256,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "beef_chuck",
@@ -212,7 +273,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "edamame",
@@ -225,7 +290,13 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "義美",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "義美"
+            ]
         },
         {
             "id": "salmon",
@@ -238,7 +309,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "full_fat_milk_250",
@@ -251,7 +326,13 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "義美",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "義美"
+            ]
         },
         {
             "id": "crab_stick",
@@ -264,7 +345,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         }
     ],
     "veggies": [
@@ -280,7 +365,12 @@
                 "carbs": 5.8,
                 "sodium": 18
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "baby_cabbage",
@@ -294,7 +384,12 @@
                 "carbs": 3.4,
                 "sodium": 10
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "broccoli",
@@ -329,7 +424,12 @@
                 "carbs": 6,
                 "sodium": 800
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "black_fungus",
@@ -343,7 +443,12 @@
                 "carbs": 6.5,
                 "sodium": 10
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "baby_corn",
@@ -357,7 +462,11 @@
                 "carbs": 6.5,
                 "sodium": 2
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "banana",
@@ -372,7 +481,12 @@
                 "carbs": 22,
                 "sodium": 1
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "spinach",
@@ -386,7 +500,12 @@
                 "carbs": 3.6,
                 "sodium": 79
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "chinese_cabbage",
@@ -400,7 +519,12 @@
                 "carbs": 2.4,
                 "sodium": 15
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "zucchini",
@@ -414,7 +538,12 @@
                 "carbs": 3.1,
                 "sodium": 8
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "cucumber",
@@ -428,7 +557,12 @@
                 "carbs": 3.6,
                 "sodium": 2
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "greens",
@@ -442,7 +576,11 @@
                 "carbs": 2.9,
                 "sodium": 28
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "carrot",
@@ -461,7 +599,7 @@
                 "全聯",
                 "傳統市場"
             ],
-            "preferredStore": "全聯/傳統市場"
+            "preferredStore": "全聯"
         },
         {
             "id": "onion",
@@ -475,7 +613,12 @@
                 "carbs": 9.3,
                 "sodium": 4
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "mushroom",
@@ -489,7 +632,12 @@
                 "carbs": 6.8,
                 "sodium": 6
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "beech_mushroom",
@@ -503,7 +651,11 @@
                 "carbs": 6.2,
                 "sodium": 3
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "frozen_berry",
@@ -534,7 +686,12 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "cherry_tomatoes",
@@ -547,7 +704,12 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "bean_sprouts",
@@ -560,7 +722,12 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         }
     ],
     "carbs": [
@@ -585,7 +752,12 @@
                 "carbs": 71.6,
                 "sodium": 1881
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "green_pepper_noodle",
@@ -601,7 +773,12 @@
                 "carbs": 67.3,
                 "sodium": 1070.1
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "EC 電商",
+            "preferredStores": [
+                "EC 電商",
+                "全聯"
+            ]
         },
         {
             "id": "bagel",
@@ -616,7 +793,11 @@
                 "carbs": 48,
                 "sodium": 380
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
         },
         {
             "id": "corn",
@@ -631,7 +812,13 @@
                 "carbs": 14.3,
                 "sodium": 160
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "義美"
+            ]
         },
         {
             "id": "brown_rice",
@@ -645,7 +832,11 @@
                 "carbs": 23,
                 "sodium": 5
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "potato",
@@ -659,7 +850,12 @@
                 "carbs": 17,
                 "sodium": 6
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "granola",
@@ -673,7 +869,12 @@
                 "carbs": 64,
                 "sodium": 45
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "udon_noodles",
@@ -686,7 +887,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "prince_noodles",
@@ -699,7 +904,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "sweet_potato",
@@ -712,7 +921,12 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
         },
         {
             "id": "steamed_noodle",
@@ -725,7 +939,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "ing_1786526730204",
@@ -739,7 +957,11 @@
                 "carbs": 10,
                 "fat": 0.2,
                 "sodium": 5
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "ing_1786625616242",
@@ -756,7 +978,12 @@
                 "carbs": 35,
                 "fat": 1,
                 "sodium": 10
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         },
         {
             "id": "ing_1786627813968",
@@ -773,7 +1000,12 @@
                 "carbs": 73.8,
                 "fat": 3.5,
                 "sodium": 1939
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
         }
     ],
     "sauces": [
@@ -789,7 +1021,11 @@
                 "carbs": 46.7,
                 "sodium": 2333
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "balsamic",
@@ -803,7 +1039,12 @@
                 "carbs": 18,
                 "sodium": 27
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "sesame_powder",
@@ -817,7 +1058,12 @@
                 "carbs": 23,
                 "sodium": 5
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "義美",
+            "preferredStores": [
+                "義美",
+                "全聯"
+            ]
         },
         {
             "id": "matcha_powder",
@@ -831,7 +1077,12 @@
                 "carbs": 40,
                 "sodium": 10
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "EC 電商"
+            ]
         },
         {
             "id": "cocoa_powder",
@@ -845,7 +1096,12 @@
                 "carbs": 58,
                 "sodium": 20
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "chia_seeds",
@@ -859,7 +1115,12 @@
                 "carbs": 42.1,
                 "sodium": 16
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "smoked_sea_salt",
@@ -872,7 +1133,12 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "soy_sauce",
@@ -885,7 +1151,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "shacha_sauce",
@@ -898,7 +1168,11 @@
                 "fat": 5,
                 "carbs": 10,
                 "sodium": 100
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "maple_syrup",
@@ -911,7 +1185,12 @@
                 "fat": 0.1,
                 "carbs": 67,
                 "sodium": 12
-            }
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "italian_herbs",
@@ -925,7 +1204,12 @@
                 "carbs": 45,
                 "sodium": 50
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "lemon_juice",
@@ -939,7 +1223,12 @@
                 "carbs": 6.9,
                 "sodium": 1
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "yuzu_vinegar",
@@ -953,7 +1242,12 @@
                 "carbs": 8,
                 "sodium": 120
             },
-            "storageZone": "pantry"
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "ing_1786625262835",
@@ -970,7 +1264,11 @@
                 "carbs": 15,
                 "fat": 5,
                 "sodium": 50
-            }
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         },
         {
             "id": "olive_oil",
@@ -984,7 +1282,12 @@
                 "carbs": 0,
                 "sodium": 0
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "truffle_olive_oil",
@@ -998,7 +1301,12 @@
                 "carbs": 0,
                 "sodium": 0
             },
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "sriracha_mayo",
@@ -1016,7 +1324,12 @@
             "storageZones": [
                 "fridge"
             ],
-            "storageZone": "fridge"
+            "storageZone": "fridge",
+            "preferredStore": "EC 電商",
+            "preferredStores": [
+                "EC 電商",
+                "全聯"
+            ]
         },
         {
             "id": "ing_1786610449768",
@@ -1033,7 +1346,12 @@
                 "carbs": 18.8,
                 "fat": 50,
                 "sodium": 312
-            }
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
         },
         {
             "id": "avocado_mash",
@@ -1042,7 +1360,7 @@
             "unitLabel": "g",
             "per100g": {
                 "kcal": 160,
-                "protein": 2.0,
+                "protein": 2,
                 "fat": 14.7,
                 "carbs": 8.5,
                 "sodium": 7
@@ -1052,9 +1370,10 @@
             ],
             "storageZone": "freezer",
             "preferredStores": [
-                "Costco"
+                "Costco",
+                "義美"
             ],
-            "preferredStore": "Costco"
+            "preferredStore": "義美"
         },
         {
             "id": "avocado_oil",

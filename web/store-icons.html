@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商店 SVG 圖示候選預覽 - Family Kitchen</title>
+    <style>
+        :root {
+            --bg-cream: #FAF8F5;
+            --card-bg: #FFFFFF;
+            --primary-sage: #4A6B5D;
+            --sage-light: #ECFDF5;
+            --accent-warm: #E29578;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --border-color: #E2E8F0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-main);
+            padding: 24px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        p.subtitle {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .icon-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            cursor: pointer;
+        }
+        .icon-card:hover, .icon-card.active {
+            border-color: var(--primary-sage);
+            background: #F4F7F5;
+            transform: translateY(-2px);
+        }
+        .icon-card.active {
+            box-shadow: 0 4px 12px rgba(74, 107, 93, 0.15);
+        }
+        .badge-num {
+            background: #E5E7EB;
+            color: #4B5563;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: #F8FAF9;
+            border: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            color: var(--primary-sage);
+        }
+        .icon-wrapper svg {
+            width: 28px;
+            height: 28px;
+        }
+        .icon-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .icon-desc {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            line-height: 1.4;
+        }
+
+        /* 實際列表模擬區 */
+        .preview-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .preview-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--primary-sage);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mock-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: #FAF8F5;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .mock-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .mock-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+            background: #FFFFFF;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+        .btn-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        .btn-trash {
+            color: #EF4444;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .expand-box {
+            background: #FFFFFF;
+            border: 1px dashed var(--primary-sage);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: -6px;
+            margin-bottom: 12px;
+        }
+        .expand-label {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .pill {
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .pill.active {
+            background: var(--primary-sage);
+            color: #FFFFFF;
+            border-color: var(--primary-sage);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛒 商店通用 SVG 圖示挑選</h1>
+    <p class="subtitle">為您設計的 4 款極簡向量圖示，請點選查看模擬效果</p>
+
+    <!-- 4 大候選卡片 -->
+    <div class="icon-grid">
+        <!-- 款式 1 -->
+        <div class="icon-card active" onclick="selectIcon(1)">
+            <span class="badge-num">款式 1</span>
+            <div class="icon-wrapper">
+                <!-- Storefront -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <path d="M3 9h18"></path>
+                    <path d="M9 22V12h6v10"></path>
+                </svg>
+            </div>
+            <div class="icon-title">經典門市</div>
+            <div class="icon-desc">方正簡約，一眼辨識為實體商店</div>
+        </div>
+
+        <!-- 款式 2 -->
+        <div class="icon-card" onclick="selectIcon(2)">
+            <span class="badge-num">款式 2 ⭐ 首推</span>
+            <div class="icon-wrapper">
+                <!-- Awning Shop -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3h18v6H3z"></path>
+                    <path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path>
+                    <path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path>
+                    <path d="M10 22v-6h4v6"></path>
+                </svg>
+            </div>
+            <div class="icon-title">遮陽棚小店</div>
+            <div class="icon-desc">溫馨波浪棚，契合媽廚生活質感</div>
+        </div>
+
+        <!-- 款式 3 -->
+        <div class="icon-card" onclick="selectIcon(3)">
+            <span class="badge-num">款式 3</span>
+            <div class="icon-wrapper">
+                <!-- Shopping Bag -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+            </div>
+            <div class="icon-title">手提購物袋</div>
+            <div class="icon-desc">極簡線條，最俐落的採買意象</div>
+        </div>
+
+        <!-- 款式 4 -->
+        <div class="icon-card" onclick="selectIcon(4)">
+            <span class="badge-num">款式 4</span>
+            <div class="icon-wrapper">
+                <!-- Store Tag -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+            </div>
+            <div class="icon-title">通路標籤</div>
+            <div class="icon-desc">標記分類感，乾淨不佔空間</div>
+        </div>
+    </div>
+
+    <!-- 實際在採買清單裡長怎樣的預覽 -->
+    <div class="preview-section">
+        <div class="preview-title">
+            <span>📱 實裝於採買清單的視覺模擬</span>
+        </div>
+
+        <!-- 項目 1 -->
+        <div class="mock-item">
+            <div class="mock-left">
+                <input type="checkbox" style="width: 18px; height: 18px;">
+                <span>酪梨泥</span>
+                <span style="font-size: 0.75rem; color: #9CA3AF; font-weight: normal;">(來自：常備食材)</span>
+            </div>
+            <div class="mock-right">
+                <button class="btn-icon" id="previewBtn" title="點擊切換通路">
+                    <!-- 動態替換 SVG -->
+                    <svg id="previewSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <path d="M3 9h18"></path>
+                        <path d="M9 22V12h6v10"></path>
+                    </svg>
+                </button>
+                <button class="btn-trash">🗑️</button>
+            </div>
+        </div>
+
+        <!-- 點擊展開的模擬 -->
+        <div class="expand-box">
+            <div class="expand-label">點擊商店圖示展開通路（純文字無圖示）：</div>
+            <div class="pill-group">
+                <span class="pill">全聯</span>
+                <span class="pill active">Costco</span>
+                <span class="pill">義美</span>
+                <span class="pill">傳統市場</span>
+                <span class="pill">EC 電商</span>
+                <span class="pill">其他</span>
+            </div>
+        </div>
+
+        <!-- 項目 2 (未展開常態) -->
+        <div class="mock-item">
+            <div class="mock-left">
+                <input type="checkbox" style="width: 18px; height: 18px;">
+                <span>金黃玉米粒(無加糖)</span>
+            </div>
+            <div class="mock-right">
+                <button class="btn-icon">
+                    <svg id="previewSvg2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <path d="M3 9h18"></path>
+                        <path d="M9 22V12h6v10"></path>
+                    </svg>
+                </button>
+                <button class="btn-trash">🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const svgs = {
+            1: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M3 9h18"></path><path d="M9 22V12h6v10"></path>`,
+            2: `<path d="M3 3h18v6H3z"></path><path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path><path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path><path d="M10 22v-6h4v6"></path>`,
+            3: `<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>`,
+            4: `<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>`
+        };
+
+        function selectIcon(num) {
+            document.querySelectorAll('.icon-card').forEach((c, idx) => {
+                if (idx + 1 === num) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            document.getElementById('previewSvg').innerHTML = svgs[num];
+            document.getElementById('previewSvg2').innerHTML = svgs[num];
+        }
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
     "dishes": [
         {
             "id": "whey_protein_shake",
-            "name": "🥛 搖搖乳清蛋白",
+            "name": "搖搖乳清蛋白",
             "categories": [
                 "breakfast",
                 "snack",
@@ -38,19 +38,55 @@
             ],
             "memberPortions": {
                 "bebe": [
-                    { "id": "whey_protein", "amount": 25, "unit": "g" },
-                    { "id": "full_fat_milk_250", "amount": 200, "unit": "g" },
-                    { "id": "matcha_powder", "amount": 2, "unit": "g" }
+                    {
+                        "id": "whey_protein",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 200,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "matcha_powder",
+                        "amount": 2,
+                        "unit": "g"
+                    }
                 ],
                 "ariel": [
-                    { "id": "whey_protein", "amount": 25, "unit": "g" },
-                    { "id": "full_fat_milk_250", "amount": 200, "unit": "g" },
-                    { "id": "cocoa_powder", "amount": 3, "unit": "g" }
+                    {
+                        "id": "whey_protein",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 200,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cocoa_powder",
+                        "amount": 3,
+                        "unit": "g"
+                    }
                 ],
                 "jason": [
-                    { "id": "whey_protein", "amount": 35, "unit": "g" },
-                    { "id": "full_fat_milk_250", "amount": 250, "unit": "g" },
-                    { "id": "sesame_powder", "amount": 5, "unit": "g" }
+                    {
+                        "id": "whey_protein",
+                        "amount": 35,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 250,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sesame_powder",
+                        "amount": 5,
+                        "unit": "g"
+                    }
                 ]
             },
             "sopSteps": [
@@ -61,7 +97,7 @@
         },
         {
             "id": "yogurt_bowl",
-            "name": "🥣 燕麥希臘優格碗",
+            "name": "燕麥希臘優格碗",
             "categories": [
                 "breakfast",
                 "brunch",
@@ -247,7 +283,7 @@
         },
         {
             "id": "brunch_set",
-            "name": "🥪 陽光美式早午餐",
+            "name": "陽光美式早午餐",
             "categories": [
                 "brunch",
                 "lunch"
@@ -324,25 +360,85 @@
             ],
             "memberPortions": {
                 "bebe": [
-                    { "id": "sous_vide_chicken", "amount": 70, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "bagel", "amount": 1, "unit": "個" },
-                    { "id": "greens", "amount": 50, "unit": "g" },
-                    { "id": "cherry_tomatoes", "amount": 40, "unit": "g" }
+                    {
+                        "id": "sous_vide_chicken",
+                        "amount": 70,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "bagel",
+                        "amount": 1,
+                        "unit": "個"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cherry_tomatoes",
+                        "amount": 40,
+                        "unit": "g"
+                    }
                 ],
                 "ariel": [
-                    { "id": "sous_vide_chicken", "amount": 80, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "bagel", "amount": 1, "unit": "個" },
-                    { "id": "greens", "amount": 50, "unit": "g" },
-                    { "id": "cherry_tomatoes", "amount": 50, "unit": "g" }
+                    {
+                        "id": "sous_vide_chicken",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "bagel",
+                        "amount": 1,
+                        "unit": "個"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cherry_tomatoes",
+                        "amount": 50,
+                        "unit": "g"
+                    }
                 ],
                 "jason": [
-                    { "id": "sous_vide_chicken", "amount": 120, "unit": "g" },
-                    { "id": "egg", "amount": 2, "unit": "顆" },
-                    { "id": "bagel", "amount": 1, "unit": "個" },
-                    { "id": "greens", "amount": 60, "unit": "g" },
-                    { "id": "cherry_tomatoes", "amount": 60, "unit": "g" }
+                    {
+                        "id": "sous_vide_chicken",
+                        "amount": 120,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 2,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "bagel",
+                        "amount": 1,
+                        "unit": "個"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cherry_tomatoes",
+                        "amount": 60,
+                        "unit": "g"
+                    }
                 ]
             },
             "sopSteps": [
@@ -354,7 +450,7 @@
         },
         {
             "id": "poke_bowl",
-            "name": "🥑 夏威夷波奇碗",
+            "name": "夏威夷波奇碗",
             "categories": [
                 "lunch",
                 "dinner",
@@ -385,41 +481,153 @@
                 "balsamic"
             ],
             "defaultIngredients": [
-                { "id": "shrimp", "amount": 80, "unit": "g" },
-                { "id": "egg", "amount": 1, "unit": "顆" },
-                { "id": "greens", "amount": 80, "unit": "g" },
-                { "id": "kimchi", "amount": 35, "unit": "g" },
-                { "id": "brown_rice", "amount": 80, "unit": "g" },
-                { "id": "corn", "amount": 30, "unit": "g" },
-                { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
+                {
+                    "id": "shrimp",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "greens",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "kimchi",
+                    "amount": 35,
+                    "unit": "g"
+                },
+                {
+                    "id": "brown_rice",
+                    "amount": 80,
+                    "unit": "g"
+                },
+                {
+                    "id": "corn",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "sriracha_mayo",
+                    "amount": 10,
+                    "unit": "g"
+                }
             ],
             "memberPortions": {
                 "bebe": [
-                    { "id": "shrimp", "amount": 80, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "greens", "amount": 80, "unit": "g" },
-                    { "id": "kimchi", "amount": 35, "unit": "g" },
-                    { "id": "brown_rice", "amount": 80, "unit": "g" },
-                    { "id": "corn", "amount": 30, "unit": "g" },
-                    { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
+                    {
+                        "id": "shrimp",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 35,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "corn",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sriracha_mayo",
+                        "amount": 10,
+                        "unit": "g"
+                    }
                 ],
                 "ariel": [
-                    { "id": "shrimp", "amount": 80, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "greens", "amount": 60, "unit": "g" },
-                    { "id": "kimchi", "amount": 30, "unit": "g" },
-                    { "id": "brown_rice", "amount": 100, "unit": "g" },
-                    { "id": "corn", "amount": 40, "unit": "g" },
-                    { "id": "sriracha_mayo", "amount": 10, "unit": "g" }
+                    {
+                        "id": "shrimp",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "corn",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sriracha_mayo",
+                        "amount": 10,
+                        "unit": "g"
+                    }
                 ],
                 "jason": [
-                    { "id": "shrimp", "amount": 120, "unit": "g" },
-                    { "id": "egg", "amount": 2, "unit": "顆" },
-                    { "id": "greens", "amount": 80, "unit": "g" },
-                    { "id": "kimchi", "amount": 50, "unit": "g" },
-                    { "id": "brown_rice", "amount": 140, "unit": "g" },
-                    { "id": "corn", "amount": 40, "unit": "g" },
-                    { "id": "sriracha_mayo", "amount": 15, "unit": "g" }
+                    {
+                        "id": "shrimp",
+                        "amount": 120,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 2,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "greens",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 140,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "corn",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sriracha_mayo",
+                        "amount": 15,
+                        "unit": "g"
+                    }
                 ]
             },
             "sopSteps": [
@@ -429,7 +637,7 @@
         },
         {
             "id": "salad",
-            "name": "🥗 彩虹生菜沙拉",
+            "name": "彩虹生菜沙拉",
             "categories": [
                 "lunch",
                 "dinner",
@@ -500,7 +708,7 @@
         },
         {
             "id": "bibimbap",
-            "name": "🍛 韓式拌飯",
+            "name": "韓式拌飯",
             "categories": [
                 "lunch",
                 "dinner"
@@ -571,31 +779,115 @@
             ],
             "memberPortions": {
                 "bebe": [
-                    { "id": "beef_slice", "amount": 80, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "zucchini", "amount": 70, "unit": "g" },
-                    { "id": "mushroom", "amount": 50, "unit": "g" },
-                    { "id": "spinach", "amount": 40, "unit": "g" },
-                    { "id": "kimchi", "amount": 30, "unit": "g" },
-                    { "id": "brown_rice", "amount": 110, "unit": "g" }
+                    {
+                        "id": "beef_slice",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "zucchini",
+                        "amount": 70,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "mushroom",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 110,
+                        "unit": "g"
+                    }
                 ],
                 "ariel": [
-                    { "id": "beef_slice", "amount": 80, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "bean_sprouts", "amount": 50, "unit": "g" },
-                    { "id": "spinach", "amount": 50, "unit": "g" },
-                    { "id": "zucchini", "amount": 50, "unit": "g" },
-                    { "id": "kimchi", "amount": 30, "unit": "g" },
-                    { "id": "brown_rice", "amount": 130, "unit": "g" }
+                    {
+                        "id": "beef_slice",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "bean_sprouts",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "zucchini",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 130,
+                        "unit": "g"
+                    }
                 ],
                 "jason": [
-                    { "id": "beef_slice", "amount": 130, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "bean_sprouts", "amount": 60, "unit": "g" },
-                    { "id": "spinach", "amount": 60, "unit": "g" },
-                    { "id": "mushroom", "amount": 50, "unit": "g" },
-                    { "id": "kimchi", "amount": 40, "unit": "g" },
-                    { "id": "brown_rice", "amount": 160, "unit": "g" }
+                    {
+                        "id": "beef_slice",
+                        "amount": 130,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "bean_sprouts",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "mushroom",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "kimchi",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 160,
+                        "unit": "g"
+                    }
                 ]
             },
             "sopSteps": [
@@ -635,7 +927,7 @@
         },
         {
             "id": "ramen_meal",
-            "name": "🍜 營養滿滿泡麵",
+            "name": "營養滿滿泡麵",
             "categories": [
                 "lunch",
                 "dinner",
@@ -695,7 +987,7 @@
         },
         {
             "id": "hotpot",
-            "name": "🍲 暖心火鍋",
+            "name": "暖心火鍋",
             "categories": [
                 "dinner",
                 "lunch"
@@ -767,7 +1059,7 @@
         },
         {
             "id": "home_cooking",
-            "name": "🥘 幸福家常飯",
+            "name": "幸福家常飯",
             "categories": [
                 "dinner"
             ],
@@ -790,41 +1082,153 @@
                 "unsalted_butter"
             ],
             "defaultIngredients": [
-                { "id": "salmon", "amount": 100, "unit": "g" },
-                { "id": "egg", "amount": 1, "unit": "顆" },
-                { "id": "pork_shoulder", "amount": 50, "unit": "g" },
-                { "id": "cabbage", "amount": 120, "unit": "g" },
-                { "id": "black_fungus", "amount": 40, "unit": "g" },
-                { "id": "carrot", "amount": 30, "unit": "g" },
-                { "id": "brown_rice", "amount": 80, "unit": "g" }
+                {
+                    "id": "salmon",
+                    "amount": 100,
+                    "unit": "g"
+                },
+                {
+                    "id": "egg",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "pork_shoulder",
+                    "amount": 50,
+                    "unit": "g"
+                },
+                {
+                    "id": "cabbage",
+                    "amount": 120,
+                    "unit": "g"
+                },
+                {
+                    "id": "black_fungus",
+                    "amount": 40,
+                    "unit": "g"
+                },
+                {
+                    "id": "carrot",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "brown_rice",
+                    "amount": 80,
+                    "unit": "g"
+                }
             ],
             "memberPortions": {
                 "bebe": [
-                    { "id": "salmon", "amount": 100, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "pork_shoulder", "amount": 50, "unit": "g" },
-                    { "id": "cabbage", "amount": 120, "unit": "g" },
-                    { "id": "black_fungus", "amount": 40, "unit": "g" },
-                    { "id": "carrot", "amount": 30, "unit": "g" },
-                    { "id": "brown_rice", "amount": 60, "unit": "g" }
+                    {
+                        "id": "salmon",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "pork_shoulder",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cabbage",
+                        "amount": 120,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "black_fungus",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "carrot",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 60,
+                        "unit": "g"
+                    }
                 ],
                 "ariel": [
-                    { "id": "salmon", "amount": 100, "unit": "g" },
-                    { "id": "egg", "amount": 1, "unit": "顆" },
-                    { "id": "pork_shoulder", "amount": 50, "unit": "g" },
-                    { "id": "cabbage", "amount": 100, "unit": "g" },
-                    { "id": "black_fungus", "amount": 30, "unit": "g" },
-                    { "id": "carrot", "amount": 30, "unit": "g" },
-                    { "id": "brown_rice", "amount": 80, "unit": "g" }
+                    {
+                        "id": "salmon",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "pork_shoulder",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cabbage",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "black_fungus",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "carrot",
+                        "amount": 30,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 80,
+                        "unit": "g"
+                    }
                 ],
                 "jason": [
-                    { "id": "salmon", "amount": 150, "unit": "g" },
-                    { "id": "egg", "amount": 2, "unit": "顆" },
-                    { "id": "pork_shoulder", "amount": 100, "unit": "g" },
-                    { "id": "cabbage", "amount": 150, "unit": "g" },
-                    { "id": "black_fungus", "amount": 50, "unit": "g" },
-                    { "id": "carrot", "amount": 40, "unit": "g" },
-                    { "id": "brown_rice", "amount": 140, "unit": "g" }
+                    {
+                        "id": "salmon",
+                        "amount": 150,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "egg",
+                        "amount": 2,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "pork_shoulder",
+                        "amount": 100,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "cabbage",
+                        "amount": 150,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "black_fungus",
+                        "amount": 50,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "carrot",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "brown_rice",
+                        "amount": 140,
+                        "unit": "g"
+                    }
                 ]
             },
             "sopSteps": [

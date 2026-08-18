@@ -63,9 +63,9 @@ export default {
 
         // 4 Storage Zones mapped to ingredients
         const zoneNames = {
-            fridge: '❄️ 【冷藏區】 (Fridge Zone)',
-            freezer: '🧊 【冷凍區】 (Freezer Zone)',
-            pantry: '🏠 【常溫區】 (Pantry Zone)'
+            fridge: '【冷藏區】 (Fridge Zone)',
+            freezer: '【冷凍區】 (Freezer Zone)',
+            pantry: '【常溫區】 (Pantry Zone)'
         };
 
         const getZoneIngredients = (zone) => {
@@ -162,14 +162,14 @@ export default {
 
         // Helper to resolve store for any shopping item
         const getItemStore = (item) => {
-            if (item.store) return item.store;
             if (item.type === 'supply') {
                 const sup = engine.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                return sup?.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
+                return sup?.store || item.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
             }
             const ing = engine.getIngredientById(item.targetId);
             if (ing?.preferredStore) return ing.preferredStore;
-            if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon'].includes(item.targetId)) {
+            if (item.store) return item.store;
+            if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon', 'avocado_mash', 'avocado_oil', 'unsalted_butter', 'corn'].includes(item.targetId)) {
                 return 'Costco';
             }
             return '全聯';
@@ -180,10 +180,30 @@ export default {
             return engine.data.pantryInventory?.shoppingList || [];
         });
 
+        // 方案 B：原地過渡與復原狀態記錄
+        const movedItemsMap = ref({});
+
+        watch(shoppingStoreFilter, () => {
+            movedItemsMap.value = {};
+        });
+
+        watch(showShoppingModal, (newVal) => {
+            if (!newVal) {
+                movedItemsMap.value = {};
+            }
+        });
+
         const filteredFoodShopping = computed(() => {
             let list = shoppingList.value.filter(s => s.type === 'food');
             if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => getItemStore(s).includes(shoppingStoreFilter.value));
+                list = list.filter(s => {
+                    const currentStore = getItemStore(s);
+                    const movedInfo = movedItemsMap.value[s.id];
+                    if (movedInfo && movedInfo.originalStore.includes(shoppingStoreFilter.value)) {
+                        return true; // 方案 B：原地保留過渡卡片
+                    }
+                    return currentStore.includes(shoppingStoreFilter.value);
+                });
             }
             return list;
         });
@@ -191,7 +211,14 @@ export default {
         const filteredSupplyShopping = computed(() => {
             let list = shoppingList.value.filter(s => s.type === 'supply');
             if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => getItemStore(s).includes(shoppingStoreFilter.value));
+                list = list.filter(s => {
+                    const currentStore = getItemStore(s);
+                    const movedInfo = movedItemsMap.value[s.id];
+                    if (movedInfo && movedInfo.originalStore.includes(shoppingStoreFilter.value)) {
+                        return true; // 方案 B：原地保留過渡卡片
+                    }
+                    return currentStore.includes(shoppingStoreFilter.value);
+                });
             }
             return list;
         });
@@ -202,6 +229,64 @@ export default {
 
         const deleteShoppingItem = async (id) => {
             await engine.deleteShoppingItem(id);
+        };
+
+        const activeStorePickerItemId = ref(null);
+        const availableStores = ['全聯', 'Costco', '義美', '傳統市場', 'EC 電商', '其他'];
+
+        const toggleStorePicker = (itemId) => {
+            activeStorePickerItemId.value = activeStorePickerItemId.value === itemId ? null : itemId;
+        };
+
+        const updateItemStore = async (item, newStore) => {
+            const oldStore = getItemStore(item);
+            if (shoppingStoreFilter.value !== 'all' && oldStore !== newStore) {
+                movedItemsMap.value[item.id] = {
+                    originalStore: oldStore,
+                    targetStore: newStore
+                };
+            } else if (movedItemsMap.value[item.id]) {
+                delete movedItemsMap.value[item.id];
+            }
+
+            item.store = newStore;
+            if (item.type === 'supply') {
+                if (engine.data.householdSupplies?.supplies) {
+                    const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
+                    if (sup) {
+                        sup.store = newStore;
+                        await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
+                    }
+                }
+            } else {
+                const ing = engine.getIngredientById(item.targetId);
+                if (ing) {
+                    ing.preferredStore = newStore;
+                    if (!ing.preferredStores) ing.preferredStores = [newStore];
+                    else if (!ing.preferredStores.includes(newStore)) ing.preferredStores.push(newStore);
+                    if (engine.data.rawIngredients) {
+                        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                            const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
+                            if (rawIng) {
+                                rawIng.preferredStore = newStore;
+                                rawIng.preferredStores = ing.preferredStores;
+                            }
+                        });
+                        await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+                    }
+                }
+            }
+            await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
+            activeStorePickerItemId.value = null;
+        };
+
+        const undoMoveItem = async (item) => {
+            const info = movedItemsMap.value[item.id];
+            if (info) {
+                const revertStore = info.originalStore;
+                delete movedItemsMap.value[item.id];
+                await updateItemStore(item, revertStore);
+            }
         };
 
         const clearPurchased = async () => {
@@ -689,6 +774,12 @@ export default {
             deleteSupplyItem,
             updateSupplyPhoto,
             getItemStore,
+            activeStorePickerItemId,
+            availableStores,
+            toggleStorePicker,
+            updateItemStore,
+            movedItemsMap,
+            undoMoveItem,
             saveNewItem
         };
     },
@@ -699,35 +790,31 @@ export default {
                 01 PANTRY STOCK 冰箱食材庫存狀態
             </div>
 
-            <!-- 📍 右側浮動快捷錨點選單 (Floating Right-Side Anchor Quick Nav) -->
-            <div class="floating-quick-nav" style="position: fixed; right: 10px; top: 42%; transform: translateY(-50%); z-index: 99; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 8px 6px; border-radius: 16px; border: 1.5px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
-                <button @click="scrollToSection('zone-fridge')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--color-text-main);">
-                    <span style="font-size: 1.05rem;">❄️</span>
-                    <span>冷藏</span>
+            <!-- 右側浮動快捷錨點選單 (Floating Right-Side Anchor Quick Nav) -->
+            <div class="floating-quick-nav" style="position: fixed; right: 10px; top: 42%; transform: translateY(-50%); z-index: 99; display: flex; flex-direction: column; gap: 6px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 8px 6px; border-radius: 16px; border: 1.5px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
+                <button @click="scrollToSection('zone-fridge')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--color-text-main);">
+                    冷藏
                 </button>
-                <button @click="scrollToSection('zone-freezer')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--color-text-main);">
-                    <span style="font-size: 1.05rem;">🧊</span>
-                    <span>冷凍</span>
+                <button @click="scrollToSection('zone-freezer')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--color-text-main);">
+                    冷凍
                 </button>
-                <button @click="scrollToSection('zone-pantry')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--color-text-main);">
-                    <span style="font-size: 1.05rem;">🏠</span>
-                    <span>常溫</span>
+                <button @click="scrollToSection('zone-pantry')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--color-text-main);">
+                    常溫
                 </button>
-                <button @click="scrollToSection('zone-supplies')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--color-text-main);">
-                    <span style="font-size: 1.05rem;">🧻</span>
-                    <span>雜項</span>
+                <button @click="scrollToSection('zone-supplies')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--color-text-main);">
+                    雜項
                 </button>
             </div>
 
-            <!-- ❄️ 【冷藏區】 (Fridge Zone) -->
+            <!-- 【冷藏區】 (Fridge Zone) -->
             <div id="zone-fridge" class="card" style="margin-bottom: 20px;">
                 <h3 style="font-size: 1.1rem; margin-bottom: 14px; color: var(--color-text-main);">
-                    ❄️ 【冷藏區】 (Fridge Zone)
+                    【冷藏區】 (Fridge Zone)
                 </h3>
 
-                <!-- 1. 🥩 蛋白質類 -->
+                <!-- 1. 蛋白質類 -->
                 <div v-if="getCategoryInZone('fridge', 'proteins').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 🥩 蛋白質類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 蛋白質類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'proteins')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -756,9 +843,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 2. 🥦 蔬菜水果 -->
+                <!-- 2. 蔬菜水果 -->
                 <div v-if="getCategoryInZone('fridge', 'veggies').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 🥦 蔬菜水果</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 蔬菜水果</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'veggies')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -787,9 +874,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 3. 🌾 碳水類 -->
+                <!-- 3. 碳水類 -->
                 <div v-if="getCategoryInZone('fridge', 'carbs').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 🌾 碳水類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 碳水類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'carbs')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -818,9 +905,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 4. 🧂 醬料調味 -->
+                <!-- 4. 醬料調味 -->
                 <div v-if="getCategoryInZone('fridge', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -849,9 +936,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 5. 🥑 油脂類 -->
+                <!-- 5. 油脂類 -->
                 <div v-if="getCategoryInZone('fridge', 'fats').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 🥑 油脂類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 油脂類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('fridge', 'fats')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -881,15 +968,15 @@ export default {
                 </div>
             </div>
 
-            <!-- 🧊 【冷凍區】 (Freezer Zone) -->
+            <!-- 【冷凍區】 (Freezer Zone) -->
             <div id="zone-freezer" class="card" style="margin-bottom: 20px;">
                 <h3 style="font-size: 1.1rem; margin-bottom: 14px; color: var(--color-text-main);">
-                    🧊 【冷凍區】 (Freezer Zone)
+                    【冷凍區】 (Freezer Zone)
                 </h3>
 
-                <!-- 1. 🥩 蛋白質類 -->
+                <!-- 1. 蛋白質類 -->
                 <div v-if="getCategoryInZone('freezer', 'proteins').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 🥩 蛋白質類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 蛋白質類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'proteins')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -918,9 +1005,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 2. 🥦 蔬菜水果 -->
+                <!-- 2. 蔬菜水果 -->
                 <div v-if="getCategoryInZone('freezer', 'veggies').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 🥦 蔬菜水果</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 蔬菜水果</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'veggies')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -949,9 +1036,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 3. 🌾 碳水類 -->
+                <!-- 3. 碳水類 -->
                 <div v-if="getCategoryInZone('freezer', 'carbs').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 🌾 碳水類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 碳水類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'carbs')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -980,9 +1067,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 4. 🧂 醬料調味 -->
+                <!-- 4. 醬料調味 -->
                 <div v-if="getCategoryInZone('freezer', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1011,9 +1098,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 5. 🥑 油脂類 -->
+                <!-- 5. 油脂類 -->
                 <div v-if="getCategoryInZone('freezer', 'fats').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 🥑 油脂類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 油脂類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('freezer', 'fats')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1043,15 +1130,15 @@ export default {
                 </div>
             </div>
 
-            <!-- 🏠 【常溫區】 (Pantry Zone) -->
+            <!-- 【常溫區】 (Pantry Zone) -->
             <div id="zone-pantry" class="card" style="margin-bottom: 20px;">
                 <h3 style="font-size: 1.1rem; margin-bottom: 14px; color: var(--color-text-main);">
-                    🏠 【常溫區】 (Pantry Zone)
+                    【常溫區】 (Pantry Zone)
                 </h3>
 
-                <!-- 1. 🥩 蛋白質類 -->
+                <!-- 1. 蛋白質類 -->
                 <div v-if="getCategoryInZone('pantry', 'proteins').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 🥩 蛋白質類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">1. 蛋白質類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'proteins')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1080,9 +1167,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 2. 🥦 蔬菜水果 -->
+                <!-- 2. 蔬菜水果 -->
                 <div v-if="getCategoryInZone('pantry', 'veggies').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 🥦 蔬菜水果</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">2. 蔬菜水果</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'veggies')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1111,9 +1198,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 3. 🌾 碳水類 -->
+                <!-- 3. 碳水類 -->
                 <div v-if="getCategoryInZone('pantry', 'carbs').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 🌾 碳水類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">3. 碳水類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'carbs')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1142,9 +1229,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 4. 🧂 醬料調味 -->
+                <!-- 4. 醬料調味 -->
                 <div v-if="getCategoryInZone('pantry', 'sauces').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 🧂 醬料與油脂</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'sauces')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1173,9 +1260,9 @@ export default {
                     </div>
                 </div>
 
-                <!-- 5. 🥑 油脂類 -->
+                <!-- 5. 油脂類 -->
                 <div v-if="getCategoryInZone('pantry', 'fats').length > 0" style="margin-bottom: 14px;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 🥑 油脂類</div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 油脂類</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'fats')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
@@ -1205,11 +1292,11 @@ export default {
                 </div>
             </div>
 
-            <!-- 🧻 【生活雜項區】 (Household Supplies Zone - 非食品) -->
+            <!-- 【生活雜項區】 (Household Supplies Zone - 非食品) -->
             <div id="zone-supplies" class="card" style="margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                     <h3 style="font-size: 1.1rem; margin: 0; color: var(--color-text-main);">
-                        🧻 【生活雜項區】 (非食品)
+                        【生活雜項區】 (非食品)
                     </h3>
                 </div>
 
@@ -1250,8 +1337,21 @@ export default {
 
             <!-- 手機畫面最底部固定常駐雙控制鈕 -->
             <div class="fab-container">
-                <button class="btn-primary" @click="showShoppingModal = true">🛒 採買清單</button>
-                <button class="btn-primary accent" @click="openAddModalWithCamera">📸 拍照/新增</button>
+                <button class="btn-primary" @click="showShoppingModal = true" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span>採買清單</span>
+                </button>
+                <button class="btn-primary accent" @click="openAddModalWithCamera" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>拍照/新增</span>
+                </button>
             </div>
 
             <!-- 📱 畫面 B：【滿版獨立全螢幕採買視窗】(點擊 🛒 賣場採買清單 入場) -->
@@ -1259,7 +1359,14 @@ export default {
                 <div class="drawer-content" style="max-height: 94vh; padding: 20px 20px 36px 20px;">
                     <!-- Top Header -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">
-                        <span style="font-weight: 700; font-size: 1.1rem;">🛒 賣場待採買 CheckList</span>
+                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: var(--color-text-main);">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                            <span>賣場待採買 CheckList</span>
+                        </div>
                         <button class="btn-icon" @click="showShoppingModal = false" style="border: none; font-size: 1.1rem;">✕</button>
                     </div>
 
@@ -1303,23 +1410,89 @@ export default {
                             <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text-main);">
                                 【食材類】：
                             </div>
-                            <div v-for="item in filteredFoodShopping" :key="item.id" 
-                                 style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px; margin-bottom: 8px;">
-                                <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;" @click="toggleItemPurchased(item.id)">
-                                    <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
-                                    <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
-                                        {{ item.name }}
-                                    </span>
-                                    <span style="font-size: 0.75rem; color: #9CA3AF;">(來自：{{ item.sourceDish }})</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <!-- 僅在「全部」分頁下才需要顯示賣場 Badge，特定賣場分頁下不重複顯示 -->
-                                    <span v-if="shoppingStoreFilter === 'all'" style="font-size: 0.75rem; background: #E5E7EB; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
-                                        {{ getItemStore(item) }}
-                                    </span>
-                                    <button class="btn-icon" @click="deleteShoppingItem(item.id)" style="padding: 2px 6px; border: none; font-size: 0.85rem; color: #EF4444;">
-                                        🗑️
+                            <div v-for="item in filteredFoodShopping" :key="item.id" style="margin-bottom: 8px;">
+                                <!-- 方案 B：過渡狀態卡片 (In-place Transition) -->
+                                <div v-if="movedItemsMap[item.id]" 
+                                     style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F3F4F6; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #4B5563;">
+                                        <span style="font-weight: 700; color: #1F2937;">{{ item.name }}</span>
+                                        <span style="color: #6B7280; font-size: 0.8rem;">➔ 已移至【{{ movedItemsMap[item.id].targetStore }}】</span>
+                                    </div>
+                                    <button class="btn-icon" @click.stop="undoMoveItem(item)" 
+                                            style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; color: var(--color-primary); cursor: pointer;">
+                                        ↩ 復原
                                     </button>
+                                </div>
+
+                                <!-- 常態卡片 -->
+                                <div v-else>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;" @click="toggleItemPurchased(item.id)">
+                                            <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
+                                            <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
+                                                {{ item.name }}
+                                            </span>
+                                            <span style="font-size: 0.75rem; color: #9CA3AF;">(來自：{{ item.sourceDish }})</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <!-- 款式 2：遮陽棚小店通用 SVG 圖示按鈕 -->
+                                            <button class="btn-icon" @click.stop="toggleStorePicker(item.id)" 
+                                                    :title="'目前通路：' + getItemStore(item) + '（點擊切換）'" 
+                                                    :style="{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        padding: '0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        color: activeStorePickerItemId === item.id ? 'var(--color-primary)' : 'var(--color-text-main)',
+                                                        cursor: 'pointer'
+                                                    }">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3 3h18v6H3z"></path>
+                                                    <path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path>
+                                                    <path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path>
+                                                    <path d="M10 22v-6h4v6"></path>
+                                                </svg>
+                                            </button>
+                                            <button class="btn-icon" @click="deleteShoppingItem(item.id)" title="刪除項目" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: #EF4444; cursor: pointer; border-radius: 8px;">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 點擊展開的純文字通路選擇列 -->
+                                    <div v-if="activeStorePickerItemId === item.id" style="background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 10px; padding: 10px 12px; margin-top: 4px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                            <span>📍 選擇採買通路（目前：{{ getItemStore(item) }}）：</span>
+                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕</span>
+                                        </div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            <button v-for="store in availableStores" :key="store"
+                                                    class="btn-icon"
+                                                    :style="{
+                                                        padding: '5px 12px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        background: getItemStore(item) === store ? 'var(--color-primary)' : '#F3F4F6',
+                                                        color: getItemStore(item) === store ? '#FFFFFF' : '#374151',
+                                                        border: getItemStore(item) === store ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
+                                                        cursor: 'pointer'
+                                                    }"
+                                                    @click="updateItemStore(item, store)">
+                                                {{ store }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1329,22 +1502,88 @@ export default {
                             <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text-main);">
                                 【生活雜項類】：
                             </div>
-                            <div v-for="item in filteredSupplyShopping" :key="item.id" 
-                                 style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px; margin-bottom: 8px;">
-                                <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;" @click="toggleItemPurchased(item.id)">
-                                    <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
-                                    <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
-                                        {{ item.name }}
-                                    </span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <!-- 僅在「全部」分頁下才需要顯示賣場 Badge，特定賣場分頁下不重複顯示 -->
-                                    <span v-if="shoppingStoreFilter === 'all'" style="font-size: 0.75rem; background: #E5E7EB; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
-                                        {{ getItemStore(item) }}
-                                    </span>
-                                    <button class="btn-icon" @click="deleteShoppingItem(item.id)" style="padding: 2px 6px; border: none; font-size: 0.85rem; color: #EF4444;">
-                                        🗑️
+                            <div v-for="item in filteredSupplyShopping" :key="item.id" style="margin-bottom: 8px;">
+                                <!-- 方案 B：過渡狀態卡片 (In-place Transition) -->
+                                <div v-if="movedItemsMap[item.id]" 
+                                     style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F3F4F6; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #4B5563;">
+                                        <span style="font-weight: 700; color: #1F2937;">{{ item.name }}</span>
+                                        <span style="color: #6B7280; font-size: 0.8rem;">➔ 已移至【{{ movedItemsMap[item.id].targetStore }}】</span>
+                                    </div>
+                                    <button class="btn-icon" @click.stop="undoMoveItem(item)" 
+                                            style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; color: var(--color-primary); cursor: pointer;">
+                                        ↩ 復原
                                     </button>
+                                </div>
+
+                                <!-- 常態卡片 -->
+                                <div v-else>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;" @click="toggleItemPurchased(item.id)">
+                                            <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
+                                            <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
+                                                {{ item.name }}
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <!-- 款式 2：遮陽棚小店通用 SVG 圖示按鈕 -->
+                                            <button class="btn-icon" @click.stop="toggleStorePicker(item.id)" 
+                                                    :title="'目前通路：' + getItemStore(item) + '（點擊切換）'" 
+                                                    :style="{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        padding: '0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        borderRadius: '8px',
+                                                        border: 'none',
+                                                        background: 'transparent',
+                                                        color: activeStorePickerItemId === item.id ? 'var(--color-primary)' : 'var(--color-text-main)',
+                                                        cursor: 'pointer'
+                                                    }">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3 3h18v6H3z"></path>
+                                                    <path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path>
+                                                    <path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path>
+                                                    <path d="M10 22v-6h4v6"></path>
+                                                </svg>
+                                            </button>
+                                            <button class="btn-icon" @click="deleteShoppingItem(item.id)" title="刪除項目" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: #EF4444; cursor: pointer; border-radius: 8px;">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 點擊展開的純文字通路選擇列 -->
+                                    <div v-if="activeStorePickerItemId === item.id" style="background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 10px; padding: 10px 12px; margin-top: 4px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                                            <span>📍 選擇採買通路（目前：{{ getItemStore(item) }}）：</span>
+                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕</span>
+                                        </div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            <button v-for="store in availableStores" :key="store"
+                                                    class="btn-icon"
+                                                    :style="{
+                                                        padding: '5px 12px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        background: getItemStore(item) === store ? 'var(--color-primary)' : '#F3F4F6',
+                                                        color: getItemStore(item) === store ? '#FFFFFF' : '#374151',
+                                                        border: getItemStore(item) === store ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
+                                                        cursor: 'pointer'
+                                                    }"
+                                                    @click="updateItemStore(item, store)">
+                                                {{ store }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1352,11 +1591,19 @@ export default {
 
                     <!-- 3. 底部快捷按鈕 (清除已買食材 & 複製清單) -->
                     <div style="display: flex; gap: 10px; justify-content: space-between; border-top: 1px solid var(--color-border); padding-top: 16px;">
-                        <button class="btn-icon" @click="clearPurchased" style="flex: 1; padding: 12px; font-weight: 600; color: #047857; background: #ECFDF5; border-color: #A7F3D0; border-radius: 12px;">
-                            🧹 清除已買食材
+                        <button class="btn-icon" @click="clearPurchased" style="flex: 1; padding: 12px; font-weight: 700; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.92rem; box-shadow: 0 2px 5px rgba(4, 120, 87, 0.08); cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 3l-8 8"></path>
+                                <path d="M11 11l-3 7a2 2 0 0 0 2 2l7-3-6-6z"></path>
+                            </svg>
+                            <span>清除已買食材</span>
                         </button>
-                        <button class="btn-primary accent" @click="copyShoppingListText" style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.95rem; border-radius: 12px;">
-                            📋 複製清單
+                        <button class="btn-primary accent" @click="copyShoppingListText" style="flex: 1; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.95rem; border-radius: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(237, 137, 54, 0.25); cursor: pointer;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>複製清單</span>
                         </button>
                     </div>
                 </div>
@@ -1367,7 +1614,7 @@ export default {
                 <div class="drawer-content" style="max-width: 480px; padding: 24px;">
                     <!-- Header -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">
-                        <span style="font-weight: 700; font-size: 1.1rem;">🧻 生活雜項詳細資料</span>
+                        <span style="font-weight: 700; font-size: 1.1rem;">生活雜項詳細資料</span>
                         <button class="btn-icon" @click="showSupplyModal = false" style="border: none; font-size: 1.1rem;">✕ 關閉</button>
                     </div>
 
@@ -1520,11 +1767,11 @@ export default {
                         <!-- 動態雙向綁定欄位 -->
                         <div v-if="addFormDisplayBasis === 'serving'" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
                             <div>
-                                <span style="color: var(--color-text-muted);">🔥 熱量(kcal/單份):</span>
+                                <span style="color: var(--color-text-muted);">熱量(kcal/單份):</span>
                                 <input type="number" v-model.number="addForm.perServing.kcal" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🥩 蛋白質(g/單份):</span>
+                                <span style="color: var(--color-text-muted);">蛋白質(g/單份):</span>
                                 <input type="number" v-model.number="addForm.perServing.protein" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                             <div>
@@ -1532,18 +1779,18 @@ export default {
                                 <input type="number" v-model.number="addForm.perServing.carbs" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🥑 脂肪(g/單份):</span>
+                                <span style="color: var(--color-text-muted);">脂肪(g/單份):</span>
                                 <input type="number" v-model.number="addForm.perServing.fat" @input="onServingInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px; font-weight: 700;">
                             </div>
                         </div>
 
                         <div v-else style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
                             <div>
-                                <span style="color: var(--color-text-muted);">🔥 熱量(kcal/100g):</span>
+                                <span style="color: var(--color-text-muted);">熱量(kcal/100g):</span>
                                 <input type="number" v-model.number="addForm.per100g.kcal" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🥩 蛋白質(g/100g):</span>
+                                <span style="color: var(--color-text-muted);">蛋白質(g/100g):</span>
                                 <input type="number" v-model.number="addForm.per100g.protein" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                             <div>
@@ -1551,25 +1798,25 @@ export default {
                                 <input type="number" v-model.number="addForm.per100g.carbs" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                             <div>
-                                <span style="color: var(--color-text-muted);">🥑 脂肪(g/100g):</span>
+                                <span style="color: var(--color-text-muted);">脂肪(g/100g):</span>
                                 <input type="number" v-model.number="addForm.per100g.fat" @input="on100gInput" class="search-input" style="width: 100%; padding: 4px 8px; margin-top: 2px;">
                             </div>
                         </div>
                     </div>
 
-                    <!-- 4. 大項分類 (🥗 飲食食材 | 🧻 生活雜項) -->
+                    <!-- 4. 大項分類 (飲食食材 | 生活雜項) -->
                     <div style="display: flex; gap: 8px; margin-bottom: 16px;">
                         <button class="capsule" 
                                 :class="addForm.type === 'food' ? 'selected' : 'in-stock'" 
                                 @click="addForm.type = 'food'"
                                 style="cursor: pointer; padding: 6px 14px; font-weight: 700; font-size: 0.85rem;">
-                            🥗 飲食食材
+                            飲食食材
                         </button>
                         <button class="capsule" 
                                 :class="addForm.type === 'supply' ? 'selected' : 'in-stock'" 
                                 @click="addForm.type = 'supply'"
                                 style="cursor: pointer; padding: 6px 14px; font-weight: 700; font-size: 0.85rem;">
-                            🧻 生活雜項
+                            生活雜項
                         </button>
                     </div>
 
@@ -1582,19 +1829,19 @@ export default {
                                         :class="isAddFormZoneSelected('fridge') ? 'selected' : 'in-stock'"
                                         @click="toggleAddFormZone('fridge')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
-                                    ❄️ 冷藏區
+                                    冷藏區
                                 </button>
                                 <button class="capsule" 
                                         :class="isAddFormZoneSelected('freezer') ? 'selected' : 'in-stock'"
                                         @click="toggleAddFormZone('freezer')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
-                                    🧊 冷凍區
+                                    冷凍區
                                 </button>
                                 <button class="capsule" 
                                         :class="isAddFormZoneSelected('pantry') ? 'selected' : 'in-stock'"
                                         @click="toggleAddFormZone('pantry')"
                                         style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
-                                    🏠 常溫區
+                                    常溫區
                                 </button>
                             </div>
                         </div>
@@ -1602,10 +1849,10 @@ export default {
                         <div style="margin-bottom: 16px;">
                             <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">營養分類：</label>
                             <select v-model="addForm.category" class="select-box" style="padding: 8px 12px; font-weight: 600; width: 100%;">
-                                <option value="proteins">🥩 蛋白質</option>
+                                <option value="proteins">蛋白質</option>
                                 <option value="veggies">🥗 蔬菜水果</option>
                                 <option value="carbs">🍚 碳水類</option>
-                                <option value="sauces">🧂 醬料與油脂</option>
+                                <option value="sauces">醬料與油脂</option>
                             </select>
                         </div>
                     </div>
@@ -1668,14 +1915,14 @@ export default {
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
                             <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🔥 熱量</span>
+                                <span>熱量</span>
                                 <div style="display: flex; align-items: center; gap: 4px;">
                                     <input type="number" v-model.number="selectedFood.per100g.kcal" @change="saveFoodChanges(selectedFood)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
                                     <span style="font-size: 0.75rem; color: var(--color-text-muted);">kcal</span>
                                 </div>
                             </div>
                             <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🥩 蛋白質</span>
+                                <span>蛋白質</span>
                                 <div style="display: flex; align-items: center; gap: 4px;">
                                     <input type="number" v-model.number="selectedFood.per100g.protein" @change="saveFoodChanges(selectedFood)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
                                     <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
@@ -1689,7 +1936,7 @@ export default {
                                 </div>
                             </div>
                             <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🥑 脂肪</span>
+                                <span>脂肪</span>
                                 <div style="display: flex; align-items: center; gap: 4px;">
                                     <input type="number" v-model.number="selectedFood.per100g.fat" @change="saveFoodChanges(selectedFood)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
                                     <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
@@ -1704,7 +1951,7 @@ export default {
                             📍 存放分區：
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="z in [{key:'fridge', label:'❄️ 冷藏區'}, {key:'freezer', label:'🧊 冷凍區'}, {key:'pantry', label:'🏠 常溫區'}]" 
+                            <button v-for="z in [{key:'fridge', label:'冷藏區'}, {key:'freezer', label:'冷凍區'}, {key:'pantry', label:'常溫區'}]" 
                                     :key="z.key"
                                     class="capsule"
                                     :class="isFoodZoneSelected(selectedFood, z.key) ? 'selected' : 'in-stock'"

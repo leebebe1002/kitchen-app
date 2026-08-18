@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>底部按鈕 SVG 圖示挑選 - Family Kitchen</title>
+    <style>
+        :root {
+            --bg-cream: #FAF8F5;
+            --card-bg: #FFFFFF;
+            --primary-sage: #4A6B5D;
+            --sage-btn-bg: #ECFDF5;
+            --sage-btn-border: #A7F3D0;
+            --sage-btn-text: #047857;
+            --accent-warm: #F6AD55;
+            --accent-btn-bg: #F6AD55;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --border-color: #E2E8F0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-main);
+            padding: 24px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        p.subtitle {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .section-header {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 20px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .icon-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 14px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            cursor: pointer;
+        }
+        .icon-card:hover, .icon-card.active {
+            border-color: var(--primary-sage);
+            background: #F4F7F5;
+            transform: translateY(-2px);
+        }
+        .icon-card.active {
+            box-shadow: 0 4px 12px rgba(74, 107, 93, 0.15);
+        }
+        .badge-num {
+            background: #E5E7EB;
+            color: #4B5563;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: var(--primary-sage);
+        }
+        .icon-wrapper.accent {
+            color: #D97706;
+        }
+        .icon-wrapper svg {
+            width: 22px;
+            height: 22px;
+        }
+        .icon-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+        .icon-desc {
+            font-size: 0.68rem;
+            color: var(--text-sub);
+            line-height: 1.3;
+        }
+
+        /* 實際底部按鈕模擬區 */
+        .preview-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            margin-top: 28px;
+        }
+        .preview-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--primary-sage);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-container {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+        }
+        .btn-clean {
+            flex: 1;
+            padding: 13px 12px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--sage-btn-text);
+            background: var(--sage-btn-bg);
+            border: 1px solid var(--sage-btn-border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(4, 120, 87, 0.08);
+        }
+        .btn-clean svg {
+            width: 18px;
+            height: 18px;
+        }
+        .btn-copy {
+            flex: 1;
+            padding: 13px 12px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: #FFFFFF;
+            background: var(--accent-btn-bg);
+            border: 1px solid #ED8936;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(237, 137, 54, 0.25);
+        }
+        .btn-copy svg {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ 底部兩大按鈕 SVG 圖示挑選</h1>
+    <p class="subtitle">請分別點選「清除」與「複製」圖示，下方會即時連動按鈕視覺</p>
+
+    <!-- 1. 清除已買食材 (左按鈕) -->
+    <div class="section-header">
+        <span>🧹 左按鈕：【清除已買食材】</span>
+    </div>
+    <div class="icon-grid">
+        <!-- 款式 A1 -->
+        <div class="icon-card active" onclick="selectCleanIcon(1)">
+            <span class="badge-num">A1 經典</span>
+            <div class="icon-wrapper">
+                <!-- Broom -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 3l-8 8"></path>
+                    <path d="M11 11l-3 7a2 2 0 0 0 2 2l7-3-6-6z"></path>
+                </svg>
+            </div>
+            <div class="icon-title">現代掃帚</div>
+            <div class="icon-desc">清掃整理<br>具體易懂</div>
+        </div>
+
+        <!-- 款式 A2 -->
+        <div class="icon-card" onclick="selectCleanIcon(2)">
+            <span class="badge-num">A2 ⭐ 首推</span>
+            <div class="icon-wrapper">
+                <!-- Sparkles -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>
+                </svg>
+            </div>
+            <div class="icon-title">魔法閃亮</div>
+            <div class="icon-desc">一鍵清爽<br>高級極簡</div>
+        </div>
+
+        <!-- 款式 A3 -->
+        <div class="icon-card" onclick="selectCleanIcon(3)">
+            <span class="badge-num">A3</span>
+            <div class="icon-wrapper">
+                <!-- Check Double -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                    <polyline points="20 12 12 20"></polyline>
+                </svg>
+            </div>
+            <div class="icon-title">已買收納</div>
+            <div class="icon-desc">打勾確認<br>入庫意象</div>
+        </div>
+    </div>
+
+    <!-- 2. 複製清單 (右按鈕) -->
+    <div class="section-header">
+        <span>📋 右按鈕：【複製清單】</span>
+    </div>
+    <div class="icon-grid">
+        <!-- 款式 B1 -->
+        <div class="icon-card active" onclick="selectCopyIcon(1)">
+            <span class="badge-num">B1 ⭐ 首推</span>
+            <div class="icon-wrapper accent">
+                <!-- Layers Copy -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </div>
+            <div class="icon-title">雙層複製</div>
+            <div class="icon-desc">經典複製<br>辨識度第一</div>
+        </div>
+
+        <!-- 款式 B2 -->
+        <div class="icon-card" onclick="selectCopyIcon(2)">
+            <span class="badge-num">B2</span>
+            <div class="icon-wrapper accent">
+                <!-- Clipboard List -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                </svg>
+            </div>
+            <div class="icon-title">清單板</div>
+            <div class="icon-desc">待買筆記板<br>生活實用</div>
+        </div>
+
+        <!-- 款式 B3 -->
+        <div class="icon-card" onclick="selectCopyIcon(3)">
+            <span class="badge-num">B3</span>
+            <div class="icon-wrapper accent">
+                <!-- Clipboard Check -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <polyline points="9 13 11 15 15 11"></polyline>
+                </svg>
+            </div>
+            <div class="icon-title">打勾清單</div>
+            <div class="icon-desc">精準完成<br>簡約細膩</div>
+        </div>
+    </div>
+
+    <!-- 實際底部雙按鈕模擬區 -->
+    <div class="preview-section">
+        <div class="preview-title">
+            <span>📱 實裝於採買清單底部的雙按鈕模擬</span>
+        </div>
+
+        <div class="btn-container">
+            <!-- 清除按鈕 -->
+            <button class="btn-clean">
+                <svg id="previewCleanSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 3l-8 8"></path>
+                    <path d="M11 11l-3 7a2 2 0 0 0 2 2l7-3-6-6z"></path>
+                </svg>
+                <span>清除已買食材</span>
+            </button>
+
+            <!-- 複製按鈕 -->
+            <button class="btn-copy">
+                <svg id="previewCopySvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>複製清單</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const cleanSvgs = {
+            1: `<path d="M19 3l-8 8"></path><path d="M11 11l-3 7a2 2 0 0 0 2 2l7-3-6-6z"></path>`,
+            2: `<path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>`,
+            3: `<polyline points="20 6 9 17 4 12"></polyline><polyline points="20 12 12 20"></polyline>`
+        };
+
+        const copySvgs = {
+            1: `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>`,
+            2: `<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="16" x2="13" y2="16"></line>`,
+            3: `<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><polyline points="9 13 11 15 15 11"></polyline>`
+        };
+
+        function selectCleanIcon(num) {
+            const cards = document.querySelectorAll('.icon-grid:first-of-type .icon-card');
+            cards.forEach((c, idx) => {
+                if (idx + 1 === num) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            document.getElementById('previewCleanSvg').innerHTML = cleanSvgs[num];
+        }
+
+        function selectCopyIcon(num) {
+            const cards = document.querySelectorAll('.icon-grid:nth-of-type(2) .icon-card');
+            cards.forEach((c, idx) => {
+                if (idx + 1 === num) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+            document.getElementById('previewCopySvg').innerHTML = copySvgs[num];
+        }
+    </script>
+</body>
+</html>
