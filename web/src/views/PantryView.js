@@ -328,7 +328,7 @@ export default {
             let text = '🛒 【FAMILY KITCHEN 賣場待買清單】\n';
             const unpurchased = list.filter(s => !s.isPurchased);
             unpurchased.forEach(item => {
-                text += `▫️ ${item.name} (${item.store || '賣場'}) - ${item.sourceDish || ''}\n`;
+                text += `▫️ ${item.name} (${getItemStoreLabel(item)})\n`;
             });
             navigator.clipboard.writeText(text);
             alert('📋 已複製待買清單文字至剪貼簿！');
@@ -1447,16 +1447,13 @@ export default {
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px;">
                                         <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;" @click="toggleItemPurchased(item.id)">
                                             <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
-                                            <div style="display: flex; flex-direction: column; gap: 2px;">
-                                                <div style="display: flex; align-items: center; gap: 6px;">
-                                                    <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
-                                                        {{ item.name }}
-                                                    </span>
-                                                    <span style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
-                                                        {{ getItemStoreLabel(item) }}
-                                                    </span>
-                                                </div>
-                                                <span style="font-size: 0.75rem; color: #9CA3AF;">(來自：{{ item.sourceDish }})</span>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
+                                                    {{ item.name }}
+                                                </span>
+                                                <span v-if="shoppingStoreFilter === 'all'" style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
+                                                    {{ getItemStoreLabel(item) }}
+                                                </span>
                                             </div>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1546,8 +1543,8 @@ export default {
                                                 <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
                                                     {{ item.name }}
                                                 </span>
-                                                <span style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
-                                                    {{ getItemStore(item) }}
+                                                <span v-if="shoppingStoreFilter === 'all'" style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
+                                                    {{ getItemStoreLabel(item) }}
                                                 </span>
                                             </div>
                                         </div>
