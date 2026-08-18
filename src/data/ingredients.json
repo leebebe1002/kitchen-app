@@ -480,6 +480,28 @@
                 "全聯",
                 "傳統市場"
             ]
+        },
+        {
+            "id": "taro_meatball",
+            "name": "芋頭貢丸",
+            "category": "proteins",
+            "isCount": false,
+            "unitLabel": "顆",
+            "per100g": {
+                "kcal": 50,
+                "protein": 1,
+                "carbs": 10,
+                "fat": 0.2,
+                "sodium": 5
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
         }
     ],
     "veggies": [
@@ -1168,28 +1190,6 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
-        },
-        {
-            "id": "taro_meatball",
-            "name": "芋頭貢丸",
-            "category": "carbs",
-            "isCount": false,
-            "unitLabel": "顆",
-            "per100g": {
-                "kcal": 50,
-                "protein": 1,
-                "carbs": 10,
-                "fat": 0.2,
-                "sodium": 5
-            },
-            "preferredStore": "全聯",
-            "preferredStores": [
-                "全聯"
-            ],
-            "storageZone": "freezer",
-            "storageZones": [
-                "freezer"
             ]
         },
         {
