@@ -521,35 +521,56 @@
         <!-- 5. 智慧冰箱分割膠囊 -->
         <div class="ds-section">
             <div class="ds-sec-title">🧊 5. 智慧冰箱雙分割膠囊 (Split Capsules)</div>
-            <div class="ds-sec-desc">左側切換庫存狀態，右側無感加入採買清單</div>
+            <div class="ds-sec-desc">左側切換庫存狀態，右側無感加入採買清單（已加入為薄荷綠圓底＋白購物車）</div>
             <div class="capsule-demo-group">
-                <!-- 在庫分割膠囊 -->
+                <!-- 1. 有庫存 ＋ 未加入採買清單 -->
                 <div class="split-capsule in-stock-bg">
                     <div class="split-left in-stock">
                         <span>牛番茄 (有庫存)</span>
                     </div>
                     <div class="split-divider"></div>
                     <div class="split-right">
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
+                        <span class="cart-icon-default">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                        </span>
                     </div>
                 </div>
 
-                <!-- 缺貨分割膠囊 (已在採買清單) -->
+                <!-- 2. 缺貨 ＋ 未加入採買清單 -->
                 <div class="split-capsule out-stock-bg">
                     <div class="split-left out-stock">
-                        <span>毛豆 (缺貨)</span>
+                        <span>蟹肉棒 (缺貨)</span>
                     </div>
                     <div class="split-divider"></div>
-                    <div class="split-right" style="background: rgba(225, 98, 98, 0.12); color: var(--ds-coral);">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                        </svg>
+                    <div class="split-right">
+                        <span class="cart-icon-default">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 3. 缺貨 ＋ 已在採買清單 (薄荷綠圓底 + 白購物車) -->
+                <div class="split-capsule out-stock-bg">
+                    <div class="split-left out-stock">
+                        <span>毛豆 (已在採買清單)</span>
+                    </div>
+                    <div class="split-divider"></div>
+                    <div class="split-right">
+                        <span class="cart-icon-selected">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                        </span>
                     </div>
                 </div>
             </div>
