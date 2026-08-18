@@ -160,19 +160,24 @@ export default {
             showSupplyModal.value = true;
         };
 
-        // Helper to resolve store for any shopping item
-        const getItemStore = (item) => {
+        // Helper to resolve all preferred stores for any shopping item (支援複選通路)
+        const getItemStores = (item) => {
             if (item.type === 'supply') {
                 const sup = engine.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                return sup?.store || item.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
+                if (sup?.preferredStores && sup.preferredStores.length > 0) return sup.preferredStores;
+                if (sup?.store) return [sup.store];
+                return ['Costco'];
             }
             const ing = engine.getIngredientById(item.targetId);
-            if (ing?.preferredStore) return ing.preferredStore;
-            if (item.store) return item.store;
-            if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon', 'avocado_mash', 'avocado_oil', 'unsalted_butter', 'corn'].includes(item.targetId)) {
-                return 'Costco';
-            }
-            return '全聯';
+            if (ing?.preferredStores && ing.preferredStores.length > 0) return ing.preferredStores;
+            if (ing?.preferredStore) return [ing.preferredStore];
+            if (item.store) return [item.store];
+            return ['全聯'];
+        };
+
+        const getItemStoreLabel = (item) => {
+            const stores = getItemStores(item);
+            return stores.join('、');
         };
 
         // Shopping List Filtered
@@ -180,30 +185,29 @@ export default {
             return engine.data.pantryInventory?.shoppingList || [];
         });
 
-        // 方案 B：原地過渡與復原狀態記錄
-        const movedItemsMap = ref({});
+        // 方案 B：多通路自動分流與歷史復原
+        const storeChangeHistory = ref({});
 
         watch(shoppingStoreFilter, () => {
-            movedItemsMap.value = {};
+            storeChangeHistory.value = {};
         });
 
         watch(showShoppingModal, (newVal) => {
             if (!newVal) {
-                movedItemsMap.value = {};
+                storeChangeHistory.value = {};
             }
         });
+
+        const getStoreShoppingCount = (storeKey) => {
+            const list = shoppingList.value.filter(s => !s.isPurchased);
+            if (storeKey === 'all') return list.length;
+            return list.filter(s => getItemStores(s).includes(storeKey)).length;
+        };
 
         const filteredFoodShopping = computed(() => {
             let list = shoppingList.value.filter(s => s.type === 'food');
             if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => {
-                    const currentStore = getItemStore(s);
-                    const movedInfo = movedItemsMap.value[s.id];
-                    if (movedInfo && movedInfo.originalStore.includes(shoppingStoreFilter.value)) {
-                        return true; // 方案 B：原地保留過渡卡片
-                    }
-                    return currentStore.includes(shoppingStoreFilter.value);
-                });
+                list = list.filter(s => getItemStores(s).includes(shoppingStoreFilter.value));
             }
             return list;
         });
@@ -211,14 +215,7 @@ export default {
         const filteredSupplyShopping = computed(() => {
             let list = shoppingList.value.filter(s => s.type === 'supply');
             if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => {
-                    const currentStore = getItemStore(s);
-                    const movedInfo = movedItemsMap.value[s.id];
-                    if (movedInfo && movedInfo.originalStore.includes(shoppingStoreFilter.value)) {
-                        return true; // 方案 B：原地保留過渡卡片
-                    }
-                    return currentStore.includes(shoppingStoreFilter.value);
-                });
+                list = list.filter(s => getItemStores(s).includes(shoppingStoreFilter.value));
             }
             return list;
         });
@@ -238,55 +235,83 @@ export default {
             activeStorePickerItemId.value = activeStorePickerItemId.value === itemId ? null : itemId;
         };
 
-        const updateItemStore = async (item, newStore) => {
-            const oldStore = getItemStore(item);
-            if (shoppingStoreFilter.value !== 'all' && oldStore !== newStore) {
-                movedItemsMap.value[item.id] = {
-                    originalStore: oldStore,
-                    targetStore: newStore
-                };
-            } else if (movedItemsMap.value[item.id]) {
-                delete movedItemsMap.value[item.id];
+        // 複選切換通路 (Multi-select Store)
+        const toggleStoreForItem = async (item, targetStore) => {
+            const currentStores = [...getItemStores(item)];
+            storeChangeHistory.value[item.id] = [...currentStores];
+
+            const idx = currentStores.indexOf(targetStore);
+            if (idx !== -1) {
+                if (currentStores.length > 1) {
+                    currentStores.splice(idx, 1);
+                }
+            } else {
+                currentStores.push(targetStore);
             }
 
-            item.store = newStore;
             if (item.type === 'supply') {
                 if (engine.data.householdSupplies?.supplies) {
                     const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
                     if (sup) {
-                        sup.store = newStore;
+                        sup.preferredStores = currentStores;
+                        sup.store = currentStores[0];
                         await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
                     }
                 }
             } else {
                 const ing = engine.getIngredientById(item.targetId);
                 if (ing) {
-                    ing.preferredStore = newStore;
-                    if (!ing.preferredStores) ing.preferredStores = [newStore];
-                    else if (!ing.preferredStores.includes(newStore)) ing.preferredStores.push(newStore);
+                    ing.preferredStores = currentStores;
+                    ing.preferredStore = currentStores[0];
                     if (engine.data.rawIngredients) {
                         ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                             const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
                             if (rawIng) {
-                                rawIng.preferredStore = newStore;
-                                rawIng.preferredStores = ing.preferredStores;
+                                rawIng.preferredStores = currentStores;
+                                rawIng.preferredStore = currentStores[0];
                             }
                         });
                         await engine.saveJson('ingredients.json', engine.data.rawIngredients);
                     }
                 }
             }
+            item.store = currentStores[0];
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
-            activeStorePickerItemId.value = null;
         };
 
-        const undoMoveItem = async (item) => {
-            const info = movedItemsMap.value[item.id];
-            if (info) {
-                const revertStore = info.originalStore;
-                delete movedItemsMap.value[item.id];
-                await updateItemStore(item, revertStore);
+        const undoStoreChange = async (item) => {
+            const oldStores = storeChangeHistory.value[item.id];
+            if (!oldStores) return;
+            delete storeChangeHistory.value[item.id];
+
+            if (item.type === 'supply') {
+                if (engine.data.householdSupplies?.supplies) {
+                    const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
+                    if (sup) {
+                        sup.preferredStores = oldStores;
+                        sup.store = oldStores[0];
+                        await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
+                    }
+                }
+            } else {
+                const ing = engine.getIngredientById(item.targetId);
+                if (ing) {
+                    ing.preferredStores = oldStores;
+                    ing.preferredStore = oldStores[0];
+                    if (engine.data.rawIngredients) {
+                        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                            const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
+                            if (rawIng) {
+                                rawIng.preferredStores = oldStores;
+                                rawIng.preferredStore = oldStores[0];
+                            }
+                        });
+                        await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+                    }
+                }
             }
+            item.store = oldStores[0];
+            await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
         };
 
         const clearPurchased = async () => {
@@ -778,13 +803,15 @@ export default {
             copyLineMessage,
             deleteSupplyItem,
             updateSupplyPhoto,
-            getItemStore,
+            getItemStores,
+            getItemStoreLabel,
+            getStoreShoppingCount,
+            storeChangeHistory,
+            undoStoreChange,
+            toggleStoreForItem,
             activeStorePickerItemId,
             availableStores,
             toggleStorePicker,
-            updateItemStore,
-            movedItemsMap,
-            undoMoveItem,
             saveNewItem
         };
     },
@@ -1375,28 +1402,28 @@ export default {
                         <button class="btn-icon" @click="showShoppingModal = false" style="border: none; font-size: 1.1rem;">✕</button>
                     </div>
 
-                    <!-- 1. 🏬 賣場過濾 Filter 膠囊 (乾淨純文字，符合整體設計規範) -->
+                    <!-- 1. 🏬 賣場過濾 Filter 膠囊 (支援品項計數) -->
                     <div style="display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;">
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'all' }" @click="shoppingStoreFilter = 'all'">
-                            All 全部
+                            All 全部 ({{ getStoreShoppingCount('all') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '全聯' }" @click="shoppingStoreFilter = '全聯'">
-                            全聯
+                            全聯 ({{ getStoreShoppingCount('全聯') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'Costco' }" @click="shoppingStoreFilter = 'Costco'">
-                            Costco
+                            Costco ({{ getStoreShoppingCount('Costco') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '義美' }" @click="shoppingStoreFilter = '義美'">
-                            義美
+                            義美 ({{ getStoreShoppingCount('義美') }})
                         </button>
-                        <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC' }" @click="shoppingStoreFilter = 'EC'">
-                            EC 電商
+                        <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC 電商' }" @click="shoppingStoreFilter = 'EC 電商'">
+                            EC 電商 ({{ getStoreShoppingCount('EC 電商') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '傳統市場' }" @click="shoppingStoreFilter = '傳統市場'">
-                            傳統市場
+                            傳統市場 ({{ getStoreShoppingCount('傳統市場') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '其他' }" @click="shoppingStoreFilter = '其他'">
-                            其他
+                            其他 ({{ getStoreShoppingCount('其他') }})
                         </button>
                     </div>
 
@@ -1416,33 +1443,26 @@ export default {
                                 【食材類】：
                             </div>
                             <div v-for="item in filteredFoodShopping" :key="item.id" style="margin-bottom: 8px;">
-                                <!-- 方案 B：過渡狀態卡片 (In-place Transition) -->
-                                <div v-if="movedItemsMap[item.id]" 
-                                     style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F3F4F6; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #4B5563;">
-                                        <span style="font-weight: 700; color: #1F2937;">{{ item.name }}</span>
-                                        <span style="color: #6B7280; font-size: 0.8rem;">➔ 已移至【{{ movedItemsMap[item.id].targetStore }}】</span>
-                                    </div>
-                                    <button class="btn-icon" @click.stop="undoMoveItem(item)" 
-                                            style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; color: var(--color-primary); cursor: pointer;">
-                                        ↩ 復原
-                                    </button>
-                                </div>
-
-                                <!-- 常態卡片 -->
-                                <div v-else>
+                                <div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px;">
                                         <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;" @click="toggleItemPurchased(item.id)">
                                             <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
-                                            <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
-                                                {{ item.name }}
-                                            </span>
-                                            <span style="font-size: 0.75rem; color: #9CA3AF;">(來自：{{ item.sourceDish }})</span>
+                                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
+                                                        {{ item.name }}
+                                                    </span>
+                                                    <span style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
+                                                        {{ getItemStoreLabel(item) }}
+                                                    </span>
+                                                </div>
+                                                <span style="font-size: 0.75rem; color: #9CA3AF;">(來自：{{ item.sourceDish }})</span>
+                                            </div>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <!-- 款式 2：遮陽棚小店通用 SVG 圖示按鈕 -->
+                                            <!-- 遮陽棚小店通用 SVG 圖示按鈕 (點擊開關通路選擇器) -->
                                             <button class="btn-icon" @click.stop="toggleStorePicker(item.id)" 
-                                                    :title="'目前通路：' + getItemStore(item) + '（點擊切換）'" 
+                                                    :title="'設定通路：' + getItemStoreLabel(item) + '（支援複選）'" 
                                                     :style="{
                                                         width: '32px',
                                                         height: '32px',
@@ -1473,12 +1493,22 @@ export default {
                                             </button>
                                         </div>
                                     </div>
+
+                                    <!-- 歷史復原提示條 (通用於 ALL 全部與所有賣場) -->
+                                    <div v-if="storeChangeHistory[item.id]" 
+                                         style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; margin-top: 4px; background: #FEF3C7; border-radius: 8px; font-size: 0.8rem; color: #92400E;">
+                                        <span>已更新通路為【{{ getItemStoreLabel(item) }}】</span>
+                                        <button class="btn-icon" @click.stop="undoStoreChange(item)" 
+                                                style="padding: 2px 8px; font-size: 0.75rem; font-weight: 700; background: #FFFFFF; border: 1px solid #F59E0B; border-radius: 6px; color: #B45309; cursor: pointer;">
+                                            ↩ 復原
+                                        </button>
+                                    </div>
                                     
-                                    <!-- 點擊展開的純文字通路選擇列 -->
+                                    <!-- 點擊展開的複選通路選擇列 -->
                                     <div v-if="activeStorePickerItemId === item.id" style="background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 10px; padding: 10px 12px; margin-top: 4px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                                         <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
-                                            <span>📍 選擇採買通路（目前：{{ getItemStore(item) }}）：</span>
-                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕</span>
+                                            <span>📍 勾選採買通路（支援複選，跨店同步）：</span>
+                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕ 關閉</span>
                                         </div>
                                         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                             <button v-for="store in availableStores" :key="store"
@@ -1488,13 +1518,13 @@ export default {
                                                         borderRadius: '8px',
                                                         fontSize: '0.8rem',
                                                         fontWeight: '600',
-                                                        background: getItemStore(item) === store ? 'var(--color-primary)' : '#F3F4F6',
-                                                        color: getItemStore(item) === store ? '#FFFFFF' : '#374151',
-                                                        border: getItemStore(item) === store ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
+                                                        background: getItemStores(item).includes(store) ? 'var(--color-primary)' : '#F3F4F6',
+                                                        color: getItemStores(item).includes(store) ? '#FFFFFF' : '#374151',
+                                                        border: getItemStores(item).includes(store) ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
                                                         cursor: 'pointer'
                                                     }"
-                                                    @click="updateItemStore(item, store)">
-                                                {{ store }}
+                                                    @click="toggleStoreForItem(item, store)">
+                                                <span v-if="getItemStores(item).includes(store)">✓ </span>{{ store }}
                                             </button>
                                         </div>
                                     </div>
@@ -1508,32 +1538,22 @@ export default {
                                 【生活雜項類】：
                             </div>
                             <div v-for="item in filteredSupplyShopping" :key="item.id" style="margin-bottom: 8px;">
-                                <!-- 方案 B：過渡狀態卡片 (In-place Transition) -->
-                                <div v-if="movedItemsMap[item.id]" 
-                                     style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #F3F4F6; border: 1.5px dashed #CBD5E1; border-radius: 10px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: #4B5563;">
-                                        <span style="font-weight: 700; color: #1F2937;">{{ item.name }}</span>
-                                        <span style="color: #6B7280; font-size: 0.8rem;">➔ 已移至【{{ movedItemsMap[item.id].targetStore }}】</span>
-                                    </div>
-                                    <button class="btn-icon" @click.stop="undoMoveItem(item)" 
-                                            style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; color: var(--color-primary); cursor: pointer;">
-                                        ↩ 復原
-                                    </button>
-                                </div>
-
-                                <!-- 常態卡片 -->
-                                <div v-else>
+                                <div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAF8F5; border-radius: 10px;">
                                         <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;" @click="toggleItemPurchased(item.id)">
                                             <input type="checkbox" :checked="item.isPurchased" style="width: 18px; height: 18px; cursor: pointer;">
-                                            <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
-                                                {{ item.name }}
-                                            </span>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <span :style="{ textDecoration: item.isPurchased ? 'line-through' : 'none', color: item.isPurchased ? '#9CA3AF' : 'var(--color-text-main)', fontWeight: 600 }">
+                                                    {{ item.name }}
+                                                </span>
+                                                <span style="font-size: 0.72rem; color: #4B5563; background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 500;">
+                                                    {{ getItemStore(item) }}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <!-- 款式 2：遮陽棚小店通用 SVG 圖示按鈕 -->
                                             <button class="btn-icon" @click.stop="toggleStorePicker(item.id)" 
-                                                    :title="'目前通路：' + getItemStore(item) + '（點擊切換）'" 
+                                                    :title="'設定通路：' + getItemStore(item)" 
                                                     :style="{
                                                         width: '32px',
                                                         height: '32px',
@@ -1549,7 +1569,7 @@ export default {
                                                     }">
                                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M3 3h18v6H3z"></path>
-                                                    <path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path>
+                                                    <path d="M3 9c1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0 1.5 2 4.5 2 6 0"></path>
                                                     <path d="M5 11v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path>
                                                     <path d="M10 22v-6h4v6"></path>
                                                 </svg>

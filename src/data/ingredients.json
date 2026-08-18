@@ -605,7 +605,7 @@
                 "sodium": 10
             },
             "storageZone": "fridge",
-            "preferredStore": "全聯",
+            "preferredStore": "Costco",
             "preferredStores": [
                 "全聯",
                 "Costco"
@@ -1054,8 +1054,7 @@
             "preferredStore": "Costco",
             "preferredStores": [
                 "Costco",
-                "全聯",
-                "義美"
+                "全聯"
             ],
             "storageZones": [
                 "fridge"
