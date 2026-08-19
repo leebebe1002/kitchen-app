@@ -1054,7 +1054,9 @@
             "preferredStore": "Costco",
             "preferredStores": [
                 "Costco",
-                "全聯"
+                "全聯",
+                "EC 電商",
+                "其他"
             ],
             "storageZones": [
                 "fridge"

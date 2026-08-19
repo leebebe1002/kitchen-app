@@ -424,6 +424,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         elif clean_path.startswith('/api/data/'):
             filename = os.path.basename(clean_path)
             self.path = f'/src/data/{filename}'
+        elif clean_path.startswith('/src/data/'):
+            self.path = clean_path
         elif clean_path in ['/style.css', '/vue.global.js']:
             self.path = f'/web{clean_path}'
         elif clean_path.startswith('/src/'):

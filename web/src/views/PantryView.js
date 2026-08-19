@@ -176,27 +176,15 @@ export default {
         };
 
         const getItemStoreLabel = (item) => {
-            const stores = getItemStores(item);
-            return stores.join('、');
+            return getItemStores(item).join('、');
         };
 
-        // Shopping List Filtered
         const shoppingList = computed(() => {
             return engine.data.pantryInventory?.shoppingList || [];
         });
 
-        // 方案 B：多通路自動分流與歷史復原
-        const storeChangeHistory = ref({});
-
-        watch(shoppingStoreFilter, () => {
-            storeChangeHistory.value = {};
-        });
-
-        watch(showShoppingModal, (newVal) => {
-            if (!newVal) {
-                storeChangeHistory.value = {};
-            }
-        });
+        const lastStoreAction = ref(null);
+        let lastActionTimer = null;
 
         const getStoreShoppingCount = (storeKey) => {
             const list = shoppingList.value.filter(s => !s.isPurchased);
@@ -205,19 +193,15 @@ export default {
         };
 
         const filteredFoodShopping = computed(() => {
-            let list = shoppingList.value.filter(s => s.type === 'food');
-            if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => getItemStores(s).includes(shoppingStoreFilter.value));
-            }
-            return list;
+            const list = shoppingList.value.filter(s => s.type === 'food');
+            if (shoppingStoreFilter.value === 'all') return list;
+            return list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
         });
 
         const filteredSupplyShopping = computed(() => {
-            let list = shoppingList.value.filter(s => s.type === 'supply');
-            if (shoppingStoreFilter.value !== 'all') {
-                list = list.filter(s => getItemStores(s).includes(shoppingStoreFilter.value));
-            }
-            return list;
+            const list = shoppingList.value.filter(s => s.type === 'supply');
+            if (shoppingStoreFilter.value === 'all') return list;
+            return list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
         });
 
         const toggleItemPurchased = async (id) => {
@@ -238,7 +222,7 @@ export default {
         // 複選切換通路 (Multi-select Store)
         const toggleStoreForItem = async (item, targetStore) => {
             const currentStores = [...getItemStores(item)];
-            storeChangeHistory.value[item.id] = [...currentStores];
+            const oldStores = [...currentStores];
 
             const idx = currentStores.indexOf(targetStore);
             if (idx !== -1) {
@@ -277,12 +261,30 @@ export default {
             }
             item.store = currentStores[0];
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
+
+            // 更新全域通知條 (常駐於畫面頂部)
+            lastStoreAction.value = {
+                item,
+                itemId: item.id,
+                targetId: item.targetId,
+                itemName: item.name,
+                type: item.type,
+                oldStores,
+                newStores: currentStores,
+                newStoreLabel: currentStores.join('、')
+            };
+
+            if (lastActionTimer) clearTimeout(lastActionTimer);
+            lastActionTimer = setTimeout(() => {
+                lastStoreAction.value = null;
+            }, 10000);
         };
 
-        const undoStoreChange = async (item) => {
-            const oldStores = storeChangeHistory.value[item.id];
-            if (!oldStores) return;
-            delete storeChangeHistory.value[item.id];
+        const undoLastStoreAction = async () => {
+            if (!lastStoreAction.value) return;
+            const { item, oldStores } = lastStoreAction.value;
+            lastStoreAction.value = null;
+            if (lastActionTimer) clearTimeout(lastActionTimer);
 
             if (item.type === 'supply') {
                 if (engine.data.householdSupplies?.supplies) {
@@ -313,6 +315,9 @@ export default {
             item.store = oldStores[0];
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
         };
+
+        const getItemStore = (item) => getItemStoreLabel(item);
+        const updateItemStore = async (item, store) => toggleStoreForItem(item, store);
 
         const clearPurchased = async () => {
             await engine.clearPurchasedShoppingList();
@@ -805,9 +810,11 @@ export default {
             updateSupplyPhoto,
             getItemStores,
             getItemStoreLabel,
+            getItemStore,
+            updateItemStore,
             getStoreShoppingCount,
-            storeChangeHistory,
-            undoStoreChange,
+            lastStoreAction,
+            undoLastStoreAction,
             toggleStoreForItem,
             activeStorePickerItemId,
             availableStores,
@@ -1437,6 +1444,38 @@ export default {
                     </div>
 
                     <div v-else style="max-height: 55vh; overflow-y: auto; margin-bottom: 20px;">
+                        <!-- 全域通路變更 ＆ 復原通知條 (無論在哪個分頁、就算卡片移走依然常駐) -->
+                        <div v-if="lastStoreAction" 
+                             style="display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; margin-bottom: 14px; background: #FEF3C7; border: 1.5px solid #FDE68A; border-radius: 10px; font-size: 0.82rem; color: #92400E; box-shadow: 0 2px 8px rgba(0,0,0,0.04); gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span style="line-height: 1.35; overflow: hidden; text-overflow: ellipsis;">
+                                    <b>【{{ lastStoreAction.itemName }}】</b>通路已改為【{{ lastStoreAction.newStoreLabel }}】
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                <button class="btn-icon" @click.stop="undoLastStoreAction" 
+                                        style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1.2px solid #F59E0B; border-radius: 6px; color: #B45309; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="1 4 1 10 7 10"></polyline>
+                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                    </svg>
+                                    <span>立即復原</span>
+                                </button>
+                                <button class="btn-icon" @click="lastStoreAction = null" 
+                                        title="關閉提示"
+                                        style="width: 22px; height: 22px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #B45309; cursor: pointer; border-radius: 4px;">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- 【食材類】 -->
                         <div v-if="filteredFoodShopping.length > 0" style="margin-bottom: 18px;">
                             <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text-main);">
@@ -1490,16 +1529,6 @@ export default {
                                             </button>
                                         </div>
                                     </div>
-
-                                    <!-- 歷史復原提示條 (通用於 ALL 全部與所有賣場) -->
-                                    <div v-if="storeChangeHistory[item.id]" 
-                                         style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; margin-top: 4px; background: #FEF3C7; border-radius: 8px; font-size: 0.8rem; color: #92400E;">
-                                        <span>已更新通路為【{{ getItemStoreLabel(item) }}】</span>
-                                        <button class="btn-icon" @click.stop="undoStoreChange(item)" 
-                                                style="padding: 2px 8px; font-size: 0.75rem; font-weight: 700; background: #FFFFFF; border: 1px solid #F59E0B; border-radius: 6px; color: #B45309; cursor: pointer;">
-                                            ↩ 復原
-                                        </button>
-                                    </div>
                                     
                                     <!-- 點擊展開的複選通路選擇列 -->
                                     <div v-if="activeStorePickerItemId === item.id" style="background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 10px; padding: 10px 12px; margin-top: 4px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -1550,7 +1579,7 @@ export default {
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <button class="btn-icon" @click.stop="toggleStorePicker(item.id)" 
-                                                    :title="'設定通路：' + getItemStore(item)" 
+                                                    :title="'設定通路：' + getItemStoreLabel(item) + '（支援複選）'" 
                                                     :style="{
                                                         width: '32px',
                                                         height: '32px',
@@ -1582,11 +1611,11 @@ export default {
                                         </div>
                                     </div>
                                     
-                                    <!-- 點擊展開的純文字通路選擇列 -->
+                                    <!-- 點擊展開的複選通路選擇列 -->
                                     <div v-if="activeStorePickerItemId === item.id" style="background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 10px; padding: 10px 12px; margin-top: 4px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                                         <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
-                                            <span>📍 選擇採買通路（目前：{{ getItemStore(item) }}）：</span>
-                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕</span>
+                                            <span>📍 勾選採買通路（支援複選，跨店同步）：</span>
+                                            <span style="cursor: pointer; color: #9CA3AF; padding: 0 4px;" @click="activeStorePickerItemId = null">✕ 關閉</span>
                                         </div>
                                         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                             <button v-for="store in availableStores" :key="store"
@@ -1596,13 +1625,13 @@ export default {
                                                         borderRadius: '8px',
                                                         fontSize: '0.8rem',
                                                         fontWeight: '600',
-                                                        background: getItemStore(item) === store ? 'var(--color-primary)' : '#F3F4F6',
-                                                        color: getItemStore(item) === store ? '#FFFFFF' : '#374151',
-                                                        border: getItemStore(item) === store ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
+                                                        background: getItemStores(item).includes(store) ? 'var(--color-primary)' : '#F3F4F6',
+                                                        color: getItemStores(item).includes(store) ? '#FFFFFF' : '#374151',
+                                                        border: getItemStores(item).includes(store) ? '1px solid var(--color-primary)' : '1px solid #E5E7EB',
                                                         cursor: 'pointer'
                                                     }"
-                                                    @click="updateItemStore(item, store)">
-                                                {{ store }}
+                                                    @click="toggleStoreForItem(item, store)">
+                                                <span v-if="getItemStores(item).includes(store)">✓ </span>{{ store }}
                                             </button>
                                         </div>
                                     </div>
