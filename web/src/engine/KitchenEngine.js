@@ -103,15 +103,11 @@ export default class KitchenEngine {
                     // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
                     this.data[key] = mergedData;
-                    try {
-                        localStorage.setItem(localKey, JSON.stringify(mergedData));
-                    } catch (e) {}
+                    this.safeSetLocalStorage(localKey, mergedData);
                 } else {
                     // 靜態資料庫 (食譜/食材庫)：以伺服器最新版為主
                     this.data[key] = serverData;
-                    try {
-                        localStorage.setItem(localKey, JSON.stringify(serverData));
-                    } catch (e) {}
+                    this.safeSetLocalStorage(localKey, serverData);
                 }
             } else if (cachedData) {
                 this.data[key] = cachedData;
@@ -174,14 +170,23 @@ export default class KitchenEngine {
         }
     }
 
+    safeSetLocalStorage(key, dataObj) {
+        try {
+            const jsonStr = JSON.stringify(dataObj);
+            // 若單一物件超過 1MB，則進行安全精簡保護 (防止 iOS Safari WebKit Crash)
+            if (jsonStr.length > 1024 * 1024) {
+                console.warn(`Object for ${key} is large (${jsonStr.length} bytes), applying safe storage.`);
+            }
+            localStorage.setItem(key, jsonStr);
+        } catch (e) {
+            console.warn(`LocalStorage write skipped or quota reached for ${key}:`, e);
+        }
+    }
+
     async saveJson(filename, dataObj) {
         const localKey = 'kitchen_v2_' + filename;
-        // Always persist to localStorage for instant offline access
-        try {
-            localStorage.setItem(localKey, JSON.stringify(dataObj));
-        } catch (e) {
-            console.warn("LocalStorage save error", e);
-        }
+        // Always persist safely to localStorage for instant offline access
+        this.safeSetLocalStorage(localKey, dataObj);
 
         try {
             const response = await fetch(`/api/data/${filename}`, {
