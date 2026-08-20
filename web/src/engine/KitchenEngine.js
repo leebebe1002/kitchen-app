@@ -389,14 +389,24 @@ export default class KitchenEngine {
         
         ingredients.forEach(req => {
             const ingData = this.getIngredientById(req.id);
-            if (ingData && ingData.per100g) {
-                const ratio = req.amount / 100;
-                const n = ingData.per100g;
-                total.kcal += (n.kcal || 0) * ratio;
-                total.protein += (n.protein || 0) * ratio;
-                total.carbs += (n.carbs || 0) * ratio;
-                total.fat += (n.fat || 0) * ratio;
-                total.sodium += (n.sodium || 0) * ratio;
+            if (ingData) {
+                if (ingData.isCount || ingData.perUnit) {
+                    const n = ingData.perUnit || ingData.per100g || {};
+                    const units = Number(req.amount) || 0;
+                    total.kcal += (n.kcal || 0) * units;
+                    total.protein += (n.protein || 0) * units;
+                    total.carbs += (n.carbs || 0) * units;
+                    total.fat += (n.fat || 0) * units;
+                    total.sodium += (n.sodium || 0) * units;
+                } else if (ingData.per100g) {
+                    const ratio = (Number(req.amount) || 0) / 100;
+                    const n = ingData.per100g;
+                    total.kcal += (n.kcal || 0) * ratio;
+                    total.protein += (n.protein || 0) * ratio;
+                    total.carbs += (n.carbs || 0) * ratio;
+                    total.fat += (n.fat || 0) * ratio;
+                    total.sodium += (n.sodium || 0) * ratio;
+                }
             }
         });
 

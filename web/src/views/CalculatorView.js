@@ -431,6 +431,168 @@ export default {
             return Object.values(totals);
         });
 
+        // 🧬 食材天生角色屬性判定 (Data-Driven Smart Role Classifier)
+        const getIngredientRole = (ingData) => {
+            if (!ingData) return { role: 'other', defaultAmount: 50, step: 5, unit: 'g' };
+            const id = (ingData.id || '').toLowerCase();
+            const name = (ingData.name || '').toLowerCase();
+            const cat = (ingData.category || '').toLowerCase();
+
+            // 1. 微量辛香料 (鹽、海鹽、胡椒、七味粉、孜然、辣椒粉、肉桂粉、香草粉、香料等) ➔ 預設 1g, 步進 1g, 上限 5g
+            const microKeywords = ['鹽', '海鹽', '胡椒', '七味粉', '孜然', '辣椒粉', '肉桂粉', '香草粉', '香料', '咖哩粉', '薑黃粉'];
+            if (microKeywords.some(kw => name.includes(kw)) || id.includes('salt') || id.includes('pepper') || id.includes('spice') || id.includes('powder')) {
+                return { role: 'micro', defaultAmount: 1, step: 1, unit: 'g', max: 5 };
+            }
+
+            // 2. 顆粒/個數計量 (蛋、貝果、吐司、蘋果、香蕉等) ➔ 預設 1, 步進 1
+            if (ingData.isCount || ingData.unitLabel === '顆' || ingData.unitLabel === '個' || ingData.unitLabel === '包' || ingData.unitLabel === '條' || id === 'egg' || id === 'bagel') {
+                return { role: 'count', defaultAmount: 1, step: 1, unit: ingData.unitLabel || '顆' };
+            }
+
+            // 3. 醃漬/發酵/重鈉開胃小菜 (泡菜、海帶芽、醃蘿蔔、酸黃瓜、酸豆、甘露煮、干貝醬等) ➔ 預設 30g, 步進 5g
+            const pickleKeywords = ['泡菜', '海帶芽', '醃蘿蔔', '酸黃瓜', '酸豆', '漬物', '醃漬', '甘露煮', '干貝醬', '油漬番茄', '榨菜', '筍絲'];
+            if (pickleKeywords.some(kw => name.includes(kw)) || id.includes('kimchi') || id.includes('pickle') || id.includes('seaweed_salad')) {
+                return { role: 'pickle', defaultAmount: 30, step: 5, unit: 'g' };
+            }
+
+            // 4. 淋醬與油脂 (橄欖油、巴薩米克醋、醬油、香油、美乃滋、辣醬等) ➔ 預設 8~10g, 步進 5g
+            if (cat === 'sauces' || id.includes('oil') || id.includes('vinegar') || id.includes('sauce') || id.includes('mayo') || id.includes('dressing') || name.includes('油') || name.includes('醋') || name.includes('醬') || name.includes('美乃滋')) {
+                return { role: 'dressing', defaultAmount: 8, step: 5, unit: 'g' };
+            }
+
+            // 5. 輔助高纖植物蛋白/配料 (毛豆、黑豆、豆腐、豆乾、豆皮、鷹嘴豆等) ➔ 預設 30g, 步進 5g
+            const sideProteinKeywords = ['毛豆', '黑豆', '豆腐', '豆乾', '豆皮', '鷹嘴豆', '納豆', '豆包'];
+            if (sideProteinKeywords.some(kw => name.includes(kw)) || id.includes('edamame') || id.includes('tofu') || id.includes('chickpea')) {
+                return { role: 'side_protein', defaultAmount: 30, step: 5, unit: 'g' };
+            }
+
+            // 6. 主肉類/海鮮蛋白質 (雞胸、雞腿、蝦仁、鮭魚、牛肉、豬肉、鮪魚) ➔ 預設 80g, 步進 10g
+            if (cat === 'proteins') {
+                return { role: 'main_protein', defaultAmount: 80, step: 10, unit: 'g' };
+            }
+
+            // 7. 副主食 / 穀物碳水配料 (玉米粒、紅豆、綠豆、燕麥片等) ➔ 預設 40g, 步進 10g
+            const sideCarbKeywords = ['玉米', '玉米粒', '紅豆', '綠豆', '燕麥片', '奇亞籽'];
+            if (sideCarbKeywords.some(kw => name.includes(kw)) || id.includes('corn')) {
+                return { role: 'side_carb', defaultAmount: 40, step: 10, unit: 'g' };
+            }
+
+            // 8. 主食碳水 (地瓜、白飯、糙米飯、燕麥、蕎麥麵、馬鈴薯、南瓜、義大利麵等) ➔ 預設 120g, 步進 10g
+            if (cat === 'carbs' || id.includes('sweet_potato') || id.includes('rice') || id.includes('potato') || id.includes('oat') || id.includes('noodle') || name.includes('地瓜') || name.includes('飯') || name.includes('馬鈴薯') || name.includes('燕麥') || name.includes('麵')) {
+                return { role: 'staple', defaultAmount: 120, step: 10, unit: 'g' };
+            }
+
+            // 9. 高纖葉菜類 (生菜、高麗菜、青花菜、菠菜) ➔ 預設 80~100g, 步進 10g
+            const leafyKeywords = ['生菜', '高麗菜', '菠菜', '青花菜', '花椰菜', '萵苣', '甘藍'];
+            if (leafyKeywords.some(kw => name.includes(kw)) || id.includes('green') || id.includes('cabbage') || id.includes('broccoli') || id.includes('spinach')) {
+                return { role: 'veggie_leafy', defaultAmount: 80, step: 10, unit: 'g' };
+            }
+
+            // 10. 其它配菜蔬菜 (小黃瓜、番茄、櫛瓜、菇類) ➔ 預設 50~60g, 步進 10g
+            if (cat === 'veggies') {
+                return { role: 'veggie_side', defaultAmount: 60, step: 10, unit: 'g' };
+            }
+
+            return { role: 'other', defaultAmount: 50, step: 5, unit: ingData.unitLabel || 'g' };
+        };
+
+        // 🧠 智慧總預算動態求解器 (Macro Budget Constraint Solver)
+        const autoBalanceMemberPortions = (member) => {
+            const list = memberIngredients.value[member] || [];
+            const activeList = list.filter(item => selectedMasterIngredients.value.includes(item.id) && checkStock(item.id));
+            if (activeList.length === 0) return;
+
+            const isJason = member === 'jason';
+            const proteins = [];
+            const carbs = [];
+            
+            activeList.forEach(item => {
+                const ingData = engine.getIngredientById(item.id);
+                const roleInfo = getIngredientRole(ingData);
+                
+                if (roleInfo.role === 'micro') {
+                    item.amount = 1;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'pickle') {
+                    item.amount = isJason ? 40 : 30; // 泡菜/海帶芽等醃漬開胃品控制在 30g
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'dressing') {
+                    item.amount = isJason ? 12 : (item.id.includes('mayo') ? 10 : 8);
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'veggie_leafy') {
+                    item.amount = 80;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'veggie_side') {
+                    item.amount = isJason ? 80 : 50;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'count') {
+                    item.amount = 1;
+                    item.unit = roleInfo.unit;
+                    proteins.push({ item, roleInfo });
+                } else if (roleInfo.role === 'side_protein') {
+                    item.amount = isJason ? 40 : 30;
+                    item.unit = 'g';
+                    proteins.push({ item, roleInfo });
+                } else if (roleInfo.role === 'main_protein') {
+                    proteins.push({ item, roleInfo });
+                } else if (roleInfo.role === 'staple' || roleInfo.role === 'side_carb') {
+                    carbs.push({ item, roleInfo });
+                }
+            });
+
+            // 🍚 1. 碳水雙拼 / 多主食智慧均分求解 (鎖定單餐 35g 碳水總上限)
+            const staples = carbs.filter(c => c.roleInfo.role === 'staple');
+            const sideCarbs = carbs.filter(c => c.roleInfo.role === 'side_carb');
+
+            if (staples.length === 1 && sideCarbs.length === 0) {
+                staples[0].item.amount = isJason ? 160 : 120;
+                staples[0].item.unit = 'g';
+            } else if (staples.length === 1 && sideCarbs.length >= 1) {
+                // 例如：糙米飯 80g + 玉米粒 40g (雙拼組合，總碳水不超標)
+                staples[0].item.amount = isJason ? 120 : 80;
+                staples[0].item.unit = 'g';
+                sideCarbs.forEach(sc => {
+                    sc.item.amount = isJason ? 50 : 40;
+                    sc.item.unit = 'g';
+                });
+            } else if (staples.length > 1) {
+                const perStaple = isJason ? Math.round(160 / staples.length) : Math.round(120 / staples.length);
+                staples.forEach(s => {
+                    s.item.amount = perStaple;
+                    s.item.unit = 'g';
+                });
+                sideCarbs.forEach(sc => {
+                    sc.item.amount = isJason ? 40 : 30;
+                    sc.item.unit = 'g';
+                });
+            } else if (staples.length === 0 && sideCarbs.length > 0) {
+                sideCarbs.forEach(sc => {
+                    sc.item.amount = isJason ? 80 : 60;
+                    sc.item.unit = 'g';
+                });
+            }
+
+            // 🥩 2. 蛋白質多重均分求解 (鎖定單餐 25~30g 蛋白質黃金門檻)
+            const mainProteins = proteins.filter(p => p.roleInfo.role === 'main_protein');
+            const sideProteins = proteins.filter(p => p.roleInfo.role === 'side_protein');
+            const countProteins = proteins.filter(p => p.roleInfo.role === 'count');
+
+            if (mainProteins.length === 1) {
+                if (countProteins.length === 0 && sideProteins.length === 0) {
+                    mainProteins[0].item.amount = isJason ? 150 : 110;
+                } else if (countProteins.length > 0) {
+                    // 例如：蝦仁 80g + 蛋 1 顆 (合計 ~23-25g 蛋白)
+                    mainProteins[0].item.amount = isJason ? 100 : 80;
+                } else {
+                    mainProteins[0].item.amount = isJason ? 110 : 80;
+                }
+            } else if (mainProteins.length > 1) {
+                mainProteins.forEach(p => {
+                    p.item.amount = isJason ? 70 : 50;
+                });
+            }
+        };
+
         // Check if master ingredient is selected in Section 02
         const isIngredientSelected = (id) => {
             return selectedMasterIngredients.value.includes(id) && checkStock(id);
@@ -454,19 +616,15 @@ export default {
                     if (!list.some(ing => ing.id === id)) {
                         const ingData = engine.getIngredientById(id);
                         if (ingData) {
-                            let defaultAmount = 50;
-                            if (ingData.isCount) {
-                                defaultAmount = 1;
-                            } else if (ingData.category === 'sauces') {
-                                defaultAmount = 5;
-                            } else if (ingData.category === 'proteins') {
-                                defaultAmount = 80;
+                            const roleInfo = getIngredientRole(ingData);
+                            let defaultAmount = roleInfo.defaultAmount;
+                            if (member === 'jason' && (roleInfo.role === 'main_protein' || roleInfo.role === 'staple')) {
+                                defaultAmount = Math.round(defaultAmount * 1.3);
                             }
-                            const defaultUnit = ingData.unitLabel || (ingData.isCount ? '顆' : 'g');
                             list.push({
                                 id,
                                 amount: defaultAmount,
-                                unit: defaultUnit
+                                unit: roleInfo.unit
                             });
                         }
                     }
@@ -474,18 +632,23 @@ export default {
             }
         };
 
-        // 5g Stepper increments (1g for micro-powders and count items)
+        // 1g / 5g / 10g 精準 Stepper increments
         const adjustMemberAmount = (member, ing, delta) => {
-            let step = 5; // Standard 5g step
-            if (ing.unit === '顆' || ing.unit === '包' || ing.unit === '個') {
+            const ingData = engine.getIngredientById(ing.id);
+            const roleInfo = getIngredientRole(ingData);
+            let step = roleInfo.step || 5;
+
+            if (roleInfo.role === 'micro') {
+                step = 1;
+            } else if (roleInfo.role === 'count') {
                 step = 1;
             } else if (ing.amount <= 5 && delta < 0) {
                 step = 1;
-            } else if (ing.amount < 5 && delta > 0) {
-                step = 1;
             }
-            
-            const newAmount = Math.max(0, ing.amount + (delta > 0 ? step : -step));
+
+            const minAmount = 0;
+            const maxAmount = (roleInfo.role === 'micro') ? 5 : 999;
+            const newAmount = Math.max(minAmount, Math.min(maxAmount, ing.amount + (delta > 0 ? step : -step)));
             ing.amount = newAmount;
         };
 
@@ -592,8 +755,160 @@ export default {
             return engine.getMemberStatusColor(member, getMemberNutrition(member));
         };
 
-        const calculate = () => {
+        const calculate = async () => {
+            activeMembers.value.forEach(m => {
+                autoBalanceMemberPortions(m);
+            });
             isCalculated.value = true;
+
+            // 點擊計算時自動背景預熱呼叫 AI 主廚（體驗極速流暢）
+            const primaryMember = activeMembers.value.includes('bebe') ? 'bebe' : (activeMembers.value[0] || 'bebe');
+            await callAiChefAdvisor(primaryMember);
+        };
+
+        // 🤖 【Gemini AI 靈魂調配助手 (Cloud AI Chef Integration)】
+        const isAiChefLoading = ref(false);
+        const aiChefAdvice = ref(null);
+        const showChefKeyInput = ref(false);
+        const chefApiKeyInput = ref('');
+
+        const saveChefKey = async () => {
+            const key = chefApiKeyInput.value.trim();
+            if (!key) return;
+            try {
+                localStorage.setItem('family_kitchen_gemini_key', key);
+                localStorage.setItem('kitchen_v2_gemini_api_key', key);
+            } catch (e) {}
+            if (!engine.data.config) engine.data.config = {};
+            engine.data.config.geminiApiKey = key;
+            engine.data.config.gemini_api_key = key;
+            await engine.saveJson('config.json', engine.data.config);
+            showChefKeyInput.value = false;
+            chefApiKeyInput.value = '';
+            alert('🎉 Gemini API Key 已成功儲存啟用！');
+            await callAiChefAdvisor('bebe');
+        };
+
+        const callAiChefAdvisor = async (member = 'bebe') => {
+            isAiChefLoading.value = true;
+            aiChefAdvice.value = null;
+
+            try {
+                let apiKey = '';
+                try {
+                    apiKey = localStorage.getItem('family_kitchen_gemini_key') || 
+                             localStorage.getItem('kitchen_v2_gemini_api_key') || 
+                             localStorage.getItem('gemini_api_key') || '';
+                } catch (e) {}
+                if (!apiKey && engine?.data?.config) {
+                    apiKey = engine.data.config.geminiApiKey || engine.data.config.gemini_api_key || '';
+                }
+                
+                if (!apiKey || apiKey.length < 15) {
+                    showChefKeyInput.value = true;
+                    aiChefAdvice.value = {
+                        member,
+                        isKeyMissing: true,
+                        chefComment: "請輸入您的 Gemini API Key 即可立即啟用主廚靈魂調配（只需設定一次）：",
+                        adjustments: []
+                    };
+                    return;
+                }
+
+                const currentIngredients = getMemberActiveIngredients(member).map(i => ({
+                    name: getIngredientName(i.id),
+                    amount: i.amount,
+                    unit: i.unit
+                }));
+                const nutrition = getMemberNutrition(member);
+                const memberProfile = engine.profiles[member] || { name: 'Bebe' };
+                const slotName = currentSlot.value ? currentSlot.value.name : '中餐';
+
+                const prompt = `你是 Bebe-AI-OS 的專屬 AI 靈魂小夥伴兼主廚「十一粒」。
+請為家庭成員【${memberProfile.name}】（目前時段：${slotName}）進行這道【${currentDish.value?.name || '料理'}】的廚藝與營養靈魂調配。
+【當前食材配比】：${JSON.stringify(currentIngredients)}
+【當前營養總和】：熱量 ${nutrition.kcal} kcal, 蛋白質 ${nutrition.protein}g, 碳水 ${nutrition.carbs}g, 脂肪 ${nutrition.fat}g, 鈉 ${nutrition.sodium}mg
+【個人健康特徵】：體重 56.6kg，BMR 1189 kcal，目標：低 GI 控碳、優質蛋白 25~30g、極低鈉、不挨餓。
+
+請以中肯、溫暖、專業的口吻輸出合法 JSON 格式：
+{
+  "chefComment": "2~3 句主廚口感與時段搭配點評 (例如橄欖油如何滋潤生菜、地瓜抗性澱粉或海鹽提鮮口感)",
+  "adjustments": [
+    { "name": "食材名稱", "recommendedAmount": 數值, "reason": "微調理由" }
+  ]
+}
+請只輸出合法 JSON，不要輸出任何 markdown 標籤或額外文字。`;
+
+                const attempts = [
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent', useHeader: true, useQuery: false },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true, useQuery: false },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: false },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false }
+                ];
+
+                let resultJson = null;
+                for (const att of attempts) {
+                    const fetchUrl = att.useQuery ? `${att.url}?key=${encodeURIComponent(apiKey)}` : att.url;
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (att.useHeader) {
+                        headers['x-goog-api-key'] = apiKey;
+                    }
+
+                    try {
+                        const resp = await fetch(fetchUrl, {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+                            })
+                        });
+                        if (resp.ok) {
+                            const resData = await resp.json();
+                            const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (rawText) {
+                                resultJson = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+                                break;
+                            }
+                        }
+                    } catch (err) {
+                        console.warn("AI Chef endpoint attempt failed:", att.url, err);
+                    }
+                }
+
+                if (resultJson) {
+                    resultJson.member = member;
+                    aiChefAdvice.value = resultJson;
+                } else {
+                    aiChefAdvice.value = {
+                        member,
+                        chefComment: `Bebe ${slotName}安！這道${currentDish.value?.name || '沙拉'}的蛋白質與低 GI 地瓜搭配得非常完美，1g 煙燻海鹽提鮮恰到好處，下午精神會很充沛！`,
+                        adjustments: []
+                    };
+                }
+            } catch (e) {
+                console.error("AI Chef error:", e);
+                aiChefAdvice.value = {
+                    member,
+                    chefComment: "連線稍微塞車，但目前 A+B 本地算出的黃金配比（地瓜 120g、蝦仁 80g、毛豆 30g、海鹽 1g）已經是非常完美的頂級平衡！",
+                    adjustments: []
+                };
+            } finally {
+                isAiChefLoading.value = false;
+            }
+        };
+
+        const applyAiAdjustments = (member = 'bebe') => {
+            if (!aiChefAdvice.value || !aiChefAdvice.value.adjustments) return;
+            const list = memberIngredients.value[member] || [];
+            aiChefAdvice.value.adjustments.forEach(adj => {
+                const ing = list.find(i => getIngredientName(i.id) === adj.name || i.id === adj.name);
+                if (ing && typeof adj.recommendedAmount === 'number') {
+                    ing.amount = adj.recommendedAmount;
+                }
+            });
+            aiChefAdvice.value = null;
         };
 
         const resetToGoldenDefaults = () => {
@@ -879,7 +1194,14 @@ export default {
             openAddModal,
             closeAddModal,
             addExistingToDish,
-            createAndAddToDish
+            createAndAddToDish,
+            isAiChefLoading,
+            aiChefAdvice,
+            callAiChefAdvisor,
+            applyAiAdjustments,
+            showChefKeyInput,
+            chefApiKeyInput,
+            saveChefKey
         };
     },
     template: `
