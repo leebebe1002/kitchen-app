@@ -1739,13 +1739,11 @@
             "preferredStores": [
                 "全聯"
             ]
-        }
-    ],
-    "drinks": [
+        },
         {
             "id": "coffee_capsule",
             "name": "咖啡膠囊",
-            "category": "drinks",
+            "category": "sauces",
             "unitLabel": "顆",
             "servingSize": 1,
             "servingUnit": "顆",

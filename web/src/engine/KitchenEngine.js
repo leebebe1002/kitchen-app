@@ -34,7 +34,7 @@ export default class KitchenEngine {
         // 2. 攤平食材列表
         this.data.ingredients = [];
         if (this.data.rawIngredients) {
-            ['proteins', 'veggies', 'carbs', 'sauces', 'drinks'].forEach(cat => {
+            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
                     this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
                 }
@@ -539,5 +539,44 @@ export default class KitchenEngine {
             this.data.favoriteFoods.push(foodItem);
         }
         await this.saveJson('favorite_foods.json', { favorites: this.data.favoriteFoods });
+    }
+
+    /**
+     * 🧠 3層巨量營養素主導自動分類法則 (Macro Dominance Auto Categorization)
+     * @param {string} name - 食材名稱
+     * @param {object} nutrients - { kcal, protein, carbs, fat, sodium }
+     * @returns {string} - 'proteins' | 'veggies' | 'carbs' | 'sauces'
+     */
+    detectNutrientCategory(name = '', nutrients = {}) {
+        const n = (name || '').trim().toLowerCase();
+        const kcal = Number(nutrients.kcal) || 0;
+        const p = Number(nutrients.protein) || 0;
+        const c = Number(nutrients.carbs) || 0;
+        const f = Number(nutrients.fat) || 0;
+
+        // 【第 1 層：微量品、調味料與零卡/微量飲品】
+        const seasoningKeywords = ['鹽', '胡椒', '香料', '醋', '油', '醬', '咖啡', '茶', '可可', '抹醬', '糖漿', '肉桂', '巴薩米克'];
+        if (seasoningKeywords.some(k => n.includes(k)) || (kcal < 15 && p < 1 && f < 1 && c < 2)) {
+            return 'sauces'; // 歸入 🧂 油脂/調味/其他
+        }
+
+        // 【第 2 層：蔬菜水果防護 (低卡高纖蔬果)】
+        const veggieKeywords = ['菜', '葉', '菇', '筍', '瓜', '茄', '番茄', '洋蔥', '蔥', '蒜', '薑', '椒', '蘿蔔', '木耳', '蘋果', '莓', '果', '芹', '芽'];
+        if (veggieKeywords.some(k => n.includes(k)) && kcal <= 45) {
+            return 'veggies'; // 穩穩留在 🥦 蔬菜水果
+        }
+
+        // 【第 3 層：實質巨量營養素主導】
+        if (f >= p && f >= c && f > 0) {
+            return 'sauces'; // 脂肪最高 ➔ 🧂 油脂/調味/其他 (黑芝麻粉、花生醬、奇亞籽、堅果、沙拉油)
+        }
+        if (p >= f && p >= c && p > 0) {
+            return 'proteins'; // 蛋白質最高 ➔ 🥩 蛋白質 (豌豆蛋白飲、乳清蛋白粉、雞肉、蝦仁、蛋、豆腐)
+        }
+        if (c >= p && c >= f && c > 0) {
+            return 'carbs'; // 碳水最高 ➔ 🍚 碳水主食 (糙米、燕麥、地瓜、義大利麵、馬鈴薯)
+        }
+
+        return 'sauces'; // 預設歸入 油脂/調味/其他
     }
 }
