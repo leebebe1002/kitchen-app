@@ -434,8 +434,20 @@ export default {
         const albumInputRef = ref(null);
         const capturedPhotoUrl = ref('');
         const isAiAnalyzing = ref(false);
+        const aiScanStatus = ref('idle'); // 'idle' | 'analyzing' | 'success' | 'error'
+        const aiStatusMessage = ref('');
         const geminiApiKeyInput = ref('');
         const showApiKeyInput = ref(false);
+
+        // 初始化讀取本地 API Key
+        const getSavedApiKey = () => {
+            return (
+                engine.data?.config?.gemini_api_key ||
+                localStorage.getItem('kitchen_v2_gemini_api_key') ||
+                localStorage.getItem('gemini_api_key') ||
+                ''
+            ).trim();
+        };
 
         const saveApiKey = async () => {
             const key = (geminiApiKeyInput.value || '').trim();
@@ -443,8 +455,14 @@ export default {
                 alert('請貼上有效的 Gemini API Key！');
                 return;
             }
+            if (!key.startsWith('AIza')) {
+                alert('⚠️ Gemini API Key 格式不正確！Google Gemini API Key 一律由 "AIza..." 開頭，請至 Google AI Studio (aistudio.google.com) 複製正確金鑰。');
+                return;
+            }
             if (!engine.data.config) engine.data.config = {};
             engine.data.config.gemini_api_key = key;
+            localStorage.setItem('kitchen_v2_gemini_api_key', key);
+            localStorage.setItem('gemini_api_key', key);
             await engine.saveJson('config.json', engine.data.config);
             showApiKeyInput.value = false;
             alert('🎉 成功儲存 API Key！系統 AI 圖片辨識功能已正式開啟！');
@@ -452,12 +470,22 @@ export default {
 
         const cancelAiAnalyzing = () => {
             isAiAnalyzing.value = false;
+            aiScanStatus.value = 'error';
+            aiStatusMessage.value = '已取消 AI 辨識等待，請直接在下方手動填寫名稱與營養數值。';
             if (!addForm.value.per100g) {
                 addForm.value.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
             }
             if (!addForm.value.perServing) {
                 addForm.value.perServing = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
             }
+        };
+
+        const closeAddModal = () => {
+            showAddModal.value = false;
+            capturedPhotoUrl.value = '';
+            isAiAnalyzing.value = false;
+            aiScanStatus.value = 'idle';
+            aiStatusMessage.value = '';
         };
 
         const triggerCamera = () => {
@@ -473,6 +501,10 @@ export default {
         };
 
         const openAddModalDirectly = () => {
+            capturedPhotoUrl.value = '';
+            isAiAnalyzing.value = false;
+            aiScanStatus.value = 'idle';
+            aiStatusMessage.value = '';
             showAddModal.value = true;
         };
 
@@ -529,78 +561,211 @@ export default {
             };
         };
 
+        // 🤖 純前端直連 Google Gemini Vision API (靜態託管/手機直連保證可用)
+        const callClientGeminiNutritionOCR = async (dataUrl, apiKey) => {
+            if (!apiKey || !apiKey.startsWith('AIza')) {
+                return {
+                    status: 'invalid_key',
+                    message: '未設定有效 Gemini API Key (需以 AIza 開頭)'
+                };
+            }
+
+            const cleanB64 = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+            let mimeType = 'image/jpeg';
+            if (dataUrl.startsWith('data:image/png')) mimeType = 'image/png';
+            else if (dataUrl.startsWith('data:image/webp')) mimeType = 'image/webp';
+
+            const prompt = `你是一位極度嚴謹的專業營養師與食品標籤 OCR 辨識專家。
+請仔細閱讀這張食品包裝照片上的營養標示 (Nutrition Facts) 或成分標籤，提取『食品名稱』、『單份克數 (servingSize)』、以及『每份 (perServing)』與『每 100g (per100g)』的雙軌營養數據。
+
+【關鍵提取與換算指令 - 務必嚴格執行】：
+1. 請讀取『每一份量 (Serving Size)』為多少克或毫升 (例如 10g, 15mL, 1包)，記為 servingSize 與 servingUnit。
+2. 如果照片上有『每份 (Per Serving)』數值，請直接讀取填入 perServing。
+3. 如果照片上有『每 100g / 100mL』數值，請直接讀取填入 per100g。
+4. 如果照片上『只有每份』或『只有每 100g』，請自動按比例換算補齊另一欄的數據！
+5. category 請依據屬性選填：proteins (蛋白質), carbs (澱粉/主食), veggies (蔬菜水果), oils (油脂/抹醬), seasonings (醬油/調味粉) 之一。
+6. 請嚴格只輸出純 JSON，不可包含 markdown codeblock 標籤：
+{
+  "name": "精準品名",
+  "category": "proteins",
+  "servingSize": 100,
+  "servingUnit": "g",
+  "perServing": {
+    "kcal": 120,
+    "protein": 24,
+    "carbs": 1,
+    "fat": 2.5,
+    "sodium": 80
+  },
+  "per100g": {
+    "kcal": 120,
+    "protein": 24,
+    "carbs": 1,
+    "fat": 2.5,
+    "sodium": 80
+  }
+}`;
+
+            const modelsToTry = [
+                'gemini-2.5-flash',
+                'gemini-2.0-flash',
+                'gemini-1.5-flash',
+                'gemini-1.5-flash-latest'
+            ];
+
+            let lastError = '';
+
+            for (const modelName of modelsToTry) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: cleanB64
+                                }
+                            }
+                        ]
+                    }]
+                };
+
+                try {
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (resp.ok) {
+                        const resData = await resp.json();
+                        const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                        let cleanJson = rawText;
+                        if (cleanJson.startsWith('```')) {
+                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        }
+                        const parsed = JSON.parse(cleanJson);
+                        return { status: 'success', result: parsed };
+                    } else {
+                        const errJson = await resp.json().catch(() => ({}));
+                        lastError = `HTTP ${resp.status}: ${errJson?.error?.message || resp.statusText}`;
+                        if (resp.status === 429) continue;
+                    }
+                } catch (e) {
+                    lastError = e.message || String(e);
+                }
+            }
+
+            if (lastError.includes('429') || lastError.includes('RESOURCE_EXHAUSTED')) {
+                return {
+                    status: 'rate_limit_429',
+                    message: 'Google API 免費額度每分鐘頻率限制，請稍候 10 秒後再次嘗試'
+                };
+            }
+
+            return {
+                status: 'error',
+                message: `Gemini API 連線辨識未完成 (${lastError})`
+            };
+        };
+
         const handleCameraSnap = async (event) => {
             const file = event.target.files && event.target.files[0];
             if (file) {
                 showAddModal.value = true;
                 isAiAnalyzing.value = true;
+                aiScanStatus.value = 'analyzing';
+                aiStatusMessage.value = '正在讀取標籤與換算 100g 數據，請稍候 3~5 秒...';
+
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const rawDataUrl = e.target.result;
                     const compressedDataUrl = await compressImage(rawDataUrl, 800, 800, 0.8);
                     capturedPhotoUrl.value = compressedDataUrl;
-                    
+
+                    const apiKey = getSavedApiKey();
+                    let data = null;
+
+                    // 1. 優先嘗試本機後端 (若有 Python server 運行)
                     try {
                         const res = await fetch('/api/analyze-nutrition-photo', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ image: compressedDataUrl })
+                            body: JSON.stringify({ image: compressedDataUrl, client_api_key: apiKey })
                         });
-                        const data = await res.json();
-                        isAiAnalyzing.value = false;
-                        
-                        if (data.status === 'success' && data.result) {
-                            const resData = data.result;
-                            if (resData.name) addForm.value.name = resData.name;
-                            if (resData.category) addForm.value.category = resData.category;
-                            
-                            if (resData.servingSize) addForm.value.servingSize = Number(resData.servingSize) || 10;
-                            if (resData.servingUnit) addForm.value.servingUnit = resData.servingUnit || 'g';
-
-                            if (resData.per100g) {
-                                addForm.value.per100g = {
-                                    kcal: Number(resData.per100g.kcal) || 0,
-                                    protein: Number(resData.per100g.protein) || 0,
-                                    carbs: Number(resData.per100g.carbs) || 0,
-                                    fat: Number(resData.per100g.fat) || 0,
-                                    sodium: Number(resData.per100g.sodium) || 0
-                                };
-                            }
-
-                            if (resData.perServing) {
-                                addForm.value.perServing = {
-                                    kcal: Number(resData.perServing.kcal) || 0,
-                                    protein: Number(resData.perServing.protein) || 0,
-                                    carbs: Number(resData.perServing.carbs) || 0,
-                                    fat: Number(resData.perServing.fat) || 0,
-                                    sodium: Number(resData.perServing.sodium) || 0
-                                };
-                            } else {
-                                on100gInput();
-                            }
-
-                            if (['sauces', 'oils', 'seasonings'].includes(resData.category)) {
-                                addFormDisplayBasis.value = 'serving';
-                            } else {
-                                addFormDisplayBasis.value = '100g';
-                            }
-
-                            alert(`🤖 AI Vision 成功辨識【${resData.name || '食材'}】！\n已為您雙向帶入：\n👉 單份(${addForm.value.servingSize}${addForm.value.servingUnit})：${addForm.value.perServing.kcal} kcal\n📏 每 100g：${addForm.value.per100g.kcal} kcal`);
-                        } else if (data.status === 'rate_limit_429' || (data.message && data.message.includes('429'))) {
-                            alert('⚡️ 提示：Google 官方免費版 API 頻率暫時達到每分鐘上限 (HTTP 429 Rate Limit)。系統已自動在背景進行多重重試，請稍等 10 秒後直接再次點擊拍照即可！✨');
-                        } else if (data.status === 'invalid_key' || data.status === 'need_api_key') {
-                            showApiKeyInput.value = true;
-                            alert(`⚠️ ${data.message || '請貼上正確的 Gemini API Key (以 AIza... 開頭)'}`);
-                            const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
-                            if (fileName && !['image', 'photo', 'camera', 'IMG', 'DCIM'].some(k => fileName.includes(k))) {
-                                addForm.value.name = fileName;
-                            }
-                        } else {
-                            alert(`⚠️ ${data.message || 'AI 辨識未完成，請手動填寫名稱與成分'}`);
+                        if (res.ok) {
+                            data = await res.json();
                         }
                     } catch (err) {
-                        isAiAnalyzing.value = false;
-                        console.error('AI Vision API fetch error:', err);
+                        // 靜態環境無後端，忽略並轉為前端直連
+                    }
+
+                    // 2. 本地後端無回應時，使用前端直連 Gemini Vision API
+                    if (!data || data.status !== 'success') {
+                        if (!apiKey) {
+                            data = {
+                                status: 'need_api_key',
+                                message: '未設定 Gemini API Key，請點擊「設定 Key」輸入金鑰，或直接手動填寫。'
+                            };
+                        } else {
+                            data = await callClientGeminiNutritionOCR(compressedDataUrl, apiKey);
+                        }
+                    }
+
+                    isAiAnalyzing.value = false;
+
+                    if (data && data.status === 'success' && data.result) {
+                        const resData = data.result;
+                        if (resData.name) addForm.value.name = resData.name;
+                        if (resData.category) addForm.value.category = resData.category;
+                        
+                        if (resData.servingSize) addForm.value.servingSize = Number(resData.servingSize) || 10;
+                        if (resData.servingUnit) addForm.value.servingUnit = resData.servingUnit || 'g';
+
+                        if (resData.per100g) {
+                            addForm.value.per100g = {
+                                kcal: Number(resData.per100g.kcal) || 0,
+                                protein: Number(resData.per100g.protein) || 0,
+                                carbs: Number(resData.per100g.carbs) || 0,
+                                fat: Number(resData.per100g.fat) || 0,
+                                sodium: Number(resData.per100g.sodium) || 0
+                            };
+                        }
+
+                        if (resData.perServing) {
+                            addForm.value.perServing = {
+                                kcal: Number(resData.perServing.kcal) || 0,
+                                protein: Number(resData.perServing.protein) || 0,
+                                carbs: Number(resData.perServing.carbs) || 0,
+                                fat: Number(resData.perServing.fat) || 0,
+                                sodium: Number(resData.perServing.sodium) || 0
+                            };
+                        } else {
+                            on100gInput();
+                        }
+
+                        if (['sauces', 'oils', 'seasonings'].includes(resData.category)) {
+                            addFormDisplayBasis.value = 'serving';
+                        } else {
+                            addFormDisplayBasis.value = '100g';
+                        }
+
+                        aiScanStatus.value = 'success';
+                        aiStatusMessage.value = `已為您自動帶入品名【${resData.name || '食材'}】與營養成份，可手動微調。`;
+                    } else {
+                        aiScanStatus.value = 'error';
+                        const errMsg = data?.message || 'AI 辨識未完成';
+                        aiStatusMessage.value = `${errMsg}，請直接在下方手動填寫品名與成分。`;
+
+                        if (data?.status === 'need_api_key' || data?.status === 'invalid_key') {
+                            showApiKeyInput.value = true;
+                        }
+
+                        const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
+                        if (fileName && !['image', 'photo', 'camera', 'IMG', 'DCIM'].some(k => fileName.includes(k))) {
+                            if (!addForm.value.name) addForm.value.name = fileName;
+                        }
                     }
                 };
                 reader.readAsDataURL(file);
@@ -781,10 +946,13 @@ export default {
             albumInputRef,
             capturedPhotoUrl,
             isAiAnalyzing,
+            aiScanStatus,
+            aiStatusMessage,
             geminiApiKeyInput,
             showApiKeyInput,
             saveApiKey,
             cancelAiAnalyzing,
+            closeAddModal,
             triggerCamera,
             triggerAlbum,
             openAddModalDirectly,
@@ -1719,7 +1887,7 @@ export default {
             </div>
 
             <!-- 📱 新增食材 / 雜項抽屜 (結合 AI 拍照辨識) -->
-            <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
+            <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
                 <div class="drawer-content" style="max-height: 90vh; padding: 20px 20px 28px 20px; position: relative; overflow-y: auto;">
                     
                     <!-- 🤖 AI 辨識中 70% 半透明白色遮罩 + 50x50px 大 Loading 圈圈 + 取消不等待按鈕 -->
@@ -1747,10 +1915,10 @@ export default {
                             </svg>
                             <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">拍攝辨識 / 新增食材與雜項</h3>
                         </div>
-                        <button class="btn-icon" @click="showAddModal = false" style="border: none; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
+                        <button class="btn-icon" @click="closeAddModal" style="border: none; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
                     </div>
 
-                    <!-- 1. AI 辨識區 (不動)：API Key 狀態與實拍圖片預覽+雷射動態掃描卡片 -->
+                    <!-- 1. AI 辨識區：API Key 狀態與實拍圖片預覽+雷射動態掃描卡片 -->
                     <div style="background: #EAF6F7; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; margin-bottom: 14px;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #19585C; display: flex; align-items: center; justify-content: space-between;">
                             <span style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1771,7 +1939,7 @@ export default {
                                 貼上免費 Gemini API Key 即可讓手機相機擁有 100% 準確營養標示 OCR 讀取能力：
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <input type="password" v-model="geminiApiKeyInput" placeholder="貼上 AIZA... API Key" class="search-input" style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF;">
+                                <input type="password" v-model="geminiApiKeyInput" placeholder="貼上 AIza... 開頭的 API Key" class="search-input" style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF;">
                                 <button class="btn-primary" @click="saveApiKey" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -1787,10 +1955,10 @@ export default {
                     <div v-if="capturedPhotoUrl" style="margin-bottom: 16px; background: #FFFFFF; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;">
                         <div class="ai-scan-box" style="width: 64px; height: 64px; flex-shrink: 0;">
                             <img :src="capturedPhotoUrl" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-                            <div v-if="isAiAnalyzing" class="ai-scan-line"></div>
+                            <div v-if="aiScanStatus === 'analyzing'" class="ai-scan-line"></div>
                         </div>
                         <div style="flex: 1;">
-                            <div v-if="isAiAnalyzing" style="display: flex; align-items: center; gap: 8px;">
+                            <div v-if="aiScanStatus === 'analyzing'" style="display: flex; align-items: center; gap: 8px;">
                                 <span class="ai-spinner"></span>
                                 <div>
                                     <div style="font-size: 0.85rem; color: #19585C; font-weight: 700;">
@@ -1801,10 +1969,16 @@ export default {
                                     </div>
                                 </div>
                             </div>
-                            <div v-else style="font-size: 0.85rem; color: #065F46; font-weight: 700;">
-                                Gemini Vision 辨識成功！
+                            <div v-else-if="aiScanStatus === 'success'" style="font-size: 0.85rem; color: #065F46; font-weight: 700;">
+                                ✨ Gemini Vision 辨識成功！
                                 <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; margin-top: 2px;">
-                                    已為您自動帶入品名與每 100g 營養成份，可手動微調。
+                                    {{ aiStatusMessage || '已為您自動帶入品名與每 100g 營養成份，可手動微調。' }}
+                                </div>
+                            </div>
+                            <div v-else style="font-size: 0.85rem; color: #B45309; font-weight: 700;">
+                                ⚠️ AI 辨識未完成
+                                <div style="font-size: 0.75rem; color: #78350F; font-weight: 500; margin-top: 2px;">
+                                    {{ aiStatusMessage || '未能自動提取數據，請在下方直接手動填寫品名與成分。' }}
                                 </div>
                             </div>
                         </div>
