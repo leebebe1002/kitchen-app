@@ -1227,7 +1227,8 @@ export default {
             applyAiAdjustments,
             showChefKeyInput,
             chefApiKeyInput,
-            saveChefKey
+            saveChefKey,
+            goToTracker
         };
     },
     template: `
@@ -1760,5 +1761,6 @@ export default {
                 </div>
             </div>
         </div>
-    `
+    </div>
+`
 };
