@@ -107,6 +107,7 @@ export default {
         const showSOP = ref(false);
         const hideOutOfStock = ref(false);
         const isCalculated = ref(false);
+        const isResultStale = ref(false);
         
         // Record Success Modal State
         const showRecordSuccessModal = ref(false);
@@ -127,6 +128,7 @@ export default {
                 document.body.classList.remove('modal-open');
             }
         });
+
         const searchQuery = ref('');
         const drawerCategory = ref('all');
         const isQuickCreate = ref(false);
@@ -161,6 +163,13 @@ export default {
             ariel: false,
             jason: false
         });
+
+        // 偵測食材或成員異動：若已產出過結果，自動將下方標記為「待重新計算 (Stale)」
+        watch([selectedMasterIngredients, diners], () => {
+            if (isCalculated.value) {
+                isResultStale.value = true;
+            }
+        }, { deep: true });
 
         const activeMembers = computed(() => {
             const members = [];
@@ -237,7 +246,7 @@ export default {
             return groups.filter(g => g.items.length > 0);
         });
 
-        // Filtered master library ingredients for drawer (Filtered by Search Query + Nutrient Tab)
+        // Filtered master library ingredients for drawer (Filtered by Search Query + Nutrient Tab + In Stock Only)
         const filteredMasterIngredients = computed(() => {
             const q = (searchQuery.value || '').trim().toLowerCase();
             const cat = drawerCategory.value;
@@ -249,13 +258,16 @@ export default {
             ];
 
             return (engine.data?.ingredients || []).filter(ing => {
-                // Filter out already existing items in this dish
+                // 1. Filter out already existing items in this dish
                 if (currentRecommended.includes(ing.id)) return false;
 
-                // Category filter
+                // 2. 備料加食材專用：只列出「家裡有庫存」的食材，無庫存不顯示
+                if (!checkStock(ing.id)) return false;
+
+                // 3. Category filter
                 if (cat !== 'all' && ing.category !== cat) return false;
 
-                // Search query
+                // 4. Search query
                 if (q && !ing.name.toLowerCase().includes(q) && !(ing.category || '').toLowerCase().includes(q)) {
                     return false;
                 }
@@ -265,6 +277,8 @@ export default {
 
         // Reset and populate ingredients when dish changes
         const onDishChange = () => {
+            isCalculated.value = false;
+            isResultStale.value = false;
             const dish = currentDish.value;
             if (dish) {
                 // 1. 只有「預設食材 (defaultIngredients) 且 有庫存」或「推薦食材中有庫存者」才納入初始選取
@@ -760,6 +774,7 @@ export default {
                 autoBalanceMemberPortions(m);
             });
             isCalculated.value = true;
+            isResultStale.value = false;
 
             // 點擊計算時自動背景預熱呼叫 AI 主廚（體驗極速流暢）
             const primaryMember = activeMembers.value.includes('bebe') ? 'bebe' : (activeMembers.value[0] || 'bebe');
@@ -1136,6 +1151,7 @@ export default {
             diners,
             hideOutOfStock,
             isCalculated,
+            isResultStale,
             groupedCategories,
             filteredMasterIngredients,
             showAddModal,
@@ -1320,7 +1336,7 @@ export default {
                     </label>
                     <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; margin-left: auto; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
                             <line x1="8" y1="6" x2="16" y2="6"></line>
                             <line x1="16" y1="14" x2="16" y2="18"></line>
                             <path d="M8 10h.01"></path>
@@ -1335,7 +1351,7 @@ export default {
                 </div>
             </div>
 
-            <div v-if="selectedDish && isCalculated">
+            <div v-if="selectedDish && isCalculated" style="position: relative;">
                 <!-- 03 PORTIONS -->
                 <div class="section-title">03 PORTIONS 全家備料大白板</div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
@@ -1402,7 +1418,7 @@ export default {
 
                     <!-- Member Steppers: Name + (Xg) + [ - ] Yg [ + ] -->
                     <div v-for="ing in getMemberActiveIngredients(member)" :key="ing.id" 
-                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">
+                          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">
                         <div style="display: flex; align-items: baseline;">
                             <span style="font-weight: 500;">{{ getIngredientName(ing.id) }}</span>
                             <span v-if="getDefaultAmount(member, ing.id)" 
@@ -1417,7 +1433,29 @@ export default {
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <!-- 🔄 形式 C：毛玻璃微遮罩 ＋ 原地一鍵重算 (Frosted Glass Stale Recalculate Overlay) -->
+                <div v-if="isResultStale" 
+                     @click="calculate"
+                     style="position: absolute; top: 0; left: -6px; right: -6px; bottom: -6px; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-radius: var(--radius-lg, 16px); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 100px; z-index: 50; cursor: pointer; transition: all 0.3s ease;">
+                    <button @click.stop="calculate" 
+                            style="display: flex; align-items: center; gap: 8px; background: var(--color-primary, #F5A623); color: #FFFFFF; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(245, 166, 35, 0.45); cursor: pointer;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+                            <line x1="8" y1="6" x2="16" y2="6"></line>
+                            <line x1="16" y1="14" x2="16" y2="18"></line>
+                            <path d="M16 10h.01"></path>
+                            <path d="M12 10h.01"></path>
+                            <path d="M8 10h.01"></path>
+                            <path d="M12 14h.01"></path>
+                            <path d="M8 14h.01"></path>
+                            <path d="M12 18h.01"></path>
+                            <path d="M8 18h.01"></path>
+                        </svg>
+                        <span>食材已調整 · 點擊重新計算</span>
+                    </button>
+                </div>
+
 
             <div class="fab-container" v-if="selectedDish && isCalculated">
                 <button class="btn-primary" style="background: #FFFFFF; color: var(--color-text-main); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; gap: 6px;" @click="openAddModal">
@@ -1510,22 +1548,19 @@ export default {
                         </button>
                     </div>
 
-                    <!-- Master Ingredient Search Results (Filtered by Tab) -->
+                    <!-- Master Ingredient Search Results (Filtered by Tab & Stock) -->
                     <div style="max-height: 40vh; overflow-y: auto;">
                         <div class="capsule-group" style="gap: 8px;">
                             <div v-for="ing in filteredMasterIngredients" 
                                  :key="ing.id" 
-                                 class="capsule"
-                                 :class="{ 'selected': ing.isAlreadyInDish }"
-                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 14px;"
+                                 class="capsule in-stock"
+                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 14px; user-select: none;"
                                  @click="addExistingToDish(ing)">
                                 <span>{{ ing.name }}</span>
-                                <span v-if="ing.isAlreadyInDish" style="font-size: 0.75rem; color: #1B5E20; margin-left: 4px;">(已在料理中)</span>
-                                <span v-else-if="!ing.hasStock" style="font-size: 0.75rem; color: #9CA3AF; margin-left: 4px;">(無庫存)</span>
-                                <span v-else style="font-size: 0.8rem; color: var(--color-primary); margin-left: 4px;">➕</span>
+                                <span style="font-size: 0.8rem; color: var(--color-primary); margin-left: 4px;">➕</span>
                             </div>
                             <div v-if="filteredMasterIngredients.length === 0" style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 0.9rem; width: 100%;">
-                                查無符合食材，點擊上方按鈕可 5 秒新增！
+                                目前無符合的庫存食材，點擊右上角「+ 新增全新食材」可直接建立並入庫！
                             </div>
                         </div>
                     </div>
