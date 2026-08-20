@@ -435,6 +435,7 @@ export default {
         };
 
         const openAddModalDirectly = () => {
+            refreshSavedApiKey();
             ingredientModal.value = {
                 isOpen: true,
                 mode: 'create',
@@ -465,6 +466,7 @@ export default {
 
         const openFoodDetail = (ing) => {
             if (!ing) return;
+            refreshSavedApiKey();
             selectedFood.value = ing;
             const zones = ing.storageZones ? [...ing.storageZones] : (ing.storageZone ? [ing.storageZone] : ['fridge']);
             const stores = ing.preferredStores ? [...ing.preferredStores] : (ing.preferredStore ? [ing.preferredStore] : ['全聯']);
@@ -634,18 +636,23 @@ export default {
             }
         };
 
-        // 初始化讀取本地 API Key
+        // 初始化讀取本地與全域 API Key
         const refreshSavedApiKey = () => {
             let key = '';
             try {
-                key = localStorage.getItem('family_kitchen_gemini_key') || '';
+                key = localStorage.getItem('family_kitchen_gemini_key') || 
+                      localStorage.getItem('kitchen_v2_gemini_api_key') || 
+                      localStorage.getItem('gemini_api_key') || '';
             } catch (e) {}
-            if (!key && engine.data.config?.geminiApiKey) {
-                key = engine.data.config.geminiApiKey;
+            if (!key && engine.data.config) {
+                key = engine.data.config.geminiApiKey || engine.data.config.gemini_api_key || '';
             }
-            savedApiKey.value = key;
-            return key;
+            savedApiKey.value = key || '';
+            return savedApiKey.value;
         };
+
+        // 立即執行一次初始化檢查
+        refreshSavedApiKey();
 
         const hasValidKey = computed(() => {
             const key = savedApiKey.value || '';
@@ -660,10 +667,13 @@ export default {
             }
             try {
                 localStorage.setItem('family_kitchen_gemini_key', key);
+                localStorage.setItem('kitchen_v2_gemini_api_key', key);
+                localStorage.setItem('gemini_api_key', key);
             } catch (e) {}
             savedApiKey.value = key;
             if (!engine.data.config) engine.data.config = {};
             engine.data.config.geminiApiKey = key;
+            engine.data.config.gemini_api_key = key;
             await engine.saveJson('config.json', engine.data.config);
             showApiKeyInput.value = false;
             geminiApiKeyInput.value = '';
@@ -864,6 +874,31 @@ export default {
                 if (ingredientModal.value.mode === 'create' || !form.name) {
                     if (resData.name) form.name = resData.name;
                 }
+                if (resData.servingSize) form.servingSize = Number(resData.servingSize) || 10;
+                if (resData.servingUnit) form.servingUnit = resData.servingUnit || 'g';
+
+                if (resData.per100g) {
+                    form.per100g = {
+                        kcal: Number(resData.per100g.kcal) || 0,
+                        protein: Number(resData.per100g.protein) || 0,
+                        carbs: Number(resData.per100g.carbs) || 0,
+                        fat: Number(resData.per100g.fat) || 0,
+                        sodium: Number(resData.per100g.sodium) || 0
+                    };
+                }
+
+                if (resData.perServing) {
+                    form.perServing = {
+                        kcal: Number(resData.perServing.kcal) || 0,
+                        protein: Number(resData.perServing.protein) || 0,
+                        carbs: Number(resData.perServing.carbs) || 0,
+                        fat: Number(resData.perServing.fat) || 0,
+                        sodium: Number(resData.perServing.sodium) || 0
+                    };
+                } else {
+                    onModal100gInput();
+                }
+
                 // 🧠 使用 3 層巨量營養素主導自動分類法則 (Macro Dominance Auto Categorization)
                 const autoCategory = engine.detectNutrientCategory(
                     resData.name || form.name, 
@@ -878,7 +913,7 @@ export default {
                 }
 
                 ingredientModal.value.photo.status = 'success';
-                ingredientModal.value.photo.message = `已為您自動帶入品名【${resData.name || form.name || '食材'}】與營養成份，可手動微調。`;
+                ingredientModal.value.photo.message = `✨ 已為您自動填入【${resData.name || form.name || '食材'}】的熱量與營養成份！`;
             } else {
                 ingredientModal.value.photo.status = 'error';
                 const errMsg = data?.message || 'AI 辨識未完成';
@@ -1629,8 +1664,8 @@ export default {
                         </div>
                     </div>
 
-                    <!-- 1. AI 辨識區：API Key 狀態列 (未設定或點擊展開時顯示) -->
-                    <div style="background: #EAF6F7; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; margin-bottom: 14px;">
+                    <!-- 1. AI 辨識區：API Key 狀態列 (未設定或使用者主動點擊修改時才顯示) -->
+                    <div v-if="!hasValidKey || showApiKeyInput" style="background: #EAF6F7; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; margin-bottom: 14px;">
                         <div style="font-size: 0.85rem; font-weight: 700; color: #19585C; display: flex; align-items: center; justify-content: space-between;">
                             <span style="display: inline-flex; align-items: center; gap: 6px;">
                                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1641,8 +1676,8 @@ export default {
                                     {{ hasValidKey ? '● 已開啟 API 辨識' : '○ 未設定 API Key' }}
                                 </span>
                             </span>
-                            <button class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
-                                {{ showApiKeyInput ? '收起' : '設定 Key' }}
+                            <button v-if="hasValidKey" class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
+                                {{ showApiKeyInput ? '收起' : '修改 Key' }}
                             </button>
                         </div>
                         <div v-if="showApiKeyInput || !hasValidKey" style="margin-top: 8px;">
