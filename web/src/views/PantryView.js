@@ -454,6 +454,8 @@ export default {
             return key;
         };
 
+        const hasValidKey = computed(() => !!getSavedApiKey());
+
         const saveApiKey = async () => {
             const key = (geminiApiKeyInput.value || '').trim();
             if (!key) {
@@ -468,6 +470,7 @@ export default {
             engine.data.config.gemini_api_key = key;
             localStorage.setItem('kitchen_v2_gemini_api_key', key);
             localStorage.setItem('gemini_api_key', key);
+            localStorage.setItem('kitchen_v2_config.json', JSON.stringify(engine.data.config));
             await engine.saveJson('config.json', engine.data.config);
             showApiKeyInput.value = false;
             alert('🎉 成功儲存 API Key！系統 AI 圖片辨識功能已正式開啟！');
@@ -961,6 +964,7 @@ export default {
             aiStatusMessage,
             geminiApiKeyInput,
             showApiKeyInput,
+            hasValidKey,
             saveApiKey,
             cancelAiAnalyzing,
             closeAddModal,
@@ -1937,15 +1941,15 @@ export default {
                                     <path d="M21 2l-2 2m-1.5 1.5L14 9a5 5 0 1 0 1.5 1.5L22 4l-1-2z"></path>
                                 </svg>
                                 <span>AI 圖片辨識狀態：</span>
-                                <span :style="{ color: engine.data.config?.gemini_api_key ? '#059669' : '#D97706', fontWeight: 800 }">
-                                    {{ engine.data.config?.gemini_api_key ? '● 已開啟 API 辨識' : '○ 未設定 API Key' }}
+                                <span :style="{ color: hasValidKey ? '#059669' : '#D97706', fontWeight: 800 }">
+                                    {{ hasValidKey ? '● 已開啟 API 辨識' : '○ 未設定 API Key' }}
                                 </span>
                             </span>
                             <button class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
                                 {{ showApiKeyInput ? '收起' : '設定 Key' }}
                             </button>
                         </div>
-                        <div v-if="showApiKeyInput || !engine.data.config?.gemini_api_key" style="margin-top: 8px;">
+                        <div v-if="showApiKeyInput || !hasValidKey" style="margin-top: 8px;">
                             <div style="font-size: 0.75rem; color: #19585C; margin-bottom: 6px;">
                                 貼上免費 Gemini API Key 即可讓手機相機擁有 100% 準確營養標示 OCR 讀取能力：
                             </div>

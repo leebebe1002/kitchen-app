@@ -143,7 +143,11 @@ export default class KitchenEngine {
         } else if (filename === 'daily_logs.json') {
             return { ...(serverData || {}), ...(localData || {}) };
         } else if (filename === 'config.json') {
-            return { ...(serverData || {}), ...(localData || {}) };
+            const merged = { ...(serverData || {}), ...(localData || {}) };
+            if (merged.gemini_api_key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
+                merged.gemini_api_key = '';
+            }
+            return merged;
         }
         return localData || serverData;
     }
