@@ -466,21 +466,17 @@ export default {
 
         const hasValidKey = computed(() => {
             const k = (savedApiKey.value || '').trim();
-            return !!k && k.startsWith('AIza') && k !== 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ';
+            return !!k && k.length >= 15 && k !== 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ';
         });
 
         const saveApiKey = async () => {
             const key = (geminiApiKeyInput.value || '').trim();
-            if (!key) {
+            if (!key || key.length < 15) {
                 alert('請貼上有效的 Gemini API Key！');
                 return;
             }
             if (key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
-                alert('⚠️ 這是舊版已失效的測試金鑰！\n請至 Google AI Studio (aistudio.google.com/app/apikey) 點擊「Create API key」建立專屬您的全新免費金鑰，複製後貼上即可。');
-                return;
-            }
-            if (!key.startsWith('AIza')) {
-                alert(`⚠️ 金鑰開頭不正確！\n您輸入的內容開頭為：「${key.slice(0, 8)}...」\n真正的 Google Gemini API Key 一律由 "AIza..." 開頭，請確認是否誤填成了密碼。`);
+                alert('⚠️ 這是舊版已失效的測試金鑰！\n請貼上您在 Google AI Studio 剛剛建立的全新金鑰 (以 AQ. 或 AIza... 開頭)。');
                 return;
             }
             if (!engine.data.config) engine.data.config = {};
@@ -595,10 +591,10 @@ export default {
 
         // 🤖 純前端直連 Google Gemini Vision API (靜態託管/手機直連保證可用)
         const callClientGeminiNutritionOCR = async (dataUrl, apiKey) => {
-            if (!apiKey || !apiKey.startsWith('AIza')) {
+            if (!apiKey || apiKey.length < 15) {
                 return {
                     status: 'invalid_key',
-                    message: '未設定有效 Gemini API Key (需以 AIza 開頭)'
+                    message: '未設定有效 Gemini API Key'
                 };
             }
 
@@ -1985,7 +1981,7 @@ export default {
                             <div style="display: flex; gap: 6px;">
                                 <input type="text" 
                                        v-model="geminiApiKeyInput" 
-                                       placeholder="貼上 AIza... 開頭的 API Key" 
+                                       placeholder="貼上 Google API Key (AQ... 或 AIza...)" 
                                        autocomplete="off" 
                                        autocorrect="off" 
                                        autocapitalize="off" 
