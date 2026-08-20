@@ -50,6 +50,27 @@ export default {
             }
         });
 
+        // 🔍 食材關鍵字即時搜尋 (Option A)
+        const showSearchInput = ref(false);
+        const searchKeyword = ref('');
+
+        const toggleSearch = () => {
+            showSearchInput.value = !showSearchInput.value;
+            if (showSearchInput.value) {
+                Vue.nextTick(() => {
+                    const el = document.getElementById('pantry-search-input');
+                    if (el) el.focus();
+                });
+            } else {
+                searchKeyword.value = '';
+            }
+        };
+
+        const clearSearch = () => {
+            searchKeyword.value = '';
+            showSearchInput.value = false;
+        };
+
         // 4 Storage Zones mapped to ingredients
         const zoneNames = {
             fridge: '【冷藏區】 (Fridge Zone)',
@@ -59,9 +80,15 @@ export default {
 
         const getZoneIngredients = (zone) => {
             const all = engine.data.ingredients || [];
+            const kw = (searchKeyword.value || '').trim().toLowerCase();
             return all.filter(ing => {
                 const zones = ing.storageZones || (ing.storageZone ? [ing.storageZone] : ['fridge']);
-                return zones.includes(zone);
+                if (!zones.includes(zone)) return false;
+                if (!kw) return true;
+                const nameMatch = (ing.name || '').toLowerCase().includes(kw);
+                const brandMatch = (ing.brand || '').toLowerCase().includes(kw);
+                const storeMatch = (ing.preferredStores || (ing.preferredStore ? ing.preferredStore.split('/') : [])).some(s => s.toLowerCase().includes(kw));
+                return nameMatch || brandMatch || storeMatch;
             });
         };
 
@@ -71,7 +98,15 @@ export default {
 
         // Household Supplies
         const supplies = computed(() => {
-            return engine.data.householdSupplies?.supplies || [];
+            const list = engine.data.householdSupplies?.supplies || [];
+            const kw = (searchKeyword.value || '').trim().toLowerCase();
+            if (!kw) return list;
+            return list.filter(s => {
+                const nameMatch = (s.name || '').toLowerCase().includes(kw);
+                const brandMatch = (s.brand || '').toLowerCase().includes(kw);
+                const storeMatch = (s.store || '').toLowerCase().includes(kw);
+                return nameMatch || brandMatch || storeMatch;
+            });
         });
 
         // Stock and Cart checks
@@ -1025,14 +1060,42 @@ export default {
             toggleStoreForItem,
             activeStorePickerItemId,
             availableStores,
-            toggleStorePicker
+            toggleStorePicker,
+            showSearchInput,
+            searchKeyword,
+            toggleSearch,
+            clearSearch
         };
     },
     template: `
         <div class="view-pantry" style="padding-bottom: 90px;">
             <!-- 01 PANTRY STOCK 冰箱食材庫存狀態 (黃金畫面 100% 呈現庫存) -->
-            <div class="section-title" style="margin-bottom: 20px;">
+            <div class="section-title" style="margin-bottom: 14px;">
                 01 PANTRY STOCK 冰箱食材庫存狀態
+            </div>
+
+            <!-- 🔍 原地即時搜尋列 (當點擊右側 🔍 浮動按鈕時平滑滑出) -->
+            <div v-if="showSearchInput" 
+                 style="margin-bottom: 18px; background: #FFFFFF; border: 1.5px solid var(--color-primary); border-radius: 14px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(76, 163, 164, 0.15);">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--color-primary)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" 
+                       id="pantry-search-input"
+                       v-model="searchKeyword" 
+                       placeholder="搜尋食材名稱、品牌、通路... (如：泡菜、咖啡、全聯)" 
+                       class="search-input" 
+                       style="flex: 1; border: none; background: transparent; padding: 4px 0; font-size: 0.95rem; font-weight: 600; outline: none; box-shadow: none;">
+                <button v-if="searchKeyword" 
+                        @click="searchKeyword = ''" 
+                        style="border: none; background: #E5E7EB; color: #4B5563; border-radius: 50%; width: 22px; height: 22px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+                    ✕
+                </button>
+                <button @click="clearSearch" 
+                        style="border: none; background: #F3F4F6; color: var(--color-text-main); font-size: 0.8rem; font-weight: 700; border-radius: 8px; padding: 4px 8px; cursor: pointer;">
+                    收起
+                </button>
             </div>
 
             <!-- 右側浮動快捷錨點選單 (Floating Right-Side Anchor Quick Nav) -->
@@ -1048,6 +1111,28 @@ export default {
                 </button>
                 <button @click="scrollToSection('zone-supplies')" style="border: none; background: transparent; padding: 6px 4px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--color-text-main);">
                     雜項
+                </button>
+                <div style="height: 1px; background: var(--color-border); margin: 1px 2px;"></div>
+                <!-- 🔍 浮動搜尋切換按鈕 (置於最下方更符合單手大拇指人體工學) -->
+                <button @click="toggleSearch" 
+                        :style="{
+                            border: 'none',
+                            background: showSearchInput ? 'var(--color-primary)' : 'transparent',
+                            color: showSearchInput ? '#FFF' : 'var(--color-text-main)',
+                            borderRadius: '10px',
+                            padding: '6px 4px',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease'
+                        }"
+                        title="搜尋食材">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                 </button>
             </div>
 
