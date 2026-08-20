@@ -439,6 +439,26 @@ export default {
         const geminiApiKeyInput = ref('');
         const showApiKeyInput = ref(false);
         const savedApiKey = ref('');
+        const debugHistory = ref([]);
+
+        const copyDebugReport = () => {
+            const report = {
+                timestamp: new Date().toISOString(),
+                apiKeyPrefix: (savedApiKey.value || '').slice(0, 8),
+                apiKeyLength: (savedApiKey.value || '').length,
+                logs: debugHistory.value
+            };
+            const text = JSON.stringify(report, null, 2);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('📋 已成功複製詳細除錯報告！請直接貼入對話框發送給十一粒。');
+                }).catch(() => {
+                    prompt('請複製以下除錯日誌：', text);
+                });
+            } else {
+                prompt('請複製以下除錯日誌：', text);
+            }
+        };
 
         // 初始化讀取本地 API Key
         const refreshSavedApiKey = () => {
@@ -665,6 +685,7 @@ export default {
             ];
 
             let lastError = '';
+            debugHistory.value = [];
 
             for (const att of attempts) {
                 const fetchUrl = att.useQuery ? `${att.url}?key=${encodeURIComponent(apiKey)}` : att.url;
@@ -680,8 +701,22 @@ export default {
                         body: JSON.stringify(payload)
                     });
 
-                    if (resp.ok) {
-                        const resData = await resp.json();
+                    const rawResponseText = await resp.text();
+                    let resData = null;
+                    try {
+                        resData = JSON.parse(rawResponseText);
+                    } catch (e) {}
+
+                    debugHistory.value.push({
+                        url: att.url,
+                        useHeader: att.useHeader,
+                        useQuery: att.useQuery,
+                        status: resp.status,
+                        statusText: resp.statusText,
+                        responsePreview: rawResponseText.slice(0, 300)
+                    });
+
+                    if (resp.ok && resData) {
                         const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
                         let cleanJson = rawText;
                         if (cleanJson.startsWith('```')) {
@@ -690,8 +725,7 @@ export default {
                         const parsed = JSON.parse(cleanJson);
                         return { status: 'success', result: parsed };
                     } else {
-                        const errJson = await resp.json().catch(() => ({}));
-                        const errMsg = errJson?.error?.message || resp.statusText;
+                        const errMsg = resData?.error?.message || resp.statusText || rawResponseText.slice(0, 150);
                         lastError = `HTTP ${resp.status}: ${errMsg}`;
                         if (resp.status === 400 || resp.status === 403) {
                             if (errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('permission')) {
@@ -704,6 +738,10 @@ export default {
                     }
                 } catch (e) {
                     lastError = e.message || String(e);
+                    debugHistory.value.push({
+                        url: att.url,
+                        error: lastError
+                    });
                 }
             }
 
@@ -1007,6 +1045,8 @@ export default {
             savedApiKey,
             hasValidKey,
             saveApiKey,
+            debugHistory,
+            copyDebugReport,
             cancelAiAnalyzing,
             closeAddModal,
             triggerCamera,
@@ -2044,6 +2084,13 @@ export default {
                                 <div style="font-size: 0.75rem; color: #78350F; font-weight: 500; margin-top: 2px;">
                                     {{ aiStatusMessage || '未能自動提取數據，請在下方直接手動填寫品名與成分。' }}
                                 </div>
+                                <button class="btn-icon" @click="copyDebugReport" style="padding: 4px 10px; font-size: 0.75rem; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; background: #FFF; border: 1px solid #D97706; color: #B45309; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span>📋 複製詳細除錯報告 (貼給十一粒)</span>
+                                </button>
                             </div>
                         </div>
                     </div>

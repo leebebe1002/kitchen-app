@@ -22,10 +22,16 @@
     <!-- Local Vue 3 (100% Offline & Reliable) -->
     <script src="./vue.global.js"></script>
 
-
+    <!-- Mobile Developer Tools (Eruda F12 Floating Console) -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        if (typeof eruda !== 'undefined') {
+            eruda.init();
+        }
+    </script>
 </head>
 <body>
     <div id="app"></div>
-    <script type="module" src="./src/main.js?v=20260820_INLINE_DATA_CAMELCASE_V10"></script>
+    <script type="module" src="./src/main.js?v=20260820_ERUDA_DEBUG_TOOLS_V11"></script>
 </body>
 </html>
