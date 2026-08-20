@@ -648,27 +648,35 @@ export default {
                 }]
             };
 
-            const endpointsToTry = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-                'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
+            const attempts = [
+                // 1. Header-only (Official standard for AQ. keys - prevents duplicate creds conflict)
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent', useHeader: true, useQuery: false },
+                // 2. Query param only (Legacy standard)
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: false, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: false, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', useHeader: false, useQuery: true },
+                // 3. Both Header & Query
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: true }
             ];
 
             let lastError = '';
 
-            for (const endpoint of endpointsToTry) {
-                const url = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
+            for (const att of attempts) {
+                const fetchUrl = att.useQuery ? `${att.url}?key=${encodeURIComponent(apiKey)}` : att.url;
+                const headers = { 'Content-Type': 'application/json' };
+                if (att.useHeader) {
+                    headers['x-goog-api-key'] = apiKey;
+                }
+
                 try {
-                    const resp = await fetch(url, {
+                    const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-goog-api-key': apiKey
-                        },
+                        headers: headers,
                         body: JSON.stringify(payload)
                     });
 
