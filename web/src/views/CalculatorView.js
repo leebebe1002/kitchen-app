@@ -218,7 +218,10 @@ export default {
             return '⚫️';
         };
 
+        const dishUpdateTrigger = ref(0);
+
         const groupedCategories = computed(() => {
+            const _ = dishUpdateTrigger.value;
             if (!currentDish.value) return [];
             
             const filterStock = (arr) => {
@@ -673,6 +676,7 @@ export default {
 
         // Drawer Controls
         const openAddModal = () => {
+            console.log('[Calculator] openAddModal called');
             searchQuery.value = '';
             drawerCategory.value = 'all';
             isQuickCreate.value = false;
@@ -680,6 +684,7 @@ export default {
         };
 
         const closeAddModal = () => {
+            console.log('[Calculator] closeAddModal called');
             showAddModal.value = false;
             searchQuery.value = '';
             drawerCategory.value = 'all';
@@ -704,17 +709,20 @@ export default {
                 dish[prop].push(ing.id);
             }
             
-            // Auto select in 02 if has stock
-            if (checkStock(ing.id) && !selectedMasterIngredients.value.includes(ing.id)) {
+            // Auto select in 02
+            if (!selectedMasterIngredients.value.includes(ing.id)) {
                 selectedMasterIngredients.value.push(ing.id);
             }
             
+            dishUpdateTrigger.value++;
+
             // Save dishes.json
             await engine.saveJson('dishes.json', engine.data.rawDishes || { dishes: engine.data.dishes });
             
             // Init member default amount
             ['bebe', 'ariel', 'jason'].forEach(m => {
-                const list = memberIngredients.value[m] || [];
+                if (!memberIngredients.value[m]) memberIngredients.value[m] = [];
+                const list = memberIngredients.value[m];
                 if (!list.some(i => i.id === ing.id)) {
                     list.push({
                         id: ing.id,
@@ -987,25 +995,33 @@ export default {
             showRecordSuccessModal.value = true;
         };
 
-        // Ingredient Detail Modal & Long Press State (750ms heavy hold + anti-drag touchmove)
         const selectedIngredient = ref(null);
         let longPressTimer = null;
         let touchStartX = 0;
         let touchStartY = 0;
         let isLongPressTriggered = false;
+        let isPressing = false;
 
         const startIngredientPress = (id, event) => {
+            console.log('[Calculator] startIngredientPress on:', id, event?.type);
             isLongPressTriggered = false;
-            if (event && event.type === 'touchstart' && event.touches && event.touches[0]) {
+            isPressing = true;
+            if (event && event.touches && event.touches[0]) {
                 touchStartX = event.touches[0].clientX;
                 touchStartY = event.touches[0].clientY;
+            } else if (event) {
+                touchStartX = event.clientX || 0;
+                touchStartY = event.clientY || 0;
             }
             if (longPressTimer) clearTimeout(longPressTimer);
             longPressTimer = setTimeout(() => {
-                isLongPressTriggered = true;
-                if (navigator.vibrate) navigator.vibrate(40);
-                openIngredientDetail(id);
-            }, 450);
+                if (isPressing) {
+                    isLongPressTriggered = true;
+                    console.log('[Calculator] Long press fired (350ms)! Opening detail for:', id);
+                    if (navigator.vibrate) navigator.vibrate(40);
+                    openIngredientDetail(id);
+                }
+            }, 350);
         };
 
         const handleIngredientTouchMove = (event) => {
@@ -1013,13 +1029,14 @@ export default {
             if (event.touches && event.touches[0]) {
                 const moveX = Math.abs(event.touches[0].clientX - touchStartX);
                 const moveY = Math.abs(event.touches[0].clientY - touchStartY);
-                if (moveX > 16 || moveY > 16) {
+                if (moveX > 20 || moveY > 20) {
                     cancelIngredientPress();
                 }
             }
         };
 
         const cancelIngredientPress = () => {
+            isPressing = false;
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
@@ -1029,7 +1046,6 @@ export default {
         const openIngredientDetail = (id) => {
             const ing = engine.getIngredientById(id);
             if (ing) {
-                // 確保 per100g 結構健全，防止無 per100g 的食材（如蛋、培根）引發 template 報錯崩潰
                 if (!ing.per100g) {
                     if (ing.perUnit) {
                         ing.per100g = {
@@ -1054,12 +1070,14 @@ export default {
                 toggleIngredient(id);
             }
             isLongPressTriggered = false;
+            isPressing = false;
         };
 
         const handleDisabledClick = (id) => {
             if (longPressTimer) clearTimeout(longPressTimer);
-            // 短按無庫存食材不觸發彈窗，只有長按 750ms (startIngredientPress) 才會開啟詳細資料卡片
+            openIngredientDetail(id);
             isLongPressTriggered = false;
+            isPressing = false;
         };
 
         const saveIngredientChanges = async (ing) => {
@@ -1161,6 +1179,7 @@ export default {
             isResultStale,
             groupedCategories,
             filteredMasterIngredients,
+            dishUpdateTrigger,
             showAddModal,
             drawerInStockOnly,
             isQuickCreate,
@@ -1522,6 +1541,7 @@ export default {
                     <span>紀錄</span>
                 </button>
             </div>
+            </div>
 
             <!-- 75% 搜尋食材與 5秒現場新增抽屜 (Slide-up Drawer with Nutrient Tabs) -->
             <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
@@ -1761,6 +1781,5 @@ export default {
                 </div>
             </div>
         </div>
-    </div>
-`
+    `
 };
