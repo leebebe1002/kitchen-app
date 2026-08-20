@@ -775,6 +775,7 @@ export default {
             });
             isCalculated.value = true;
             isResultStale.value = false;
+            showChefNote.value = false;
 
             // 點擊計算時自動背景預熱呼叫 AI 主廚（體驗極速流暢）
             const primaryMember = activeMembers.value.includes('bebe') ? 'bebe' : (activeMembers.value[0] || 'bebe');
@@ -784,6 +785,7 @@ export default {
         // 🤖 【Gemini AI 靈魂調配助手 (Cloud AI Chef Integration)】
         const isAiChefLoading = ref(false);
         const aiChefAdvice = ref(null);
+        const showChefNote = ref(false);
         const showChefKeyInput = ref(false);
         const chefApiKeyInput = ref('');
 
@@ -1213,6 +1215,7 @@ export default {
             createAndAddToDish,
             isAiChefLoading,
             aiChefAdvice,
+            showChefNote,
             callAiChefAdvisor,
             applyAiAdjustments,
             showChefKeyInput,
@@ -1395,7 +1398,35 @@ export default {
                 <!-- 04 MEMBER CARDS -->
                 <div class="section-title">04 MEMBER CARDS 全家成員卡片</div>
                 <div class="card" v-for="member in activeMembers" :key="member" style="margin-bottom: 16px;">
-                    <h3 style="margin-bottom: 12px; font-size: 1.1rem;">{{ engine.profiles[member].name }} 的專屬份量</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin-bottom: 0; font-size: 1.1rem;">{{ engine.profiles[member].name }} 的專屬份量</h3>
+                        
+                        <!-- ✨ Option A: AI Chef Status Indicator & Expandable Advice Capsule -->
+                        <div v-if="member === 'bebe'">
+                            <!-- Loading State -->
+                            <div v-if="isAiChefLoading" 
+                                 style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #6B7280; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB;">
+                                <span>⏳</span>
+                                <span>AI 覆核中...</span>
+                            </div>
+                            <!-- Ready / Reviewed State (Clickable to toggle advice) -->
+                            <button v-else-if="aiChefAdvice && aiChefAdvice.chefComment" 
+                                    @click="showChefNote = !showChefNote"
+                                    style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
+                                <span>✨ 主廚已覆核</span>
+                                <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Expandable Chef Note Box (Collapsible) -->
+                    <div v-if="member === 'bebe' && showChefNote && aiChefAdvice && aiChefAdvice.chefComment" 
+                         style="margin-bottom: 14px; background: #FFFDF8; border-left: 3px solid var(--color-primary); border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; color: #4B5563; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                        <div style="font-weight: 700; color: var(--color-primary); margin-bottom: 4px; font-size: 0.78rem;">
+                            💬 十一粒主廚小筆記：
+                        </div>
+                        <div>{{ aiChefAdvice.chefComment }}</div>
+                    </div>
                     
                     <!-- Status Tags -->
                     <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">
