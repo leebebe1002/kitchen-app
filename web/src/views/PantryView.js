@@ -452,6 +452,7 @@ export default {
             // 排除舊版無效測試金鑰
             if (key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
                 key = '';
+                geminiApiKeyInput.value = '';
             }
             savedApiKey.value = key;
             if (key && !geminiApiKeyInput.value) {
@@ -472,6 +473,10 @@ export default {
             const key = (geminiApiKeyInput.value || '').trim();
             if (!key) {
                 alert('請貼上有效的 Gemini API Key！');
+                return;
+            }
+            if (key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
+                alert('⚠️ 這是舊版已失效的測試金鑰！\n請至 Google AI Studio (aistudio.google.com/app/apikey) 點擊「Create API key」建立專屬您的全新免費金鑰，複製後貼上即可。');
                 return;
             }
             if (!key.startsWith('AIza')) {
