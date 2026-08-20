@@ -438,10 +438,11 @@ export default {
         const aiStatusMessage = ref('');
         const geminiApiKeyInput = ref('');
         const showApiKeyInput = ref(false);
+        const savedApiKey = ref('');
 
         // 初始化讀取本地 API Key
-        const getSavedApiKey = () => {
-            const key = (
+        const refreshSavedApiKey = () => {
+            let key = (
                 engine.data?.config?.gemini_api_key ||
                 localStorage.getItem('kitchen_v2_gemini_api_key') ||
                 localStorage.getItem('gemini_api_key') ||
@@ -449,12 +450,21 @@ export default {
             ).trim();
             // 排除舊版無效測試金鑰
             if (key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
-                return '';
+                key = '';
+            }
+            savedApiKey.value = key;
+            if (key && !geminiApiKeyInput.value) {
+                geminiApiKeyInput.value = key;
             }
             return key;
         };
 
-        const hasValidKey = computed(() => !!getSavedApiKey());
+        // 立即執行一次初始化
+        refreshSavedApiKey();
+
+        const hasValidKey = computed(() => {
+            return !!savedApiKey.value && savedApiKey.value.startsWith('AIza');
+        });
 
         const saveApiKey = async () => {
             const key = (geminiApiKeyInput.value || '').trim();
@@ -468,12 +478,19 @@ export default {
             }
             if (!engine.data.config) engine.data.config = {};
             engine.data.config.gemini_api_key = key;
+            savedApiKey.value = key;
             localStorage.setItem('kitchen_v2_gemini_api_key', key);
             localStorage.setItem('gemini_api_key', key);
             localStorage.setItem('kitchen_v2_config.json', JSON.stringify(engine.data.config));
             await engine.saveJson('config.json', engine.data.config);
             showApiKeyInput.value = false;
-            alert('🎉 成功儲存 API Key！系統 AI 圖片辨識功能已正式開啟！');
+
+            // 🚀 若畫面上已有照片，立刻自動觸發辨識！
+            if (capturedPhotoUrl.value) {
+                await analyzePhotoDirectly(capturedPhotoUrl.value, key);
+            } else {
+                alert('🎉 成功儲存 API Key！系統 AI 圖片辨識功能已正式開啟！');
+            }
         };
 
         const cancelAiAnalyzing = () => {
@@ -684,103 +701,107 @@ export default {
             };
         };
 
+        const analyzePhotoDirectly = async (compressedDataUrl, apiKey, fileName = '') => {
+            isAiAnalyzing.value = true;
+            aiScanStatus.value = 'analyzing';
+            aiStatusMessage.value = '正在讀取標籤與換算 100g 數據，請稍候 3~5 秒...';
+
+            let data = null;
+
+            // 1. 優先嘗試本機後端 (若有 Python server 運行)
+            try {
+                const res = await fetch('/api/analyze-nutrition-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: compressedDataUrl, client_api_key: apiKey })
+                });
+                if (res.ok) {
+                    data = await res.json();
+                }
+            } catch (err) {
+                // 靜態環境無後端，忽略並轉為前端直連
+            }
+
+            // 2. 本地後端無回應時，使用前端直連 Gemini Vision API
+            if (!data || data.status !== 'success') {
+                if (!apiKey) {
+                    data = {
+                        status: 'need_api_key',
+                        message: '未設定 Gemini API Key，請點擊「設定 Key」輸入金鑰，或直接手動填寫。'
+                    };
+                } else {
+                    data = await callClientGeminiNutritionOCR(compressedDataUrl, apiKey);
+                }
+            }
+
+            isAiAnalyzing.value = false;
+
+            if (data && data.status === 'success' && data.result) {
+                const resData = data.result;
+                if (resData.name) addForm.value.name = resData.name;
+                if (resData.category) addForm.value.category = resData.category;
+                
+                if (resData.servingSize) addForm.value.servingSize = Number(resData.servingSize) || 10;
+                if (resData.servingUnit) addForm.value.servingUnit = resData.servingUnit || 'g';
+
+                if (resData.per100g) {
+                    addForm.value.per100g = {
+                        kcal: Number(resData.per100g.kcal) || 0,
+                        protein: Number(resData.per100g.protein) || 0,
+                        carbs: Number(resData.per100g.carbs) || 0,
+                        fat: Number(resData.per100g.fat) || 0,
+                        sodium: Number(resData.per100g.sodium) || 0
+                    };
+                }
+
+                if (resData.perServing) {
+                    addForm.value.perServing = {
+                        kcal: Number(resData.perServing.kcal) || 0,
+                        protein: Number(resData.perServing.protein) || 0,
+                        carbs: Number(resData.perServing.carbs) || 0,
+                        fat: Number(resData.perServing.fat) || 0,
+                        sodium: Number(resData.perServing.sodium) || 0
+                    };
+                } else {
+                    on100gInput();
+                }
+
+                if (['sauces', 'oils', 'seasonings'].includes(resData.category)) {
+                    addFormDisplayBasis.value = 'serving';
+                } else {
+                    addFormDisplayBasis.value = '100g';
+                }
+
+                aiScanStatus.value = 'success';
+                aiStatusMessage.value = `已為您自動帶入品名【${resData.name || '食材'}】與營養成份，可手動微調。`;
+            } else {
+                aiScanStatus.value = 'error';
+                const errMsg = data?.message || 'AI 辨識未完成';
+                aiStatusMessage.value = `${errMsg}，請直接在下方手動填寫品名與成分。`;
+
+                if (data?.status === 'need_api_key' || data?.status === 'invalid_key') {
+                    showApiKeyInput.value = true;
+                }
+
+                if (fileName && !['image', 'photo', 'camera', 'IMG', 'DCIM'].some(k => fileName.includes(k))) {
+                    if (!addForm.value.name) addForm.value.name = fileName;
+                }
+            }
+        };
+
         const handleCameraSnap = async (event) => {
             const file = event.target.files && event.target.files[0];
             if (file) {
                 showAddModal.value = true;
-                isAiAnalyzing.value = true;
-                aiScanStatus.value = 'analyzing';
-                aiStatusMessage.value = '正在讀取標籤與換算 100g 數據，請稍候 3~5 秒...';
-
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const rawDataUrl = e.target.result;
                     const compressedDataUrl = await compressImage(rawDataUrl, 800, 800, 0.8);
                     capturedPhotoUrl.value = compressedDataUrl;
 
-                    const apiKey = getSavedApiKey();
-                    let data = null;
-
-                    // 1. 優先嘗試本機後端 (若有 Python server 運行)
-                    try {
-                        const res = await fetch('/api/analyze-nutrition-photo', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ image: compressedDataUrl, client_api_key: apiKey })
-                        });
-                        if (res.ok) {
-                            data = await res.json();
-                        }
-                    } catch (err) {
-                        // 靜態環境無後端，忽略並轉為前端直連
-                    }
-
-                    // 2. 本地後端無回應時，使用前端直連 Gemini Vision API
-                    if (!data || data.status !== 'success') {
-                        if (!apiKey) {
-                            data = {
-                                status: 'need_api_key',
-                                message: '未設定 Gemini API Key，請點擊「設定 Key」輸入金鑰，或直接手動填寫。'
-                            };
-                        } else {
-                            data = await callClientGeminiNutritionOCR(compressedDataUrl, apiKey);
-                        }
-                    }
-
-                    isAiAnalyzing.value = false;
-
-                    if (data && data.status === 'success' && data.result) {
-                        const resData = data.result;
-                        if (resData.name) addForm.value.name = resData.name;
-                        if (resData.category) addForm.value.category = resData.category;
-                        
-                        if (resData.servingSize) addForm.value.servingSize = Number(resData.servingSize) || 10;
-                        if (resData.servingUnit) addForm.value.servingUnit = resData.servingUnit || 'g';
-
-                        if (resData.per100g) {
-                            addForm.value.per100g = {
-                                kcal: Number(resData.per100g.kcal) || 0,
-                                protein: Number(resData.per100g.protein) || 0,
-                                carbs: Number(resData.per100g.carbs) || 0,
-                                fat: Number(resData.per100g.fat) || 0,
-                                sodium: Number(resData.per100g.sodium) || 0
-                            };
-                        }
-
-                        if (resData.perServing) {
-                            addForm.value.perServing = {
-                                kcal: Number(resData.perServing.kcal) || 0,
-                                protein: Number(resData.perServing.protein) || 0,
-                                carbs: Number(resData.perServing.carbs) || 0,
-                                fat: Number(resData.perServing.fat) || 0,
-                                sodium: Number(resData.perServing.sodium) || 0
-                            };
-                        } else {
-                            on100gInput();
-                        }
-
-                        if (['sauces', 'oils', 'seasonings'].includes(resData.category)) {
-                            addFormDisplayBasis.value = 'serving';
-                        } else {
-                            addFormDisplayBasis.value = '100g';
-                        }
-
-                        aiScanStatus.value = 'success';
-                        aiStatusMessage.value = `已為您自動帶入品名【${resData.name || '食材'}】與營養成份，可手動微調。`;
-                    } else {
-                        aiScanStatus.value = 'error';
-                        const errMsg = data?.message || 'AI 辨識未完成';
-                        aiStatusMessage.value = `${errMsg}，請直接在下方手動填寫品名與成分。`;
-
-                        if (data?.status === 'need_api_key' || data?.status === 'invalid_key') {
-                            showApiKeyInput.value = true;
-                        }
-
-                        const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
-                        if (fileName && !['image', 'photo', 'camera', 'IMG', 'DCIM'].some(k => fileName.includes(k))) {
-                            if (!addForm.value.name) addForm.value.name = fileName;
-                        }
-                    }
+                    const apiKey = refreshSavedApiKey();
+                    const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
+                    await analyzePhotoDirectly(compressedDataUrl, apiKey, fileName);
                 };
                 reader.readAsDataURL(file);
                 event.target.value = '';
@@ -964,6 +985,7 @@ export default {
             aiStatusMessage,
             geminiApiKeyInput,
             showApiKeyInput,
+            savedApiKey,
             hasValidKey,
             saveApiKey,
             cancelAiAnalyzing,

@@ -1,10 +1,10 @@
 const { createApp, ref, computed, onMounted } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260820_AI_KEY_REFACTOR';
-import CalculatorView from './views/CalculatorView.js?v=20260820_AI_KEY_REFACTOR';
-import TrackerView from './views/TrackerView.js?v=20260820_AI_KEY_REFACTOR';
-import PantryView from './views/PantryView.js?v=20260820_AI_KEY_REFACTOR';
-import CameraVisionModal from './components/CameraVisionModal.js?v=20260820_AI_KEY_REFACTOR';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260820_REACTIVE_KEY_V4';
+import CalculatorView from './views/CalculatorView.js?v=20260820_REACTIVE_KEY_V4';
+import TrackerView from './views/TrackerView.js?v=20260820_REACTIVE_KEY_V4';
+import PantryView from './views/PantryView.js?v=20260820_REACTIVE_KEY_V4';
+import CameraVisionModal from './components/CameraVisionModal.js?v=20260820_REACTIVE_KEY_V4';
 
 const App = {
     components: {

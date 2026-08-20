@@ -6,7 +6,8 @@ export default class KitchenEngine {
             householdSupplies: [],
             pantryInventory: {},
             dishes: [],
-            dailyLogs: {}
+            dailyLogs: {},
+            config: { gemini_api_key: '', openai_api_key: '' }
         });
         // 家庭成員健康檔案 (Family Profiles)
         this.profiles = {
