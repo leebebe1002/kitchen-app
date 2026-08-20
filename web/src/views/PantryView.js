@@ -669,19 +669,14 @@ export default {
             };
 
             const attempts = [
-                // 1. Header-only (Official standard for AQ. keys - prevents duplicate creds conflict)
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false },
-                { url: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
+                // 1. Google 2026 最新官方主力模型 (Google 回應指定)：gemini-3.6-flash
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-pro:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent', useHeader: true, useQuery: false },
                 { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: false },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent', useHeader: true, useQuery: false },
-                // 2. Query param only (Legacy standard)
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: false, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: false, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent', useHeader: false, useQuery: true },
-                // 3. Both Header & Query
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: true }
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false }
             ];
 
             let lastError = '';
