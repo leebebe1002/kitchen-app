@@ -441,12 +441,17 @@ export default {
 
         // 初始化讀取本地 API Key
         const getSavedApiKey = () => {
-            return (
+            const key = (
                 engine.data?.config?.gemini_api_key ||
                 localStorage.getItem('kitchen_v2_gemini_api_key') ||
                 localStorage.getItem('gemini_api_key') ||
                 ''
             ).trim();
+            // 排除舊版無效測試金鑰
+            if (key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
+                return '';
+            }
+            return key;
         };
 
         const saveApiKey = async () => {
@@ -587,30 +592,30 @@ export default {
 6. 請嚴格只輸出純 JSON，不可包含 markdown codeblock 標籤：
 {
   "name": "精準品名",
-  "category": "proteins",
-  "servingSize": 100,
-  "servingUnit": "g",
+  "category": "seasonings",
+  "servingSize": 16,
+  "servingUnit": "ml",
   "perServing": {
-    "kcal": 120,
-    "protein": 24,
-    "carbs": 1,
-    "fat": 2.5,
-    "sodium": 80
+    "kcal": 20,
+    "protein": 0.3,
+    "carbs": 4.6,
+    "fat": 0,
+    "sodium": 18
   },
   "per100g": {
-    "kcal": 120,
-    "protein": 24,
-    "carbs": 1,
-    "fat": 2.5,
-    "sodium": 80
+    "kcal": 124,
+    "protein": 1.9,
+    "carbs": 28.7,
+    "fat": 0,
+    "sodium": 110
   }
 }`;
 
             const modelsToTry = [
-                'gemini-2.5-flash',
-                'gemini-2.0-flash',
                 'gemini-1.5-flash',
-                'gemini-1.5-flash-latest'
+                'gemini-1.5-flash-8b',
+                'gemini-2.0-flash',
+                'gemini-1.5-pro'
             ];
 
             let lastError = '';
@@ -649,8 +654,14 @@ export default {
                         return { status: 'success', result: parsed };
                     } else {
                         const errJson = await resp.json().catch(() => ({}));
-                        lastError = `HTTP ${resp.status}: ${errJson?.error?.message || resp.statusText}`;
-                        if (resp.status === 429) continue;
+                        const errMsg = errJson?.error?.message || resp.statusText;
+                        lastError = `HTTP ${resp.status}: ${errMsg}`;
+                        if (resp.status === 400 || resp.status === 403) {
+                            return {
+                                status: 'invalid_key',
+                                message: `您的 Gemini API Key 無效或尚未開通 (${errMsg})，請點擊「設定 Key」貼上正確的金鑰。`
+                            };
+                        }
                     }
                 } catch (e) {
                     lastError = e.message || String(e);
