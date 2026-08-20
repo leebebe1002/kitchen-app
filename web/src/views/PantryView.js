@@ -248,7 +248,7 @@ export default {
                     ing.preferredStores = currentStores;
                     ing.preferredStore = currentStores[0];
                     if (engine.data.rawIngredients) {
-                        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                        ['proteins', 'veggies', 'carbs', 'sauces', 'drinks'].forEach(cat => {
                             const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
                             if (rawIng) {
                                 rawIng.preferredStores = currentStores;
@@ -301,7 +301,7 @@ export default {
                     ing.preferredStores = oldStores;
                     ing.preferredStore = oldStores[0];
                     if (engine.data.rawIngredients) {
-                        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                        ['proteins', 'veggies', 'carbs', 'sauces', 'drinks'].forEach(cat => {
                             const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
                             if (rawIng) {
                                 rawIng.preferredStores = oldStores;
@@ -631,7 +631,7 @@ export default {
 2. 如果照片上有『每份 (Per Serving)』數值，請直接讀取填入 perServing。
 3. 如果照片上有『每 100g / 100mL』數值，請直接讀取填入 per100g。
 4. 如果照片上『只有每份』或『只有每 100g』，請自動按比例換算補齊另一欄的數據！
-5. category 請依據屬性選填：proteins (蛋白質), carbs (澱粉/主食), veggies (蔬菜水果), oils (油脂/抹醬), seasonings (醬油/調味粉) 之一。
+5. category 請依據屬性選填：proteins (蛋白質), carbs (澱粉/主食), veggies (蔬菜水果), sauces (醬料/油脂/調味), drinks (咖啡/茶包/沖泡飲品) 之一。
 6. 請嚴格只輸出純 JSON，不可包含 markdown codeblock 標籤：
 {
   "name": "精準品名",
@@ -818,7 +818,7 @@ export default {
                     on100gInput();
                 }
 
-                if (['sauces', 'oils', 'seasonings'].includes(resData.category)) {
+                if (['sauces', 'oils', 'seasonings', 'drinks'].includes(resData.category)) {
                     addFormDisplayBasis.value = 'serving';
                 } else {
                     addFormDisplayBasis.value = '100g';
@@ -1234,6 +1234,37 @@ export default {
                     </div>
                 </div>
 
+                <!-- 5. 飲品與沖泡 -->
+                <div v-if="getCategoryInZone('fridge', 'drinks').length > 0" style="margin-bottom: 14px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 飲品與沖泡</div>
+                    <div class="capsule-group">
+                        <template v-for="ing in getCategoryInZone('fridge', 'drinks')" :key="ing.id">
+                            <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
+                                <div class="split-left" :class="checkFoodStock(ing.id) ? 'in-stock' : 'out-stock'" style="cursor: pointer; user-select: none;" @mousedown="startFoodPress(ing, $event)" @mouseup="cancelFoodPress" @mouseleave="cancelFoodPress" @touchstart="startFoodPress(ing, $event)" @touchmove="handleFoodTouchMove($event)" @touchend="cancelFoodPress" @touchcancel="cancelFoodPress" @click="handleFoodLeftClick(ing)">
+                                    <span>{{ ing.name }}</span>
+                                </div>
+                                <div class="split-divider"></div>
+                                <div class="split-right" @click="toggleFoodCart(ing)">
+                                    <span v-if="!isInCart(ing.id)" class="cart-icon-default" title="加入採買清單">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                    <span v-else class="cart-icon-selected" title="已在採買清單">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- 5. 油脂類 -->
                 <div v-if="getCategoryInZone('fridge', 'fats').length > 0" style="margin-bottom: 14px;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 油脂類</div>
@@ -1396,6 +1427,37 @@ export default {
                     </div>
                 </div>
 
+                <!-- 5. 飲品與沖泡 -->
+                <div v-if="getCategoryInZone('freezer', 'drinks').length > 0" style="margin-bottom: 14px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 飲品與冰品</div>
+                    <div class="capsule-group">
+                        <template v-for="ing in getCategoryInZone('freezer', 'drinks')" :key="ing.id">
+                            <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
+                                <div class="split-left" :class="checkFoodStock(ing.id) ? 'in-stock' : 'out-stock'" style="cursor: pointer; user-select: none;" @mousedown="startFoodPress(ing, $event)" @mouseup="cancelFoodPress" @mouseleave="cancelFoodPress" @touchstart="startFoodPress(ing, $event)" @touchmove="handleFoodTouchMove($event)" @touchend="cancelFoodPress" @touchcancel="cancelFoodPress" @click="handleFoodLeftClick(ing)">
+                                    <span>{{ ing.name }}</span>
+                                </div>
+                                <div class="split-divider"></div>
+                                <div class="split-right" @click="toggleFoodCart(ing)">
+                                    <span v-if="!isInCart(ing.id)" class="cart-icon-default" title="加入採買清單">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                    <span v-else class="cart-icon-selected" title="已在採買清單">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- 5. 油脂類 -->
                 <div v-if="getCategoryInZone('freezer', 'fats').length > 0" style="margin-bottom: 14px;">
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 油脂類</div>
@@ -1532,6 +1594,37 @@ export default {
                     <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">4. 醬料與油脂</div>
                     <div class="capsule-group">
                         <template v-for="ing in getCategoryInZone('pantry', 'sauces')" :key="ing.id">
+                            <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
+                                <div class="split-left" :class="checkFoodStock(ing.id) ? 'in-stock' : 'out-stock'" style="cursor: pointer; user-select: none;" @mousedown="startFoodPress(ing, $event)" @mouseup="cancelFoodPress" @mouseleave="cancelFoodPress" @touchstart="startFoodPress(ing, $event)" @touchmove="handleFoodTouchMove($event)" @touchend="cancelFoodPress" @touchcancel="cancelFoodPress" @click="handleFoodLeftClick(ing)">
+                                    <span>{{ ing.name }}</span>
+                                </div>
+                                <div class="split-divider"></div>
+                                <div class="split-right" @click="toggleFoodCart(ing)">
+                                    <span v-if="!isInCart(ing.id)" class="cart-icon-default" title="加入採買清單">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                    <span v-else class="cart-icon-selected" title="已在採買清單">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 5. 飲品與沖泡 -->
+                <div v-if="getCategoryInZone('pantry', 'drinks').length > 0" style="margin-bottom: 14px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 6px;">5. 飲品與沖泡</div>
+                    <div class="capsule-group">
+                        <template v-for="ing in getCategoryInZone('pantry', 'drinks')" :key="ing.id">
                             <div class="split-capsule" :class="checkFoodStock(ing.id) ? 'in-stock-bg' : 'out-stock-bg'">
                                 <div class="split-left" :class="checkFoodStock(ing.id) ? 'in-stock' : 'out-stock'" style="cursor: pointer; user-select: none;" @mousedown="startFoodPress(ing, $event)" @mouseup="cancelFoodPress" @mouseleave="cancelFoodPress" @touchstart="startFoodPress(ing, $event)" @touchmove="handleFoodTouchMove($event)" @touchend="cancelFoodPress" @touchcancel="cancelFoodPress" @click="handleFoodLeftClick(ing)">
                                     <span>{{ ing.name }}</span>
@@ -2222,6 +2315,7 @@ export default {
                                 <option value="veggies">蔬菜水果</option>
                                 <option value="carbs">碳水類</option>
                                 <option value="sauces">醬料與油脂</option>
+                                <option value="drinks">飲品與沖泡</option>
                             </select>
                         </div>
                     </div>
@@ -2343,6 +2437,20 @@ export default {
                                 {{ z.label }}
                             </button>
                         </div>
+                    </div>
+
+                    <!-- 分類切換 -->
+                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
+                            食材分類：
+                        </div>
+                        <select v-model="selectedFood.category" @change="saveFoodChanges(selectedFood)" class="select-box" style="width: 100%; padding: 8px 12px; font-weight: 600;">
+                            <option value="proteins">蛋白質</option>
+                            <option value="veggies">蔬菜水果</option>
+                            <option value="carbs">碳水類</option>
+                            <option value="sauces">醬料與油脂</option>
+                            <option value="drinks">飲品與沖泡</option>
+                        </select>
                     </div>
 
                     <!-- 3. 常用採買通路 (統一系統膠囊UI) & 4. 純 🛒 圖示按鈕 -->

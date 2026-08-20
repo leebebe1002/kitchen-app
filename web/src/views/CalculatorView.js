@@ -142,7 +142,8 @@ export default {
             { id: 'proteins', label: '🥩 蛋白質' },
             { id: 'veggies', label: '🥦 蔬菜水果' },
             { id: 'carbs', label: '🍚 碳水主食' },
-            { id: 'sauces', label: '🧂 醬料與油脂' }
+            { id: 'sauces', label: '🧂 醬料與油脂' },
+            { id: 'drinks', label: '☕️ 飲品沖泡' }
         ];
 
         // Master selected ingredients in Section 02 (The Single Filter for all calculations)
@@ -728,7 +729,7 @@ export default {
             if (!ing || !ing.id) return;
             let found = false;
             if (engine.data.rawIngredients) {
-                const categories = ['proteins', 'veggies', 'carbs', 'sauces', 'fats'];
+                const categories = ['proteins', 'veggies', 'carbs', 'sauces', 'drinks', 'fats'];
                 for (const cat of categories) {
                     if (Array.isArray(engine.data.rawIngredients[cat])) {
                         const idx = engine.data.rawIngredients[cat].findIndex(item => item.id === ing.id);
@@ -744,7 +745,7 @@ export default {
                 await engine.saveJson('ingredients.json', engine.data.rawIngredients);
                 // 重新同步扁平化食材清單
                 engine.data.ingredients = [];
-                ['proteins', 'veggies', 'carbs', 'sauces', 'fats'].forEach(cat => {
+                ['proteins', 'veggies', 'carbs', 'sauces', 'drinks', 'fats'].forEach(cat => {
                     if (engine.data.rawIngredients[cat]) {
                         engine.data.ingredients = engine.data.ingredients.concat(engine.data.rawIngredients[cat]);
                     }
@@ -1154,6 +1155,7 @@ export default {
                                     <option value="veggies">🥦 蔬菜水果</option>
                                     <option value="carbs">🍚 碳水主食</option>
                                     <option value="sauces">🧂 醬料與油脂</option>
+                                    <option value="drinks">☕️ 飲品與沖泡</option>
                                 </select>
                             </div>
                             <div style="flex: 1;">

@@ -34,7 +34,7 @@ export default class KitchenEngine {
         // 2. 攤平食材列表
         this.data.ingredients = [];
         if (this.data.rawIngredients) {
-            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+            ['proteins', 'veggies', 'carbs', 'sauces', 'drinks'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
                     this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
                 }
