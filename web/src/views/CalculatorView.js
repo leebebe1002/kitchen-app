@@ -245,7 +245,9 @@ export default {
             return groups.filter(g => g.items.length > 0);
         });
 
-        // Filtered master library ingredients for drawer (Filtered by Search Query + Nutrient Tab + In Stock Only)
+        const drawerInStockOnly = ref(false);
+
+        // Filtered master library ingredients for drawer (Filtered by Search Query + Nutrient Tab + In-stock Sorting)
         const filteredMasterIngredients = computed(() => {
             const q = (searchQuery.value || '').trim().toLowerCase();
             const cat = drawerCategory.value;
@@ -260,8 +262,8 @@ export default {
                 // 1. Filter out already existing items in this dish
                 if (currentRecommended.includes(ing.id)) return false;
 
-                // 2. 備料加食材專用：只列出「家裡有庫存」的食材，無庫存不顯示
-                if (!checkStock(ing.id)) return false;
+                // 2. If drawerInStockOnly is true, filter out non-stock
+                if (drawerInStockOnly.value && !checkStock(ing.id)) return false;
 
                 // 3. Category filter
                 if (cat !== 'all' && ing.category !== cat) return false;
@@ -271,6 +273,10 @@ export default {
                     return false;
                 }
                 return true;
+            }).sort((a, b) => {
+                const stockA = checkStock(a.id) ? 1 : 0;
+                const stockB = checkStock(b.id) ? 1 : 0;
+                return stockB - stockA;
             });
         });
 
@@ -999,7 +1005,7 @@ export default {
                 isLongPressTriggered = true;
                 if (navigator.vibrate) navigator.vibrate(40);
                 openIngredientDetail(id);
-            }, 750);
+            }, 450);
         };
 
         const handleIngredientTouchMove = (event) => {
@@ -1007,7 +1013,7 @@ export default {
             if (event.touches && event.touches[0]) {
                 const moveX = Math.abs(event.touches[0].clientX - touchStartX);
                 const moveY = Math.abs(event.touches[0].clientY - touchStartY);
-                if (moveX > 6 || moveY > 6) {
+                if (moveX > 16 || moveY > 16) {
                     cancelIngredientPress();
                 }
             }
@@ -1156,6 +1162,8 @@ export default {
             groupedCategories,
             filteredMasterIngredients,
             showAddModal,
+            drawerInStockOnly,
+            isQuickCreate,
             saveIngredientChanges,
             saveAndCloseIngredientModal,
             toggleStockInModal,
@@ -1271,11 +1279,11 @@ export default {
                         <div style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;">{{ group.label }}</div>
                         <div class="capsule-group">
                             <template v-for="id in group.items" :key="id">
-                                <!-- In Stock Capsule (Short Tap: Toggle Cooking / Heavy Long Press 750ms: 100g Nutrition Detail) -->
+                                <!-- In Stock Capsule (Short Tap: Toggle Cooking / Long Press 450ms: 100g Nutrition Detail) -->
                                 <div v-if="checkStock(id)"
                                      class="capsule in-stock"
                                      :class="{ 'selected': isIngredientSelected(id) }"
-                                     style="cursor: pointer; user-select: none;"
+                                     style="cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
                                      @mousedown="startIngredientPress(id, $event)"
                                      @mouseup="cancelIngredientPress"
                                      @mouseleave="cancelIngredientPress"
@@ -1283,13 +1291,14 @@ export default {
                                      @touchmove="handleIngredientTouchMove($event)"
                                      @touchend="cancelIngredientPress"
                                      @touchcancel="cancelIngredientPress"
+                                     @contextmenu.prevent
                                      @click="handleIngredientClick(id)">
                                     {{ getIngredientName(id) }}
                                 </div>
                                 <!-- Out of Stock Capsule (Short Tap/Long Press: Open 100g Nutrition Detail) -->
                                 <div v-else
                                      class="capsule out-stock disabled"
-                                     style="cursor: pointer; user-select: none;"
+                                     style="cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;"
                                      title="無庫存 (點擊或長按查看 100g 營養與採買)"
                                      @mousedown="startIngredientPress(id, $event)"
                                      @mouseup="cancelIngredientPress"
@@ -1298,6 +1307,7 @@ export default {
                                      @touchmove="handleIngredientTouchMove($event)"
                                      @touchend="cancelIngredientPress"
                                      @touchcancel="cancelIngredientPress"
+                                     @contextmenu.prevent
                                      @click="handleDisabledClick(id)">
                                     <span>{{ getIngredientName(id) }}</span>
                                 </div>
@@ -1565,8 +1575,8 @@ export default {
                         </div>
                     </div>
 
-                    <!-- Nutrient Category Tabs (營養素分類切換列) -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px;">
+                    <!-- Nutrient Category Tabs & In-Stock Toggle -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; align-items: center;">
                         <button v-for="tab in drawerTabs" 
                                 :key="tab.id"
                                 class="capsule"
@@ -1575,6 +1585,12 @@ export default {
                                 @click="drawerCategory = tab.id">
                             {{ tab.label }}
                         </button>
+                        <button class="capsule" 
+                                :class="drawerInStockOnly ? 'selected' : 'in-stock'" 
+                                style="padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; flex-shrink: 0; margin-left: auto; border: 1px dashed var(--color-primary);"
+                                @click="drawerInStockOnly = !drawerInStockOnly">
+                            {{ drawerInStockOnly ? '❄️ 只看庫存中' : '📦 顯示冰箱全食材' }}
+                        </button>
                     </div>
 
                     <!-- Master Ingredient Search Results (Filtered by Tab & Stock) -->
@@ -1582,14 +1598,16 @@ export default {
                         <div class="capsule-group" style="gap: 8px;">
                             <div v-for="ing in filteredMasterIngredients" 
                                  :key="ing.id" 
-                                 class="capsule in-stock"
-                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 14px; user-select: none;"
+                                 class="capsule"
+                                 :class="checkStock(ing.id) ? 'in-stock' : 'out-stock'"
+                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 14px; user-select: none; display: inline-flex; align-items: center; gap: 6px;"
                                  @click="addExistingToDish(ing)">
                                 <span>{{ ing.name }}</span>
-                                <span style="font-size: 0.8rem; color: var(--color-primary); margin-left: 4px;">➕</span>
+                                <span v-if="checkStock(ing.id)" style="font-size: 0.8rem; color: var(--color-primary);">➕</span>
+                                <span v-else style="font-size: 0.75rem; color: var(--color-text-muted);">🛒</span>
                             </div>
                             <div v-if="filteredMasterIngredients.length === 0" style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 0.9rem; width: 100%;">
-                                目前無符合的庫存食材，點擊右上角「+ 新增全新食材」可直接建立並入庫！
+                                目前無符合的食材，點擊右上角「➕ 新增全新食材」可直接建立並入庫！
                             </div>
                         </div>
                     </div>
