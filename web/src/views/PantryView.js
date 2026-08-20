@@ -634,35 +634,41 @@ export default {
   }
 }`;
 
-            const modelsToTry = [
-                'gemini-1.5-flash',
-                'gemini-1.5-flash-8b',
-                'gemini-2.0-flash',
-                'gemini-1.5-pro'
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: cleanB64
+                            }
+                        }
+                    ]
+                }]
+            };
+
+            const endpointsToTry = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
             ];
 
             let lastError = '';
 
-            for (const modelName of modelsToTry) {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: cleanB64
-                                }
-                            }
-                        ]
-                    }]
-                };
-
+            for (const endpoint of endpointsToTry) {
+                const url = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
                 try {
                     const resp = await fetch(url, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-goog-api-key': apiKey
+                        },
                         body: JSON.stringify(payload)
                     });
 
@@ -680,10 +686,12 @@ export default {
                         const errMsg = errJson?.error?.message || resp.statusText;
                         lastError = `HTTP ${resp.status}: ${errMsg}`;
                         if (resp.status === 400 || resp.status === 403) {
-                            return {
-                                status: 'invalid_key',
-                                message: `您的 Gemini API Key 無效或尚未開通 (${errMsg})，請點擊「設定 Key」貼上正確的金鑰。`
-                            };
+                            if (errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('permission')) {
+                                return {
+                                    status: 'invalid_key',
+                                    message: `Gemini API Key 驗證未通過 (${errMsg})`
+                                };
+                            }
                         }
                     }
                 } catch (e) {
