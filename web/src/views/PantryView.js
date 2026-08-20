@@ -443,6 +443,7 @@ export default {
         // 初始化讀取本地 API Key
         const refreshSavedApiKey = () => {
             let key = (
+                savedApiKey.value ||
                 engine.data?.config?.gemini_api_key ||
                 localStorage.getItem('kitchen_v2_gemini_api_key') ||
                 localStorage.getItem('gemini_api_key') ||
@@ -463,7 +464,8 @@ export default {
         refreshSavedApiKey();
 
         const hasValidKey = computed(() => {
-            return !!savedApiKey.value && savedApiKey.value.startsWith('AIza');
+            const k = (savedApiKey.value || '').trim();
+            return !!k && k.startsWith('AIza') && k !== 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ';
         });
 
         const saveApiKey = async () => {
@@ -473,7 +475,7 @@ export default {
                 return;
             }
             if (!key.startsWith('AIza')) {
-                alert('⚠️ Gemini API Key 格式不正確！Google Gemini API Key 一律由 "AIza..." 開頭，請至 Google AI Studio (aistudio.google.com) 複製正確金鑰。');
+                alert(`⚠️ 金鑰開頭不正確！\n您輸入的內容開頭為：「${key.slice(0, 8)}...」\n真正的 Google Gemini API Key 一律由 "AIza..." 開頭，請確認是否誤填成了密碼。`);
                 return;
             }
             if (!engine.data.config) engine.data.config = {};
@@ -489,7 +491,7 @@ export default {
             if (capturedPhotoUrl.value) {
                 await analyzePhotoDirectly(capturedPhotoUrl.value, key);
             } else {
-                alert('🎉 成功儲存 API Key！系統 AI 圖片辨識功能已正式開啟！');
+                alert(`🎉 成功啟用 API Key (${key.slice(0, 6)}...${key.slice(-4)})！系統 AI 圖片辨識已開啟！`);
             }
         };
 
@@ -1976,7 +1978,15 @@ export default {
                                 貼上免費 Gemini API Key 即可讓手機相機擁有 100% 準確營養標示 OCR 讀取能力：
                             </div>
                             <div style="display: flex; gap: 6px;">
-                                <input type="password" v-model="geminiApiKeyInput" placeholder="貼上 AIza... 開頭的 API Key" class="search-input" style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF;">
+                                <input type="text" 
+                                       v-model="geminiApiKeyInput" 
+                                       placeholder="貼上 AIza... 開頭的 API Key" 
+                                       autocomplete="off" 
+                                       autocorrect="off" 
+                                       autocapitalize="off" 
+                                       spellcheck="false" 
+                                       class="search-input" 
+                                       style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF; font-family: monospace;">
                                 <button class="btn-primary" @click="saveApiKey" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
