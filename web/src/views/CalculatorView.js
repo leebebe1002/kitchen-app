@@ -1044,24 +1044,36 @@ export default {
         };
 
         const openIngredientDetail = (id) => {
-            const ing = engine.getIngredientById(id);
-            if (ing) {
-                if (!ing.per100g) {
-                    if (ing.perUnit) {
-                        ing.per100g = {
-                            kcal: Math.round((ing.perUnit.kcal || 0) * 1.8),
-                            protein: Math.round((ing.perUnit.protein || 0) * 1.8 * 10) / 10,
-                            carbs: Math.round((ing.perUnit.carbs || 0) * 1.8 * 10) / 10,
-                            fat: Math.round((ing.perUnit.fat || 0) * 1.8 * 10) / 10,
-                            sodium: Math.round((ing.perUnit.sodium || 0) * 1.8)
-                        };
-                    } else {
-                        ing.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-                    }
-                }
-                selectedIngredient.value = ing;
-                showIngredientDetailModal.value = true;
+            console.log('[Calculator] openIngredientDetail for:', id);
+            let ing = engine.getIngredientById(id);
+            if (!ing) {
+                // Fallback for orphan or removed ingredient IDs
+                ing = {
+                    id: id,
+                    name: id === 'whey_protein' ? '乳清蛋白粉 (舊版標籤)' : id,
+                    category: 'proteins',
+                    per100g: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 },
+                    storageZones: ['pantry'],
+                    preferredStores: ['全聯'],
+                    isOrphan: true
+                };
             }
+            if (!ing.per100g) {
+                if (ing.perUnit) {
+                    ing.per100g = {
+                        kcal: Math.round((ing.perUnit.kcal || 0) * 1.8),
+                        protein: Math.round((ing.perUnit.protein || 0) * 1.8 * 10) / 10,
+                        carbs: Math.round((ing.perUnit.carbs || 0) * 1.8 * 10) / 10,
+                        fat: Math.round((ing.perUnit.fat || 0) * 1.8 * 10) / 10,
+                        sodium: Math.round((ing.perUnit.sodium || 0) * 1.8)
+                    };
+                } else {
+                    ing.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+                }
+            }
+            selectedIngredient.value = ing;
+            showIngredientDetailModal.value = true;
+            console.log('[Calculator] showIngredientDetailModal is now true, selectedIngredient:', selectedIngredient.value.name);
         };
 
         const handleIngredientClick = (id) => {
@@ -1162,9 +1174,24 @@ export default {
             await saveIngredientChanges(ing);
         };
 
+        const removeFromCurrentDish = async (ingId) => {
+            if (!currentDish.value) return;
+            const dish = currentDish.value;
+            ['recommendedProteins', 'recommendedVeggies', 'recommendedCarbs', 'recommendedSauces'].forEach(prop => {
+                if (dish[prop]) {
+                    dish[prop] = dish[prop].filter(id => id !== ingId);
+                }
+            });
+            selectedMasterIngredients.value = selectedMasterIngredients.value.filter(id => id !== ingId);
+            dishUpdateTrigger.value++;
+            await engine.saveJson('dishes.json', engine.data.rawDishes || { dishes: engine.data.dishes });
+            showIngredientDetailModal.value = false;
+        };
+
         const deleteIngredient = async (ingId) => {
             if (confirm('確定要永久刪除這個食材嗎？')) {
                 await engine.deleteIngredient(ingId);
+                await removeFromCurrentDish(ingId);
                 showIngredientDetailModal.value = false;
             }
         };
@@ -1190,6 +1217,7 @@ export default {
             toggleFoodStorageZone,
             isStoreSelected,
             togglePreferredStore,
+            removeFromCurrentDish,
             deleteIngredient,
             searchQuery,
             drawerCategory,
@@ -1766,12 +1794,12 @@ export default {
                         </div>
                     </div>
 
-                    <!-- 5. 底部 3 按鈕：更新外包裝照片 | 🗑️ 刪除食材 | 💾 儲存 -->
+                    <!-- 5. 底部按鈕：從此料理移除 | 🗑️ 刪除食材 | 💾 儲存 -->
                     <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon" @click="showIngredientDetailModal = false" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600;">
-                            📸 外包裝照片
+                        <button class="btn-icon" @click="removeFromCurrentDish(selectedIngredient.id)" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #D97706; background: #FFFBEB; border-color: #FDE68A;">
+                            ➖ 從料理移除
                         </button>
-                        <button class="btn-icon" @click="deleteIngredient(selectedIngredient.id)" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #EF4444; background: #FEF2F2; border-color: #FCA5A5;">
+                        <button class="btn-icon" @click="deleteIngredient(selectedIngredient.id)" style="flex: 1.1; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #EF4444; background: #FEF2F2; border-color: #FCA5A5;">
                             🗑️ 刪除食材
                         </button>
                         <button class="btn-primary" @click="saveAndCloseIngredientModal(selectedIngredient)" style="flex: 1; justify-content: center; padding: 10px 6px; font-size: 0.85rem; font-weight: 600;">
