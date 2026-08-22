@@ -239,6 +239,208 @@ export default {
             }
         };
 
+        // 圖片壓縮輔助 (避免相簿高解析大圖卡死或超時)
+        const compressImage = (dataUrl, maxWidth = 1000, maxHeight = 1000, quality = 0.82) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => resolve(dataUrl);
+                img.src = dataUrl;
+            });
+        };
+
+        const showApiKeyModal = ref(false);
+        const inputApiKey = ref('');
+
+        const getGeminiApiKey = () => {
+            return (
+                localStorage.getItem('family_kitchen_gemini_key') ||
+                localStorage.getItem('kitchen_v2_gemini_api_key') ||
+                localStorage.getItem('gemini_api_key') ||
+                localStorage.getItem('GEMINI_API_KEY') ||
+                engine.data?.config?.geminiApiKey ||
+                engine.data?.config?.gemini_api_key ||
+                ''
+            );
+        };
+
+        const openApiKeySettings = () => {
+            inputApiKey.value = getGeminiApiKey();
+            showApiKeyModal.value = true;
+        };
+
+        const saveApiKeySetting = () => {
+            const k = (inputApiKey.value || '').trim();
+            localStorage.setItem('family_kitchen_gemini_key', k);
+            localStorage.setItem('kitchen_v2_gemini_api_key', k);
+            localStorage.setItem('gemini_api_key', k);
+            localStorage.setItem('GEMINI_API_KEY', k);
+            if (engine.data?.config) {
+                engine.data.config.gemini_api_key = k;
+                engine.data.config.geminiApiKey = k;
+            }
+            showApiKeyModal.value = false;
+            alert(k ? '✨ Gemini API Key 已成功儲存！' : '已清除 API Key');
+        };
+
+        // Client-side Gemini Vision API 直接呼叫 (支援 Cloud Mode 與無後端模式)
+        const callClientGeminiVision = async (compressedDataUrl, apiKey) => {
+            console.log('🤖 [十一粒 AI] 正在啟動 Gemini 視覺神經網絡分析...');
+            const b64Data = compressedDataUrl.split(',')[1];
+            const mimeType = compressedDataUrl.split(',')[0].split(':')[1]?.split(';')[0] || 'image/jpeg';
+            const cleanB64 = b64Data ? b64Data.replace(/[\n\r\s]/g, '') : '';
+
+            const prompt = `你是一位極具洞察力的頂級營養師與 AI 視覺估算專家。
+請仔細辨識這張照片中的食物/餐點（若照片非食物，請推測可能的情境或如實說明）。
+請提取出『料理/餐點名稱 (dishName)』，並根據視覺份量精準估算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
+
+請嚴格只輸出合法 JSON，不要加入 markdown \`\`\`json 標籤：
+{
+  "dishName": "精準料理品名 (如: 炙燒鮭魚丼 / 舒肥雞胸溫沙拉 / 燕麥拿鐵)",
+  "kcal": 520,
+  "protein": 38,
+  "carbs": 45,
+  "fat": 16,
+  "sodium": 680,
+  "aiNote": "十一粒 AI 視覺估算：含主菜蛋白質、主食與時蔬，數據可隨時點擊調整。"
+}`;
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: mimeType, data: cleanB64 } }
+                    ]
+                }]
+            };
+
+            const attempts = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+            ];
+
+            let lastErr = '';
+            for (const endpoint of attempts) {
+                try {
+                    const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
+                    console.log(`📡 [十一粒 AI] 嘗試連線模型: ${endpoint.split('/models/')[1]?.split(':')[0]}`);
+                    const resp = await fetch(fetchUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const rawTextResp = await resp.text();
+                    let resData = null;
+                    try { resData = JSON.parse(rawTextResp); } catch (e) {}
+
+                    if (resp.ok && resData) {
+                        const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                        let cleanJson = rawText;
+                        if (cleanJson.startsWith('```')) {
+                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        }
+                        const parsed = JSON.parse(cleanJson);
+                        console.log('✅ [十一粒 AI] 視覺神經網絡分析成功！辨識結果:', parsed);
+                        return { status: 'success', result: parsed, isRealAi: true };
+                    } else {
+                        const msg = resData?.error?.message || resp.statusText || rawTextResp.slice(0, 100);
+                        lastErr = `HTTP ${resp.status}: ${msg}`;
+                        console.warn(`⚠️ [十一粒 AI] 模型 ${endpoint} 回應異常: ${lastErr}`);
+                    }
+                } catch (e) {
+                    lastErr = e.message || String(e);
+                    console.warn(`⚠️ [十一粒 AI] 連線模型 ${endpoint} 失敗:`, e);
+                }
+            }
+            return { status: 'error', message: lastErr || 'Gemini Vision 呼叫失敗' };
+        };
+
+        // Client-side Gemini NLP 語音/文字解析直接呼叫
+        const callClientGeminiNLP = async (text, apiKey) => {
+            console.log('🤖 [十一粒 AI] 正在啟動 Gemini 語意深度解析...');
+            const prompt = `你是一位極具洞察力的頂級營養師與 AI 飲食精算專家。
+使用者輸入了今日飲食文字：「${text}」
+請分析該餐點內容，提取出精確的『料理名稱 (dishName)』，並根據一般外食/家常份量精準推算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
+
+請嚴格只輸出合法 JSON，不要加入 markdown 標籤：
+{
+  "dishName": "料理品名",
+  "kcal": 450,
+  "protein": 25,
+  "carbs": 50,
+  "fat": 15,
+  "sodium": 600,
+  "aiNote": "十一粒 AI 語意估算完成，數據可隨時點擊調整。"
+}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            const attempts = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+            ];
+
+            let lastErr = '';
+            for (const endpoint of attempts) {
+                try {
+                    const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(fetchUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                        body: JSON.stringify(payload)
+                    });
+                    const rawTextResp = await resp.text();
+                    let resData = null;
+                    try { resData = JSON.parse(rawTextResp); } catch (e) {}
+
+                    if (resp.ok && resData) {
+                        const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                        let cleanJson = rawText;
+                        if (cleanJson.startsWith('```')) {
+                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        }
+                        const parsed = JSON.parse(cleanJson);
+                        console.log('✅ [十一粒 AI] 語意精算成功！解析結果:', parsed);
+                        return { status: 'success', result: parsed, isRealAi: true };
+                    } else {
+                        lastErr = resData?.error?.message || resp.statusText;
+                    }
+                } catch (e) {
+                    lastErr = e.message || String(e);
+                }
+            }
+            return { status: 'error', message: lastErr || 'Gemini NLP 呼叫失敗' };
+        };
+
         const triggerAlbumSelect = () => {
             if (albumInput.value) {
                 albumInput.value.value = '';
@@ -254,10 +456,13 @@ export default {
                 isAiAnalyzing.value = true;
                 modalStep.value = 'result';
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    capturedPhotoUrl.value = e.target.result;
+                reader.onload = async (e) => {
+                    const rawDataUrl = e.target.result;
+                    // 即時等比壓縮，避免傳輸超大照片卡死
+                    const compressed = await compressImage(rawDataUrl, 1000, 1000, 0.82);
+                    capturedPhotoUrl.value = compressed;
                     stopCameraStream();
-                    processPhotoResult(file.name || '外食拍照餐點');
+                    processPhotoResult(file.name || '外食拍照餐點', compressed);
                 };
                 reader.readAsDataURL(file);
                 event.target.value = ''; // Reset input to allow next photo
@@ -272,29 +477,59 @@ export default {
                 isAiAnalyzing.value = true;
                 modalStep.value = 'result';
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    capturedPhotoUrl.value = e.target.result;
+                reader.onload = async (e) => {
+                    const rawDataUrl = e.target.result;
+                    // 即時等比壓縮，避免相簿超高畫質相片卡死
+                    const compressed = await compressImage(rawDataUrl, 1000, 1000, 0.82);
+                    capturedPhotoUrl.value = compressed;
                     stopCameraStream();
-                    processPhotoResult(file.name || '相簿選取餐點');
+                    processPhotoResult(file.name || '相簿選取餐點', compressed);
                 };
                 reader.readAsDataURL(file);
                 event.target.value = ''; // Reset input
             }
         };
 
-        // 📸 真正的 Gemini Vision API 視覺辨識
-        const processPhotoResult = async (hintText = '') => {
+        // 📸 真正的 Gemini Vision API 視覺辨識 (優先前端直接連線，支援 Cloud Mode 與本地 Server)
+        const processPhotoResult = async (hintText = '', directPhotoUrl = null) => {
             showAiModal.value = true;
             isAiAnalyzing.value = true;
             modalStep.value = 'result';
 
-            if (capturedPhotoUrl.value) {
+            const photoData = directPhotoUrl || capturedPhotoUrl.value;
+            const apiKey = getGeminiApiKey();
+
+            if (photoData) {
+                // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API (極速 1~2 秒，支援 Cloud Mode)
+                if (apiKey) {
+                    try {
+                        const clientRes = await callClientGeminiVision(photoData, apiKey);
+                        if (clientRes.status === 'success' && clientRes.result) {
+                            resultForm.value = {
+                                dishName: clientRes.result.dishName || '拍照餐點',
+                                kcal: Number(clientRes.result.kcal) || 0,
+                                protein: Number(clientRes.result.protein) || 0,
+                                carbs: Number(clientRes.result.carbs) || 0,
+                                fat: Number(clientRes.result.fat) || 0,
+                                sodium: Number(clientRes.result.sodium) || 0,
+                                aiNote: clientRes.result.aiNote || '十一粒 AI 視覺辨識完成，數據可點擊微調。'
+                            };
+                            isAiAnalyzing.value = false;
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn('Direct Client Vision failed, trying backend fallback:', err);
+                    }
+                }
+
+                // 2. 本地 Server Fallback (若處於 Local 伺服器環境)
                 try {
                     const res = await fetch('/api/analyze-meal-photo', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            image: capturedPhotoUrl.value
+                            image: photoData,
+                            apiKey: apiKey
                         })
                     });
                     const data = await res.json();
@@ -316,7 +551,7 @@ export default {
                 }
             }
 
-            // 若視覺辨識異常時的備援
+            // 若視覺辨識無 Key 或離線時的備援
             resultForm.value = {
                 dishName: hintText || '外食拍照餐點',
                 kcal: 520,
@@ -324,7 +559,7 @@ export default {
                 carbs: 60,
                 fat: 16,
                 sodium: 680,
-                aiNote: '十一粒 AI 視覺估算：含主菜與配菜，數值皆可直接點擊手動微調。'
+                aiNote: apiKey ? '十一粒 AI 視覺推算：含主菜與配菜，數值皆可直接點擊手動微調。' : '⚠️ 尚未設定 Gemini API Key，已帶入標準備援估算數值（可點擊手動修改）。'
             };
             isAiAnalyzing.value = false;
         };
@@ -342,11 +577,36 @@ export default {
             modalStep.value = 'result';
             capturedPhotoUrl.value = null; // 清除照片
 
+            const apiKey = getGeminiApiKey();
+
+            // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API
+            if (apiKey) {
+                try {
+                    const clientRes = await callClientGeminiNLP(text, apiKey);
+                    if (clientRes.status === 'success' && clientRes.result) {
+                        resultForm.value = {
+                            dishName: clientRes.result.dishName || text,
+                            kcal: Number(clientRes.result.kcal) || 0,
+                            protein: Number(clientRes.result.protein) || 0,
+                            carbs: Number(clientRes.result.carbs) || 0,
+                            fat: Number(clientRes.result.fat) || 0,
+                            sodium: Number(clientRes.result.sodium) || 0,
+                            aiNote: clientRes.result.aiNote || '十一粒 AI 語意精算完成，數據可點擊手動微調。'
+                        };
+                        isAiAnalyzing.value = false;
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Direct Client NLP failed, trying backend fallback:', err);
+                }
+            }
+
+            // 2. 本地 Server Fallback
             try {
                 const res = await fetch('/api/analyze-food-nlp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
+                    body: JSON.stringify({ text, apiKey })
                 });
                 const data = await res.json();
                 if (data.status === 'success' && data.result) {
@@ -366,7 +626,7 @@ export default {
                 console.log('NLP API request failed:', e);
             }
 
-            // 網路離線時的備援
+            // 網路離線或無 Key 時的備援
             resultForm.value = {
                 dishName: text,
                 kcal: 450,
@@ -374,7 +634,7 @@ export default {
                 carbs: 55,
                 fat: 15,
                 sodium: 600,
-                aiNote: '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。'
+                aiNote: apiKey ? '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。' : '⚠️ 尚未設定 Gemini API Key，已記錄餐點名稱並帶入估算值（可手動修改）。'
             };
             isAiAnalyzing.value = false;
         };
@@ -449,15 +709,15 @@ export default {
         };
     },
     template: `
-        <div class="view-tracker">
-            <!-- Date & Family Member Switcher -->
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;">
+        <div class="view-tracker" style="padding-top: 6px;">
+            <!-- Date Switcher -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 14px; align-items: center;">
                 <button class="btn-icon" @click="changeDate(-1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                <span style="font-weight: 700; font-size: 1.05rem;">
+                <span style="font-weight: 800; font-size: 1.1rem; color: #111827;">
                     {{ currentDate }} {{ isToday ? '(今天)' : '' }}
                 </span>
                 <button class="btn-icon" @click="changeDate(1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
@@ -467,8 +727,9 @@ export default {
                 </button>
             </div>
             
-            <div class="capsule-group" style="margin-bottom: 24px;">
-                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" style="display: inline-flex; align-items: center; gap: 6px;">
+            <!-- Family Member Selector Capsules -->
+            <div class="capsule-group" style="margin-bottom: 20px;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
@@ -477,13 +738,13 @@ export default {
                     </svg>
                     <span>Bebe</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" style="display: inline-flex; align-items: center; gap: 6px;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                     <span>樂樂</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" style="display: inline-flex; align-items: center; gap: 6px;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
                         <line x1="9" y1="4" x2="11" y2="12"></line>
@@ -495,31 +756,31 @@ export default {
             </div>
 
             <!-- 01 Daily Progress Dashboard (新版暖黃韓系極簡圖表：頂部長膠囊熱量條 + 3個圓環進度圈 + 鈉含量文字) -->
-            <div class="card" style="margin-bottom: 24px; background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 20px; padding: 20px 18px 16px;">
+            <div class="card" style="margin-bottom: 24px; background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 20px; padding: 20px 18px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
                 <!-- Header -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div style="font-weight: 700; font-size: 1rem; color: var(--color-text-main);">
+                    <div style="font-weight: 700; font-size: 1.05rem; color: #111827;">
                         全天達標進度 ({{ targetProfile.name }})
                     </div>
-                    <div style="display: flex; align-items: center; font-size: 0.82rem; font-weight: 700; color: #E16262; background: #FDF2F2; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(225, 98, 98, 0.35);">
+                    <div style="display: flex; align-items: center; font-size: 0.85rem; font-weight: 700; color: #E11D48; background: #FFF1F2; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(225, 29, 72, 0.2);">
                         <span>{{ remaining.kcal >= 0 ? '剩餘 ' + remaining.kcal + ' kcal' : '超標 ' + Math.abs(remaining.kcal) + ' kcal' }}</span>
                     </div>
                 </div>
                 
                 <!-- 1. 頂部大長條膠囊進度條 (🔥 熱量 Calories) -->
                 <div style="margin-bottom: 22px;">
-                    <div class="calorie-capsule-bar" style="position: relative; width: 100%; height: 38px; background: #FFF5D6; border-radius: 9999px; overflow: hidden; display: flex; align-items: center;">
+                    <div class="calorie-capsule-bar" style="position: relative; width: 100%; height: 40px; background: #FFF9E6; border: 1.5px solid #FFE082; border-radius: 9999px; overflow: hidden; display: flex; align-items: center;">
                         <!-- 進度填充層 (系統黃色漸層) -->
                         <div :style="{ 
                             width: percent.kcal + '%', 
                             height: '100%', 
-                            background: percent.rawKcal > 100 ? 'linear-gradient(90deg, #FFB020 0%, #E16262 100%)' : 'linear-gradient(90deg, #FFD54F 0%, #FFB300 100%)', 
+                            background: percent.rawKcal > 100 ? 'linear-gradient(90deg, #FFB020 0%, #E11D48 100%)' : 'linear-gradient(90deg, #FDE68A 0%, #F59E0B 100%)', 
                             borderRadius: '9999px',
                             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
                         }"></div>
-                        <!-- 文字置中 -->
-                        <div style="position: absolute; width: 100%; text-align: center; font-weight: 800; font-size: 1.05rem; color: #5A3E00; pointer-events: none; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(255,255,255,0.4);">
-                            {{ percent.rawKcal }}% <span style="font-size: 0.8rem; font-weight: 600; opacity: 0.85;">({{ totals.kcal }} / {{ targetProfile.targetKcal }} kcal)</span>
+                        <!-- 文字置中 (清晰深棕色文字) -->
+                        <div style="position: absolute; width: 100%; text-align: center; font-weight: 800; font-size: 1.05rem; color: #451A03; pointer-events: none; letter-spacing: 0.5px;">
+                            {{ percent.rawKcal }}% <span style="font-size: 0.85rem; font-weight: 600; color: #78350F;">({{ totals.kcal }} / {{ targetProfile.targetKcal }} kcal)</span>
                         </div>
                     </div>
                 </div>
@@ -530,138 +791,100 @@ export default {
                     <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
                         <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
                             <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                                <!-- 背景底圈 -->
                                 <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <!-- 進度圈 (系統黃色漸層效果) -->
-                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                <path stroke="#F59E0B" stroke-width="4.2" stroke-linecap="round" fill="none"
                                       :stroke-dasharray="percent.protein + ', 100'"
                                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                                       style="transition: stroke-dasharray 0.4s ease;" />
                             </svg>
-                            <!-- 圈內百分比文字 -->
                             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawProtein }}%</span>
+                                <span style="font-weight: 800; font-size: 1rem; color: #451A03; line-height: 1;">{{ percent.rawProtein }}%</span>
                             </div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">蛋白質</div>
-                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.protein }}g / {{ targetProfile.targetProtein }}g</div>
+                        <div style="margin-top: 8px; font-size: 0.9rem; font-weight: 700; color: #1F2937;">蛋白質</div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #4B5563; margin-top: 2px;">{{ totals.protein }}g / {{ targetProfile.targetProtein }}g</div>
                     </div>
 
                     <!-- 碳水 Carbohydrates -->
                     <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
                         <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
                             <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                                <!-- 背景底圈 -->
                                 <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <!-- 進度圈 -->
-                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                <path stroke="#F59E0B" stroke-width="4.2" stroke-linecap="round" fill="none"
                                       :stroke-dasharray="percent.carbs + ', 100'"
-                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                                       style="transition: stroke-dasharray 0.4s ease;" />
                             </svg>
-                            <!-- 圈內百分比文字 -->
                             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawCarbs }}%</span>
+                                <span style="font-weight: 800; font-size: 1rem; color: #451A03; line-height: 1;">{{ percent.rawCarbs }}%</span>
                             </div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">碳水</div>
-                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.carbs }}g / {{ targetProfile.targetCarbs }}g</div>
+                        <div style="margin-top: 8px; font-size: 0.9rem; font-weight: 700; color: #1F2937;">碳水</div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #4B5563; margin-top: 2px;">{{ totals.carbs }}g / {{ targetProfile.targetCarbs }}g</div>
                     </div>
 
                     <!-- 脂肪 Fats -->
                     <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
                         <div class="circular-progress" style="position: relative; width: 76px; height: 76px;">
                             <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-                                <!-- 背景底圈 -->
                                 <path stroke="#FFF1C2" stroke-width="4.2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <!-- 進度圈 -->
-                                <path stroke="#FFB300" stroke-width="4.2" stroke-linecap="round" fill="none"
+                                <path stroke="#F59E0B" stroke-width="4.2" stroke-linecap="round" fill="none"
                                       :stroke-dasharray="percent.fat + ', 100'"
-                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                                       style="transition: stroke-dasharray 0.4s ease;" />
                             </svg>
-                            <!-- 圈內百分比文字 -->
                             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                <span style="font-weight: 800; font-size: 1rem; color: #6D4C00; line-height: 1;">{{ percent.rawFat }}%</span>
+                                <span style="font-weight: 800; font-size: 1rem; color: #451A03; line-height: 1;">{{ percent.rawFat }}%</span>
                             </div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">脂肪</div>
-                        <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 2px;">{{ totals.fat }}g / {{ targetProfile.targetFat }}g</div>
+                        <div style="margin-top: 8px; font-size: 0.9rem; font-weight: 700; color: #1F2937;">脂肪</div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #4B5563; margin-top: 2px;">{{ totals.fat }}g / {{ targetProfile.targetFat }}g</div>
                     </div>
                 </div>
 
                 <!-- 3. 底部鈉含量文字呈現 -->
-                <div style="border-top: 1px dashed #F0E6D2; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
-                    <div style="display: flex; align-items: center; gap: 6px; color: var(--color-text-main);">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 3h6v3H9z"></path>
-                            <path d="M8 6l-2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2L16 6"></path>
-                            <circle cx="12" cy="11" r="0.8" fill="currentColor"></circle>
-                            <circle cx="10" cy="15" r="0.8" fill="currentColor"></circle>
-                            <circle cx="14" cy="15" r="0.8" fill="currentColor"></circle>
-                        </svg>
+                <div style="border-top: 1px dashed #E5E7EB; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                    <div style="display: flex; align-items: center; gap: 6px; color: #1F2937;">
+                        <span>🧂</span>
                         <strong>今日鈉攝取：</strong>
-                        <span style="font-weight: 700; color: var(--color-text-main);">{{ totals.sodium }} mg</span>
-                        <span style="color: var(--color-text-muted); font-size: 0.78rem;">(上限 {{ targetProfile.targetSodium }} mg)</span>
+                        <span style="font-weight: 800; color: #111827;">{{ totals.sodium }} mg</span>
+                        <span style="color: #6B7280; font-size: 0.78rem;">(上限 {{ targetProfile.targetSodium }} mg)</span>
                     </div>
-                    <div :style="{ color: remaining.sodium >= 0 ? 'var(--color-accent)' : 'var(--color-secondary)', fontWeight: 700, fontSize: '0.85rem' }">
+                    <div :style="{ color: remaining.sodium >= 0 ? '#059669' : '#DC2626', fontWeight: 800, fontSize: '0.88rem' }">
                         {{ remaining.sodium >= 0 ? '剩 ' + remaining.sodium + ' mg' : '超標 ' + Math.abs(remaining.sodium) + ' mg' }}
                     </div>
                 </div>
             </div>
 
             <!-- 02 Meal Timeline Log -->
-            <div class="section-title">當日用餐時間軸</div>
+            <div class="section-title" style="font-size: 1rem; font-weight: 700; color: #374151; margin-bottom: 12px;">當日用餐時間軸</div>
             
-            <!-- Empty State -->
+            <!-- Empty State (清晰深色文字與排版) -->
             <div v-if="meals.length === 0" 
-                 style="text-align: center; padding: 36px 16px; color: var(--color-text-muted); background: #FFFDF8; border-radius: 12px; border: 1px dashed var(--color-border); font-size: 0.9rem; margin-bottom: 24px;">
-                {{ isToday ? '今日' : currentDate }} 尚無任何飲食紀錄<br>
-                <span style="font-size: 0.8rem; color: #9CA3AF; margin-top: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 3px;">
-                    可在第一頁備料計算後點擊「<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>紀錄」或點擊下方按鈕 AI 補記！
-                </span>
+                 style="text-align: center; padding: 32px 18px; color: #374151; background: #FFFFFF; border-radius: 16px; border: 1.5px dashed #D1D5DB; font-size: 0.95rem; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                <div style="font-weight: 700; font-size: 1.05rem; color: #1F2937; margin-bottom: 6px;">
+                    🍽️ {{ isToday ? '今日' : currentDate }} 尚無任何飲食紀錄
+                </div>
+                <div style="font-size: 0.85rem; color: #4B5563; line-height: 1.5;">
+                    可在第一頁備料計算後點擊「記錄」，或點擊下方按鈕進行 AI 補記！
+                </div>
             </div>
 
             <!-- Recorded Meals List -->
             <div v-else style="margin-bottom: 24px;">
-                <div v-for="meal in meals" :key="meal.id" 
-                     class="card" 
-                     style="margin-bottom: 14px; position: relative; border-left: 4px solid var(--color-primary);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <h4 style="margin: 0; font-size: 1rem; word-break: break-word;">{{ meal.dishName }}</h4>
-                                <span v-if="meal.source === 'photo_ai'" style="font-size: 0.68rem; background: #EEF2FF; color: #4F46E5; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;">📷 拍照</span>
-                                <span v-else style="font-size: 0.68rem; background: #FEF3C7; color: #B45309; padding: 2px 5px; border-radius: 4px; font-weight: 600; flex-shrink: 0;">💬 快捷/輸入</span>
-                            </div>
-                            <span style="font-size: 0.78rem; color: var(--color-text-muted);">🕒 {{ meal.time }}</span>
+                <div v-for="meal in meals" :key="meal.id" class="card" style="margin-bottom: 14px; border-left: 4px solid var(--color-primary); background: #FFFFFF; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--color-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #111827;">{{ meal.dishName }}</h4>
+                            <span style="font-size: 0.78rem; color: #6B7280;">🕒 {{ meal.time }}</span>
                         </div>
-                        <button class="btn-icon" @click="deleteMeal(meal.id)" style="padding: 3px 8px; border: none; font-size: 0.82rem; color: #EF4444; cursor: pointer; flex-shrink: 0;">
-                            🗑️ 刪除
-                        </button>
+                        <button class="btn-icon" @click="deleteMeal(meal.id)" style="color: #EF4444; border: none; font-size: 0.9rem; cursor: pointer;">🗑️</button>
                     </div>
-                    
-                    <!-- Real Photo Thumbnail if recorded via Camera/Album -->
-                    <div v-if="meal.photoUrl" style="margin-bottom: 10px;">
-                        <img :src="meal.photoUrl" style="width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-                    </div>
-
-                    <div style="font-size: 0.82rem; color: var(--color-text-main); font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 8px;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #374151; display: flex; gap: 12px; margin-top: 4px;">
                         <span>🔥 {{ meal.nutrients?.kcal || 0 }} kcal</span>
                         <span>🥩 {{ meal.nutrients?.protein || 0 }}g 蛋白</span>
                         <span>🍚 {{ meal.nutrients?.carbs || 0 }}g 碳水</span>
                         <span>🥑 {{ meal.nutrients?.fat || 0 }}g 脂</span>
-                    </div>
-
-                    <!-- AI Context Note -->
-                    <div v-if="meal.aiNote" style="font-size: 0.8rem; color: #4B5563; background: #F3F4F6; padding: 6px 10px; border-radius: 6px; margin-bottom: 6px;">
-                        {{ meal.aiNote }}
-                    </div>
-
-                    <!-- Ingredients Summary (for home cooking) -->
-                    <div v-if="meal.ingredientsSummary && meal.ingredientsSummary.length > 0" 
-                         style="font-size: 0.8rem; color: var(--color-text-muted); background: #FAF8F5; padding: 6px 10px; border-radius: 6px;">
-                        ▫️ {{ meal.ingredientsSummary.join('、') }}
                     </div>
                 </div>
             </div>
@@ -670,7 +893,7 @@ export default {
             <input type="file" accept="image/*" capture="environment" ref="nativeCameraInput" @change="handleNativeCameraSnap" style="display: none;">
             <input type="file" accept="image/*" ref="albumInput" @change="handleAlbumUpload" style="display: none;">
 
-            <!-- Bottom Floating Action Bar (主畫面保持俐落雙控制鈕) -->
+            <!-- Bottom Floating Action Bar -->
             <div class="fab-container">
                 <button class="btn-primary" @click="openAiModal('camera')" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -702,9 +925,14 @@ export default {
                                 ✕ 關閉
                             </button>
                             <span style="font-size: 0.9rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
-                            <button class="btn-icon" @click="toggleFacingMode" style="border: none; font-size: 0.92rem; color: var(--color-text-muted);" title="翻轉鏡頭">
-                                🔄 鏡頭
-                            </button>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn-icon" @click="openApiKeySettings" style="border: none; font-size: 0.82rem; color: var(--color-text-muted);" title="API Key 設定">
+                                    🔑 Key
+                                </button>
+                                <button class="btn-icon" @click="toggleFacingMode" style="border: none; font-size: 0.92rem; color: var(--color-text-muted);" title="翻轉鏡頭">
+                                    🔄 鏡頭
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Camera Live Viewfinder Area (點擊即拍) -->
@@ -715,7 +943,6 @@ export default {
                             
                             <!-- 韓式圓角對焦框 (Focus Bracket) -->
                             <div style="width: 220px; height: 220px; border: 2px dashed rgba(245, 158, 11, 0.8); border-radius: 24px; position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-                                <!-- 4 Corners -->
                                 <div style="position: absolute; top: -2px; left: -2px; width: 24px; height: 24px; border-top: 4px solid var(--color-primary); border-left: 4px solid var(--color-primary); border-top-left-radius: 12px;"></div>
                                 <div style="position: absolute; top: -2px; right: -2px; width: 24px; height: 24px; border-top: 4px solid var(--color-primary); border-right: 4px solid var(--color-primary); border-top-right-radius: 12px;"></div>
                                 <div style="position: absolute; bottom: -2px; left: -2px; width: 24px; height: 24px; border-bottom: 4px solid var(--color-primary); border-left: 4px solid var(--color-primary); border-bottom-left-radius: 12px;"></div>
@@ -763,7 +990,6 @@ export default {
 
                     <!-- 語音 / 文字輸入子畫面 -->
                     <div v-if="modalStep === 'voice'">
-                        <!-- Header (乾淨標題與關閉按鈕) -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                             <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main);">🎙️ 語音 / 文字輸入</span>
                             <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem; color: var(--color-text-muted);">✕</button>
@@ -777,7 +1003,7 @@ export default {
                                       style="resize: none; font-size: 0.95rem; line-height: 1.5;"></textarea>
                         </div>
 
-                        <!-- 常用餐點快捷 (直接點擊 0 毫秒帶出精確數據確認卡) -->
+                        <!-- 常用餐點快捷 -->
                         <div style="margin-bottom: 22px;">
                             <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px;">⭐ 常用餐點快捷 (點擊秒出精確數據)：</div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -802,7 +1028,12 @@ export default {
                             <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main);">
                                 {{ capturedPhotoUrl ? '🤖 十一粒 AI 視覺辨識分析結果' : '💬 十一粒 AI 語意推算分析結果' }}
                             </span>
-                            <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem;">✕</button>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button class="btn-icon" @click="openApiKeySettings" style="border: none; font-size: 0.82rem; color: var(--color-text-muted);" title="設定 Key">
+                                    🔑 Key
+                                </button>
+                                <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem;">✕</button>
+                            </div>
                         </div>
 
                         <!-- Analyzing Spinner -->
@@ -811,6 +1042,9 @@ export default {
                             <div style="font-weight: 700; font-size: 1rem; color: var(--color-primary);">
                                 {{ capturedPhotoUrl ? 'Gemini AI 視覺神經網絡分析中...' : '十一粒 AI 語意深度計算中...' }}
                             </div>
+                            <div style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 6px;">
+                                正在辨識料理名稱並精算熱量與營養成分...
+                            </div>
                         </div>
 
                         <!-- Result Card -->
@@ -818,7 +1052,6 @@ export default {
                             <!-- Real Captured Photo Display with Retake Button -->
                             <div v-if="capturedPhotoUrl" style="margin-bottom: 14px; position: relative;">
                                 <img :src="capturedPhotoUrl" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block;">
-                                <!-- 頂部右上角：重拍按鈕 -->
                                 <button @click="openAiModal('camera')" 
                                         style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.72); color: #FFF; border: 1px solid rgba(255,255,255,0.3); font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
                                     🔄 重拍照片
@@ -897,6 +1130,34 @@ export default {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gemini API Key 快速設定 Modal -->
+            <div v-if="showApiKeyModal" class="modal-overlay" @click.self="showApiKeyModal = false" style="z-index: 1001;">
+                <div class="modal-content" style="padding: 24px 20px; border-radius: 20px; max-width: 380px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
+                            🔑 Gemini API Key 設定
+                        </h3>
+                        <button class="btn-icon" @click="showApiKeyModal = false" style="border: none; font-size: 1.1rem;">✕</button>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 14px;">
+                        請輸入你的 Google Gemini API Key，即可在手機與雲端模式下秒速啟用 AI 拍照辨識與語意精算：
+                    </p>
+                    <input type="password" 
+                           v-model="inputApiKey" 
+                           placeholder="AIzaSy..." 
+                           class="search-input" 
+                           style="width: 100%; padding: 10px 12px; margin-bottom: 16px; font-family: monospace;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-primary" @click="showApiKeyModal = false" style="flex: 1; justify-content: center; background: #F3F4F6; color: #4B5563; border: none;">
+                            取消
+                        </button>
+                        <button class="btn-primary accent" @click="saveApiKeySetting" style="flex: 1.5; justify-content: center; font-weight: 700;">
+                            儲存金鑰
+                        </button>
                     </div>
                 </div>
             </div>
