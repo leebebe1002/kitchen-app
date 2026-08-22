@@ -815,6 +815,14 @@ export default {
             isResultStale.value = false;
             showChefNote.value = false;
 
+            // 🌟 點擊計算後，自動平滑滾動至「全家備料大白板」
+            setTimeout(() => {
+                const target = document.getElementById('portions-section');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 80);
+
             // 2. 立即呼叫 Gemini AI 進行全家 InBody 智能精算與直接覆寫右側主數值
             await callAiChefAdvisor();
         };
@@ -1433,7 +1441,7 @@ ${JSON.stringify(membersData, null, 2)}
 
             <div v-if="selectedDish && isCalculated" style="position: relative;">
                 <!-- 03 PORTIONS -->
-                <div class="section-title">03 PORTIONS 全家備料大白板</div>
+                <div id="portions-section" class="section-title">03 PORTIONS 全家備料大白板</div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1442,7 +1450,7 @@ ${JSON.stringify(membersData, null, 2)}
                                 <span class="apple-spinner"></span>
                                 <span>AI 智能精算中...</span>
                             </span>
-                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ InBody AI 智能配比</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⚙️ 本地食譜配比</span>
                         </div>
                         <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
