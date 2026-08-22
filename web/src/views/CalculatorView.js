@@ -623,17 +623,13 @@ export default {
             }
 
             // 🥛 3. 希臘優格與水果智能基線
-            sauces.forEach(s => {
-                if (s.id === 'greek_yogurt' || s.id === 'plain_yogurt') {
-                    s.item.amount = isJason ? 140 : (member === 'ariel' ? 120 : 100);
-                    s.item.unit = 'g';
-                }
-            });
-
-            veggies.forEach(v => {
-                if (v.id === 'mango' || v.id === 'banana') {
-                    v.item.amount = isJason ? 120 : (member === 'ariel' ? 100 : 80);
-                    v.item.unit = 'g';
+            activeList.forEach(item => {
+                if (item.id === 'greek_yogurt' || item.id === 'plain_yogurt') {
+                    item.amount = isJason ? 140 : (member === 'ariel' ? 120 : 100);
+                    item.unit = 'g';
+                } else if (item.id === 'mango' || item.id === 'banana') {
+                    item.amount = isJason ? 120 : (member === 'ariel' ? 100 : 80);
+                    item.unit = 'g';
                 }
             });
         };
