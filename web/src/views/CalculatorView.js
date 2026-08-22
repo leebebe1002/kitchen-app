@@ -939,8 +939,9 @@ ${JSON.stringify(membersData, null, 2)}
 
                 const attempts = [
                     { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent' },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent' },
                     { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' }
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent' }
                 ];
 
                 let resultJson = null;
@@ -957,15 +958,20 @@ ${JSON.stringify(membersData, null, 2)}
                             method: 'POST',
                             headers: headers,
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: prompt }] }],
-                                generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+                                contents: [{ parts: [{ text: prompt }] }]
                             })
                         });
                         if (resp.ok) {
                             const resData = await resp.json();
                             const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                             if (rawText) {
-                                resultJson = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+                                let clean = rawText.trim();
+                                if (clean.includes('```json')) {
+                                    clean = clean.replace(/```json/g, '').replace(/```/g, '').trim();
+                                } else if (clean.includes('```')) {
+                                    clean = clean.replace(/```/g, '').trim();
+                                }
+                                resultJson = JSON.parse(clean);
                                 break;
                             }
                         } else {
