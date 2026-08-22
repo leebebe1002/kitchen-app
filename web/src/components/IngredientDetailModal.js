@@ -310,18 +310,18 @@ const IngredientDetailModal = {
             };
 
             const attempts = [
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent', useHeader: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true }
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent' },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent' },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent' }
             ];
 
             let lastError = '';
 
             for (const att of attempts) {
                 try {
-                    const resp = await fetch(att.url, {
+                    const fetchUrl = `${att.url}?key=${encodeURIComponent(apiKey)}`;
+                    const resp = await fetch(fetchUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
                         body: JSON.stringify(payload)
