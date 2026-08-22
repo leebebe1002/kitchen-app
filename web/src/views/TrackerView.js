@@ -292,6 +292,7 @@ export default {
 
         const showApiKeyModal = ref(false);
         const inputApiKey = ref('');
+        const isKeyVisible = ref(true); // 預設明文顯示，方便使用者查看與比對金鑰
 
         const getGeminiApiKey = () => {
             return (
@@ -780,6 +781,7 @@ export default {
             saveAsFavorite,
             showApiKeyModal,
             inputApiKey,
+            isKeyVisible,
             openApiKeySettings,
             saveApiKeySetting,
             getGeminiApiKey
@@ -1328,7 +1330,7 @@ export default {
                 </div>
             </div>
 
-            <!-- Gemini API Key 快速設定 Modal -->
+            <!-- Gemini API Key 快速設定 Modal (支援明文/密文切換與狀態核對) -->
             <div v-if="showApiKeyModal" class="modal-overlay" @click.self="showApiKeyModal = false" style="z-index: 1001;">
                 <div class="modal-content" style="padding: 24px 20px; border-radius: 20px; max-width: 380px; width: 90%;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -1340,11 +1342,27 @@ export default {
                     <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 14px;">
                         請輸入你的 Google Gemini API Key，即可在手機與雲端模式下秒速啟用 AI 拍照辨識與語意精算：
                     </p>
-                    <input type="password" 
-                           v-model="inputApiKey" 
-                           placeholder="AIzaSy..." 
-                           class="search-input" 
-                           style="width: 100%; padding: 10px 12px; margin-bottom: 16px; font-family: monospace;">
+                    
+                    <!-- 明文/密文可切換的 Input -->
+                    <div style="position: relative; margin-bottom: 8px;">
+                        <input :type="isKeyVisible ? 'text' : 'password'" 
+                               v-model="inputApiKey" 
+                               placeholder="AIzaSy..." 
+                               class="search-input" 
+                               style="width: 100%; padding: 10px 42px 10px 12px; font-family: monospace; font-size: 0.88rem; background: #FAF8F5;">
+                        <button type="button" 
+                                @click="isKeyVisible = !isKeyVisible" 
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #6B7280; padding: 6px; display: flex; align-items: center;"
+                                :title="isKeyVisible ? '切換為密文' : '切換為明文'">
+                            <span style="font-size: 1.1rem;">{{ isKeyVisible ? '🙈' : '👁️' }}</span>
+                        </button>
+                    </div>
+
+                    <div style="font-size: 0.76rem; color: #6B7280; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>目前金鑰：{{ inputApiKey ? inputApiKey.slice(0, 8) + '...' + inputApiKey.slice(-4) : '尚未輸入' }}</span>
+                        <button v-if="inputApiKey" @click="inputApiKey = ''" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 0.76rem; text-decoration: underline;">清空金鑰</button>
+                    </div>
+
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-primary" @click="showApiKeyModal = false" style="flex: 1; justify-content: center; background: #F3F4F6; color: #4B5563; border: none;">
                             取消

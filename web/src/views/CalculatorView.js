@@ -833,22 +833,35 @@ export default {
         const showChefNote = ref(false);
         const showChefKeyInput = ref(false);
         const chefApiKeyInput = ref('');
+        const isChefKeyVisible = ref(true);
+
+        const openChefKeyModal = () => {
+            chefApiKeyInput.value = (
+                localStorage.getItem('family_kitchen_gemini_key') || 
+                localStorage.getItem('kitchen_v2_gemini_api_key') || 
+                localStorage.getItem('gemini_api_key') || 
+                engine.data?.config?.geminiApiKey || 
+                engine.data?.config?.gemini_api_key || 
+                ''
+            );
+            showChefKeyInput.value = true;
+        };
 
         const saveChefKey = async () => {
             const key = chefApiKeyInput.value.trim();
-            if (!key) return;
             try {
                 localStorage.setItem('family_kitchen_gemini_key', key);
                 localStorage.setItem('kitchen_v2_gemini_api_key', key);
+                localStorage.setItem('gemini_api_key', key);
+                localStorage.setItem('GEMINI_API_KEY', key);
             } catch (e) {}
             if (!engine.data.config) engine.data.config = {};
             engine.data.config.geminiApiKey = key;
             engine.data.config.gemini_api_key = key;
             await engine.saveJson('config.json', engine.data.config);
             showChefKeyInput.value = false;
-            chefApiKeyInput.value = '';
-            alert('🎉 Gemini API Key 已成功儲存啟用！');
-            await callAiChefAdvisor();
+            alert(key ? '🎉 Gemini API Key 已成功儲存啟用！' : '已清除金鑰');
+            if (key) await callAiChefAdvisor();
         };
 
         const callAiChefAdvisor = async () => {
@@ -1302,6 +1315,8 @@ ${JSON.stringify(membersData, null, 2)}
             applyAiAdjustments,
             showChefKeyInput,
             chefApiKeyInput,
+            isChefKeyVisible,
+            openChefKeyModal,
             saveChefKey,
             goToTracker
         };
@@ -1685,19 +1700,37 @@ ${JSON.stringify(membersData, null, 2)}
                 </div>
             </div>
 
-            <!-- 🔑 設定 Gemini API Key 彈窗 -->
+            <!-- 🔑 設定 Gemini API Key 彈窗 (支援明文切換與狀態核對) -->
             <div v-if="showChefKeyInput" class="modal-overlay" @click.self="showChefKeyInput = false">
                 <div class="card" style="width: 90%; max-width: 420px; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #FFF;">
-                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--color-text-main); margin-bottom: 8px;">
-                        🔑 設定 Gemini API Key
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--color-text-main);">
+                            🔑 設定 Gemini API Key
+                        </div>
+                        <button class="btn-icon" @click="showChefKeyInput = false" style="border: none; font-size: 1.1rem;">✕</button>
                     </div>
                     <div style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 16px;">
                         請輸入 Google AI Studio 產生的 Gemini API Key（格式為 <strong>AIzaSy...</strong> 開頭）：
                     </div>
-                    <input type="password" 
-                           v-model="chefApiKeyInput" 
-                           placeholder="AIzaSy..." 
-                           style="width: 100%; padding: 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 0.95rem; margin-bottom: 16px; box-sizing: border-box; background: #FAF8F5;">
+                    
+                    <div style="position: relative; margin-bottom: 8px;">
+                        <input :type="isChefKeyVisible ? 'text' : 'password'" 
+                               v-model="chefApiKeyInput" 
+                               placeholder="AIzaSy..." 
+                               style="width: 100%; padding: 12px 42px 12px 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 0.9rem; font-family: monospace; box-sizing: border-box; background: #FAF8F5;">
+                        <button type="button" 
+                                @click="isChefKeyVisible = !isChefKeyVisible" 
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #6B7280; padding: 6px; display: flex; align-items: center;"
+                                :title="isChefKeyVisible ? '隱藏金鑰' : '顯示完整金鑰'">
+                            <span style="font-size: 1.1rem;">{{ isChefKeyVisible ? '🙈' : '👁️' }}</span>
+                        </button>
+                    </div>
+
+                    <div style="font-size: 0.76rem; color: #6B7280; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>目前金鑰：{{ chefApiKeyInput ? chefApiKeyInput.slice(0, 8) + '...' + chefApiKeyInput.slice(-4) : '尚未輸入' }}</span>
+                        <button v-if="chefApiKeyInput" @click="chefApiKeyInput = ''" style="background: none; border: none; color: #EF4444; cursor: pointer; font-size: 0.76rem; text-decoration: underline;">清空金鑰</button>
+                    </div>
+
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="btn-secondary" @click="showChefKeyInput = false" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--color-border); background: #FFF; cursor: pointer;">取消</button>
                         <button class="btn-primary" @click="saveChefKey" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; background: var(--color-primary); color: #FFF; border: none; cursor: pointer;">儲存並啟用 AI</button>
