@@ -1512,6 +1512,11 @@ ${JSON.stringify(membersData, null, 2)}
                             {{ aiChefAdvice.source === 'ai' ? '💬 十一粒主廚 AI 點評：' : '⚙️ 系統計算狀態：' }}
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
+                        <div v-if="aiChefAdvice.source === 'local'" style="margin-top: 10px;">
+                            <button @click="showChefKeyInput = true" style="background: var(--color-primary, #FFCA60); color: #78350F; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(255, 202, 96, 0.3);">
+                                🔑 點此更換 / 設定正確的 Gemini Key (AIzaSy...)
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Status Tags -->
@@ -1650,6 +1655,26 @@ ${JSON.stringify(membersData, null, 2)}
                                 目前分類下無庫存食材，可切換分類或搜尋新增！
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔑 設定 Gemini API Key 彈窗 -->
+            <div v-if="showChefKeyInput" class="modal-overlay" @click.self="showChefKeyInput = false">
+                <div class="card" style="width: 90%; max-width: 420px; padding: 24px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #FFF;">
+                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--color-text-main); margin-bottom: 8px;">
+                        🔑 設定 Gemini API Key
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 16px;">
+                        請輸入 Google AI Studio 產生的 Gemini API Key（格式為 <strong>AIzaSy...</strong> 開頭）：
+                    </div>
+                    <input type="password" 
+                           v-model="chefApiKeyInput" 
+                           placeholder="AIzaSy..." 
+                           style="width: 100%; padding: 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 0.95rem; margin-bottom: 16px; box-sizing: border-box; background: #FAF8F5;">
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn-secondary" @click="showChefKeyInput = false" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--color-border); background: #FFF; cursor: pointer;">取消</button>
+                        <button class="btn-primary" @click="saveChefKey" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; background: var(--color-primary); color: #FFF; border: none; cursor: pointer;">儲存並啟用 AI</button>
                     </div>
                 </div>
             </div>
