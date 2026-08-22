@@ -938,17 +938,19 @@ ${JSON.stringify(membersData, null, 2)}
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
                 const attempts = [
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: false },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true, useQuery: false }
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent' },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent' },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' }
                 ];
 
                 let resultJson = null;
+                let lastErrDetail = '';
                 for (const att of attempts) {
-                    const fetchUrl = att.useQuery ? `${att.url}?key=${encodeURIComponent(apiKey)}` : att.url;
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (att.useHeader) headers['x-goog-api-key'] = apiKey;
+                    const fetchUrl = `${att.url}?key=${encodeURIComponent(apiKey)}`;
+                    const headers = { 
+                        'Content-Type': 'application/json',
+                        'x-goog-api-key': apiKey 
+                    };
 
                     try {
                         const resp = await fetch(fetchUrl, {
@@ -966,14 +968,18 @@ ${JSON.stringify(membersData, null, 2)}
                                 resultJson = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
                                 break;
                             }
+                        } else {
+                            const errTxt = await resp.text();
+                            lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
                         }
                     } catch (err) {
+                        lastErrDetail = err.message || String(err);
                         console.warn("AI Chef endpoint attempt failed:", att.url, err);
                     }
                 }
 
                 if (resultJson && resultJson.portions) {
-                    // 🌟 直接將 AI 精算數值覆寫至各成員的右側實際主數值！
+                    // 🌟 成功獲取 AI 精算數值！覆寫至各成員的右側實際主數值！
                     Object.keys(resultJson.portions).forEach(member => {
                         const aiItems = resultJson.portions[member];
                         if (Array.isArray(aiItems) && memberIngredients.value[member]) {
@@ -986,19 +992,26 @@ ${JSON.stringify(membersData, null, 2)}
                             });
                         }
                     });
+                    resultJson.source = 'ai'; // 明確標記來源為 AI
                     aiChefAdvice.value = resultJson;
                     showChefNote.value = true;
                 } else {
-                    // 本地智能求解 fallback
+                    // 本地智能求解 fallback (誠實標記為本地)
                     activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
                     aiChefAdvice.value = {
-                        chefComment: `十一粒主廚已根據 InBody 目標精算完成！已為全家自動配置高蛋白與抗性澱粉黃金比例。`,
+                        source: 'local', // 誠實標記為本地演算法
+                        chefComment: `目前為系統本地演算法基線（因 API 連線未成功：${lastErrDetail || '請確認 API 金鑰'}）。若要啟用 AI 主廚智能求解，請確認金鑰設定。`,
                         portions: {}
                     };
                 }
             } catch (e) {
                 console.error("AI Chef error:", e);
                 activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
+                aiChefAdvice.value = {
+                    source: 'local',
+                    chefComment: "連線異常，已使用本地演算法基線配比。",
+                    portions: {}
+                };
             } finally {
                 isAiChefLoading.value = false;
             }
@@ -1416,7 +1429,8 @@ ${JSON.stringify(membersData, null, 2)}
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
                             <span v-if="isAiChefLoading" style="font-size: 0.72rem; color: #6B7280; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⏳ AI 精算中...</span>
-                            <span v-else-if="aiChefAdvice && aiChefAdvice.chefComment" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ InBody 智能配比</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ InBody AI 智能配比</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⚙️ 本地食譜配比</span>
                         </div>
                         <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1459,19 +1473,26 @@ ${JSON.stringify(membersData, null, 2)}
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                         <h3 style="margin-bottom: 0; font-size: 1.1rem;">{{ engine.profiles[member].name }} 的專屬份量</h3>
                         
-                        <!-- ✨ Option A: AI Chef Status Indicator & Expandable Advice Capsule -->
-                        <div v-if="member === 'bebe'">
+                        <!-- ✨ AI vs Local Status Indicator -->
+                        <div>
                             <!-- Loading State -->
                             <div v-if="isAiChefLoading" 
                                  style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #6B7280; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB;">
                                 <span>⏳</span>
-                                <span>AI 覆核中...</span>
+                                <span>AI 智能精算中...</span>
                             </div>
-                            <!-- Ready / Reviewed State (Clickable to toggle advice) -->
-                            <button v-else-if="aiChefAdvice && aiChefAdvice.chefComment" 
+                            <!-- AI Success State -->
+                            <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
                                     @click="showChefNote = !showChefNote"
                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
-                                <span>✨ 主廚已覆核</span>
+                                <span>✨ AI 主廚已精算</span>
+                                <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
+                            </button>
+                            <!-- Local Fallback State -->
+                            <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" 
+                                    @click="showChefNote = !showChefNote"
+                                    style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #4B5563; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB; cursor: pointer; transition: all 0.2s ease;">
+                                <span>⚙️ 本地演算法</span>
                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                         </div>
@@ -1481,7 +1502,7 @@ ${JSON.stringify(membersData, null, 2)}
                     <div v-if="member === 'bebe' && showChefNote && aiChefAdvice && aiChefAdvice.chefComment" 
                          style="margin-bottom: 14px; background: #FFFDF8; border-left: 3px solid var(--color-primary); border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; color: #4B5563; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div style="font-weight: 700; color: var(--color-primary); margin-bottom: 4px; font-size: 0.78rem;">
-                            💬 十一粒主廚小筆記：
+                            {{ aiChefAdvice.source === 'ai' ? '💬 十一粒主廚 AI 點評：' : '⚙️ 系統計算狀態：' }}
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                     </div>
