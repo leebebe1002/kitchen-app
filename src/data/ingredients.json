@@ -506,6 +506,30 @@
     ],
     "veggies": [
         {
+            "id": "mango",
+            "name": "芒果",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 50,
+                "protein": 0.6,
+                "fat": 0.3,
+                "carbs": 12.8,
+                "sodium": 1
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge",
+                "pantry"
+            ]
+        },
+        {
             "id": "cabbage",
             "name": "高麗菜",
             "category": "veggies",

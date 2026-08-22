@@ -1,5 +1,6 @@
 {
     "foodStockStatus": {
+        "mango": true,
         "tuna": false,
         "shrimp": true,
         "sous_vide_chicken": true,
