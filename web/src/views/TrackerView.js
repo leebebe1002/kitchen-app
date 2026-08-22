@@ -239,8 +239,8 @@ export default {
             }
         };
 
-        // 圖片壓縮輔助 (避免相簿高解析大圖卡死或超時)
-        const compressImage = (dataUrl, maxWidth = 1000, maxHeight = 1000, quality = 0.82) => {
+        // 圖片壓縮輔助 (將長邊限制在 800px、quality 0.75，大幅縮小 Base64 體積提升 API 穩定度與秒速回傳)
+        const compressImage = (dataUrl, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
@@ -311,18 +311,18 @@ export default {
             const cleanB64 = b64Data ? b64Data.replace(/[\n\r\s]/g, '') : '';
 
             const prompt = `你是一位極具洞察力的頂級營養師與 AI 視覺估算專家。
-請仔細辨識這張照片中的食物/餐點（若照片非食物，請推測可能的情境或如實說明）。
+請仔細辨識這張照片中的食物/餐點（若照片非食物，請如實說明）。
 請提取出『料理/餐點名稱 (dishName)』，並根據視覺份量精準估算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
 
-請嚴格只輸出合法 JSON，不要加入 markdown \`\`\`json 標籤：
+請嚴格只輸出合法 JSON 物件，不要包在 Markdown 或其他文字中：
 {
-  "dishName": "精準料理品名 (如: 炙燒鮭魚丼 / 舒肥雞胸溫沙拉 / 燕麥拿鐵)",
+  "dishName": "精準料理品名 (如: 台式高麗菜荷包蛋便當 / 炙燒鮭魚丼 / 舒肥雞胸溫沙拉)",
   "kcal": 520,
-  "protein": 38,
-  "carbs": 45,
-  "fat": 16,
-  "sodium": 680,
-  "aiNote": "十一粒 AI 視覺估算：含主菜蛋白質、主食與時蔬，數據可隨時點擊調整。"
+  "protein": 32,
+  "carbs": 58,
+  "fat": 18,
+  "sodium": 750,
+  "aiNote": "十一粒 AI 視覺估算：含主菜與配菜，數據可隨時點擊調整。"
 }`;
 
             const payload = {
@@ -334,18 +334,21 @@ export default {
                 }]
             };
 
+            // 優先使用視覺支援最穩健的 gemini-1.5-flash 與 gemini-2.0-flash
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
             ];
 
             let lastErr = '';
             for (const endpoint of attempts) {
                 try {
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
-                    console.log(`📡 [十一粒 AI] 嘗試連線模型: ${endpoint.split('/models/')[1]?.split(':')[0]}`);
+                    const modelName = endpoint.split('/models/')[1]?.split(':')[0];
+                    console.log(`📡 [十一粒 AI] 嘗試連線模型: ${modelName}`);
+                    
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -358,17 +361,20 @@ export default {
 
                     if (resp.ok && resData) {
                         const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-                        let cleanJson = rawText;
-                        if (cleanJson.startsWith('```')) {
-                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        // 使用正規表達式提取 JSON 區塊，防止前後文字或 markdown 標籤導致 parse 失敗
+                        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            console.log('✅ [十一粒 AI] 視覺神經網絡分析成功！辨識結果:', parsed);
+                            return { status: 'success', result: parsed, isRealAi: true };
                         }
-                        const parsed = JSON.parse(cleanJson);
-                        console.log('✅ [十一粒 AI] 視覺神經網絡分析成功！辨識結果:', parsed);
-                        return { status: 'success', result: parsed, isRealAi: true };
                     } else {
                         const msg = resData?.error?.message || resp.statusText || rawTextResp.slice(0, 100);
                         lastErr = `HTTP ${resp.status}: ${msg}`;
-                        console.warn(`⚠️ [十一粒 AI] 模型 ${endpoint} 回應異常: ${lastErr}`);
+                        if (resp.status === 429) {
+                            lastErr = 'Google API 每分鐘請求額度已滿 (Rate Limit 429)，請稍候 10 秒後重試';
+                        }
+                        console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 回應: ${lastErr}`);
                     }
                 } catch (e) {
                     lastErr = e.message || String(e);
@@ -515,6 +521,7 @@ export default {
                 return;
             }
 
+            let lastFailMessage = '';
             if (photoData) {
                 // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API (極速 1~2 秒，支援 Cloud Mode)
                 try {
@@ -531,8 +538,11 @@ export default {
                         };
                         isAiAnalyzing.value = false;
                         return;
+                    } else {
+                        lastFailMessage = clientRes.message || '';
                     }
                 } catch (err) {
+                    lastFailMessage = err.message || String(err);
                     console.warn('Direct Client Vision failed, trying backend fallback:', err);
                 }
 
@@ -565,15 +575,23 @@ export default {
                 }
             }
 
-            // 若視覺辨識異常時的備援
+            // 清理檔名 hintText（若為相機預設檔名如 IMG_xxx.jpeg，則替換為友善名稱）
+            let fallbackName = hintText;
+            if (!fallbackName || /^(IMG_|photo_|image_|\d+|\w+\.(jpe?g|png|webp|heic))/i.test(fallbackName)) {
+                fallbackName = '相簿/實拍餐點';
+            }
+
+            // 若視覺辨識異常時的備援與清楚錯誤提示
             resultForm.value = {
-                dishName: hintText || '外食拍照餐點',
+                dishName: fallbackName,
                 kcal: 520,
                 protein: 30,
                 carbs: 60,
                 fat: 16,
                 sodium: 680,
-                aiNote: apiKey ? '十一粒 AI 視覺推算：含主菜與配菜，數值皆可直接點擊手動微調。' : '⚠️ 尚未設定 Gemini API Key，已帶入標準備援估算數值（可點擊手動修改）。'
+                aiNote: lastFailMessage 
+                    ? `⚠️ AI 分析暫時未回應（${lastFailMessage}），已帶入備援數值，可直接點擊手動修改。`
+                    : (apiKey ? '十一粒 AI 視覺推算：含主菜與配菜，數值皆可直接點擊手動微調。' : '⚠️ 尚未設定 Gemini API Key，已帶入標準備援估算數值。')
             };
             isAiAnalyzing.value = false;
         };
