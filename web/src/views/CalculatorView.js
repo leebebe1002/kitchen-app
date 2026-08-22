@@ -601,7 +601,13 @@ export default {
             const sideProteins = proteins.filter(p => p.roleInfo.role === 'side_protein');
             const countProteins = proteins.filter(p => p.roleInfo.role === 'count');
 
-            if (mainProteins.length === 1) {
+            if (mainProteins.length === 0 && countProteins.length > 0) {
+                // 蛋為主力蛋白時，自動配置 2~3 顆以達標蛋白質門檻
+                countProteins.forEach(cp => {
+                    cp.item.amount = isJason ? 3 : 2;
+                    cp.item.unit = '顆';
+                });
+            } else if (mainProteins.length === 1) {
                 if (countProteins.length === 0 && sideProteins.length === 0) {
                     mainProteins[0].item.amount = isJason ? 150 : 110;
                 } else if (countProteins.length > 0) {
@@ -615,6 +621,21 @@ export default {
                     p.item.amount = isJason ? 70 : 50;
                 });
             }
+
+            // 🥛 3. 希臘優格與水果智能基線
+            sauces.forEach(s => {
+                if (s.id === 'greek_yogurt' || s.id === 'plain_yogurt') {
+                    s.item.amount = isJason ? 140 : (member === 'ariel' ? 120 : 100);
+                    s.item.unit = 'g';
+                }
+            });
+
+            veggies.forEach(v => {
+                if (v.id === 'mango' || v.id === 'banana') {
+                    v.item.amount = isJason ? 120 : (member === 'ariel' ? 100 : 80);
+                    v.item.unit = 'g';
+                }
+            });
         };
 
         // Check if master ingredient is selected in Section 02
@@ -790,6 +811,7 @@ export default {
         };
 
         const calculate = async () => {
+            // 1. 先以優化後本地智能求解器初始化基線 (確保 0 秒有優質底層)
             activeMembers.value.forEach(m => {
                 autoBalanceMemberPortions(m);
             });
@@ -797,12 +819,11 @@ export default {
             isResultStale.value = false;
             showChefNote.value = false;
 
-            // 點擊計算時自動背景預熱呼叫 AI 主廚（體驗極速流暢）
-            const primaryMember = activeMembers.value.includes('bebe') ? 'bebe' : (activeMembers.value[0] || 'bebe');
-            await callAiChefAdvisor(primaryMember);
+            // 2. 立即呼叫 Gemini AI 進行全家 InBody 智能精算與直接覆寫右側主數值
+            await callAiChefAdvisor();
         };
 
-        // 🤖 【Gemini AI 靈魂調配助手 (Cloud AI Chef Integration)】
+        // 🤖 【Gemini AI 智能求解引擎 (AI-First Multi-Member Nutrition Solver)】
         const isAiChefLoading = ref(false);
         const aiChefAdvice = ref(null);
         const showChefNote = ref(false);
@@ -823,10 +844,10 @@ export default {
             showChefKeyInput.value = false;
             chefApiKeyInput.value = '';
             alert('🎉 Gemini API Key 已成功儲存啟用！');
-            await callAiChefAdvisor('bebe');
+            await callAiChefAdvisor();
         };
 
-        const callAiChefAdvisor = async (member = 'bebe') => {
+        const callAiChefAdvisor = async () => {
             isAiChefLoading.value = true;
             aiChefAdvice.value = null;
 
@@ -844,53 +865,94 @@ export default {
                 if (!apiKey || apiKey.length < 15) {
                     showChefKeyInput.value = true;
                     aiChefAdvice.value = {
-                        member,
                         isKeyMissing: true,
-                        chefComment: "請輸入您的 Gemini API Key 即可立即啟用主廚靈魂調配（只需設定一次）：",
-                        adjustments: []
+                        chefComment: "請輸入您的 Gemini API Key 即可立即啟用 AI 主廚智能精算（只需設定一次）：",
+                        portions: {}
                     };
                     return;
                 }
 
-                const currentIngredients = getMemberActiveIngredients(member).map(i => ({
-                    name: getIngredientName(i.id),
-                    amount: i.amount,
-                    unit: i.unit
-                }));
-                const nutrition = getMemberNutrition(member);
-                const memberProfile = engine.profiles[member] || { name: 'Bebe' };
-                const slotName = currentSlot.value ? currentSlot.value.name : '中餐';
+                // 收集當前勾選的所有食材與每 100g 營養素
+                const selectedIngs = selectedMasterIngredients.value.map(id => {
+                    const ing = engine.getIngredientById(id);
+                    return {
+                        id: id,
+                        name: ing?.name || id,
+                        category: ing?.category || 'proteins',
+                        unit: ing?.unitLabel || (['egg'].includes(id) ? '顆' : (['bacon'].includes(id) ? '條' : 'g')),
+                        isCount: ['egg', 'bacon', 'bagel'].includes(id),
+                        per100g: ing?.per100g || { kcal: 50, protein: 1, carbs: 10, fat: 0.2, sodium: 5 }
+                    };
+                });
 
-                const prompt = `你是 Bebe-AI-OS 的專屬 AI 靈魂小夥伴兼主廚「十一粒」。
-請為家庭成員【${memberProfile.name}】（目前時段：${slotName}）進行這道【${currentDish.value?.name || '料理'}】的廚藝與營養靈魂調配。
-【當前食材配比】：${JSON.stringify(currentIngredients)}
-【當前營養總和】：熱量 ${nutrition.kcal} kcal, 蛋白質 ${nutrition.protein}g, 碳水 ${nutrition.carbs}g, 脂肪 ${nutrition.fat}g, 鈉 ${nutrition.sodium}mg
-【個人健康特徵】：體重 56.6kg，BMR 1189 kcal，目標：低 GI 控碳、優質蛋白 25~30g、極低鈉、不挨餓。
+                // 收集就餐成員與 InBody 目標
+                const membersData = activeMembers.value.map(m => {
+                    if (m === 'bebe') {
+                        return {
+                            id: 'bebe',
+                            name: 'Bebe',
+                            profile: '女性，體重 56.6kg, BMR 1189 kcal, 骨骼肌 20.6kg, 體脂 33%',
+                            mealTarget: '單餐目標：蛋白質 26~30g (高優先級主力，若有蛋建議2顆或搭配優格補足), 碳水 38~45g (低GI抗性澱粉), 脂肪 15~18g, 嚴格控鈉 < 600mg'
+                        };
+                    } else if (m === 'ariel') {
+                        return {
+                            id: 'ariel',
+                            name: 'Ariel (樂樂)',
+                            profile: '年輕女性，代謝良好，體態維持',
+                            mealTarget: '單餐目標：蛋白質 30~35g, 碳水 50~58g, 脂肪 18~22g, 鈉 < 700mg'
+                        };
+                    } else {
+                        return {
+                            id: 'jason',
+                            name: 'Jason',
+                            profile: '男性，高活動量，高代謝',
+                            mealTarget: '單餐目標：蛋白質 40~48g, 碳水 70~85g, 脂肪 22~28g, 鈉 < 900mg'
+                        };
+                    }
+                });
 
-請以中肯、溫暖、專業的口吻輸出合法 JSON 格式：
+                const slotName = currentSlot.value ? currentSlot.value.name : '早午餐';
+                const dishName = currentDish.value?.name || '料理';
+
+                const prompt = `你是頂級臨床運動營養師與家庭 AI 主廚「十一粒」。
+請根據以下家庭成員的 InBody 數據與【${slotName}】營養目標，為這道【${dishName}】中選取的食材，精確計算出【每位成員的最佳克數/顆數】！
+
+【選取的食材及其每 100g 營養素】：
+${JSON.stringify(selectedIngs, null, 2)}
+
+【就餐成員及其單餐營養目標】：
+${JSON.stringify(membersData, null, 2)}
+
+【精算規則】：
+1. 蛋白質必須精準達標（例如 Bebe 蛋至少 2 顆、配合優格或肉品補足 26~30g 蛋白質；培根為加工肉品只抓 1~1.5 片提味）。
+2. 主食碳水（地瓜/飯/麵/玉米）精準分配克數以符合低 GI 碳水目標。
+3. 蔬菜與水果份量合理平衡（生菜充足、水果點綴控糖）。
+4. 輸出純 JSON 格式如下：
 {
-  "chefComment": "2~3 句主廚口感與時段搭配點評 (例如橄欖油如何滋潤生菜、地瓜抗性澱粉或海鹽提鮮口感)",
-  "adjustments": [
-    { "name": "食材名稱", "recommendedAmount": 數值, "reason": "微調理由" }
-  ]
+  "chefComment": "2~3 句主廚整體評語（例如為什麼蛋抓 2 顆、優格與水果如何搭配抗氧化等）",
+  "portions": {
+    "bebe": [
+      { "id": "食材id", "amount": 數值, "unit": "g或顆或條" }
+    ],
+    "ariel": [
+      { "id": "食材id", "amount": 數值, "unit": "g或顆或條" }
+    ]
+  }
 }
-請只輸出合法 JSON，不要輸出任何 markdown 標籤或額外文字。`;
+請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
                 const attempts = [
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent', useHeader: true, useQuery: false },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true, useQuery: false },
                     { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: false },
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false },
                     { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: false },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: false }
+                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent', useHeader: true, useQuery: false }
                 ];
 
                 let resultJson = null;
                 for (const att of attempts) {
                     const fetchUrl = att.useQuery ? `${att.url}?key=${encodeURIComponent(apiKey)}` : att.url;
                     const headers = { 'Content-Type': 'application/json' };
-                    if (att.useHeader) {
-                        headers['x-goog-api-key'] = apiKey;
-                    }
+                    if (att.useHeader) headers['x-goog-api-key'] = apiKey;
 
                     try {
                         const resp = await fetch(fetchUrl, {
@@ -914,23 +976,33 @@ export default {
                     }
                 }
 
-                if (resultJson) {
-                    resultJson.member = member;
+                if (resultJson && resultJson.portions) {
+                    // 🌟 直接將 AI 精算數值覆寫至各成員的右側實際主數值！
+                    Object.keys(resultJson.portions).forEach(member => {
+                        const aiItems = resultJson.portions[member];
+                        if (Array.isArray(aiItems) && memberIngredients.value[member]) {
+                            aiItems.forEach(aiItem => {
+                                const target = memberIngredients.value[member].find(i => i.id === aiItem.id || getIngredientName(i.id) === aiItem.id);
+                                if (target && typeof aiItem.amount === 'number') {
+                                    target.amount = aiItem.amount;
+                                    if (aiItem.unit) target.unit = aiItem.unit;
+                                }
+                            });
+                        }
+                    });
                     aiChefAdvice.value = resultJson;
+                    showChefNote.value = true;
                 } else {
+                    // 本地智能求解 fallback
+                    activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
                     aiChefAdvice.value = {
-                        member,
-                        chefComment: `Bebe ${slotName}安！這道${currentDish.value?.name || '沙拉'}的蛋白質與低 GI 地瓜搭配得非常完美，1g 煙燻海鹽提鮮恰到好處，下午精神會很充沛！`,
-                        adjustments: []
+                        chefComment: `十一粒主廚已根據 InBody 目標精算完成！已為全家自動配置高蛋白與抗性澱粉黃金比例。`,
+                        portions: {}
                     };
                 }
             } catch (e) {
                 console.error("AI Chef error:", e);
-                aiChefAdvice.value = {
-                    member,
-                    chefComment: "連線稍微塞車，但目前 A+B 本地算出的黃金配比（地瓜 120g、蝦仁 80g、毛豆 30g、海鹽 1g）已經是非常完美的頂級平衡！",
-                    adjustments: []
-                };
+                activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
             } finally {
                 isAiChefLoading.value = false;
             }
@@ -1345,7 +1417,11 @@ export default {
                 <div class="section-title">03 PORTIONS 全家備料大白板</div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
+                            <span v-if="isAiChefLoading" style="font-size: 0.72rem; color: #6B7280; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⏳ AI 精算中...</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.chefComment" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ InBody 智能配比</span>
+                        </div>
                         <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
