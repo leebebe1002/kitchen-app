@@ -966,13 +966,13 @@ export default {
                                         <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
-                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG) -->
-                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer;" title="翻轉鏡頭">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="18 2 22 6 18 10"></polyline>
-                                        <path d="M4 11V9a4 4 0 0 1 4-4h14"></path>
-                                        <polyline points="6 22 2 18 6 14"></polyline>
-                                        <path d="M20 13v2a4 4 0 0 1-4 4H2"></path>
+                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，放大至 20px 飽滿呈現) -->
+                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" title="翻轉鏡頭">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="17 1 22 6 17 11"></polyline>
+                                        <path d="M3 11V9a4 4 0 0 1 4-4h15"></path>
+                                        <polyline points="7 23 2 18 7 13"></polyline>
+                                        <path d="M21 13v2a4 4 0 0 1-4 4H2"></path>
                                     </svg>
                                 </button>
                             </div>
