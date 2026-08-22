@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>【細緻弧度款】碗 ✕ 往右弧度箭頭 FAB 預覽 - Family Kitchen 2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans TC", sans-serif; }
+        body { background: #F3F4F6; padding: 24px 16px 80px 16px; color: #1F2937; }
+        .container { max-width: 440px; margin: 0 auto; }
+        h1 { font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; text-align: center; color: #111827; }
+        p.subtitle { font-size: 0.85rem; color: #6B7280; text-align: center; margin-bottom: 24px; }
+        
+        .card { background: #FFFFFF; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1.5px solid #E5E7EB; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .badge { font-size: 0.75rem; background: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+        
+        .preview-box { background: #FAF8F5; border-radius: 16px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; position: relative; border: 1px dashed #D1D5DB; }
+        
+        /* 橘色正圓浮動按鈕 (FAB) */
+        .fab-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            box-shadow: 0 8px 18px rgba(245, 124, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+        }
+        .fab-circle:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 10px rgba(245, 124, 0, 0.3);
+        }
+        
+        .fab-label { font-size: 0.9rem; font-weight: 700; color: #B45309; }
+        .desc { font-size: 0.82rem; color: #4B5563; line-height: 1.5; margin-top: 10px; }
+
+        /* 底部 iOS 無縫 Bar 預覽 */
+        .bottom-bar-mockup {
+            background: #FFFFFF;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 12px 0;
+            border-radius: 0 0 20px 20px;
+            margin-top: 16px;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            color: #6B7280;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .tab-item.active {
+            color: #19585C;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>【精緻細線條款】碗 ✕ 往右弧度箭頭</h1>
+        <p class="subtitle">線條細緻優雅（stroke: 1.8），帶有向右飄逸彈出的優美弧度</p>
+
+        <!-- 款式 1：【輕盈弧度出碗】 -->
+        <div class="card">
+            <div class="card-title">
+                <span>款式 1：【輕盈向右弧度 ✕ 圓潤瓷碗】</span>
+                <span class="badge" style="background:#ECFDF5; color:#047857;">推薦：最流暢</span>
+            </div>
+            <div class="preview-box">
+                <div class="fab-circle">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 溫潤料理碗 -->
+                        <path d="M4 12c0 4.5 3.5 7.5 8 7.5s8-3 8-7.5H4z"></path>
+                        <line x1="8.5" y1="19.5" x2="15.5" y2="19.5"></line>
+                        <!-- 從碗中向右上方拋出的流暢平滑弧線箭頭 -->
+                        <path d="M7 8c2.5-3.5 6.5-4 12-2"></path>
+                        <polyline points="16 3 19 6 15.5 8.5"></polyline>
+                    </svg>
+                </div>
+                <div class="fab-label">🥣 ➔ ⤳ 向右躍出碗外</div>
+            </div>
+            <p class="desc"><strong>視覺特點：</strong> 碗身比例優雅，上方是一道從碗心向上、順暢向右上方飛出的弧形貝茲曲線，線條纖細（1.8px），呼吸感十足！</p>
+        </div>
+
+        <!-- 款式 2：【俏皮拋物線弧度】 -->
+        <div class="card">
+            <div class="card-title">
+                <span>款式 2：【流線拋物線 ✕ 俐落碗口】</span>
+                <span class="badge">動態感強</span>
+            </div>
+            <div class="preview-box">
+                <div class="fab-circle">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 簡約半圓碗 -->
+                        <path d="M3.5 13a8.5 8.5 0 0 0 17 0H3.5z"></path>
+                        <line x1="9" y1="19.5" x2="15" y2="19.5"></line>
+                        <!-- 大弧度向右拋出的拋物線箭頭 -->
+                        <path d="M8 9.5C9 5.5 13 4 18 5.5"></path>
+                        <polyline points="15 3.5 18.5 5.5 16 8"></polyline>
+                    </svg>
+                </div>
+                <div class="fab-label">🥣 ➔ ⤴ 拋物線外推</div>
+            </div>
+            <p class="desc"><strong>視覺特點：</strong> 箭頭弧度較大，帶有活潑的彈射拋物感，一眼就看得出是把食材「彈出」這碗料理之外。</p>
+        </div>
+
+        <!-- 款式 3：【極簡微弧飄逸款】 -->
+        <div class="card">
+            <div class="card-title">
+                <span>款式 3：【極簡微弧 ✕ 開口淺碗】</span>
+                <span class="badge">極簡高雅</span>
+            </div>
+            <div class="preview-box">
+                <div class="fab-circle">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 開口淺碗 -->
+                        <path d="M3 11.5c0 5 4 8.5 9 8.5s9-3.5 9-8.5H3z"></path>
+                        <!-- 碗口正上方帶微弧向右飛行的箭頭 -->
+                        <path d="M8.5 6.5C11.5 5 15 5.2 18 6.5"></path>
+                        <polyline points="15 4 18.5 6.5 15 9"></polyline>
+                    </svg>
+                </div>
+                <div class="fab-label">🥣 ➔ ➔ 平緩微弧飛出</div>
+            </div>
+            <p class="desc"><strong>視覺特點：</strong> 弧線較為平緩內斂，橫向往右飛行，視覺平衡感極佳，極具現代北歐風極簡設計美學。</p>
+        </div>
+
+        <!-- 整合展示：搭配截圖同款無縫底欄的實際重疊效果 -->
+        <div class="card" style="padding-bottom: 0; overflow: hidden;">
+            <div class="card-title">
+                <span>📱 搭配無縫底欄的實際重疊效果</span>
+            </div>
+            <div style="background: #FAF8F5; border-radius: 14px; padding: 24px 16px; position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 0.85rem; color: #9CA3AF; font-weight: 500;">（上方為卡片雙軌規格表單）</span>
+
+                <!-- 浮動正圓橘鈕 (展示款式 1 效果) -->
+                <div class="fab-circle" style="position: absolute; right: 16px; bottom: 20px; z-index: 20;">
+                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12c0 4.5 3.5 7.5 8 7.5s8-3 8-7.5H4z"></path>
+                        <line x1="8.5" y1="19.5" x2="15.5" y2="19.5"></line>
+                        <path d="M9 8c2.5-3.5 6.5-4 12-2"></path>
+                        <polyline points="18 3 21 6 17.5 8.5"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 無縫底欄 (截圖 4 項按鈕同款) -->
+            <div class="bottom-bar-mockup">
+                <div class="tab-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>AI 拍</span>
+                </div>
+                <div class="tab-item">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>相簿</span>
+                </div>
+                <div class="tab-item" style="color: #EF4444;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>刪除</span>
+                </div>
+                <div class="tab-item active">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span>儲存</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

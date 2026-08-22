@@ -1,6 +1,10 @@
 const { ref, computed, watch } = Vue;
+import IngredientDetailModal from '../components/IngredientDetailModal.js';
 
 export default {
+    components: {
+        IngredientDetailModal
+    },
     props: ['engine'],
     setup(props) {
         const engine = props.engine;
@@ -16,28 +20,7 @@ export default {
         const ingredientModal = ref({
             isOpen: false,
             mode: 'create', // 'create' | 'edit'
-            form: {
-                id: '',
-                name: '',
-                type: 'food',
-                category: 'proteins',
-                servingSize: 10,
-                servingUnit: 'g',
-                displayBasis: '100g', // '100g' | 'serving'
-                perServing: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 },
-                per100g: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 },
-                storageZones: ['fridge'],
-                preferredStores: ['全聯'],
-                brand: '',
-                price: '',
-                stock: true
-            },
-            photo: {
-                url: '',
-                isAnalyzing: false,
-                status: 'idle', // 'idle' | 'analyzing' | 'success' | 'error'
-                message: ''
-            }
+            ingredient: null
         });
         
         // Modal 背景鎖定機制 (Body Scroll Lock)
@@ -377,236 +360,34 @@ export default {
             }
         };
 
-        // 雙軌數值換算
-        const onModalServingInput = () => {
-            const form = ingredientModal.value.form;
-            const size = Number(form.servingSize) || 10;
-            const ratio = 100 / size;
-            const ps = form.perServing || {};
-            form.per100g = {
-                kcal: Math.round((Number(ps.kcal) || 0) * ratio * 10) / 10,
-                protein: Math.round((Number(ps.protein) || 0) * ratio * 10) / 10,
-                carbs: Math.round((Number(ps.carbs) || 0) * ratio * 10) / 10,
-                fat: Math.round((Number(ps.fat) || 0) * ratio * 10) / 10,
-                sodium: Math.round((Number(ps.sodium) || 0) * ratio * 10) / 10
-            };
-        };
-
-        const onModal100gInput = () => {
-            const form = ingredientModal.value.form;
-            const size = Number(form.servingSize) || 10;
-            const ratio = size / 100;
-            const p100 = form.per100g || {};
-            form.perServing = {
-                kcal: Math.round((Number(p100.kcal) || 0) * ratio * 10) / 10,
-                protein: Math.round((Number(p100.protein) || 0) * ratio * 10) / 10,
-                carbs: Math.round((Number(p100.carbs) || 0) * ratio * 10) / 10,
-                fat: Math.round((Number(p100.fat) || 0) * ratio * 10) / 10,
-                sodium: Math.round((Number(p100.sodium) || 0) * ratio * 10) / 10
-            };
-        };
-
-        const toggleModalZone = (zoneKey) => {
-            const zones = ingredientModal.value.form.storageZones;
-            const idx = zones.indexOf(zoneKey);
-            if (idx === -1) {
-                zones.push(zoneKey);
-            } else if (zones.length > 1) {
-                zones.splice(idx, 1);
-            }
-        };
-
-        const toggleModalStore = (store) => {
-            const stores = ingredientModal.value.form.preferredStores;
-            const idx = stores.indexOf(store);
-            if (idx === -1) {
-                stores.push(store);
-            } else if (stores.length > 1) {
-                stores.splice(idx, 1);
-            }
-        };
-
-        const toggleModalStock = async () => {
-            const form = ingredientModal.value.form;
-            form.stock = !form.stock;
-            if (form.id) {
-                await engine.toggleStock(form.id, form.stock);
-            }
-        };
-
         const openAddModalDirectly = () => {
-            refreshSavedApiKey();
             ingredientModal.value = {
                 isOpen: true,
                 mode: 'create',
-                form: {
-                    id: '',
-                    name: '',
-                    type: 'food',
-                    category: 'proteins',
-                    servingSize: 10,
-                    servingUnit: 'g',
-                    displayBasis: '100g',
-                    perServing: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 },
-                    per100g: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 },
-                    storageZones: ['fridge'],
-                    preferredStores: ['全聯'],
-                    brand: '',
-                    price: '',
-                    stock: true
-                },
-                photo: {
-                    url: '',
-                    isAnalyzing: false,
-                    status: 'idle',
-                    message: ''
-                }
+                ingredient: null
             };
         };
 
         const openFoodDetail = (ing) => {
             if (!ing) return;
-            refreshSavedApiKey();
             selectedFood.value = ing;
-            const zones = ing.storageZones ? [...ing.storageZones] : (ing.storageZone ? [ing.storageZone] : ['fridge']);
-            const stores = ing.preferredStores ? [...ing.preferredStores] : (ing.preferredStore ? [ing.preferredStore] : ['全聯']);
-            const p100 = ing.per100g ? { ...ing.per100g } : { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-            const pServ = ing.perServing ? { ...ing.perServing } : { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-            const displayBasis = (['sauces', 'seasonings', 'oils', 'fats'].includes(ing.category)) ? 'serving' : '100g';
-
             ingredientModal.value = {
                 isOpen: true,
                 mode: 'edit',
-                form: {
-                    id: ing.id,
-                    name: ing.name || '',
-                    type: 'food',
-                    category: ing.category || 'proteins',
-                    servingSize: Number(ing.servingSize) || 10,
-                    servingUnit: ing.servingUnit || 'g',
-                    displayBasis: displayBasis,
-                    perServing: pServ,
-                    per100g: p100,
-                    storageZones: zones,
-                    preferredStores: stores,
-                    brand: ing.brand || '',
-                    price: ing.price || '',
-                    stock: checkFoodStock(ing.id)
-                },
-                photo: {
-                    url: '',
-                    isAnalyzing: false,
-                    status: 'idle',
-                    message: ''
-                }
+                ingredient: ing
             };
         };
 
         const closeIngredientModal = () => {
             ingredientModal.value.isOpen = false;
-            ingredientModal.value.photo.isAnalyzing = false;
         };
 
-        const cancelAiAnalyzing = () => {
-            ingredientModal.value.photo.isAnalyzing = false;
-            ingredientModal.value.photo.status = 'idle';
+        const onIngredientSaved = async (savedIng) => {
+            pantryUpdateTrigger.value++;
         };
 
-        const saveIngredientModal = async () => {
-            const form = ingredientModal.value.form;
-            const name = (form.name || '').trim();
-            if (!name) {
-                alert('請填寫食材名稱！');
-                return;
-            }
-
-            const cat = form.category || 'proteins';
-            const itemData = {
-                name: name,
-                category: cat,
-                unitLabel: form.servingUnit || 'g',
-                servingSize: Number(form.servingSize) || 10,
-                servingUnit: form.servingUnit || 'g',
-                perServing: { ...form.perServing },
-                per100g: { ...form.per100g },
-                storageZone: form.storageZones[0] || 'fridge',
-                storageZones: [...form.storageZones],
-                preferredStore: form.preferredStores[0] || '全聯',
-                preferredStores: [...form.preferredStores],
-                brand: form.brand || '',
-                price: Number(form.price) || 0
-            };
-
-            if (ingredientModal.value.mode === 'create') {
-                const newId = `food_custom_${Date.now()}`;
-                const newIng = { id: newId, ...itemData };
-
-                if (!engine.data.rawIngredients) engine.data.rawIngredients = {};
-                if (!engine.data.rawIngredients[cat]) engine.data.rawIngredients[cat] = [];
-                engine.data.rawIngredients[cat].push(newIng);
-                if (!engine.data.ingredients) engine.data.ingredients = [];
-                engine.data.ingredients.push(newIng);
-
-                // 保存至 localStorage 自訂食材
-                try {
-                    const customKey = 'kitchen_v2_custom_ingredients';
-                    const existing = JSON.parse(localStorage.getItem(customKey) || '[]');
-                    existing.push(newIng);
-                    localStorage.setItem(customKey, JSON.stringify(existing));
-                } catch (e) {
-                    console.warn('Error saving custom ingredient', e);
-                }
-
-                await engine.saveJson('ingredients.json', engine.data.rawIngredients);
-                await engine.toggleStock(newId, true);
-                alert(`🎉 成功新增食材【${name}】！`);
-            } else {
-                // Edit mode
-                const targetId = form.id;
-                itemData.id = targetId;
-                let found = false;
-                if (engine.data.rawIngredients) {
-                    for (const c of Object.keys(engine.data.rawIngredients)) {
-                        if (Array.isArray(engine.data.rawIngredients[c])) {
-                            const idx = engine.data.rawIngredients[c].findIndex(i => i.id === targetId);
-                            if (idx !== -1) {
-                                if (c !== cat) {
-                                    // 類別變更，移動到新類別陣列
-                                    engine.data.rawIngredients[c].splice(idx, 1);
-                                    if (!engine.data.rawIngredients[cat]) engine.data.rawIngredients[cat] = [];
-                                    engine.data.rawIngredients[cat].push(itemData);
-                                } else {
-                                    engine.data.rawIngredients[c][idx] = { ...engine.data.rawIngredients[c][idx], ...itemData };
-                                }
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (found) {
-                    await engine.saveJson('ingredients.json', engine.data.rawIngredients);
-                    // 同步扁平化 ingredients 陣列
-                    if (engine.data.ingredients) {
-                        const flatIdx = engine.data.ingredients.findIndex(i => i.id === targetId);
-                        if (flatIdx !== -1) {
-                            engine.data.ingredients[flatIdx] = { ...engine.data.ingredients[flatIdx], ...itemData };
-                        }
-                    }
-                }
-                await engine.toggleStock(targetId, form.stock);
-            }
-
-            closeIngredientModal();
-        };
-
-        const deleteIngredientFromModal = async () => {
-            const form = ingredientModal.value.form;
-            if (!form.id) return;
-            if (confirm(`確定要永久刪除食材【${form.name}】嗎？`)) {
-                await engine.deleteIngredient(form.id);
-                closeIngredientModal();
-            }
+        const onIngredientDeleted = async (deletedId) => {
+            pantryUpdateTrigger.value++;
         };
 
         // Camera & AI Vision state & Config API Key
@@ -1015,17 +796,11 @@ export default {
             showShoppingModal,
             showSupplyModal,
             ingredientModal,
-            onModalServingInput,
-            onModal100gInput,
-            toggleModalZone,
-            toggleModalStore,
-            toggleModalStock,
             openAddModalDirectly,
             openFoodDetail,
             closeIngredientModal,
-            cancelAiAnalyzing,
-            saveIngredientModal,
-            deleteIngredientFromModal,
+            onIngredientSaved,
+            onIngredientDeleted,
             startFoodPress,
             handleFoodTouchMove,
             cancelFoodPress,
@@ -1584,10 +1359,6 @@ export default {
                 </div>
             </div>
 
-            <!-- 隱藏原生手機相機與相簿 input (支援 iPhone/Android 實拍) -->
-            <input type="file" accept="image/*" capture="environment" ref="cameraInputRef" style="display:none;" @change="handleCameraSnap">
-            <input type="file" accept="image/*" ref="albumInputRef" style="display:none;" @change="handleCameraSnap">
-
             <!-- 手機畫面最底部固定常駐雙控制鈕 -->
             <div class="fab-container">
                 <button class="btn-primary" @click="showShoppingModal = true" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -1607,327 +1378,17 @@ export default {
                 </button>
             </div>
 
-            <!-- 📱 【萬能食材編輯器 (Unified Ingredient Modal)】支援新增 (create) 與長按編輯 (edit) 雙模式 -->
-            <div v-if="ingredientModal.isOpen" class="modal-overlay" @click.self="closeIngredientModal">
-                <div class="drawer-content" style="max-height: 90vh; padding: 20px 20px 28px 20px; position: relative; overflow-y: auto;">
-                    
-                    <!-- 🤖 AI 辨識中 70% 半透明白色遮罩 + 50x50px 大 Loading 圈圈 + 取消不等待按鈕 -->
-                    <div v-if="ingredientModal.photo.isAnalyzing" 
-                         style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 100; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
-                        <div class="ai-spinner-lg" style="margin-bottom: 18px;"></div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: #19585C; margin-bottom: 6px;">
-                            Gemini AI 正在分析照片中...
-                        </div>
-                        <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500; margin-bottom: 24px; max-width: 240px; line-height: 1.5;">
-                            正在讀取標籤與換算每 100g 數據，已為您封鎖畫面防止誤觸
-                        </div>
-                        <button class="btn-icon" 
-                                @click="cancelAiAnalyzing" 
-                                style="background: #FFFFFF; border: 1.5px solid var(--color-border); padding: 10px 22px; border-radius: var(--radius-full); font-weight: 700; font-size: 0.85rem; color: var(--color-text-main); box-shadow: 0 4px 14px rgba(0,0,0,0.08); cursor: pointer; transition: all 0.2s ease;">
-                            ✕ 取消不等待 (改為手動填寫)
-                        </button>
-                    </div>
-
-                    <!-- 頂部標題列 -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <!-- 左側：Emoji + 品名輸入 -->
-                        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                            <span style="font-size: 1.25rem;">🥗</span>
-                            <input type="text" 
-                                   v-model="ingredientModal.form.name" 
-                                   :placeholder="ingredientModal.mode === 'create' ? '食材名稱 (如：牛番茄、鮮乳)' : '食材名稱'" 
-                                   class="search-input" 
-                                   style="font-weight: 700; font-size: 1.05rem; padding: 6px 10px; flex: 1; max-width: 220px;">
-                        </div>
-
-                        <!-- 右側：編輯模式時顯示「庫存切換」與「刪除按鈕」，以及共通「✕ 關閉按鈕」 -->
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <button v-if="ingredientModal.mode === 'edit'" 
-                                    class="capsule" 
-                                    :class="ingredientModal.form.stock ? 'selected' : 'disabled'" 
-                                    @click="toggleModalStock" 
-                                    style="cursor: pointer; padding: 4px 8px; font-size: 0.78rem; font-weight: 700; user-select: none;">
-                                {{ ingredientModal.form.stock ? '❄️ 有庫存' : '🛒 無庫存' }}
-                            </button>
-                            <button v-if="ingredientModal.mode === 'edit'" 
-                                    class="btn-icon" 
-                                    @click="deleteIngredientFromModal" 
-                                    style="color: #EF4444; border-color: #FECACA; background: #FEF2F2; font-size: 0.78rem; padding: 4px 8px; font-weight: 700; border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;"
-                                    title="刪除此食材">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                <span>刪除</span>
-                            </button>
-                            <button class="btn-icon" @click="closeIngredientModal" style="border: none; font-size: 1.1rem; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">✕</button>
-                        </div>
-                    </div>
-
-                    <!-- 1. AI 辨識區：API Key 狀態列 (未設定或使用者主動點擊修改時才顯示) -->
-                    <div v-if="!hasValidKey || showApiKeyInput" style="background: #EAF6F7; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; margin-bottom: 14px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: #19585C; display: flex; align-items: center; justify-content: space-between;">
-                            <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 2l-2 2m-1.5 1.5L14 9a5 5 0 1 0 1.5 1.5L22 4l-1-2z"></path>
-                                </svg>
-                                <span>AI 圖片辨識狀態：</span>
-                                <span :style="{ color: hasValidKey ? '#059669' : '#D97706', fontWeight: 800 }">
-                                    {{ hasValidKey ? '● 已開啟 API 辨識' : '○ 未設定 API Key' }}
-                                </span>
-                            </span>
-                            <button v-if="hasValidKey" class="btn-icon" @click="showApiKeyInput = !showApiKeyInput" style="padding: 3px 10px; font-size: 0.75rem; font-weight: 600;">
-                                {{ showApiKeyInput ? '收起' : '修改 Key' }}
-                            </button>
-                        </div>
-                        <div v-if="showApiKeyInput || !hasValidKey" style="margin-top: 8px;">
-                            <div style="font-size: 0.75rem; color: #19585C; margin-bottom: 6px;">
-                                貼上免費 Gemini API Key 即可讓手機相機擁有 100% 準確營養標示 OCR 讀取能力：
-                            </div>
-                            <div style="display: flex; gap: 6px;">
-                                <input type="text" 
-                                       v-model="geminiApiKeyInput" 
-                                       placeholder="貼上 Google API Key (AQ... 或 AIza...)" 
-                                       autocomplete="off" 
-                                       autocorrect="off" 
-                                       autocapitalize="off" 
-                                       spellcheck="false" 
-                                       class="search-input" 
-                                       style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #FFF; font-family: monospace;">
-                                <button class="btn-primary" @click="saveApiKey" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                        <polyline points="7 3 7 8 15 8"></polyline>
-                                    </svg>
-                                    <span>儲存啟用</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. AI 實拍/選圖預覽卡片 (動態雷射掃描與狀態) -->
-                    <div v-if="ingredientModal.photo.url" style="margin-bottom: 16px; background: #FFFFFF; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;">
-                        <div class="ai-scan-box" style="width: 64px; height: 64px; flex-shrink: 0;">
-                            <img :src="ingredientModal.photo.url" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-                            <div v-if="ingredientModal.photo.status === 'analyzing'" class="ai-scan-line"></div>
-                        </div>
-                        <div style="flex: 1;">
-                            <div v-if="ingredientModal.photo.status === 'analyzing'" style="display: flex; align-items: center; gap: 8px;">
-                                <span class="ai-spinner"></span>
-                                <div>
-                                    <div style="font-size: 0.85rem; color: #19585C; font-weight: 700;">
-                                        Gemini AI 辨識中...
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; margin-top: 2px;">
-                                        正在讀取標籤與換算 100g 數據，請稍候 3~5 秒
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else-if="ingredientModal.photo.status === 'success'" style="font-size: 0.85rem; color: #065F46; font-weight: 700;">
-                                ✨ Gemini Vision 辨識成功！
-                                <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; margin-top: 2px;">
-                                    {{ ingredientModal.photo.message || '已為您自動帶入品名與每 100g 營養成份，可手動微調。' }}
-                                </div>
-                            </div>
-                            <div v-else style="font-size: 0.85rem; color: #B45309; font-weight: 700;">
-                                ⚠️ AI 辨識未完成
-                                <div style="font-size: 0.75rem; color: #78350F; font-weight: 500; margin-top: 2px;">
-                                    {{ ingredientModal.photo.message || '未能自動提取數據，請在下方直接手動填寫。' }}
-                                </div>
-                                <button class="btn-icon" @click="copyDebugReport" style="padding: 4px 10px; font-size: 0.75rem; margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; background: #FFF; border: 1px solid #D97706; color: #B45309; font-weight: 700; border-radius: 8px; cursor: pointer;">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                    </svg>
-                                    <span>📋 複製詳細除錯報告 (貼給十一粒)</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. 雙軌營養規格編輯卡片 (每 100g / 單份規格) -->
-                    <div style="background: #F9FAFB; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 20v-6M6 20V10M18 20V4"></path>
-                                </svg>
-                                <span>營養成份規格：</span>
-                            </label>
-                            
-                            <!-- 雙軌切換按鈕 -->
-                            <div style="display: flex; background: #E5E7EB; padding: 2px; border-radius: 8px; gap: 2px;">
-                                <button type="button" 
-                                        @click="ingredientModal.form.displayBasis = '100g'" 
-                                        :style="{ background: ingredientModal.form.displayBasis === '100g' ? 'var(--color-primary)' : 'transparent', color: ingredientModal.form.displayBasis === '100g' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
-                                    每 100g/mL
-                                </button>
-                                <button type="button" 
-                                        @click="ingredientModal.form.displayBasis = 'serving'" 
-                                        :style="{ background: ingredientModal.form.displayBasis === 'serving' ? 'var(--color-primary)' : 'transparent', color: ingredientModal.form.displayBasis === 'serving' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
-                                    按單份
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 依據單份填寫時的份量定義列 -->
-                        <div v-if="ingredientModal.form.displayBasis === 'serving'" style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
-                            <span style="font-weight: 700; color: #92400E;">單份份量：</span>
-                            <input type="number" v-model.number="ingredientModal.form.servingSize" @input="onModalServingInput" class="search-input" style="width: 60px; padding: 4px; font-weight: 700; text-align: center;">
-                            <select v-model="ingredientModal.form.servingUnit" class="select-box" style="padding: 4px 8px; font-weight: 600;">
-                                <option value="g">公克 (g)</option>
-                                <option value="mL">毫升 (mL)</option>
-                                <option value="顆">顆</option>
-                                <option value="包">包</option>
-                            </select>
-                            <span style="font-size: 0.72rem; color: #B45309;">(系統自動換算 100g)</span>
-                        </div>
-
-                        <!-- 4 格數字輸入表單 -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>熱量</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" 
-                                           v-if="ingredientModal.form.displayBasis === '100g'"
-                                           v-model.number="ingredientModal.form.per100g.kcal" 
-                                           @input="onModal100gInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <input type="number" 
-                                           v-else
-                                           v-model.number="ingredientModal.form.perServing.kcal" 
-                                           @input="onModalServingInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">kcal</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>蛋白質</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" 
-                                           v-if="ingredientModal.form.displayBasis === '100g'"
-                                           v-model.number="ingredientModal.form.per100g.protein" 
-                                           @input="onModal100gInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <input type="number" 
-                                           v-else
-                                           v-model.number="ingredientModal.form.perServing.protein" 
-                                           @input="onModalServingInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🍚 碳水</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" 
-                                           v-if="ingredientModal.form.displayBasis === '100g'"
-                                           v-model.number="ingredientModal.form.per100g.carbs" 
-                                           @input="onModal100gInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <input type="number" 
-                                           v-else
-                                           v-model.number="ingredientModal.form.perServing.carbs" 
-                                           @input="onModalServingInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>脂肪</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" 
-                                           v-if="ingredientModal.form.displayBasis === '100g'"
-                                           v-model.number="ingredientModal.form.per100g.fat" 
-                                           @input="onModal100gInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <input type="number" 
-                                           v-else
-                                           v-model.number="ingredientModal.form.perServing.fat" 
-                                           @input="onModalServingInput" 
-                                           style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 4. 存放分區 (可複選/切換：冷藏區、冷凍區、常溫區) -->
-                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
-                            存放分區：
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="z in [{key:'fridge', label:'冷藏區'}, {key:'freezer', label:'冷凍區'}, {key:'pantry', label:'常溫區'}]" 
-                                    :key="z.key"
-                                    class="capsule"
-                                    :class="ingredientModal.form.storageZones.includes(z.key) ? 'selected' : 'in-stock'"
-                                    style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;"
-                                    @click="toggleModalZone(z.key)">
-                                {{ z.label }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 5. 食材分類 -->
-                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
-                            食材分類：
-                        </div>
-                        <select v-model="ingredientModal.form.category" class="select-box" style="width: 100%; padding: 8px 12px; font-weight: 600;">
-                            <option value="proteins">🥩 蛋白質</option>
-                            <option value="veggies">🥦 蔬菜水果</option>
-                            <option value="carbs">🍚 碳水類</option>
-                            <option value="sauces">🧂 油脂/調味/其他</option>
-                        </select>
-                    </div>
-
-                    <!-- 6. 常用採買通路 -->
-                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
-                            常用採買通路：
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="store in ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他']" 
-                                    :key="store"
-                                    class="capsule"
-                                    :class="ingredientModal.form.preferredStores.includes(store) ? 'selected' : 'in-stock'"
-                                    style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;"
-                                    @click="toggleModalStore(store)">
-                                {{ store }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 7. 底部 3 按鈕：AI 實拍 | 相簿選圖 | 儲存建檔或修改 -->
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon" @click="triggerCamera" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                <circle cx="12" cy="13" r="4"></circle>
-                            </svg>
-                            <span>AI 實拍</span>
-                        </button>
-                        <button class="btn-icon" @click="triggerAlbum" style="flex: 1; justify-content: center; padding: 10px 4px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                            <span>相簿選圖</span>
-                        </button>
-                        <button class="btn-primary accent" @click="saveIngredientModal" style="flex: 1.4; justify-content: center; padding: 10px 4px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                <polyline points="7 3 7 8 15 8"></polyline>
-                            </svg>
-                            <span>{{ ingredientModal.mode === 'create' ? '儲存建檔' : '儲存修改' }}</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <!-- 📱 【全域共用食材卡片 (Unified Ingredient Modal)】支援新增 (create) 與長按編輯 (edit) 雙模式 -->
+            <ingredient-detail-modal 
+                :is-open="ingredientModal.isOpen"
+                :mode="ingredientModal.mode"
+                :initial-ingredient="ingredientModal.ingredient"
+                context="pantry"
+                :engine="engine"
+                @close="closeIngredientModal"
+                @saved="onIngredientSaved"
+                @deleted="onIngredientDeleted"
+            />
 
             <!-- 📱 畫面 B：【滿版獨立全螢幕採買視窗】(點擊 🛒 賣場採買清單 入場) -->
             <div v-if="showShoppingModal" class="modal-overlay" @click.self="showShoppingModal = false">

@@ -1,6 +1,10 @@
-const { ref, computed, watch, onMounted } = Vue;
+const { ref, reactive, computed, watch, onMounted } = Vue;
+import IngredientDetailModal from '../components/IngredientDetailModal.js';
 
 export default {
+    components: {
+        IngredientDetailModal
+    },
     props: ['engine', 'onNavigate'],
     setup(props) {
         const engine = props.engine;
@@ -248,9 +252,7 @@ export default {
             return groups.filter(g => g.items.length > 0);
         });
 
-        const drawerInStockOnly = ref(false);
-
-        // Filtered master library ingredients for drawer (Filtered by Search Query + Nutrient Tab + In-stock Sorting)
+        // Filtered master library ingredients for drawer (Search Query + Nutrient Tab)
         const filteredMasterIngredients = computed(() => {
             const q = (searchQuery.value || '').trim().toLowerCase();
             const cat = drawerCategory.value;
@@ -265,17 +267,17 @@ export default {
                 // 1. Filter out already existing items in this dish
                 if (currentRecommended.includes(ing.id)) return false;
 
-                // 2. If drawerInStockOnly is true, filter out non-stock
-                if (drawerInStockOnly.value && !checkStock(ing.id)) return false;
-
-                // 3. Category filter
+                // 2. Category filter
                 if (cat !== 'all' && ing.category !== cat) return false;
 
-                // 4. Search query
-                if (q && !ing.name.toLowerCase().includes(q) && !(ing.category || '').toLowerCase().includes(q)) {
-                    return false;
+                // 3. Search query or stock condition:
+                if (!q) {
+                    // Default view: ONLY in-stock items
+                    return checkStock(ing.id);
+                } else {
+                    // Searching: show matching items (both in-stock and out-of-stock)
+                    return ing.name.toLowerCase().includes(q) || (ing.brand || '').toLowerCase().includes(q);
                 }
-                return true;
             }).sort((a, b) => {
                 const stockA = checkStock(a.id) ? 1 : 0;
                 const stockB = checkStock(b.id) ? 1 : 0;
@@ -696,6 +698,11 @@ export default {
             if (!currentDish.value) return;
             const dish = currentDish.value;
             
+            // Smart auto-restock: if user adds out-of-stock ingredient to dish, auto mark as in-stock!
+            if (!engine.checkStock(ing.id)) {
+                engine.updateStock(ing.id, true);
+            }
+
             // Map category to dish property
             const catPropMap = {
                 proteins: 'recommendedProteins',
@@ -1043,6 +1050,15 @@ export default {
             }
         };
 
+        // 全域共用食材模組狀態
+        const sharedIngredientModal = reactive({
+            isOpen: false,
+            mode: 'edit', // 'edit' | 'create'
+            context: 'calculator', // 'calculator' | 'calculator_create'
+            ingredient: null,
+            initialName: ''
+        });
+
         const openIngredientDetail = (id) => {
             console.log('[Calculator] openIngredientDetail for:', id);
             let ing = engine.getIngredientById(id);
@@ -1058,22 +1074,19 @@ export default {
                     isOrphan: true
                 };
             }
-            if (!ing.per100g) {
-                if (ing.perUnit) {
-                    ing.per100g = {
-                        kcal: Math.round((ing.perUnit.kcal || 0) * 1.8),
-                        protein: Math.round((ing.perUnit.protein || 0) * 1.8 * 10) / 10,
-                        carbs: Math.round((ing.perUnit.carbs || 0) * 1.8 * 10) / 10,
-                        fat: Math.round((ing.perUnit.fat || 0) * 1.8 * 10) / 10,
-                        sodium: Math.round((ing.perUnit.sodium || 0) * 1.8)
-                    };
-                } else {
-                    ing.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-                }
-            }
-            selectedIngredient.value = ing;
-            showIngredientDetailModal.value = true;
-            console.log('[Calculator] showIngredientDetailModal is now true, selectedIngredient:', selectedIngredient.value.name);
+            sharedIngredientModal.isOpen = true;
+            sharedIngredientModal.mode = 'edit';
+            sharedIngredientModal.context = 'calculator';
+            sharedIngredientModal.ingredient = ing;
+            sharedIngredientModal.initialName = '';
+        };
+
+        const openCreateIngredientFromDrawer = () => {
+            sharedIngredientModal.isOpen = true;
+            sharedIngredientModal.mode = 'create';
+            sharedIngredientModal.context = 'calculator_create';
+            sharedIngredientModal.ingredient = null;
+            sharedIngredientModal.initialName = (searchQuery.value || '').trim();
         };
 
         const handleIngredientClick = (id) => {
@@ -1092,86 +1105,19 @@ export default {
             isPressing = false;
         };
 
-        const saveIngredientChanges = async (ing) => {
-            if (!ing || !ing.id) return;
-            let found = false;
-            if (engine.data.rawIngredients) {
-                const categories = ['proteins', 'veggies', 'carbs', 'sauces', 'fats'];
-                for (const cat of categories) {
-                    if (Array.isArray(engine.data.rawIngredients[cat])) {
-                        const idx = engine.data.rawIngredients[cat].findIndex(item => item.id === ing.id);
-                        if (idx !== -1) {
-                            engine.data.rawIngredients[cat][idx] = { ...engine.data.rawIngredients[cat][idx], ...ing };
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (found) {
-                await engine.saveJson('ingredients.json', engine.data.rawIngredients);
-                // 重新同步扁平化食材清單
-                engine.data.ingredients = [];
-                ['proteins', 'veggies', 'carbs', 'sauces', 'fats'].forEach(cat => {
-                    if (engine.data.rawIngredients[cat]) {
-                        engine.data.ingredients = engine.data.ingredients.concat(engine.data.rawIngredients[cat]);
-                    }
-                });
-            }
-        };
-
-        const saveAndCloseIngredientModal = async (ing) => {
-            await saveIngredientChanges(ing);
-            showIngredientDetailModal.value = false;
-        };
-
-        const toggleStockInModal = async (ingId) => {
-            const current = checkStock(ingId);
-            await engine.toggleStock(ingId, !current);
-        };
-
-        const isFoodZoneSelected = (ing, zoneKey) => {
-            if (!ing) return false;
-            const zones = ing.storageZones || (ing.storageZone ? [ing.storageZone] : ['fridge']);
-            return zones.includes(zoneKey);
-        };
-
-        const toggleFoodStorageZone = async (ing, zoneKey) => {
-            if (!ing) return;
-            let zones = ing.storageZones ? [...ing.storageZones] : (ing.storageZone ? [ing.storageZone] : ['fridge']);
-            const idx = zones.indexOf(zoneKey);
-            if (idx === -1) {
-                zones.push(zoneKey);
+        const handleSharedModalSaved = async (savedIng, autoAddToDish) => {
+            if (autoAddToDish) {
+                await addExistingToDish(savedIng);
             } else {
-                if (zones.length > 1) {
-                    zones.splice(idx, 1);
+                dishUpdateTrigger.value++;
+                if (isCalculated.value) {
+                    calculate();
                 }
             }
-            ing.storageZones = zones;
-            ing.storageZone = zones[0];
-            await saveIngredientChanges(ing);
         };
 
-        const isStoreSelected = (ing, store) => {
-            if (!ing) return false;
-            const stores = ing.preferredStores || (ing.preferredStore ? ing.preferredStore.split('/') : ['全聯']);
-            return stores.includes(store);
-        };
-
-        const togglePreferredStore = async (ing, store) => {
-            if (!ing) return;
-            let stores = ing.preferredStores || (ing.preferredStore ? ing.preferredStore.split('/') : ['全聯']);
-            const idx = stores.indexOf(store);
-            if (idx === -1) {
-                stores.push(store);
-            } else {
-                if (stores.length > 1) {
-                    stores.splice(idx, 1);
-                }
-            }
-            ing.preferredStores = stores;
-            ing.preferredStore = stores.join('/');
-            await saveIngredientChanges(ing);
+        const handleSharedModalDeleted = async (ingId) => {
+            await removeFromCurrentDish(ingId);
         };
 
         const removeFromCurrentDish = async (ingId) => {
@@ -1185,14 +1131,8 @@ export default {
             selectedMasterIngredients.value = selectedMasterIngredients.value.filter(id => id !== ingId);
             dishUpdateTrigger.value++;
             await engine.saveJson('dishes.json', engine.data.rawDishes || { dishes: engine.data.dishes });
-            showIngredientDetailModal.value = false;
-        };
-
-        const deleteIngredient = async (ingId) => {
-            if (confirm('確定要永久刪除這個食材嗎？')) {
-                await engine.deleteIngredient(ingId);
-                await removeFromCurrentDish(ingId);
-                showIngredientDetailModal.value = false;
+            if (isCalculated.value) {
+                calculate();
             }
         };
 
@@ -1206,29 +1146,18 @@ export default {
             isResultStale,
             groupedCategories,
             filteredMasterIngredients,
-            dishUpdateTrigger,
             showAddModal,
-            drawerInStockOnly,
-            isQuickCreate,
-            saveIngredientChanges,
-            saveAndCloseIngredientModal,
-            toggleStockInModal,
-            isFoodZoneSelected,
-            toggleFoodStorageZone,
-            isStoreSelected,
-            togglePreferredStore,
-            removeFromCurrentDish,
-            deleteIngredient,
             searchQuery,
             drawerCategory,
             drawerTabs,
-            isQuickCreate,
-            quickForm,
-            showRecordSuccessModal,
-            recordSuccessDishName,
-            recordSuccessDate,
-            showIngredientDetailModal,
-            selectedIngredient,
+            openAddModal,
+            closeAddModal,
+            addExistingToDish,
+            sharedIngredientModal,
+            openCreateIngredientFromDrawer,
+            handleSharedModalSaved,
+            handleSharedModalDeleted,
+            removeFromCurrentDish,
             startIngredientPress,
             handleIngredientTouchMove,
             cancelIngredientPress,
@@ -1317,7 +1246,7 @@ export default {
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
-                            <span>新增食材</span>
+                            <span>加食材</span>
                         </button>
                     </div>
                 </div>
@@ -1571,61 +1500,21 @@ export default {
             </div>
             </div>
 
-            <!-- 75% 搜尋食材與 5秒現場新增抽屜 (Slide-up Drawer with Nutrient Tabs) -->
+            <!-- 📱 加食材抽屜 (82vh 固定高度 + 蝦皮式內嵌新增按鈕) -->
             <div v-if="showAddModal" class="modal-overlay" @click.self="closeAddModal">
-                <div class="drawer-content">
-                    <!-- 第一行：搜尋框 ＋ 新增全新食材按鈕 ＋ 關閉按鈕 -->
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 14px;">
+                <div class="drawer-content" style="height: 82vh; max-height: 85vh; display: flex; flex-direction: column; padding: 20px 20px 24px 20px;">
+                    <!-- 第 1 排：極致純粹搜尋框 + ✕ 關閉按鈕 -->
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
                         <input type="text" 
                                v-model="searchQuery" 
-                               placeholder="🔍 搜尋大總庫食材..." 
+                               placeholder="🔍 搜尋冰箱食材..." 
                                class="search-input"
-                               style="flex: 1; padding: 10px 14px;">
-                        <button class="btn-icon" 
-                                @click="isQuickCreate = !isQuickCreate" 
-                                style="white-space: nowrap; padding: 10px 14px; font-weight: 600; color: var(--color-primary); background: #FAF8F5; flex-shrink: 0; border: 1px solid var(--color-border);">
-                            ➕ 新增全新食材
-                        </button>
-                        <button class="btn-icon" @click="closeAddModal" style="border: none; font-size: 1.1rem; padding: 6px 10px; flex-shrink: 0; color: var(--color-text-muted);">✕</button>
+                               style="flex: 1; padding: 10px 14px; border-radius: 12px; background: #FAF8F5; border: 1px solid var(--color-border); font-size: 0.9rem;">
+                        <button class="btn-icon" @click="closeAddModal" style="border: none; font-size: 1.2rem; padding: 6px 10px; flex-shrink: 0; color: var(--color-text-muted);">✕</button>
                     </div>
 
-                    <!-- Quick 5-second Form (點擊展開) -->
-                    <div v-if="isQuickCreate" style="background: #FAF8F5; border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; margin-bottom: 14px;">
-                        <div style="font-weight: 700; margin-bottom: 12px; font-size: 0.95rem;">⚡ 5秒極速新增食材至總庫</div>
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">食材名稱</label>
-                            <input type="text" v-model="quickForm.name" :placeholder="searchQuery || '輸入名稱...'" class="search-input" style="background: #FFF; padding: 8px 12px;">
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                            <div style="flex: 1;">
-                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">分類</label>
-                                <select v-model="quickForm.category" class="select-box" style="padding: 8px 12px; font-size: 0.9rem; background: #FFF;">
-                                    <option value="proteins">🥩 蛋白質</option>
-                                    <option value="veggies">🥦 蔬菜水果</option>
-                                    <option value="carbs">🍚 碳水主食</option>
-                                    <option value="sauces">🧂 油脂/調味/其他</option>
-                                </select>
-                            </div>
-                            <div style="flex: 1;">
-                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">計算單位</label>
-                                <select v-model="quickForm.unitLabel" class="select-box" style="padding: 8px 12px; font-size: 0.9rem; background: #FFF;">
-                                    <option value="g">公克 (g)</option>
-                                    <option value="顆">顆</option>
-                                    <option value="包">包</option>
-                                    <option value="條">條</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-icon" @click="isQuickCreate = false">取消</button>
-                            <button class="btn-icon" @click="createAndAddToDish" style="background: var(--color-primary); color: #FFF; border: none; font-weight: 600;">
-                                💾 儲存並加入料理
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Nutrient Category Tabs & In-Stock Toggle -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; align-items: center;">
+                    <!-- 第 2 排：四大營養素分類標籤 (純淨分類) -->
+                    <div style="display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; align-items: center;">
                         <button v-for="tab in drawerTabs" 
                                 :key="tab.id"
                                 class="capsule"
@@ -1634,180 +1523,50 @@ export default {
                                 @click="drawerCategory = tab.id">
                             {{ tab.label }}
                         </button>
-                        <button class="capsule" 
-                                :class="drawerInStockOnly ? 'selected' : 'in-stock'" 
-                                style="padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; flex-shrink: 0; margin-left: auto; border: 1px dashed var(--color-primary);"
-                                @click="drawerInStockOnly = !drawerInStockOnly">
-                            {{ drawerInStockOnly ? '❄️ 只看庫存中' : '📦 顯示冰箱全食材' }}
-                        </button>
                     </div>
 
-                    <!-- Master Ingredient Search Results (Filtered by Tab & Stock) -->
-                    <div style="max-height: 40vh; overflow-y: auto;">
+                    <!-- 中間可滾動食材區 -->
+                    <div style="flex: 1; overflow-y: auto; padding-right: 2px;">
                         <div class="capsule-group" style="gap: 8px;">
                             <div v-for="ing in filteredMasterIngredients" 
                                  :key="ing.id" 
                                  class="capsule"
                                  :class="checkStock(ing.id) ? 'in-stock' : 'out-stock'"
-                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 14px; user-select: none; display: inline-flex; align-items: center; gap: 6px;"
+                                 style="cursor: pointer; font-size: 0.9rem; padding: 6px 12px; user-select: none; display: inline-flex; align-items: center; gap: 4px;"
                                  @click="addExistingToDish(ing)">
                                 <span>{{ ing.name }}</span>
-                                <span v-if="checkStock(ing.id)" style="font-size: 0.8rem; color: var(--color-primary);">➕</span>
-                                <span v-else style="font-size: 0.75rem; color: var(--color-text-muted);">🛒</span>
+                                <span v-if="checkStock(ing.id)" style="font-size: 0.65rem; color: var(--color-primary); font-weight: 700; opacity: 0.85; margin-left: 2px;">＋</span>
+                                <span v-else style="font-size: 0.7rem; color: var(--color-text-muted); margin-left: 2px;">🛒</span>
                             </div>
-                            <div v-if="filteredMasterIngredients.length === 0" style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 0.9rem; width: 100%;">
-                                目前無符合的食材，點擊右上角「➕ 新增全新食材」可直接建立並入庫！
+
+                            <!-- 搜尋不到時的智能提示卡片 (方案 A) -->
+                            <div v-if="searchQuery && filteredMasterIngredients.length === 0" 
+                                 @click="openCreateIngredientFromDrawer"
+                                 style="padding: 20px 16px; border: 1.5px dashed var(--color-primary, #FFCA60); background: #FFFDF8; border-radius: 16px; text-align: center; color: #B45309; font-weight: 700; font-size: 0.92rem; width: 100%; cursor: pointer; box-shadow: 0 2px 8px rgba(255, 202, 96, 0.15); transition: all 0.2s ease;">
+                                <div style="font-size: 1.3rem; margin-bottom: 6px;">➕</div>
+                                <div>找不到【<strong style="color: var(--color-text-main);">{{ searchQuery }}</strong>】，點此建立並加入料理</div>
+                            </div>
+                            <div v-else-if="!searchQuery && filteredMasterIngredients.length === 0" style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 0.9rem; width: 100%;">
+                                目前分類下無庫存食材，可切換分類或搜尋新增！
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div v-if="showRecordSuccessModal" class="modal-overlay" @click.self="showRecordSuccessModal = false">
-                <div class="drawer-content" style="max-width: 480px; text-align: center; border-radius: 24px; padding: 32px 24px;">
-                    <div style="font-size: 2.8rem; margin-bottom: 12px;">🎉</div>
-                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text-main);">
-                        成功寫入飲食進度！
-                    </h3>
-                    <p style="font-size: 0.95rem; color: var(--color-text-muted); margin-bottom: 24px; line-height: 1.6;">
-                        已將【<strong style="color: var(--color-text-main);">{{ recordSuccessDishName }}</strong>】記錄至今日 ({{ recordSuccessDate }}) 飲食時間軸中。
-                    </p>
 
-                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn-icon" @click="showRecordSuccessModal = false" style="padding: 12px 20px; font-weight: 600; font-size: 0.95rem;">
-                            留在本頁
-                        </button>
-                        <button class="btn-primary accent" @click="goToTracker" style="padding: 12px 24px; font-weight: 700; font-size: 0.95rem;">
-                            📊 前往查看今日紀錄 ➔
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 📱 長按/點擊【食材 100g 營養數據與詳細資料 Modal】 -->
-            <div v-if="showIngredientDetailModal && selectedIngredient" class="modal-overlay" @click.self="showIngredientDetailModal = false">
-                <div class="drawer-content" style="max-width: 440px; padding: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <!-- 1. 食材名稱：灰色實底線，刪除鉛筆 Icon -->
-                        <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
-                            <span style="font-size: 1.2rem;">🥗</span>
-                            <input type="text" 
-                                   v-model="selectedIngredient.name" 
-                                   @change="saveIngredientChanges(selectedIngredient)" 
-                                   placeholder="食材名稱"
-                                   style="font-weight: 700; font-size: 1.1rem; border: none; border-bottom: 1.5px solid var(--color-border); background: transparent; padding: 2px 4px; width: 160px; color: var(--color-text-main); outline: none;" />
-                        </div>
-                        <!-- 2. 「有庫存」跟「沒庫存」可互相切換按鈕 -->
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <button class="capsule" 
-                                    :class="checkStock(selectedIngredient.id) ? 'selected' : 'disabled'" 
-                                    @click="toggleStockInModal(selectedIngredient.id)" 
-                                    style="cursor: pointer; padding: 4px 10px; font-size: 0.8rem; font-weight: 700; user-select: none;">
-                                {{ checkStock(selectedIngredient.id) ? '❄️ 有庫存' : '🛒 無庫存' }}
-                            </button>
-                            <button class="btn-icon" @click="showIngredientDetailModal = false" style="border: none; font-size: 1.1rem;">✕</button>
-                        </div>
-                    </div>
-
-                    <!-- 2. 每 100g 營養成份規格 (成份可直接修改，標題簡潔) -->
-                    <div style="background: #FAF8F5; border: 1px solid var(--color-border); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
-                            <span>📊 每 100g 營養成份規格：</span>
-                            <span v-if="selectedIngredient.servingSize && selectedIngredient.per100g" style="font-size: 0.72rem; color: #047857; background: #ECFDF5; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
-                                💡 單份({{ selectedIngredient.servingSize }}{{ selectedIngredient.servingUnit || 'g' }}): {{ Math.round((selectedIngredient.per100g.kcal || 0) * (selectedIngredient.servingSize / 100)) }} kcal
-                            </span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🔥 熱量</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" v-model.number="selectedIngredient.per100g.kcal" @change="saveIngredientChanges(selectedIngredient)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">kcal</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🥩 蛋白質</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" v-model.number="selectedIngredient.per100g.protein" @change="saveIngredientChanges(selectedIngredient)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🍚 碳水</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" v-model.number="selectedIngredient.per100g.carbs" @change="saveIngredientChanges(selectedIngredient)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                            <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                                <span>🥑 脂肪</span>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <input type="number" v-model.number="selectedIngredient.per100g.fat" @change="saveIngredientChanges(selectedIngredient)" style="width: 52px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 📍 存放分區 (可複選/切換：冷藏區、冷凍區、常溫區) -->
-                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
-                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
-                            📍 存放分區：
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="z in [{key:'fridge', label:'❄️ 冷藏區'}, {key:'freezer', label:'🧊 冷凍區'}, {key:'pantry', label:'🏠 常溫區'}]" 
-                                    :key="z.key"
-                                    class="capsule"
-                                    :class="isFoodZoneSelected(selectedIngredient, z.key) ? 'selected' : 'in-stock'"
-                                    style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;"
-                                    @click="toggleFoodStorageZone(selectedIngredient, z.key)">
-                                {{ z.label }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 3. 常用採買通路 (統一系統膠囊UI) & 4. 純 🛒 圖示按鈕 -->
-                    <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main);">🏬 常用採買通路：</span>
-                            <!-- 4. 加入採買清單：純 🛒 圖示按鈕 -->
-                            <button class="btn-icon" 
-                                    @click="toggleCart(selectedIngredient.id)" 
-                                    style="padding: 6px 10px; border-radius: var(--radius-full); border: 1.5px solid var(--color-border); cursor: pointer; transition: all 0.15s ease;"
-                                    :style="{ background: isInCart(selectedIngredient.id) ? 'var(--color-mint-active)' : '#FFFFFF', color: isInCart(selectedIngredient.id) ? '#FFFFFF' : 'var(--color-cart-gray)', borderColor: isInCart(selectedIngredient.id) ? 'var(--color-mint-active)' : 'var(--color-border)' }"
-                                    :title="isInCart(selectedIngredient.id) ? '已在採買清單 (點擊移除)' : '加入採買清單'">
-                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
-                                    <circle cx="9" cy="21" r="1"></circle>
-                                    <circle cx="20" cy="21" r="1"></circle>
-                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button v-for="store in ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他']" 
-                                    :key="store"
-                                    class="capsule"
-                                    :class="isStoreSelected(selectedIngredient, store) ? 'selected' : 'in-stock'"
-                                    style="padding: 4px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;"
-                                    @click="togglePreferredStore(selectedIngredient, store)">
-                                {{ store }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 5. 底部按鈕：從此料理移除 | 🗑️ 刪除食材 | 💾 儲存 -->
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon" @click="removeFromCurrentDish(selectedIngredient.id)" style="flex: 1.2; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #D97706; background: #FFFBEB; border-color: #FDE68A;">
-                            ➖ 從料理移除
-                        </button>
-                        <button class="btn-icon" @click="deleteIngredient(selectedIngredient.id)" style="flex: 1.1; justify-content: center; padding: 10px 6px; font-size: 0.8rem; font-weight: 600; color: #EF4444; background: #FEF2F2; border-color: #FCA5A5;">
-                            🗑️ 刪除食材
-                        </button>
-                        <button class="btn-primary" @click="saveAndCloseIngredientModal(selectedIngredient)" style="flex: 1; justify-content: center; padding: 10px 6px; font-size: 0.85rem; font-weight: 600;">
-                            💾 儲存
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <!-- 📱 全域共用食材卡片 (Unified Modal) -->
+            <ingredient-detail-modal 
+                :is-open="sharedIngredientModal.isOpen"
+                :mode="sharedIngredientModal.mode"
+                :initial-ingredient="sharedIngredientModal.ingredient"
+                :initial-name="sharedIngredientModal.initialName"
+                :context="sharedIngredientModal.context"
+                :engine="engine"
+                @close="sharedIngredientModal.isOpen = false"
+                @saved="handleSharedModalSaved"
+                @deleted="handleSharedModalDeleted"
+                @remove-from-dish="removeFromCurrentDish"
+            />
         </div>
     `
 };
