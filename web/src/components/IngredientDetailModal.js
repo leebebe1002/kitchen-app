@@ -488,10 +488,16 @@ const IngredientDetailModal = {
             };
 
             // 儲存至總庫
-            await props.engine.saveIngredient(ingData);
+            if (props.engine?.saveIngredient) {
+                await props.engine.saveIngredient(ingData);
+            }
 
             // 更新庫存狀態
-            props.engine.updateStock(targetId, form.stock);
+            if (props.engine?.toggleStock) {
+                await props.engine.toggleStock(targetId, form.stock);
+            } else if (props.engine?.updateStock) {
+                await props.engine.updateStock(targetId, form.stock);
+            }
 
             const autoAddToDish = (props.context === 'calculator_create' || props.context === 'calculator');
             emit('saved', ingData, autoAddToDish);

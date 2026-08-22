@@ -261,6 +261,53 @@ export default class KitchenEngine {
         return this.data.pantryInventory.shoppingList.some(s => s.targetId === targetId && !s.isPurchased);
     }
 
+    async saveIngredient(ingData) {
+        if (!ingData || !ingData.id) return;
+        const category = ingData.category || 'proteins';
+
+        // 1. Ensure rawIngredients has the category array
+        if (!this.data.rawIngredients) {
+            this.data.rawIngredients = { proteins: [], veggies: [], carbs: [], sauces: [] };
+        }
+        if (!this.data.rawIngredients[category]) {
+            this.data.rawIngredients[category] = [];
+        }
+
+        // 2. Remove old entry if exists across all categories in rawIngredients
+        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+            if (this.data.rawIngredients[cat]) {
+                this.data.rawIngredients[cat] = this.data.rawIngredients[cat].filter(i => i.id !== ingData.id);
+            }
+        });
+
+        // 3. Add to the specified category
+        this.data.rawIngredients[category].push(ingData);
+
+        // 4. Update the flattened this.data.ingredients array
+        this.data.ingredients = this.data.ingredients.filter(i => i.id !== ingData.id);
+        this.data.ingredients.push(ingData);
+
+        // 5. Persist to ingredients.json
+        await this.saveJson('ingredients.json', this.data.rawIngredients);
+
+        // 6. Also sync custom ingredients to LocalStorage
+        try {
+            const customKey = 'kitchen_v2_custom_ingredients';
+            let customList = [];
+            try {
+                const stored = localStorage.getItem(customKey);
+                if (stored) customList = JSON.parse(stored);
+            } catch (e) {}
+            customList = customList.filter(i => i.id !== ingData.id);
+            customList.push(ingData);
+            localStorage.setItem(customKey, JSON.stringify(customList));
+        } catch (e) {}
+    }
+
+    async updateStock(id, hasStock) {
+        return this.toggleStock(id, hasStock);
+    }
+
     async deleteIngredient(id) {
         // Remove from ingredients array
         this.data.ingredients = this.data.ingredients.filter(ing => ing.id !== id);
