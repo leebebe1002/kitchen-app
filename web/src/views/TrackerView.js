@@ -746,9 +746,15 @@ export default {
                 </button>
             </div>
             
-            <!-- Family Member Selector Capsules -->
+            <!-- Family Member Selector Capsules (與第一頁配色完全 1:1 一致：未選白底灰字，選中淡湖藍底 #EAF6F7 + 湖藍邊框 #7DC7CC + 深綠字 #19585C) -->
             <div class="capsule-group" style="margin-bottom: 20px;">
-                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" 
+                        :style="{ 
+                            background: currentMember === 'bebe' ? '#EAF6F7' : '#FFFFFF',
+                            borderColor: currentMember === 'bebe' ? '#7DC7CC' : 'var(--color-border)',
+                            color: currentMember === 'bebe' ? '#19585C' : '#374151'
+                        }"
+                        style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
@@ -757,13 +763,25 @@ export default {
                     </svg>
                     <span>Bebe</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" 
+                        :style="{ 
+                            background: currentMember === 'ariel' ? '#EAF6F7' : '#FFFFFF',
+                            borderColor: currentMember === 'ariel' ? '#7DC7CC' : 'var(--color-border)',
+                            color: currentMember === 'ariel' ? '#19585C' : '#374151'
+                        }"
+                        style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                     <span>樂樂</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" 
+                        :style="{ 
+                            background: currentMember === 'jason' ? '#EAF6F7' : '#FFFFFF',
+                            borderColor: currentMember === 'jason' ? '#7DC7CC' : 'var(--color-border)',
+                            color: currentMember === 'jason' ? '#19585C' : '#374151'
+                        }"
+                        style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
                         <line x1="9" y1="4" x2="11" y2="12"></line>
@@ -950,7 +968,7 @@ export default {
                                 </svg>
                                 <span>拍照 AI 補記</span>
                             </span>
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
                                 <!-- 正圓形 Key 設定 SVG 按鈕 (使用者指定經典水平鑰匙樣式) -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
@@ -958,21 +976,21 @@ export default {
                                             border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
                                             color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06);" 
+                                        style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
                                         :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="7.5" cy="12" r="4.5"></circle>
                                         <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
                                         <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
-                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，放大至 22px 醒目呈現) -->
-                                <button class="btn-icon" @click="toggleFacingMode" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; border: 1.5px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 0;" title="翻轉鏡頭">
-                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="17 2 22 7 17 12"></polyline>
-                                        <path d="M2 11V9a4 4 0 0 1 4-4h16"></path>
-                                        <polyline points="7 22 2 17 7 12"></polyline>
-                                        <path d="M22 13v2a4 4 0 0 1-4 4H2"></path>
+                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，標準系統 16px 粗細 2) -->
+                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 0;" title="翻轉鏡頭">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="18 2 22 6 18 10"></polyline>
+                                        <path d="M4 11V9a4 4 0 0 1 4-4h14"></path>
+                                        <polyline points="6 22 2 18 6 14"></polyline>
+                                        <path d="M20 13v2a4 4 0 0 1-4 4H2"></path>
                                     </svg>
                                 </button>
                             </div>

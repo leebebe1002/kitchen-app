@@ -208,13 +208,16 @@ input, textarea, select, [contenteditable="true"] {
     border-radius: var(--radius-full);
     padding: 8px 16px;
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--color-text-main);
     cursor: pointer;
     user-select: none;
     transition: all 0.15s;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-family: inherit;
+    -webkit-appearance: none;
 }
 
 .capsule:active {
