@@ -950,7 +950,7 @@ export default {
                                 </svg>
                                 <span>拍照 AI 補記</span>
                             </span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
                                 <!-- 正圓形 Key 設定 SVG 按鈕 (使用者指定經典水平鑰匙樣式) -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
@@ -958,21 +958,21 @@ export default {
                                             border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
                                             color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
+                                        style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06);" 
                                         :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="7.5" cy="12" r="4.5"></circle>
                                         <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
                                         <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
-                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，放大至 20px 飽滿呈現) -->
-                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" title="翻轉鏡頭">
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="17 1 22 6 17 11"></polyline>
-                                        <path d="M3 11V9a4 4 0 0 1 4-4h15"></path>
-                                        <polyline points="7 23 2 18 7 13"></polyline>
-                                        <path d="M21 13v2a4 4 0 0 1-4 4H2"></path>
+                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，放大至 22px 醒目呈現) -->
+                                <button class="btn-icon" @click="toggleFacingMode" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; border: 1.5px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 0;" title="翻轉鏡頭">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="17 2 22 7 17 12"></polyline>
+                                        <path d="M2 11V9a4 4 0 0 1 4-4h16"></path>
+                                        <polyline points="7 22 2 17 7 12"></polyline>
+                                        <path d="M22 13v2a4 4 0 0 1-4 4H2"></path>
                                     </svg>
                                 </button>
                             </div>
