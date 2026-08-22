@@ -943,27 +943,34 @@ export default {
                             <button class="btn-icon" @click="closeAiModal" style="border: none; font-weight: 600; font-size: 0.95rem; color: var(--color-text-muted);">
                                 ✕ 關閉
                             </button>
-                            <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
+                            <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>拍照 AI 補記</span>
+                            </span>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <!-- 正圓形 Key 設定 SVG 按鈕 -->
+                                <!-- 正圓形 Key 設定 SVG 按鈕 (使用者指定經典水平鑰匙樣式) -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
                                             background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
                                             border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
                                             color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
+                                        style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
                                         :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="7.5" cy="15.5" r="4"></circle>
-                                        <path d="M10.5 12.5L19 4"></path>
-                                        <path d="M15.5 4.5L18.5 7.5"></path>
-                                        <path d="M19 1l3 3"></path>
-                                        <polyline points="14 17 16.5 19.5 21 15" stroke="#10B981" stroke-width="2.5"></polyline>
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="7.5" cy="12" r="4.5"></circle>
+                                        <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
+                                        <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
-                                <button class="btn-icon" @click="toggleFacingMode" style="border: 1px solid var(--color-border); padding: 4px 8px; border-radius: 10px; font-size: 0.88rem; color: var(--color-text-muted);" title="翻轉鏡頭">
-                                    🔄
+                                <!-- 翻轉鏡頭按鈕 (系統標準循環箭頭 SVG) -->
+                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer;" title="翻轉鏡頭">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 2.21 1.01 4.21 2.62 5.58L4 18h5v-5l-2.02 2.02A5.96 5.96 0 0 1 6 10c0-3.314 2.686-6 6-6s6 2.686 6 6c0 1.66-.67 3.16-1.76 4.24l1.42 1.42A7.95 7.95 0 0 0 20 10z"></path>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
@@ -981,20 +988,31 @@ export default {
                                 <div style="position: absolute; bottom: -2px; left: -2px; width: 24px; height: 24px; border-bottom: 4px solid var(--color-primary); border-left: 4px solid var(--color-primary); border-bottom-left-radius: 12px;"></div>
                                 <div style="position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-bottom: 4px solid var(--color-primary); border-right: 4px solid var(--color-primary); border-bottom-right-radius: 12px;"></div>
                                 
-                                <span style="color: #FFF; font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 20px;">
-                                    🎯 點擊此處或下方快門拍照
+                                <span style="color: #FFF; font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="9"></circle>
+                                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                                    </svg>
+                                    <span>點擊此處或下方快門拍照</span>
                                 </span>
                             </div>
                         </div>
 
                         <!-- 經典相機底部三聯控制列 (左：相簿選取、中：快門拍攝、右：語音文字) -->
                         <div style="display: flex; justify-content: space-around; align-items: center; width: 100%; padding: 4px 10px 10px;">
-                            <!-- 左側：相簿選取按鈕 -->
+                            <!-- 左側：相簿選取按鈕 (17 相簿選圖 SVG) -->
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 72px;">
                                 <button class="btn-icon" @click="triggerAlbumSelect" 
-                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
+                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: #374151; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
                                         title="從相簿選取照片">
-                                    🖼️
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
                                 </button>
                                 <span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted);">相簿選取</span>
                             </div>
@@ -1009,12 +1027,17 @@ export default {
                                 <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">拍攝快門</span>
                             </div>
 
-                            <!-- 右側：語音/文字輸入按鈕 -->
+                            <!-- 右側：語音/文字輸入按鈕 (11 專業麥克風 SVG) -->
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; width: 72px;">
                                 <button class="btn-icon" @click="modalStep = 'voice'" 
-                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
+                                        style="width: 52px; height: 52px; border-radius: 16px; background: #F3F4F6; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: #D97706; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;"
                                         title="語音或文字手動補記">
-                                    🎙️
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                    </svg>
                                 </button>
                                 <span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted);">語音/文字</span>
                             </div>
@@ -1024,7 +1047,15 @@ export default {
                     <!-- 語音 / 文字輸入子畫面 -->
                     <div v-if="modalStep === 'voice'">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main);">🎙️ 語音 / 文字輸入</span>
+                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                                <span>語音 / 文字輸入</span>
+                            </span>
                             <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem; color: var(--color-text-muted);">✕</button>
                         </div>
 
@@ -1038,19 +1069,20 @@ export default {
 
                         <!-- 常用餐點快捷 -->
                         <div style="margin-bottom: 22px;">
-                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px;">⭐ 常用餐點快捷 (點擊秒出精確數據)：</div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px;">常用餐點快捷 (點擊秒出精確數據)：</div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button v-for="fav in favoriteFoods" :key="fav.id" 
                                         class="capsule" 
                                         style="font-size: 0.85rem; padding: 6px 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer;" 
                                         @click="selectFavoriteFood(fav)">
-                                    {{ fav.icon || '🍔' }} {{ fav.name }}
+                                    <span>{{ fav.icon || '🍱' }}</span>
+                                    <span>{{ fav.name }}</span>
                                 </button>
                             </div>
                         </div>
 
                         <button class="btn-primary accent" @click="triggerVoiceAnalysis" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
-                            ✨ Gemini AI 深度智能解析
+                            Gemini AI 深度智能解析
                         </button>
                     </div>
 
@@ -1058,25 +1090,28 @@ export default {
                     <div v-if="modalStep === 'result'">
                         <!-- Header -->
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">
-                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main);">
-                                {{ capturedPhotoUrl ? '🤖 十一粒 AI 視覺辨識分析結果' : '💬 十一粒 AI 語意推算分析結果' }}
+                            <span style="font-weight: 700; font-size: 1.05rem; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                </svg>
+                                <span>{{ capturedPhotoUrl ? 'AI 視覺辨識分析結果' : 'AI 語意推算分析結果' }}</span>
                             </span>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <!-- 正圓形 Key 設定 SVG 按鈕 -->
+                                <!-- 正圓形 Key 設定 SVG 按鈕 (使用者指定經典水平鑰匙樣式) -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
                                             background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
                                             border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
                                             color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
+                                        style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
                                         :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="7.5" cy="15.5" r="4"></circle>
-                                        <path d="M10.5 12.5L19 4"></path>
-                                        <path d="M15.5 4.5L18.5 7.5"></path>
-                                        <path d="M19 1l3 3"></path>
-                                        <polyline points="14 17 16.5 19.5 21 15" stroke="#10B981" stroke-width="2.5"></polyline>
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="7.5" cy="12" r="4.5"></circle>
+                                        <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
+                                        <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
                                 <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem;">✕</button>
@@ -1118,8 +1153,16 @@ export default {
                             </div>
 
                             <!-- Dish Name Row -->
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px;">
-                                <span style="font-size: 1.5rem;">🍱</span>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--color-border);">
+                                <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                                        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                                        <line x1="6" y1="1" x2="6" y2="4"></line>
+                                        <line x1="10" y1="1" x2="10" y2="4"></line>
+                                        <line x1="14" y1="1" x2="14" y2="4"></line>
+                                    </svg>
+                                </div>
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">推算料理名稱 (可點擊修改)</div>
                                     <input type="text" v-model="resultForm.dishName" class="search-input" style="padding: 6px 10px; font-weight: 700; font-size: 1rem; background: #FFF; margin-top: 4px;">
@@ -1133,7 +1176,7 @@ export default {
                                 </div>
                                 
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <span style="font-weight: 600;">🔥 熱量：</span>
+                                    <span style="font-weight: 700; color: #B45309;">熱量 Calories</span>
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <input type="number" v-model="resultForm.kcal" style="width: 80px; text-align: center; padding: 6px; border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                         <span style="font-size: 0.85rem; color: var(--color-text-muted);">kcal</span>
@@ -1141,7 +1184,7 @@ export default {
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <span style="font-weight: 600;">🥩 蛋白：</span>
+                                    <span style="font-weight: 700; color: #1F2937;">蛋白質 Protein</span>
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <input type="number" v-model="resultForm.protein" style="width: 80px; text-align: center; padding: 6px; border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                         <span style="font-size: 0.85rem; color: var(--color-text-muted);">g</span>
@@ -1149,7 +1192,7 @@ export default {
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <span style="font-weight: 600;">🌾 碳水：</span>
+                                    <span style="font-weight: 700; color: #1F2937;">碳水 Carbs</span>
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <input type="number" v-model="resultForm.carbs" style="width: 80px; text-align: center; padding: 6px; border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                         <span style="font-size: 0.85rem; color: var(--color-text-muted);">g</span>
@@ -1157,7 +1200,7 @@ export default {
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <span style="font-weight: 600;">🥑 脂肪：</span>
+                                    <span style="font-weight: 700; color: #1F2937;">脂肪 Fats</span>
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <input type="number" v-model="resultForm.fat" style="width: 80px; text-align: center; padding: 6px; border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                         <span style="font-size: 0.85rem; color: var(--color-text-muted);">g</span>
@@ -1165,7 +1208,7 @@ export default {
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600;">🧂 鈉：</span>
+                                    <span style="font-weight: 700; color: #1F2937;">鈉含量 Sodium</span>
                                     <div style="display: flex; align-items: center; gap: 4px;">
                                         <input type="number" v-model="resultForm.sodium" style="width: 80px; text-align: center; padding: 6px; border: 1px solid var(--color-border); border-radius: 8px; font-weight: 700; font-size: 0.95rem;">
                                         <span style="font-size: 0.85rem; color: var(--color-text-muted);">mg</span>
@@ -1175,16 +1218,22 @@ export default {
 
                             <!-- AI Context Note -->
                             <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4;">
-                                💡 <strong>AI 說明：</strong>{{ resultForm.aiNote }}
+                                <strong>AI 說明：</strong>{{ resultForm.aiNote }}
                             </div>
 
                             <!-- CTA Button (一鍵歸入今日時間軸 + 收藏常用) -->
                             <div style="display: flex; gap: 10px;">
-                                <button class="btn-primary" @click="saveAsFavorite" style="flex: 1; justify-content: center; padding: 14px; font-size: 0.95rem; font-weight: 700; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer;">
-                                    ⭐ 存為常用
+                                <button class="btn-primary" @click="saveAsFavorite" style="flex: 1; justify-content: center; padding: 14px; font-size: 0.95rem; font-weight: 700; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                    <span>存為常用</span>
                                 </button>
-                                <button class="btn-primary accent" @click="confirmSaveRecord" style="flex: 2; justify-content: center; padding: 14px; font-size: 1rem; font-weight: 700;">
-                                    ✅ 確認寫入紀錄
+                                <button class="btn-primary accent" @click="confirmSaveRecord" style="flex: 2; justify-content: center; padding: 14px; font-size: 1rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    <span>確認寫入紀錄</span>
                                 </button>
                             </div>
                         </div>
