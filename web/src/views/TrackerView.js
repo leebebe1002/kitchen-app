@@ -499,27 +499,41 @@ export default {
             const photoData = directPhotoUrl || capturedPhotoUrl.value;
             const apiKey = getGeminiApiKey();
 
+            if (!apiKey) {
+                console.warn('⚠️ 未設定 Gemini API Key，自動開啟設定視窗');
+                isAiAnalyzing.value = false;
+                resultForm.value = {
+                    dishName: hintText || '外食拍照餐點',
+                    kcal: 520,
+                    protein: 30,
+                    carbs: 60,
+                    fat: 16,
+                    sodium: 680,
+                    aiNote: '⚠️ 尚未設定 Gemini API Key，請點擊右上角「🔑 設定 Key」輸入你的 Google 金鑰，即可開啟秒速視覺辨識！'
+                };
+                openApiKeySettings();
+                return;
+            }
+
             if (photoData) {
                 // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API (極速 1~2 秒，支援 Cloud Mode)
-                if (apiKey) {
-                    try {
-                        const clientRes = await callClientGeminiVision(photoData, apiKey);
-                        if (clientRes.status === 'success' && clientRes.result) {
-                            resultForm.value = {
-                                dishName: clientRes.result.dishName || '拍照餐點',
-                                kcal: Number(clientRes.result.kcal) || 0,
-                                protein: Number(clientRes.result.protein) || 0,
-                                carbs: Number(clientRes.result.carbs) || 0,
-                                fat: Number(clientRes.result.fat) || 0,
-                                sodium: Number(clientRes.result.sodium) || 0,
-                                aiNote: clientRes.result.aiNote || '十一粒 AI 視覺辨識完成，數據可點擊微調。'
-                            };
-                            isAiAnalyzing.value = false;
-                            return;
-                        }
-                    } catch (err) {
-                        console.warn('Direct Client Vision failed, trying backend fallback:', err);
+                try {
+                    const clientRes = await callClientGeminiVision(photoData, apiKey);
+                    if (clientRes.status === 'success' && clientRes.result) {
+                        resultForm.value = {
+                            dishName: clientRes.result.dishName || '拍照餐點',
+                            kcal: Number(clientRes.result.kcal) || 0,
+                            protein: Number(clientRes.result.protein) || 0,
+                            carbs: Number(clientRes.result.carbs) || 0,
+                            fat: Number(clientRes.result.fat) || 0,
+                            sodium: Number(clientRes.result.sodium) || 0,
+                            aiNote: clientRes.result.aiNote || '十一粒 AI 視覺辨識完成，數據可點擊微調。'
+                        };
+                        isAiAnalyzing.value = false;
+                        return;
                     }
+                } catch (err) {
+                    console.warn('Direct Client Vision failed, trying backend fallback:', err);
                 }
 
                 // 2. 本地 Server Fallback (若處於 Local 伺服器環境)
@@ -551,7 +565,7 @@ export default {
                 }
             }
 
-            // 若視覺辨識無 Key 或離線時的備援
+            // 若視覺辨識異常時的備援
             resultForm.value = {
                 dishName: hintText || '外食拍照餐點',
                 kcal: 520,
@@ -705,7 +719,12 @@ export default {
             confirmSaveRecord,
             favoriteFoods,
             selectFavoriteFood,
-            saveAsFavorite
+            saveAsFavorite,
+            showApiKeyModal,
+            inputApiKey,
+            openApiKeySettings,
+            saveApiKeySetting,
+            getGeminiApiKey
         };
     },
     template: `
@@ -924,13 +943,20 @@ export default {
                             <button class="btn-icon" @click="closeAiModal" style="border: none; font-weight: 600; font-size: 0.95rem; color: var(--color-text-muted);">
                                 ✕ 關閉
                             </button>
-                            <span style="font-size: 0.9rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
-                            <div style="display: flex; gap: 6px;">
-                                <button class="btn-icon" @click="openApiKeySettings" style="border: none; font-size: 0.82rem; color: var(--color-text-muted);" title="API Key 設定">
-                                    🔑 Key
+                            <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button class="btn-icon" @click="openApiKeySettings" 
+                                        :style="{ 
+                                            background: getGeminiApiKey() ? '#EFF6FF' : '#FEF2F2',
+                                            border: getGeminiApiKey() ? '1.5px solid #3B82F6' : '1.5px solid #EF4444',
+                                            color: getGeminiApiKey() ? '#1D4ED8' : '#DC2626'
+                                        }"
+                                        style="padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" 
+                                        title="Gemini API Key 設定">
+                                    🔑 {{ getGeminiApiKey() ? 'Key 已設定' : '設定 Key' }}
                                 </button>
-                                <button class="btn-icon" @click="toggleFacingMode" style="border: none; font-size: 0.92rem; color: var(--color-text-muted);" title="翻轉鏡頭">
-                                    🔄 鏡頭
+                                <button class="btn-icon" @click="toggleFacingMode" style="border: 1px solid var(--color-border); padding: 4px 8px; border-radius: 10px; font-size: 0.88rem; color: var(--color-text-muted);" title="翻轉鏡頭">
+                                    🔄
                                 </button>
                             </div>
                         </div>
@@ -1029,8 +1055,15 @@ export default {
                                 {{ capturedPhotoUrl ? '🤖 十一粒 AI 視覺辨識分析結果' : '💬 十一粒 AI 語意推算分析結果' }}
                             </span>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <button class="btn-icon" @click="openApiKeySettings" style="border: none; font-size: 0.82rem; color: var(--color-text-muted);" title="設定 Key">
-                                    🔑 Key
+                                <button class="btn-icon" @click="openApiKeySettings" 
+                                        :style="{ 
+                                            background: getGeminiApiKey() ? '#EFF6FF' : '#FEF2F2',
+                                            border: getGeminiApiKey() ? '1.5px solid #3B82F6' : '1.5px solid #EF4444',
+                                            color: getGeminiApiKey() ? '#1D4ED8' : '#DC2626'
+                                        }"
+                                        style="padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" 
+                                        title="設定 Key">
+                                    🔑 {{ getGeminiApiKey() ? 'Key 已設定' : '設定 Key' }}
                                 </button>
                                 <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem;">✕</button>
                             </div>
