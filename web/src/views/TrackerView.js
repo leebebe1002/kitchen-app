@@ -945,15 +945,22 @@ export default {
                             </button>
                             <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main);">📷 拍照 AI 補記</span>
                             <div style="display: flex; align-items: center; gap: 8px;">
+                                <!-- 正圓形 Key 設定 SVG 按鈕 -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
-                                            background: getGeminiApiKey() ? '#EFF6FF' : '#FEF2F2',
-                                            border: getGeminiApiKey() ? '1.5px solid #3B82F6' : '1.5px solid #EF4444',
-                                            color: getGeminiApiKey() ? '#1D4ED8' : '#DC2626'
+                                            background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
+                                            border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
+                                            color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" 
-                                        title="Gemini API Key 設定">
-                                    🔑 {{ getGeminiApiKey() ? 'Key 已設定' : '設定 Key' }}
+                                        style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
+                                        :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="7.5" cy="15.5" r="4"></circle>
+                                        <path d="M10.5 12.5L19 4"></path>
+                                        <path d="M15.5 4.5L18.5 7.5"></path>
+                                        <path d="M19 1l3 3"></path>
+                                        <polyline points="14 17 16.5 19.5 21 15" stroke="#10B981" stroke-width="2.5"></polyline>
+                                    </svg>
                                 </button>
                                 <button class="btn-icon" @click="toggleFacingMode" style="border: 1px solid var(--color-border); padding: 4px 8px; border-radius: 10px; font-size: 0.88rem; color: var(--color-text-muted);" title="翻轉鏡頭">
                                     🔄
@@ -1055,15 +1062,22 @@ export default {
                                 {{ capturedPhotoUrl ? '🤖 十一粒 AI 視覺辨識分析結果' : '💬 十一粒 AI 語意推算分析結果' }}
                             </span>
                             <div style="display: flex; align-items: center; gap: 8px;">
+                                <!-- 正圓形 Key 設定 SVG 按鈕 -->
                                 <button class="btn-icon" @click="openApiKeySettings" 
                                         :style="{ 
-                                            background: getGeminiApiKey() ? '#EFF6FF' : '#FEF2F2',
-                                            border: getGeminiApiKey() ? '1.5px solid #3B82F6' : '1.5px solid #EF4444',
-                                            color: getGeminiApiKey() ? '#1D4ED8' : '#DC2626'
+                                            background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
+                                            border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
+                                            color: getGeminiApiKey() ? '#15803D' : '#DC2626'
                                         }"
-                                        style="padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" 
-                                        title="設定 Key">
-                                    🔑 {{ getGeminiApiKey() ? 'Key 已設定' : '設定 Key' }}
+                                        style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
+                                        :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="7.5" cy="15.5" r="4"></circle>
+                                        <path d="M10.5 12.5L19 4"></path>
+                                        <path d="M15.5 4.5L18.5 7.5"></path>
+                                        <path d="M19 1l3 3"></path>
+                                        <polyline points="14 17 16.5 19.5 21 15" stroke="#10B981" stroke-width="2.5"></polyline>
+                                    </svg>
                                 </button>
                                 <button class="btn-icon" @click="closeAiModal" style="border: none; font-size: 1.1rem;">✕</button>
                             </div>
@@ -1082,14 +1096,25 @@ export default {
 
                         <!-- Result Card -->
                         <div v-else>
-                            <!-- Real Captured Photo Display with Retake Button -->
+                            <!-- Real Captured Photo Display with Retake Button (已換成系統標準向量 SVG) -->
                             <div v-if="capturedPhotoUrl" style="margin-bottom: 14px; position: relative;">
                                 <img :src="capturedPhotoUrl" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block;">
                                 <button @click="openAiModal('camera')" 
-                                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.72); color: #FFF; border: 1px solid rgba(255,255,255,0.3); font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                                    🔄 重拍照片
+                                        style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.72); color: #FFF; border: 1px solid rgba(255,255,255,0.3); font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                    </svg>
+                                    <span>重拍照片</span>
                                 </button>
-                                <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.65); color: #FFF; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600;">📷 實拍照片</span>
+                                <span style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.65); color: #FFF; font-size: 0.72rem; padding: 4px 8px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                        <circle cx="12" cy="13" r="4"></circle>
+                                    </svg>
+                                    <span>實拍照片</span>
+                                </span>
                             </div>
 
                             <!-- Dish Name Row -->
