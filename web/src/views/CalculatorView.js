@@ -976,7 +976,11 @@ ${JSON.stringify(membersData, null, 2)}
                             }
                         } else {
                             const errTxt = await resp.text();
-                            lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
+                            if (resp.status === 429) {
+                                lastErrDetail = `Google 免費額度每分鐘呼叫過於頻繁（Rate Limit 頻率限制），請稍候 10~15 秒再次按下計算即可！`;
+                            } else {
+                                lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
+                            }
                         }
                     } catch (err) {
                         lastErrDetail = err.message || String(err);
