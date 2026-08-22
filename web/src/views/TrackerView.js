@@ -334,10 +334,12 @@ export default {
                 }]
             };
 
-            // 優先使用視覺支援最穩健的 gemini-1.5-flash 與 gemini-2.0-flash
+            // 超強抗 503 負載尖峰多模型備援清單 (包含 2.0-flash, 2.0-flash-lite, 1.5-flash-8b, 1.5-flash, 1.5-pro)
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
             ];
@@ -351,7 +353,7 @@ export default {
                     
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     
@@ -373,6 +375,10 @@ export default {
                         lastErr = `HTTP ${resp.status}: ${msg}`;
                         if (resp.status === 429) {
                             lastErr = 'Google API 每分鐘請求額度已滿 (Rate Limit 429)，請稍候 10 秒後重試';
+                        } else if (resp.status === 503) {
+                            lastErr = `Google 伺服器尖峰負載 (503)，已自動切換備援模型...`;
+                            // 遇到 503 時微延遲 350ms 避開尖峰
+                            await new Promise(r => setTimeout(r, 350));
                         }
                         console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 回應: ${lastErr}`);
                     }
@@ -391,7 +397,7 @@ export default {
 使用者輸入了今日飲食文字：「${text}」
 請分析該餐點內容，提取出精確的『料理名稱 (dishName)』，並根據一般外食/家常份量精準推算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
 
-請嚴格只輸出合法 JSON，不要加入 markdown 標籤：
+請嚴格只輸出合法 JSON 物件，不要包在 Markdown 或其他文字中：
 {
   "dishName": "料理品名",
   "kcal": 450,
@@ -409,10 +415,11 @@ export default {
             };
 
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
             ];
 
             let lastErr = '';
@@ -421,7 +428,7 @@ export default {
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     const rawTextResp = await resp.text();
@@ -430,15 +437,17 @@ export default {
 
                     if (resp.ok && resData) {
                         const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-                        let cleanJson = rawText;
-                        if (cleanJson.startsWith('```')) {
-                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            console.log('✅ [十一粒 AI] 語意精算成功！解析結果:', parsed);
+                            return { status: 'success', result: parsed, isRealAi: true };
                         }
-                        const parsed = JSON.parse(cleanJson);
-                        console.log('✅ [十一粒 AI] 語意精算成功！解析結果:', parsed);
-                        return { status: 'success', result: parsed, isRealAi: true };
                     } else {
                         lastErr = resData?.error?.message || resp.statusText;
+                        if (resp.status === 503) {
+                            await new Promise(r => setTimeout(r, 300));
+                        }
                     }
                 } catch (e) {
                     lastErr = e.message || String(e);
