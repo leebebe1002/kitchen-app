@@ -154,27 +154,6 @@
             ]
         },
         {
-            "id": "greek_yogurt",
-            "name": "希臘優格",
-            "category": "proteins",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 59,
-                "protein": 10,
-                "fat": 0.4,
-                "carbs": 3.6,
-                "sodium": 36
-            },
-            "storageZone": "fridge",
-            "preferredStore": "Costco",
-            "preferredStores": [
-                "Costco"
-            ],
-            "storageZones": [
-                "fridge"
-            ]
-        },
-        {
             "id": "plain_yogurt",
             "name": "一般優格",
             "category": "proteins",
@@ -502,6 +481,36 @@
             "storageZones": [
                 "freezer"
             ]
+        },
+        {
+            "id": "greek_yogurt",
+            "name": "希臘優格",
+            "brand": "",
+            "category": "proteins",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStores": [
+                "Costco"
+            ],
+            "price": 0,
+            "priceUnit": "包",
+            "per100g": {
+                "kcal": 59,
+                "protein": 10,
+                "carbs": 3.6,
+                "fat": 0.4,
+                "sodium": 36
+            },
+            "perServing": {
+                "kcal": 59,
+                "protein": 10,
+                "carbs": 3.6,
+                "fat": 0.4,
+                "sodium": 36
+            }
         }
     ],
     "veggies": [

@@ -1411,10 +1411,7 @@ ${JSON.stringify(membersData, null, 2)}
                         <span>Jason</span>
                     </label>
                     <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; margin-left: auto; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
-                        <svg v-if="isAiChefLoading" class="ai-spinner" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                        </svg>
-                        <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="4" y="2" width="16" height="20" rx="2"></rect>
                             <line x1="8" y1="6" x2="16" y2="6"></line>
                             <line x1="16" y1="14" x2="16" y2="18"></line>
@@ -1437,10 +1434,8 @@ ${JSON.stringify(membersData, null, 2)}
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
-                            <span v-if="isAiChefLoading" class="ai-loading-pill" style="font-size: 0.74rem; color: #92400E; padding: 3px 10px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #FCD34D;">
-                                <svg class="ai-spinner" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#B45309" stroke-width="2.8" stroke-linecap="round">
-                                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                                </svg>
+                            <span v-if="isAiChefLoading" style="font-size: 0.74rem; color: #92400E; background: #FEF3C7; padding: 2px 9px; border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #FDE68A;">
+                                <span class="apple-spinner"></span>
                                 <span>AI 智能精算中...</span>
                             </span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ InBody AI 智能配比</span>
@@ -1489,13 +1484,10 @@ ${JSON.stringify(membersData, null, 2)}
                         
                         <!-- ✨ AI vs Local Status Indicator -->
                         <div>
-                            <!-- Loading State (Dynamic Lively Spinner & Pulse Glow) -->
+                            <!-- Loading State (Minimalist Apple-style Single Ring Spinner) -->
                             <div v-if="isAiChefLoading" 
-                                 class="ai-loading-pill"
-                                 style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; font-weight: 700; color: #92400E; padding: 4px 12px; border-radius: 14px; border: 1px solid #FCD34D;">
-                                <svg class="ai-spinner" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#B45309" stroke-width="2.8" stroke-linecap="round">
-                                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                                </svg>
+                                 style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #92400E; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A;">
+                                <span class="apple-spinner"></span>
                                 <span>AI 智能精算中...</span>
                             </div>
                             <!-- AI Success State -->
