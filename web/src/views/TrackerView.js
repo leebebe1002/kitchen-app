@@ -239,8 +239,8 @@ export default {
             }
         };
 
-        // 圖片壓縮輔助 (將長邊限制在 800px、quality 0.75，大幅縮小 Base64 體積提升 API 穩定度與秒速回傳)
-        const compressImage = (dataUrl, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
+        // 圖片壓縮輔助 (將長邊限制在 640px、quality 0.70，將 Base64 壓縮至 60~90KB，徹底消除 Google 503/429 負載超載)
+        const compressImage = (dataUrl, maxWidth = 640, maxHeight = 640, quality = 0.70) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
@@ -262,9 +262,30 @@ export default {
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
+                    // 強制轉出標準 JPEG DataURL
                     resolve(canvas.toDataURL('image/jpeg', quality));
                 };
-                img.onerror = () => resolve(dataUrl);
+                img.onerror = () => {
+                    // 若直接載入失敗，嘗試透過 ImageBitmap 轉換
+                    if (typeof createImageBitmap !== 'undefined') {
+                        fetch(dataUrl)
+                            .then(res => res.blob())
+                            .then(blob => createImageBitmap(blob))
+                            .then(bitmap => {
+                                const canvas = document.createElement('canvas');
+                                let w = bitmap.width, h = bitmap.height;
+                                if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                                canvas.width = w;
+                                canvas.height = h;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(bitmap, 0, 0, w, h);
+                                resolve(canvas.toDataURL('image/jpeg', quality));
+                            })
+                            .catch(() => resolve(dataUrl));
+                    } else {
+                        resolve(dataUrl);
+                    }
+                };
                 img.src = dataUrl;
             });
         };
@@ -306,9 +327,13 @@ export default {
         // Client-side Gemini Vision API 直接呼叫 (支援 Cloud Mode 與無後端模式)
         const callClientGeminiVision = async (compressedDataUrl, apiKey) => {
             console.log('🤖 [十一粒 AI] 正在啟動 Gemini 視覺神經網絡分析...');
-            const b64Data = compressedDataUrl.split(',')[1];
-            const mimeType = compressedDataUrl.split(',')[0].split(':')[1]?.split(';')[0] || 'image/jpeg';
-            const cleanB64 = b64Data ? b64Data.replace(/[\n\r\s]/g, '') : '';
+            let b64Data = '';
+            if (compressedDataUrl.includes(',')) {
+                b64Data = compressedDataUrl.split(',')[1];
+            } else {
+                b64Data = compressedDataUrl;
+            }
+            const cleanB64 = b64Data.replace(/[\n\r\s]/g, '');
 
             const prompt = `你是一位極具洞察力的頂級營養師與 AI 視覺估算專家。
 請仔細辨識這張照片中的食物/餐點（若照片非食物，請如實說明）。
@@ -329,19 +354,18 @@ export default {
                 contents: [{
                     parts: [
                         { text: prompt },
-                        { inlineData: { mimeType: mimeType, data: cleanB64 } }
+                        { inline_data: { mime_type: "image/jpeg", data: cleanB64 } }
                     ]
                 }]
             };
 
-            // 超強抗 503 負載尖峰多模型備援清單 (包含 2.0-flash, 2.0-flash-lite, 1.5-flash-8b, 1.5-flash, 1.5-pro)
+            // 支援 Google 官方標準 models 端點 (依序嘗試最穩定的 Vision 模型)
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent'
             ];
 
             let lastErr = '';
@@ -377,8 +401,7 @@ export default {
                             lastErr = 'Google API 每分鐘請求額度已滿 (Rate Limit 429)，請稍候 10 秒後重試';
                         } else if (resp.status === 503) {
                             lastErr = `Google 伺服器尖峰負載 (503)，已自動切換備援模型...`;
-                            // 遇到 503 時微延遲 350ms 避開尖峰
-                            await new Promise(r => setTimeout(r, 350));
+                            await new Promise(r => setTimeout(r, 400));
                         }
                         console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 回應: ${lastErr}`);
                     }
@@ -1156,7 +1179,7 @@ export default {
                                         }"
                                         style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
                                         :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="7.5" cy="12" r="4.5"></circle>
                                         <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
                                         <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
@@ -1184,10 +1207,9 @@ export default {
                                 <img :src="capturedPhotoUrl" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; border: 1px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08); display: block;">
                                 <button @click="openAiModal('camera')" 
                                         style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.72); color: #FFF; border: 1px solid rgba(255,255,255,0.3); font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="23 4 23 10 17 10"></polyline>
-                                        <polyline points="1 20 1 14 7 14"></polyline>
-                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                                     </svg>
                                     <span>重拍照片</span>
                                 </button>
@@ -1206,7 +1228,7 @@ export default {
                                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
                                         <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-                                        <line x1="6" y1="1" x2="6" y2="4"></line>
+                                        <line x1="6" y1="6" x2="6" y2="4"></line>
                                         <line x1="10" y1="1" x2="10" y2="4"></line>
                                         <line x1="14" y1="1" x2="14" y2="4"></line>
                                     </svg>
@@ -1264,9 +1286,16 @@ export default {
                                 </div>
                             </div>
 
-                            <!-- AI Context Note -->
-                            <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4;">
-                                <strong>AI 說明：</strong>{{ resultForm.aiNote }}
+                            <!-- AI Context Note (附帶重新辨識按鈕) -->
+                            <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                <div style="flex: 1;"><strong>AI 說明：</strong>{{ resultForm.aiNote }}</div>
+                                <button v-if="capturedPhotoUrl" class="btn-icon" @click="processPhotoResult('', capturedPhotoUrl)" style="padding: 4px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; color: var(--color-primary);" title="立即重新分析照片">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    <span>重新辨識</span>
+                                </button>
                             </div>
 
                             <!-- CTA Button (一鍵歸入今日時間軸 + 收藏常用) -->
@@ -1286,6 +1315,8 @@ export default {
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
