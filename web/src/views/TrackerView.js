@@ -152,14 +152,17 @@ export default {
 
         // --- Camera & Modal Flow (畫面 B / 畫面 C) ---
         const currentFacingMode = ref('environment');
+        const isStreamReady = ref(false);
 
         const toggleFacingMode = async () => {
+            isStreamReady.value = false;
             currentFacingMode.value = currentFacingMode.value === 'environment' ? 'user' : 'environment';
             stopCameraStream();
             await startCameraStream();
         };
 
         const startCameraStream = async () => {
+            isStreamReady.value = false;
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({
@@ -172,6 +175,7 @@ export default {
                         videoRef.value.setAttribute('playsinline', 'true');
                         videoRef.value.setAttribute('muted', 'true');
                         await videoRef.value.play().catch(e => console.log('Video play catch:', e));
+                        isStreamReady.value = true;
                     }
                 }
             } catch (err) {
@@ -180,6 +184,7 @@ export default {
         };
 
         const stopCameraStream = () => {
+            isStreamReady.value = false;
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
@@ -437,7 +442,7 @@ export default {
   "carbs": 50,
   "fat": 15,
   "sodium": 600,
-  "aiNote": "十一粒 AI 語意估算完成，數據可隨時點擊調整。"
+  "aiNote": "十一粒 AI 語意精算完成，數據可隨時點擊調整。"
 }`;
 
             const payload = {
@@ -759,6 +764,7 @@ export default {
             capturedPhotoUrl,
             voiceText,
             videoRef,
+            isStreamReady,
             nativeCameraInput,
             albumInput,
             resultForm,
@@ -1059,8 +1065,22 @@ export default {
                         <!-- Camera Live Viewfinder Area (點擊即拍) -->
                         <div @click="triggerShutter('')" 
                              style="background: #111827; border-radius: 20px; height: 320px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 18px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); cursor: pointer;">
-                            <!-- Video Stream -->
-                            <video ref="videoRef" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;"></video>
+                            
+                            <!-- 相機串流尚未 Ready 時的優雅載入佔位動畫 (避免 iOS Safari 預設 4:3 小框彈跳) -->
+                            <div v-if="!isStreamReady" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: rgba(255,255,255,0.6); z-index: 5;">
+                                <div style="font-size: 1.8rem; animation: pulse 1.2s ease-in-out infinite;">📷</div>
+                                <span style="font-size: 0.78rem; font-weight: 600;">正在啟動相機...</span>
+                            </div>
+
+                            <!-- Video Stream (加入 opacity 絲滑淡入過渡，完全消滅尺寸跳動) -->
+                            <video ref="videoRef" 
+                                   autoplay 
+                                   playsinline 
+                                   muted 
+                                   @loadeddata="isStreamReady = true"
+                                   @playing="isStreamReady = true"
+                                   :style="{ opacity: isStreamReady ? 1 : 0 }"
+                                   style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; transition: opacity 0.22s ease-in-out; will-change: opacity;"></video>
                             
                             <!-- 韓式圓角對焦框 (Focus Bracket) -->
                             <div style="width: 220px; height: 220px; border: 2px dashed rgba(245, 158, 11, 0.8); border-radius: 24px; position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
