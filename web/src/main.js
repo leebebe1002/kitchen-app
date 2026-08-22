@@ -1,10 +1,10 @@
 const { createApp, ref, computed, onMounted } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260822_OFFICIAL_SVG_V30';
-import CalculatorView from './views/CalculatorView.js?v=20260822_OFFICIAL_SVG_V30';
-import TrackerView from './views/TrackerView.js?v=20260822_OFFICIAL_SVG_V30';
-import PantryView from './views/PantryView.js?v=20260822_OFFICIAL_SVG_V30';
-import CameraVisionModal from './components/CameraVisionModal.js?v=20260822_OFFICIAL_SVG_V30';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260822_SVG_STANDARDIZED_V31';
+import CalculatorView from './views/CalculatorView.js?v=20260822_SVG_STANDARDIZED_V31';
+import TrackerView from './views/TrackerView.js?v=20260822_SVG_STANDARDIZED_V31';
+import PantryView from './views/PantryView.js?v=20260822_SVG_STANDARDIZED_V31';
+import CameraVisionModal from './components/CameraVisionModal.js?v=20260822_SVG_STANDARDIZED_V31';
 
 const App = {
     components: {
@@ -56,10 +56,9 @@ const App = {
             <header class="header">
                 <h1>FAMILY KITCHEN 2.0</h1>
                 <button class="btn-icon" @click="refreshData" style="display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                     </svg>
                     <span>刷新</span>
                 </button>

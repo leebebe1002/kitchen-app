@@ -966,10 +966,13 @@ export default {
                                         <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
                                     </svg>
                                 </button>
-                                <!-- 翻轉鏡頭按鈕 (系統標準循環箭頭 SVG) -->
+                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG) -->
                                 <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer;" title="翻轉鏡頭">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 2.21 1.01 4.21 2.62 5.58L4 18h5v-5l-2.02 2.02A5.96 5.96 0 0 1 6 10c0-3.314 2.686-6 6-6s6 2.686 6 6c0 1.66-.67 3.16-1.76 4.24l1.42 1.42A7.95 7.95 0 0 0 20 10z"></path>
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="18 2 22 6 18 10"></polyline>
+                                        <path d="M4 11V9a4 4 0 0 1 4-4h14"></path>
+                                        <polyline points="6 22 2 18 6 14"></polyline>
+                                        <path d="M20 13v2a4 4 0 0 1-4 4H2"></path>
                                     </svg>
                                 </button>
                             </div>
