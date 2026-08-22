@@ -1451,14 +1451,17 @@ ${JSON.stringify(membersData, null, 2)}
                                 <span>AI 智能精算中...</span>
                             </span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
-                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⚙️ 本地食譜配比</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600;">⚙️ 系統配比</span>
                         </div>
-                        <button class="btn-icon" @click="copySOP" style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 📋 精簡正圓形複製食譜按鈕 -->
+                        <button class="btn-icon" 
+                                @click="copySOP" 
+                                style="width: 32px; height: 32px; border-radius: 50%; background: #FAF8F5; border: 1px solid var(--color-border); color: #4B5563; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04);" 
+                                title="複製食譜">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                             </svg>
-                            <span>複製食譜</span>
                         </button>
                     </div>
                     
@@ -1504,18 +1507,18 @@ ${JSON.stringify(membersData, null, 2)}
                             </div>
                             <!-- AI Success State -->
                             <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
-                                    @click="showChefNote = !showChefNote"
-                                    style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
-                                <span>✨ AI 主廚已精算</span>
-                                <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
-                            </button>
-                            <!-- Local Fallback State -->
-                            <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" 
-                                    @click="showChefNote = !showChefNote"
-                                    style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #4B5563; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB; cursor: pointer; transition: all 0.2s ease;">
-                                <span>⚙️ 本地演算法</span>
-                                <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
-                            </button>
+                                     @click="showChefNote = !showChefNote"
+                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
+                                 <span>✨ AI 主廚已精算</span>
+                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
+                             </button>
+                             <!-- Local Fallback State -->
+                             <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" 
+                                     @click="showChefNote = !showChefNote"
+                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #4B5563; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB; cursor: pointer; transition: all 0.2s ease;">
+                                 <span>⚙️ 系統預設</span>
+                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
+                             </button>
                         </div>
                     </div>
 
