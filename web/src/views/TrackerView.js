@@ -395,13 +395,21 @@ export default {
                             return { status: 'success', result: parsed, isRealAi: true };
                         }
                     } else {
-                        const msg = resData?.error?.message || resp.statusText || rawTextResp.slice(0, 100);
-                        lastErr = `HTTP ${resp.status}: ${msg}`;
+                        const rawErrMsg = resData?.error?.message || resp.statusText || rawTextResp.slice(0, 150);
                         if (resp.status === 429) {
-                            lastErr = 'Google API 每分鐘請求額度已滿 (Rate Limit 429)，請稍候 10 秒後重試';
+                            if (rawErrMsg.toLowerCase().includes('day') || rawErrMsg.toLowerCase().includes('exhausted') || rawErrMsg.toLowerCase().includes('quota')) {
+                                lastErr = `Google API 金鑰今日免費額度已達上限 (429 Quota Exhausted)。建議點擊右上角「🔑」更換一組新的 Gemini API Key。`;
+                            } else {
+                                lastErr = `Google API 每分鐘請求頻率限制 (Rate Limit 429)。若頻繁發生，建議點擊右上角「🔑」更換金鑰。`;
+                            }
+                            console.warn(`⚠️ [十一粒 AI] 遇到 429 額度限制: ${rawErrMsg}`);
+                            // 遇到 429 時立即終止迴圈，避免連續請求加劇封鎖
+                            break;
                         } else if (resp.status === 503) {
                             lastErr = `Google 伺服器尖峰負載 (503)，已自動切換備援模型...`;
                             await new Promise(r => setTimeout(r, 400));
+                        } else {
+                            lastErr = `HTTP ${resp.status}: ${rawErrMsg}`;
                         }
                         console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 回應: ${lastErr}`);
                     }
