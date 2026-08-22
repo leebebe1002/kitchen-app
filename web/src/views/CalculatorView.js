@@ -938,16 +938,17 @@ ${JSON.stringify(membersData, null, 2)}
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
                 const attempts = [
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent' }
+                    { url: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}` },
+                    { url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}` },
+                    { url: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}` },
+                    { url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}` },
+                    { url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${encodeURIComponent(apiKey)}` }
                 ];
 
                 let resultJson = null;
                 let lastErrDetail = '';
                 for (const att of attempts) {
-                    const fetchUrl = `${att.url}?key=${encodeURIComponent(apiKey)}`;
+                    const fetchUrl = att.url;
                     const headers = { 
                         'Content-Type': 'application/json',
                         'x-goog-api-key': apiKey 
