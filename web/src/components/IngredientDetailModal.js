@@ -307,20 +307,18 @@ const IngredientDetailModal = {
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: cleanB64 } }] }]
-            };
-
-            const attempts = [
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent' },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent' },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent' }
+            // 🌟 使用 Google 官方最穩定高配額端點 gemini-1.5-flash，杜絕 0.1 秒連環連發觸發 429 封鎖
+            const endpoints = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
             ];
 
             let lastError = '';
 
-            for (const att of attempts) {
+            for (let i = 0; i < endpoints.length; i++) {
+                const endpoint = endpoints[i];
                 try {
-                    const fetchUrl = `${att.url}?key=${encodeURIComponent(apiKey)}`;
+                    const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -333,23 +331,30 @@ const IngredientDetailModal = {
 
                     if (resp.ok && resData) {
                         const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-                        let cleanJson = rawText;
-                        if (cleanJson.startsWith('```')) {
-                            cleanJson = cleanJson.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            return { status: 'success', result: parsed };
                         }
-                        const parsed = JSON.parse(cleanJson);
-                        return { status: 'success', result: parsed };
                     } else {
                         const errMsg = resData?.error?.message || resp.statusText || rawResponseText.slice(0, 150);
-                        lastError = `HTTP ${resp.status}: ${errMsg}`;
-                        if (resp.status === 400 || resp.status === 403) {
+                        if (resp.status === 429) {
+                            return { status: 'rate_limited', message: `Google API 額度限制 (429)：若剛剛已等待仍出現此訊息，代表此金鑰今日免費總配額已用盡，請更換金鑰。` };
+                        } else if (resp.status === 400 || resp.status === 403) {
                             if (errMsg.toLowerCase().includes('api key') || errMsg.toLowerCase().includes('permission')) {
                                 return { status: 'invalid_key', message: `Gemini API Key 驗證未通過 (${errMsg})` };
                             }
+                        } else if (resp.status === 503 && i === 0) {
+                            console.warn("503 Overloaded, waiting 800ms for fallback...");
+                            await new Promise(r => setTimeout(r, 800));
+                            continue;
                         }
+                        lastError = `HTTP ${resp.status}: ${errMsg}`;
+                        break;
                     }
                 } catch (e) {
                     lastError = e.message || String(e);
+                    break;
                 }
             }
 

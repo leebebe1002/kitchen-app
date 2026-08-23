@@ -372,13 +372,10 @@ export default {
                 }]
             };
 
-            // 支援 Google 官方標準 models 端點 (依序嘗試最穩定的 Vision 模型)
+            // 🌟 支援 Google 官方最穩定高配額端點 (gemini-1.5-flash)，杜絕連轟 5 款觸發 429
             const attempts = [
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
             ];
 
             let lastErr = '';

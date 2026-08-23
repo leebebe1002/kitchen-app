@@ -958,54 +958,58 @@ ${JSON.stringify(membersData, null, 2)}
 }
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
-                const attempts = [
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent' },
-                    { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent' }
-                ];
-
+                // 🌟 使用 Google 官方最穩定高配額端點 gemini-1.5-flash，杜絕 0.1 秒連環連發觸發 429 封鎖
+                const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+                const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+                
                 let resultJson = null;
                 let lastErrDetail = '';
-                for (const att of attempts) {
-                    const fetchUrl = `${att.url}?key=${encodeURIComponent(apiKey)}`;
-                    const headers = { 
-                        'Content-Type': 'application/json',
-                        'x-goog-api-key': apiKey 
-                    };
+                
+                const endpoints = [primaryUrl, fallbackUrl];
 
+                for (let i = 0; i < endpoints.length; i++) {
+                    const fetchUrl = endpoints[i];
                     try {
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
-                            headers: headers,
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'x-goog-api-key': apiKey 
+                            },
                             body: JSON.stringify({
-                                contents: [{ parts: [{ text: prompt }] }]
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: { temperature: 0.2 }
                             })
                         });
+
                         if (resp.ok) {
                             const resData = await resp.json();
                             const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                             if (rawText) {
-                                let clean = rawText.trim();
-                                if (clean.includes('```json')) {
-                                    clean = clean.replace(/```json/g, '').replace(/```/g, '').trim();
-                                } else if (clean.includes('```')) {
-                                    clean = clean.replace(/```/g, '').trim();
+                                const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                                if (jsonMatch) {
+                                    resultJson = JSON.parse(jsonMatch[0]);
+                                    break;
                                 }
-                                resultJson = JSON.parse(clean);
-                                break;
                             }
                         } else {
                             const errTxt = await resp.text();
                             if (resp.status === 429) {
-                                lastErrDetail = `Google 免費額度每分鐘呼叫過於頻繁（Rate Limit 頻率限制），請稍候 10~15 秒再次按下計算即可！`;
+                                lastErrDetail = `Google API 額度限制 (429)：若剛剛已等待仍出現此訊息，代表這組金鑰今日免費總配額已用盡，請更換金鑰。`;
+                                break; // 遇到 429 立即中斷，絕不繼續連發燒乾配額
+                            } else if (resp.status === 503 && i === 0) {
+                                console.warn("503 Overloaded, waiting 800ms for fallback...");
+                                await new Promise(r => setTimeout(r, 800));
+                                continue;
                             } else {
                                 lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
+                                break;
                             }
                         }
                     } catch (err) {
                         lastErrDetail = err.message || String(err);
-                        console.warn("AI Chef endpoint attempt failed:", att.url, err);
+                        console.warn("AI Chef endpoint attempt failed:", fetchUrl, err);
+                        break;
                     }
                 }
 
