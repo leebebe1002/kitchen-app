@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>當日用餐時間軸卡片 - 3 款 UI 提案預覽</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #F59E0B;
+            --color-text-main: #1F2937;
+            --color-text-muted: #6B7280;
+            --color-border: #E5E7EB;
+            --color-bg: #FAF8F5;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F3F4F6;
+            margin: 0;
+            padding: 20px 16px;
+            color: var(--color-text-main);
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+        .section-header {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #111827;
+        }
+        .section-sub {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 24px;
+        }
+        .option-box {
+            background: #FFF;
+            border-radius: 20px;
+            padding: 18px 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--color-border);
+        }
+        .option-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #4B5563;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge {
+            background: #FEF3C7;
+            color: #D97706;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* 樣式 A: 標籤膠囊風 */
+        .card-a {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-left: 4px solid var(--color-primary);
+            border-radius: 16px;
+            padding: 14px 14px;
+        }
+        .card-a-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-a-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .card-a-chips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .chip {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+        .chip.highlight {
+            background: #FEF3C7;
+            border-color: #FDE68A;
+            color: #B45309;
+        }
+
+        /* 樣式 B: 熱量大徽章 + 圓點副資訊 */
+        .card-b {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-left: 4px solid #10B981;
+            border-radius: 16px;
+            padding: 14px 14px;
+        }
+        .card-b-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .card-b-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .card-b-kcal {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #EA580C;
+            background: #FFF7ED;
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid #FFEDD5;
+        }
+        .card-b-sub {
+            font-size: 0.8rem;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .card-b-dot {
+            color: #9CA3AF;
+        }
+
+        /* 樣式 C: 4 欄對齊儀表微矩陣 */
+        .card-c {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-left: 4px solid #3B82F6;
+            border-radius: 16px;
+            padding: 14px 14px 12px 14px;
+        }
+        .card-c-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .card-c-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            background: #F9FAFB;
+            padding: 8px 6px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #F3F4F6;
+        }
+        .c-val {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+        .c-lbl {
+            font-size: 0.7rem;
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        /* 刪除按鈕通用樣式 */
+        .del-btn {
+            color: #EF4444;
+            border: 1px solid #FECACA;
+            background: #FEF2F2;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section-header">🍽️ 用餐時間軸卡片 UI 提案</div>
+        <div class="section-sub">徹底解決四項營養素斷行問題，提供三種不同視覺風格選擇：</div>
+
+        <!-- 方案 1 -->
+        <div class="option-box">
+            <div class="option-title">
+                <span class="badge">款式 A</span> <strong>簡約標籤膠囊風 (Chips)</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">特色：每個數值擁有獨立圓角標籤，緊湊不折行，熱量特殊金黃高亮。</div>
+            
+            <div class="card-a">
+                <div class="card-a-top">
+                    <div>
+                        <div class="card-a-title">燕麥希臘優格碗</div>
+                        <div style="font-size: 0.78rem; color: #6B7280; margin-top: 2px;">🕒 上午10:03</div>
+                    </div>
+                    <button class="del-btn" title="刪除">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-a-chips">
+                    <span class="chip highlight">🔥 90.4 kcal</span>
+                    <span class="chip">🥩 6.7g 蛋白</span>
+                    <span class="chip">🍚 16.2g 碳水</span>
+                    <span class="chip">🥑 0.6g 脂肪</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 方案 2 -->
+        <div class="option-box">
+            <div class="option-title">
+                <span class="badge">款式 B</span> <strong>熱量主徽章 ＋ 圓點副資訊列 (Hero Metric)</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">特色：熱量最醒目右上高亮，三大營養素與時間以「·」流暢串接成單行，極具現代感。</div>
+            
+            <div class="card-b">
+                <div class="card-b-top">
+                    <div class="card-b-title">燕麥希臘優格碗</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="card-b-kcal">🔥 90.4 kcal</span>
+                        <button class="del-btn" title="刪除">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-b-sub">
+                    <span>🕒 上午10:03</span>
+                    <span class="card-b-dot">·</span>
+                    <span>🥩 蛋白 6.7g</span>
+                    <span class="card-b-dot">·</span>
+                    <span>🍚 碳水 16.2g</span>
+                    <span class="card-b-dot">·</span>
+                    <span>🥑 脂 0.6g</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 方案 3 -->
+        <div class="option-box">
+            <div class="option-title">
+                <span class="badge">款式 C</span> <strong>4 欄對齊儀表微矩陣 (Grid Dashboard)</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #6B7280; margin-bottom: 10px;">特色：底部 4 等分微型矩陣，數值在上、標籤在下，結構最工整對稱。</div>
+            
+            <div class="card-c">
+                <div class="card-c-top">
+                    <div>
+                        <div style="font-size: 1.02rem; font-weight: 700; color: #111827;">燕麥希臘優格碗</div>
+                        <div style="font-size: 0.78rem; color: #6B7280; margin-top: 2px;">🕒 上午10:03</div>
+                    </div>
+                    <button class="del-btn" title="刪除">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-c-grid">
+                    <div>
+                        <div class="c-val" style="color: #EA580C;">90.4</div>
+                        <div class="c-lbl">🔥 熱量(kcal)</div>
+                    </div>
+                    <div>
+                        <div class="c-val" style="color: #DC2626;">6.7g</div>
+                        <div class="c-lbl">🥩 蛋白質</div>
+                    </div>
+                    <div>
+                        <div class="c-val" style="color: #4B5563;">16.2g</div>
+                        <div class="c-lbl">🍚 碳水</div>
+                    </div>
+                    <div>
+                        <div class="c-val" style="color: #15803D;">0.6g</div>
+                        <div class="c-lbl">🥑 脂肪</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
