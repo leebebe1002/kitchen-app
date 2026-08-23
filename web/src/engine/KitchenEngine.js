@@ -56,9 +56,9 @@ export default class KitchenEngine {
         console.log("KitchenEngine Initialized with State Protection", this.data);
     }
 
-    // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態永遠不被 Git 沖掉)
+    // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
     isUserStateFile(filename) {
-        return ['pantry_inventory.json', 'daily_logs.json', 'config.json'].includes(filename);
+        return ['pantry_inventory.json', 'daily_logs.json', 'config.json', 'ingredients.json', 'household_supplies.json'].includes(filename);
     }
 
     async fetchJson(filename, key, defaultValue) {
@@ -101,12 +101,12 @@ export default class KitchenEngine {
                 const serverData = await response.json();
                 
                 if (isUserState && cachedData) {
-                    // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/飲食記錄) 優先採用手機本地，並智慧增量合併
+                    // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/自訂通路/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
                     this.data[key] = mergedData;
                     this.safeSetLocalStorage(localKey, mergedData);
                 } else {
-                    // 靜態資料庫 (食譜/食材庫)：以伺服器最新版為主
+                    // 靜態資料庫 (食譜)：以伺服器最新版為主
                     this.data[key] = serverData;
                     this.safeSetLocalStorage(localKey, serverData);
                 }
@@ -140,6 +140,45 @@ export default class KitchenEngine {
             // 採買清單以本地為準
             merged.shoppingList = Array.isArray(localData?.shoppingList) ? localData.shoppingList : (serverData?.shoppingList || []);
             merged.foodCart = Array.isArray(localData?.foodCart) ? localData.foodCart : (serverData?.foodCart || []);
+            return merged;
+        } else if (filename === 'ingredients.json') {
+            // 🛡️ 保留使用者在本地修改過的食材通路與自訂規格
+            if (!serverData || !localData) return localData || serverData;
+            const merged = { ...serverData };
+            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                const serverList = serverData[cat] || [];
+                const localList = localData[cat] || [];
+                const localMap = new Map(localList.map(i => [i.id, i]));
+                merged[cat] = serverList.map(sIng => {
+                    const lIng = localMap.get(sIng.id);
+                    if (lIng) {
+                        return { ...sIng, ...lIng };
+                    }
+                    return sIng;
+                });
+                // 加入使用者自訂的新食材
+                localList.forEach(lIng => {
+                    if (!merged[cat].some(i => i.id === lIng.id)) {
+                        merged[cat].push(lIng);
+                    }
+                });
+            });
+            return merged;
+        } else if (filename === 'household_supplies.json') {
+            if (!serverData || !localData) return localData || serverData;
+            const merged = { ...serverData };
+            const serverList = serverData.supplies || [];
+            const localList = localData.supplies || [];
+            const localMap = new Map(localList.map(s => [s.id, s]));
+            merged.supplies = serverList.map(sSup => {
+                const lSup = localMap.get(sSup.id);
+                return lSup ? { ...sSup, ...lSup } : sSup;
+            });
+            localList.forEach(lSup => {
+                if (!merged.supplies.some(s => s.id === lSup.id)) {
+                    merged.supplies.push(lSup);
+                }
+            });
             return merged;
         } else if (filename === 'daily_logs.json') {
             return { ...(serverData || {}), ...(localData || {}) };
@@ -330,39 +369,57 @@ export default class KitchenEngine {
         await this.saveJson('pantry_inventory.json', this.data.pantryInventory);
     }
 
-    async toggleShoppingList(item) {
+    async toggleShoppingList(itemOrId) {
         if (!this.data.pantryInventory.shoppingList) {
             this.data.pantryInventory.shoppingList = [];
         }
-        const index = this.data.pantryInventory.shoppingList.findIndex(s => s.targetId === item.targetId && !s.isPurchased);
+        let targetId = typeof itemOrId === 'string' ? itemOrId : itemOrId?.targetId;
+        let item = typeof itemOrId === 'object' ? itemOrId : null;
+        if (!item && targetId) {
+            const ing = this.getIngredientById(targetId);
+            item = {
+                targetId: targetId,
+                name: ing?.name || targetId,
+                type: 'food',
+                preferredStores: ing?.preferredStores || (ing?.preferredStore ? [ing.preferredStore] : ['全聯']),
+                store: ing?.preferredStore || '全聯'
+            };
+        }
+        if (!targetId || !item) return;
+
+        const index = this.data.pantryInventory.shoppingList.findIndex(s => s.targetId === targetId && !s.isPurchased);
         if (index !== -1) {
             this.data.pantryInventory.shoppingList.splice(index, 1);
         } else {
             let defaultStore = null;
             if (item.type === 'supply') {
-                const sup = this.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                defaultStore = sup?.store || item.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
+                const sup = this.data.householdSupplies?.supplies?.find(s => s.id === targetId);
+                defaultStore = sup?.preferredStores?.[0] || sup?.store || item.store || (item.name.includes('紙巾') || item.name.includes('洗碗') ? 'Costco' : '全聯');
             } else {
-                const ing = this.getIngredientById(item.targetId);
-                if (ing?.preferredStore) {
+                const ing = this.getIngredientById(targetId);
+                if (ing?.preferredStores && ing.preferredStores.length > 0) {
+                    defaultStore = ing.preferredStores[0];
+                } else if (ing?.preferredStore) {
                     defaultStore = ing.preferredStore;
                 } else if (item.store) {
                     defaultStore = item.store;
                 } else if (ing?.brand?.includes('義美') || item.name?.includes('義美') || item.name?.includes('豆奶') || item.name?.includes('芝麻粉')) {
                     defaultStore = '義美';
-                } else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon', 'avocado_mash', 'avocado_oil', 'unsalted_butter', 'corn'].includes(item.targetId)) {
+                } else if (['beef_slice', 'chicken_thigh', 'tuna', 'frozen_berry', 'greek_yogurt', 'pork_shoulder', 'salmon', 'avocado_mash', 'avocado_oil', 'unsalted_butter', 'corn'].includes(targetId)) {
                     defaultStore = 'Costco';
                 } else {
                     defaultStore = '全聯';
                 }
             }
+            const stores = item.preferredStores || (defaultStore ? [defaultStore] : ['全聯']);
             this.data.pantryInventory.shoppingList.push({
                 id: 'shop_' + Date.now(),
                 type: item.type || 'food',
-                targetId: item.targetId,
+                targetId: targetId,
                 name: item.name,
                 sourceDish: item.sourceDish || '常備食材',
                 store: defaultStore || '全聯',
+                preferredStores: stores,
                 isPurchased: false
             });
         }

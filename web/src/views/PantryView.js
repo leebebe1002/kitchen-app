@@ -170,11 +170,14 @@ export default {
         // Helper to resolve all preferred stores for any shopping item (支援複選通路)
         const getItemStores = (item) => {
             if (item.type === 'supply') {
+                if (item.preferredStores && item.preferredStores.length > 0) return item.preferredStores;
                 const sup = engine.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
                 if (sup?.preferredStores && sup.preferredStores.length > 0) return sup.preferredStores;
                 if (sup?.store) return [sup.store];
+                if (item.store) return [item.store];
                 return ['Costco'];
             }
+            if (item.preferredStores && item.preferredStores.length > 0) return item.preferredStores;
             const ing = engine.getIngredientById(item.targetId);
             if (ing?.preferredStores && ing.preferredStores.length > 0) return ing.preferredStores;
             if (ing?.preferredStore) return [ing.preferredStore];
@@ -260,6 +263,10 @@ export default {
                 currentStores.push(targetStore);
             }
 
+            // 同步保存至 item 本身
+            item.preferredStores = currentStores;
+            item.store = currentStores[0];
+
             if (item.type === 'supply') {
                 if (engine.data.householdSupplies?.supplies) {
                     const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
@@ -286,7 +293,6 @@ export default {
                     }
                 }
             }
-            item.store = currentStores[0];
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
 
             // 更新全域通知條 (常駐於畫面頂部)
