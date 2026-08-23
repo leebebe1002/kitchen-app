@@ -1377,6 +1377,13 @@ export default {
                                     </svg>
                                     <span>重新辨識</span>
                                 </button>
+                                <button v-else class="btn-icon" @click="triggerVoiceAnalysis" style="padding: 4px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; color: var(--color-primary);" title="重新進行 AI 語意推算">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    <span>重新精算</span>
+                                </button>
                             </div>
 
                             <!-- CTA Button (一鍵歸入今日時間軸 + 收藏常用) -->
