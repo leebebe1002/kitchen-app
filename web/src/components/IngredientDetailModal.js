@@ -314,10 +314,12 @@ const IngredientDetailModal = {
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: cleanB64 } }] }]
             };
-            // 🌟 使用 Google 官方最穩定高配額端點 gemini-1.5-flash，杜絕 0.1 秒連環連發觸發 429 封鎖
+            // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
             const endpoints = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent'
             ];
 
             let lastError = '';

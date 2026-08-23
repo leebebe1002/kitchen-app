@@ -372,10 +372,12 @@ export default {
                 }]
             };
 
-            // 🌟 支援 Google 官方最穩定高配額端點 (gemini-1.5-flash)，杜絕連轟 5 款觸發 429
+            // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent'
             ];
 
             let lastErr = '';
@@ -387,7 +389,7 @@ export default {
                     
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
                         body: JSON.stringify(payload)
                     });
                     
@@ -459,8 +461,10 @@ export default {
             };
 
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent'
             ];
 
             let lastErr = '';
@@ -1414,7 +1418,7 @@ export default {
                     <div style="position: relative; margin-bottom: 8px;">
                         <input :type="isKeyVisible ? 'text' : 'password'" 
                                v-model="inputApiKey" 
-                               placeholder="AIzaSy..." 
+                               placeholder="貼上你的 Gemini API Key (AQ... 或 AIza...)" 
                                class="search-input" 
                                style="width: 100%; padding: 10px 42px 10px 12px; font-family: monospace; font-size: 0.88rem; background: #FAF8F5;">
                         <button type="button" 

@@ -958,14 +958,16 @@ ${JSON.stringify(membersData, null, 2)}
 }
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
-                // 🌟 使用 Google 官方最穩定高配額端點 gemini-1.5-flash，杜絕 0.1 秒連環連發觸發 429 封鎖
-                const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-                const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+                // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
+                const endpoints = [
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${encodeURIComponent(apiKey)}`
+                ];
                 
                 let resultJson = null;
                 let lastErrDetail = '';
-                
-                const endpoints = [primaryUrl, fallbackUrl];
 
                 for (let i = 0; i < endpoints.length; i++) {
                     const fetchUrl = endpoints[i];
@@ -1718,13 +1720,13 @@ ${JSON.stringify(membersData, null, 2)}
                         <button class="btn-icon" @click="showChefKeyInput = false" style="border: none; font-size: 1.1rem;">✕</button>
                     </div>
                     <div style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 16px;">
-                        請輸入 Google AI Studio 產生的 Gemini API Key（格式為 <strong>AIzaSy...</strong> 開頭）：
+                        請輸入 Google AI Studio 產生的 Gemini API Key（支援 <strong>AQ...</strong> 或 <strong>AIzaSy...</strong> 格式）：
                     </div>
                     
                     <div style="position: relative; margin-bottom: 8px;">
                         <input :type="isChefKeyVisible ? 'text' : 'password'" 
                                v-model="chefApiKeyInput" 
-                               placeholder="AIzaSy..." 
+                               placeholder="貼上你的 Gemini API Key (AQ... 或 AIza...)" 
                                style="width: 100%; padding: 12px 42px 12px 12px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 0.9rem; font-family: monospace; box-sizing: border-box; background: #FAF8F5;">
                         <button type="button" 
                                 @click="isChefKeyVisible = !isChefKeyVisible" 

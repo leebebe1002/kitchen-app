@@ -74,14 +74,14 @@ def analyze_vision_image(image_base64_str, client_api_key=None):
     )
 
     if gemini_key:
-        if not gemini_key.startswith("AIza"):
+        if not (gemini_key.startswith("AIza") or gemini_key.startswith("AQ.")):
             return {
                 "status": "invalid_key",
-                "message": f"Gemini API Key 格式不正確！您輸入的金鑰開頭為 '{gemini_key[:8]}...'，但真正的 Google Gemini API Key 一律是由 'AIzaSy...' 開頭。"
+                "message": f"Gemini API Key 格式不正確！您輸入的金鑰開頭為 '{gemini_key[:8]}...'。"
             }
 
-        # 依序嘗試 model，若遇到 429 則自動指數退避重試
-        models_to_try = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemma-4-31b-it"]
+        # 依序嘗試 model (包含 Gemini 3.5 / 3.7 / 3.6 最新高配額主力模型)
+        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
         last_error = ""
 
         for model_name in models_to_try:
@@ -217,7 +217,7 @@ def analyze_meal_image(image_base64_str, client_api_key=None):
     )
 
     if gemini_key:
-        models_to_try = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemma-4-31b-it"]
+        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
         last_error = ""
 
         for model_name in models_to_try:
@@ -338,7 +338,7 @@ def analyze_food_nlp(text_input, client_api_key=None):
     )
 
     if gemini_key:
-        models_to_try = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemma-4-31b-it"]
+        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
         last_error = ""
 
         for model_name in models_to_try:
