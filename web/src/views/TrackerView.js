@@ -1000,11 +1000,28 @@ export default {
                             </svg>
                         </button>
                     </div>
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #374151; display: flex; gap: 12px; margin-top: 4px;">
-                        <span>🔥 {{ meal.nutrients?.kcal || 0 }} kcal</span>
-                        <span>🥩 {{ meal.nutrients?.protein || 0 }}g 蛋白</span>
-                        <span>🍚 {{ meal.nutrients?.carbs || 0 }}g 碳水</span>
-                        <span>🥑 {{ meal.nutrients?.fat || 0 }}g 脂</span>
+                    <!-- 4 格極簡圓角數據方塊 (熱量淡紅 + 無 icon) -->
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px;">
+                        <!-- 1. 卡路里 (系統刷淡紅背景) -->
+                        <div style="background: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 10px; padding: 6px 2px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #DC2626; font-weight: 600; margin-bottom: 2px;">熱量</div>
+                            <div style="font-size: 0.88rem; font-weight: 700; color: #991B1B; font-family: 'Inter', sans-serif;">{{ meal.nutrients?.kcal || 0 }}</div>
+                        </div>
+                        <!-- 2. 蛋白質 -->
+                        <div style="background: #FAF8F5; border: 1px solid #F3F4F6; border-radius: 10px; padding: 6px 2px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #6B7280; font-weight: 500; margin-bottom: 2px;">蛋白質</div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #1F2937; font-family: 'Inter', sans-serif;">{{ meal.nutrients?.protein || 0 }}g</div>
+                        </div>
+                        <!-- 3. 碳水 -->
+                        <div style="background: #FAF8F5; border: 1px solid #F3F4F6; border-radius: 10px; padding: 6px 2px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #6B7280; font-weight: 500; margin-bottom: 2px;">碳水</div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #1F2937; font-family: 'Inter', sans-serif;">{{ meal.nutrients?.carbs || 0 }}g</div>
+                        </div>
+                        <!-- 4. 脂肪 -->
+                        <div style="background: #FAF8F5; border: 1px solid #F3F4F6; border-radius: 10px; padding: 6px 2px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #6B7280; font-weight: 500; margin-bottom: 2px;">脂肪</div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #1F2937; font-family: 'Inter', sans-serif;">{{ meal.nutrients?.fat || 0 }}g</div>
+                        </div>
                     </div>
                 </div>
             </div>
