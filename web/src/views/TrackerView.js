@@ -81,15 +81,20 @@ export default {
             alert(`🎉 已成功將【${resultForm.value.dishName}】收錄為常用快捷餐點！`);
         };
 
+        const refreshCounter = ref(0);
+
         const memberLog = computed(() => {
+            refreshCounter.value; // 響應式依賴
             return engine.getDailyLog(currentDate.value, currentMember.value);
         });
 
         const totals = computed(() => {
+            refreshCounter.value; // 響應式依賴
             return memberLog.value.totals || { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
         });
 
         const meals = computed(() => {
+            refreshCounter.value; // 響應式依賴
             return memberLog.value.meals || [];
         });
 
@@ -143,7 +148,9 @@ export default {
 
         const deleteMeal = async (mealId) => {
             if (confirm('確定要刪除這筆飲食紀錄嗎？')) {
+                if (navigator.vibrate) navigator.vibrate(40);
                 await engine.deleteMeal(currentDate.value, currentMember.value, mealId);
+                refreshCounter.value++;
             }
         };
 
@@ -981,7 +988,17 @@ export default {
                             <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #111827;">{{ meal.dishName }}</h4>
                             <span style="font-size: 0.78rem; color: #6B7280;">🕒 {{ meal.time }}</span>
                         </div>
-                        <button class="btn-icon" @click="deleteMeal(meal.id)" style="color: #EF4444; border: none; font-size: 0.9rem; cursor: pointer;">🗑️</button>
+                        <button class="btn-icon" 
+                                @click.stop="deleteMeal(meal.id)" 
+                                style="color: #EF4444; border: 1px solid #FECACA; background: #FEF2F2; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex-shrink: 0;" 
+                                title="刪除此筆記錄">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
                     </div>
                     <div style="font-size: 0.85rem; font-weight: 700; color: #374151; display: flex; gap: 12px; margin-top: 4px;">
                         <span>🔥 {{ meal.nutrients?.kcal || 0 }} kcal</span>
