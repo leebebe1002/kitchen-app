@@ -438,7 +438,7 @@ export default {
 使用者輸入了今日飲食文字：「${text}」
 請分析該餐點內容，提取出精確的『料理名稱 (dishName)』，並根據一般外食/家常份量精準推算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
 
-請嚴格只輸出合法 JSON 物件，不要包在 Markdown 或其他文字中：
+請嚴格只輸出合法 JSON 物件：
 {
   "dishName": "料理品名",
   "kcal": 450,
@@ -452,7 +452,10 @@ export default {
             const payload = {
                 contents: [{
                     parts: [{ text: prompt }]
-                }]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
             };
 
             const attempts = [
@@ -474,17 +477,27 @@ export default {
                     try { resData = JSON.parse(rawTextResp); } catch (e) {}
 
                     if (resp.ok && resData) {
-                        const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                        let rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                        if (rawText.startsWith('```')) {
+                            rawText = rawText.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                        }
                         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
                         if (jsonMatch) {
-                            const parsed = JSON.parse(jsonMatch[0]);
-                            console.log('✅ [十一粒 AI] 語意精算成功！解析結果:', parsed);
-                            return { status: 'success', result: parsed, isRealAi: true };
+                            try {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                console.log('✅ [十一粒 AI] 語意精算成功！解析結果:', parsed);
+                                return { status: 'success', result: parsed, isRealAi: true };
+                            } catch (parseErr) {
+                                lastErr = 'JSON 格式解析錯誤';
+                            }
                         }
                     } else {
-                        lastErr = resData?.error?.message || resp.statusText;
-                        if (resp.status === 503) {
-                            await new Promise(r => setTimeout(r, 300));
+                        const errMsg = resData?.error?.message || resp.statusText || rawTextResp.slice(0, 100);
+                        lastErr = `HTTP ${resp.status}: ${errMsg}`;
+                        if (resp.status === 429) {
+                            return { status: 'error', message: `Google API 配額限制 (429): ${errMsg}` };
+                        } else if (resp.status === 400 || resp.status === 403) {
+                            return { status: 'error', message: `API 金鑰無效或驗證未通過 (${errMsg})` };
                         }
                     }
                 } catch (e) {
@@ -657,6 +670,7 @@ export default {
             capturedPhotoUrl.value = null; // 清除照片
 
             const apiKey = getGeminiApiKey();
+            let lastFailReason = '';
 
             // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API
             if (apiKey) {
@@ -674,13 +688,16 @@ export default {
                         };
                         isAiAnalyzing.value = false;
                         return;
+                    } else {
+                        lastFailReason = clientRes.message || '';
                     }
                 } catch (err) {
+                    lastFailReason = err.message || String(err);
                     console.warn('Direct Client NLP failed, trying backend fallback:', err);
                 }
             }
 
-            // 2. 本地 Server Fallback
+            // 2. 本地 Server Fallback (若有本機 Python Server)
             try {
                 const res = await fetch('/api/analyze-food-nlp', {
                     method: 'POST',
@@ -705,7 +722,7 @@ export default {
                 console.log('NLP API request failed:', e);
             }
 
-            // 網路離線或無 Key 時的備援
+            // 網路離線或無 Key 時的備援與清楚錯誤提示
             resultForm.value = {
                 dishName: text,
                 kcal: 450,
@@ -713,7 +730,9 @@ export default {
                 carbs: 55,
                 fat: 15,
                 sodium: 600,
-                aiNote: apiKey ? '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。' : '⚠️ 尚未設定 Gemini API Key，已記錄餐點名稱並帶入估算值（可手動修改）。'
+                aiNote: !apiKey 
+                    ? '⚠️ 尚未設定 Gemini API Key：請點右上角 🔑 貼上金鑰，即可開啟即時 AI 語意精算！'
+                    : (lastFailReason ? `⚠️ AI 分析未完成（${lastFailReason}），已帶入備援估算數值。` : '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。')
             };
             isAiAnalyzing.value = false;
         };
