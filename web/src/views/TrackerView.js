@@ -456,11 +456,8 @@ export default {
             };
 
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
             ];
 
             let lastErr = '';
@@ -469,7 +466,7 @@ export default {
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
                         body: JSON.stringify(payload)
                     });
                     const rawTextResp = await resp.text();
