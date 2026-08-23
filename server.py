@@ -91,13 +91,14 @@ def analyze_vision_image(image_base64_str, client_api_key=None):
                     "parts": [
                         {"text": prompt},
                         {
-                            "inline_data": {
-                                "mime_type": mime_type,
+                            "inlineData": {
+                                "mimeType": mime_type,
                                 "data": clean_b64
                             }
                         }
                     ]
-                }]
+                }],
+                "generationConfig": {"responseMimeType": "application/json"}
             }
             req = urllib.request.Request(
                 url,
@@ -227,13 +228,14 @@ def analyze_meal_image(image_base64_str, client_api_key=None):
                     "parts": [
                         {"text": prompt},
                         {
-                            "inline_data": {
-                                "mime_type": mime_type,
+                            "inlineData": {
+                                "mimeType": mime_type,
                                 "data": clean_b64
                             }
                         }
                     ]
-                }]
+                }],
+                "generationConfig": {"responseMimeType": "application/json"}
             }
             req = urllib.request.Request(
                 url,

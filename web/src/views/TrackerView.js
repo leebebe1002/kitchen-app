@@ -367,9 +367,12 @@ export default {
                 contents: [{
                     parts: [
                         { text: prompt },
-                        { inline_data: { mime_type: "image/jpeg", data: cleanB64 } }
+                        { inlineData: { mimeType: "image/jpeg", data: cleanB64 } }
                     ]
-                }]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
             };
 
             // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
