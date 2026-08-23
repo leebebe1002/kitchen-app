@@ -201,14 +201,34 @@ export default {
 
         const filteredFoodShopping = computed(() => {
             const list = shoppingList.value.filter(s => s.type === 'food');
-            if (shoppingStoreFilter.value === 'all') return list;
-            return list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
+            const filtered = (shoppingStoreFilter.value === 'all') 
+                ? list 
+                : list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
+            // 🌟 排序：未打勾 (isPurchased === false) 在上方，已打勾 (isPurchased === true) 在下方
+            return [...filtered].sort((a, b) => {
+                const aPurchased = !!a.isPurchased;
+                const bPurchased = !!b.isPurchased;
+                if (aPurchased !== bPurchased) {
+                    return aPurchased ? 1 : -1;
+                }
+                return 0;
+            });
         });
 
         const filteredSupplyShopping = computed(() => {
             const list = shoppingList.value.filter(s => s.type === 'supply');
-            if (shoppingStoreFilter.value === 'all') return list;
-            return list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
+            const filtered = (shoppingStoreFilter.value === 'all') 
+                ? list 
+                : list.filter(item => getItemStores(item).includes(shoppingStoreFilter.value));
+            // 🌟 排序：未打勾 (isPurchased === false) 在上方，已打勾 (isPurchased === true) 在下方
+            return [...filtered].sort((a, b) => {
+                const aPurchased = !!a.isPurchased;
+                const bPurchased = !!b.isPurchased;
+                if (aPurchased !== bPurchased) {
+                    return aPurchased ? 1 : -1;
+                }
+                return 0;
+            });
         });
 
         const toggleItemPurchased = async (id) => {

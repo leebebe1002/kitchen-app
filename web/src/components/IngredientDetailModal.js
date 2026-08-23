@@ -765,7 +765,7 @@ const IngredientDetailModal = {
                 <div v-if="context === 'calculator' && mode === 'edit'"
                      @click="handleRemoveFromDish"
                      title="從此料理移除"
-                     style="position: absolute; right: 18px; bottom: 68px; width: 52px; height: 52px; border-radius: 50%; background: #FFCA60; display: flex; align-items: center; justify-content: center; z-index: 40; cursor: pointer; border: none; box-shadow: none; transition: transform 0.15s ease;">
+                     style="position: absolute; right: 18px; bottom: 92px; width: 52px; height: 52px; border-radius: 50%; background: #FFCA60; display: flex; align-items: center; justify-content: center; z-index: 40; cursor: pointer; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.15s ease;">
                     <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
                         <!-- 溫潤料理碗 -->
                         <path d="M4 12c0 4.5 3.5 7.5 8 7.5s8-3 8-7.5H4z"></path>
