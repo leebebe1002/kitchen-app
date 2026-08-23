@@ -1112,6 +1112,7 @@ ${JSON.stringify(membersData, null, 2)}
             recordSuccessDishName.value = currentDish.value.name;
             recordSuccessDate.value = dateStr;
             showRecordSuccessModal.value = true;
+            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
         };
 
         const selectedIngredient = ref(null);
@@ -1313,12 +1314,15 @@ ${JSON.stringify(membersData, null, 2)}
             showChefNote,
             callAiChefAdvisor,
             applyAiAdjustments,
+            showRecordSuccessModal,
+            recordSuccessDishName,
+            recordSuccessDate,
+            goToTracker,
             showChefKeyInput,
             chefApiKeyInput,
             isChefKeyVisible,
             openChefKeyModal,
-            saveChefKey,
-            goToTracker
+            saveChefKey
         };
     },
     template: `
@@ -1734,6 +1738,27 @@ ${JSON.stringify(membersData, null, 2)}
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="btn-secondary" @click="showChefKeyInput = false" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--color-border); background: #FFF; cursor: pointer;">取消</button>
                         <button class="btn-primary" @click="saveChefKey" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; background: var(--color-primary); color: #FFF; border: none; cursor: pointer;">儲存並啟用 AI</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🎉 飲食紀錄成功彈窗 -->
+            <div v-if="showRecordSuccessModal" class="modal-overlay" @click.self="showRecordSuccessModal = false">
+                <div class="card" style="width: 88%; max-width: 360px; padding: 26px 20px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); background: #FFF; text-align: center;">
+                    <div style="font-size: 2.6rem; margin-bottom: 8px; animation: bounce 0.6s ease;">🎉</div>
+                    <div style="font-weight: 700; font-size: 1.2rem; color: var(--color-text-main); margin-bottom: 8px;">
+                        飲食紀錄成功！
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 22px;">
+                        已成功為全家記錄<strong>【{{ recordSuccessDishName }}】</strong>至今日飲食追蹤庫存！
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-primary" @click="goToTracker" style="width: 100%; padding: 13px; border-radius: 12px; font-weight: 700; background: var(--color-primary); color: #FFF; border: none; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                            <span>📊 前往飲食追蹤查看</span>
+                        </button>
+                        <button class="btn-secondary" @click="showRecordSuccessModal = false" style="width: 100%; padding: 11px; border-radius: 12px; border: 1px solid var(--color-border); background: #FAF8F5; color: var(--color-text-main); font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                            留在此頁繼續
+                        </button>
                     </div>
                 </div>
             </div>
