@@ -307,6 +307,7 @@ const IngredientDetailModal = {
 
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: cleanB64 } }] }]
+            };
             // 🌟 使用 Google 官方最穩定高配額端點 gemini-1.5-flash，杜絕 0.1 秒連環連發觸發 429 封鎖
             const endpoints = [
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
