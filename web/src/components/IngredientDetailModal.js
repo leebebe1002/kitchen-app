@@ -513,7 +513,7 @@ const IngredientDetailModal = {
                 await props.engine.updateStock(targetId, form.stock);
             }
 
-            const autoAddToDish = (props.context === 'calculator_create' || props.context === 'calculator');
+            const autoAddToDish = (props.context === 'calculator_create');
             emit('saved', ingData, autoAddToDish);
             emit('close');
         };

@@ -1228,6 +1228,9 @@ ${JSON.stringify(membersData, null, 2)}
             if (autoAddToDish) {
                 await addExistingToDish(savedIng);
             } else {
+                if (!engine.checkStock(savedIng.id)) {
+                    selectedMasterIngredients.value = selectedMasterIngredients.value.filter(id => id !== savedIng.id);
+                }
                 dishUpdateTrigger.value++;
                 if (isCalculated.value) {
                     calculate();
