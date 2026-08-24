@@ -960,17 +960,24 @@ ${JSON.stringify(selectedIngs, null, 2)}
 【就餐成員及其單餐營養目標】：
 ${JSON.stringify(membersData, null, 2)}
 
-【強制執行之廚房常理邊界條件 (STRICT BOUNDARIES)】：
-1. 嚴格遵守各食材的 targetRange 範圍，不可任意翻倍或灌水！
-2. 小黃瓜、小番茄等瓜果配菜：單人份嚴格限制在 30~50g（約半條，切片點綴）。絕對嚴禁給出 80g~300g 這種荒謬份量！
-3. 綜合生菜/葉菜基底：80~120g（一大碗）。
-4. 蝦仁（主菜）：60~80g；水煮鮪魚：30~45g；蛋：1顆。
-5. 地瓜：80~110g。
-6. 松露橄欖油：5~7g；煙燻海鹽：0.5~1g。
+【主廚料理與常理分工 (Culinary & Real-Life Kitchen Principles)】：
+1. 蛋白質主副分工 (Protein Hierarchy)：
+   - 當有多種蛋白質時，海鮮與肉品為主菜（單份 60~90g），蛋作為輔助蛋白（抓 1 顆即可）。
+   - 若整道菜只有【單一蛋白質來源】（如只有蝦仁或只有雞肉），則該食材需獨立扛起 28~35g 蛋白質目標（約 150~180g 蝦仁/肉品）。
+   - 若只有蛋，則蛋可給到 2~3 顆以補足蛋白質。
+2. 蔬菜配比與常理分工：
+   - 多種蔬菜時（如沙拉）：生菜基底 80~120g，瓜果配菜（小黃瓜、番茄等）30~50g。
+   - 若整道菜只有【單一蔬菜】（如只有小黃瓜作為涼拌黃瓜/輕食小菜）：份量可為 120~160g（約 1~1.5 條），兼顧真實備料常理，並在短評中貼心提醒需搭配蛋白質與主食。
+3. 碳水份量的拳頭常識 (Carb Portions)：
+   - 根莖類（地瓜/馬鈴薯）單餐抓 80~110g（一小拳頭大）。
+4. 油脂與調味物理常識：
+   - 優質油品（松露橄欖油/酪梨油）抓 5~7g（約 1 茶匙多）。
+   - 研磨海鹽/純鹽抓 0.5~1g（提味控鈉）。
+5. 總熱量與各項營養素力求精準平衡，符合各就餐者的單餐營養區間（Bebe 單餐約 400~460 kcal）。
 
 輸出純 JSON 格式如下：
 {
-  "chefComment": "2~3 句主廚整體評語（點出主要蛋白質、碳水與風味亮點）",
+  "chefComment": "2~3 句主廚整體評語（點出主要蛋白質、碳水與風味亮點，若只有單一食材可提醒營養互補）",
   "portions": {
     "bebe": [
       { "id": "食材id", "amount": 數值, "unit": "g或顆或條" }
@@ -1004,7 +1011,10 @@ ${JSON.stringify(membersData, null, 2)}
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
-                                generationConfig: { temperature: 0.2 }
+                                generationConfig: { 
+                                    responseMimeType: "application/json",
+                                    temperature: 0.1 
+                                }
                             })
                         });
 
@@ -1041,6 +1051,7 @@ ${JSON.stringify(membersData, null, 2)}
 
                 if (resultJson && resultJson.portions) {
                     // 🌟 成功獲取 AI 精算數值！覆寫至各成員的右側實際主數值！
+                    const totalSelectedCount = selectedMasterIngredients.value.length;
                     Object.keys(resultJson.portions).forEach(member => {
                         const aiItems = resultJson.portions[member];
                         if (Array.isArray(aiItems) && memberIngredients.value[member]) {
@@ -1050,9 +1061,11 @@ ${JSON.stringify(membersData, null, 2)}
                                     let safeAmount = aiItem.amount;
                                     const targetIdLower = (target.id || '').toLowerCase();
                                     
-                                    // 🛡️ 常理防呆夾持 (防止任何 AI 幻覺給出 300g 小黃瓜或 5g 鹽巴)
+                                    // 🛡️ 常理防呆夾持：
+                                    // 1. 多食材料理中，配菜瓜果點綴上限 50g (Jason 70g)；若是單一食材料理 (如只有小黃瓜)，放寬至 160g
                                     if (targetIdLower.includes('cucumber') || targetIdLower.includes('瓜') || targetIdLower.includes('tomato') || targetIdLower.includes('茄')) {
-                                        safeAmount = Math.min(safeAmount, member === 'jason' ? 70 : 50);
+                                        const maxLimit = totalSelectedCount > 1 ? (member === 'jason' ? 70 : 50) : (member === 'jason' ? 220 : 160);
+                                        safeAmount = Math.min(safeAmount, maxLimit);
                                     } else if (targetIdLower.includes('salt') || targetIdLower.includes('鹽')) {
                                         safeAmount = Math.min(safeAmount, 1.0);
                                     }
