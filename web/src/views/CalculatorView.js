@@ -889,15 +889,35 @@ export default {
                     return;
                 }
 
+                // 輔助函式：定義食材在真實料理中的合理區間，防止 AI 幻覺爆量
+                const getIngredientTargetRange = (id, cat) => {
+                    const idLower = (id || '').toLowerCase();
+                    if (idLower.includes('cucumber') || idLower.includes('瓜') || idLower.includes('tomato') || idLower.includes('茄')) {
+                        return '30~50g (配菜點綴，絕對不可超過60g)';
+                    }
+                    if (cat === 'veggies') return '80~120g (基底葉菜)';
+                    if (['shrimp', 'chicken_breast', 'salmon', 'beef', 'pork'].includes(idLower) || idLower.includes('蝦') || idLower.includes('肉') || idLower.includes('鮭魚')) {
+                        return '60~90g (主力蛋白質)';
+                    }
+                    if (idLower.includes('tuna') || idLower.includes('鮪魚')) return '30~50g (輔助海鮮)';
+                    if (idLower === 'egg' || idLower.includes('蛋')) return '1顆 (有其他肉類時固定1顆)';
+                    if (cat === 'carbs') return '80~110g (拳頭大低GI慢碳)';
+                    if (cat === 'sauces' && (idLower.includes('oil') || idLower.includes('油'))) return '5~7g (好油滋潤)';
+                    if (cat === 'sauces' && (idLower.includes('salt') || idLower.includes('鹽'))) return '0.5~1g (微量提味控鈉)';
+                    return '適量';
+                };
+
                 // 收集當前勾選的所有食材與每 100g 營養素
                 const selectedIngs = selectedMasterIngredients.value.map(id => {
                     const ing = engine.getIngredientById(id);
+                    const cat = ing?.category || 'proteins';
                     return {
                         id: id,
                         name: ing?.name || id,
-                        category: ing?.category || 'proteins',
+                        category: cat,
                         unit: ing?.unitLabel || (['egg'].includes(id) ? '顆' : (['bacon'].includes(id) ? '條' : 'g')),
                         isCount: ['egg', 'bacon', 'bagel'].includes(id),
+                        targetRange: getIngredientTargetRange(id, cat),
                         per100g: ing?.per100g || { kcal: 50, protein: 1, carbs: 10, fat: 0.2, sodium: 5 }
                     };
                 });
@@ -909,7 +929,7 @@ export default {
                             id: 'bebe',
                             name: 'Bebe',
                             profile: '女性，體重 56.6kg, BMR 1189 kcal, 骨骼肌 20.6kg, 體脂 33%',
-                            mealTarget: '單餐目標：熱量 400~460 kcal, 蛋白質 28~35g (優質海鮮/肉類優先，若有多種蛋白時主菜肉類需有足量存在感，蛋抓1顆或依比例協調), 碳水 35~45g (以天然低GI慢碳為主，單餐根莖類如地瓜約80~120g拳頭大), 脂肪 12~16g (好油滋潤), 鈉 < 600mg (清爽少水腫)'
+                            mealTarget: '單餐目標：熱量 400~460 kcal, 蛋白質 28~35g (優質海鮮/肉類優先，若有多種蛋白時主菜肉類需有足量存在感，蛋抓1顆), 碳水 35~45g (以天然低GI慢碳為主，單餐地瓜約80~110g), 脂肪 12~16g (好油滋潤), 鈉 < 600mg (清爽少水腫)'
                         };
                     } else if (m === 'ariel') {
                         return {
@@ -934,26 +954,19 @@ export default {
                 const prompt = `你是頂級臨床運動營養師與家庭 AI 主廚「十一粒」。
 請根據以下家庭成員的 InBody 數據與【${slotName}】營養目標，為這道【${dishName}】中選取的食材，精確計算出【每位成員的最佳克數/顆數】！
 
-【選取的食材及其每 100g 營養素】：
+【選取的食材及其標準範圍約束 (Target Range)】：
 ${JSON.stringify(selectedIngs, null, 2)}
 
 【就餐成員及其單餐營養目標】：
 ${JSON.stringify(membersData, null, 2)}
 
-【主廚料理與常理分工 (Culinary & Real-Life Kitchen Principles)】：
-1. 蛋白質主副分工 (Protein Hierarchy)：
-   - 當有多種蛋白質時，海鮮與肉品為主菜（單份至少給足 60~90g），蛋作為輔助蛋白（抓 1 顆即可），切勿為了湊數把主菜縮小成 10~20g。
-   - 若只有單一蛋白來源（如只有蛋），則蛋可給到 2~3 顆以補足蛋白質。
-2. 蔬菜配比與常理分工（切勿單項爆量）：
-   - 單餐蔬菜【總量】合計約 150~220g 即可。
-   - 綜合生菜/葉菜基底：80~120g（一大碗蓬鬆葉菜）。
-   - 瓜果配菜（小黃瓜、小番茄、櫛瓜等）：30~60g（約半條或數片點綴，切勿單項給到 100g~200g 以上，那相當於 2~3 根大黃瓜，極不合常理）。
-3. 碳水份量的拳頭常識 (Carb Portions)：
-   - 根莖類（地瓜/馬鈴薯）單餐抓 80~120g（一小拳頭大），避免單餐超載。
-4. 油脂與調味物理常識：
-   - 優質油品（松露橄欖油/酪梨油）抓 5~7g（約 1 茶匙多）。
-   - 研磨海鹽/純鹽抓 0.5~1g（提味控鈉，切勿給到 2g 以上）。
-5. 總熱量與各項營養素力求精準平衡，符合各就餐者的單餐營養區間（Bebe 單餐約 400~460 kcal）。
+【強制執行之廚房常理邊界條件 (STRICT BOUNDARIES)】：
+1. 嚴格遵守各食材的 targetRange 範圍，不可任意翻倍或灌水！
+2. 小黃瓜、小番茄等瓜果配菜：單人份嚴格限制在 30~50g（約半條，切片點綴）。絕對嚴禁給出 80g~300g 這種荒謬份量！
+3. 綜合生菜/葉菜基底：80~120g（一大碗）。
+4. 蝦仁（主菜）：60~80g；水煮鮪魚：30~45g；蛋：1顆。
+5. 地瓜：80~110g。
+6. 松露橄欖油：5~7g；煙燻海鹽：0.5~1g。
 
 輸出純 JSON 格式如下：
 {
@@ -969,7 +982,7 @@ ${JSON.stringify(membersData, null, 2)}
 }
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
-                // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
+                // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash, gemini-3.6-flash)
                 const endpoints = [
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -1034,7 +1047,17 @@ ${JSON.stringify(membersData, null, 2)}
                             aiItems.forEach(aiItem => {
                                 const target = memberIngredients.value[member].find(i => i.id === aiItem.id || getIngredientName(i.id) === aiItem.id);
                                 if (target && typeof aiItem.amount === 'number') {
-                                    target.amount = aiItem.amount;
+                                    let safeAmount = aiItem.amount;
+                                    const targetIdLower = (target.id || '').toLowerCase();
+                                    
+                                    // 🛡️ 常理防呆夾持 (防止任何 AI 幻覺給出 300g 小黃瓜或 5g 鹽巴)
+                                    if (targetIdLower.includes('cucumber') || targetIdLower.includes('瓜') || targetIdLower.includes('tomato') || targetIdLower.includes('茄')) {
+                                        safeAmount = Math.min(safeAmount, member === 'jason' ? 70 : 50);
+                                    } else if (targetIdLower.includes('salt') || targetIdLower.includes('鹽')) {
+                                        safeAmount = Math.min(safeAmount, 1.0);
+                                    }
+                                    
+                                    target.amount = safeAmount;
                                     if (aiItem.unit) target.unit = aiItem.unit;
                                 }
                             });
