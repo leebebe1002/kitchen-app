@@ -573,10 +573,10 @@ export default {
             };
 
             const attempts = [
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', useHeader: true, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent', useHeader: true, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent', useHeader: true, useQuery: true },
-                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent', useHeader: true, useQuery: true }
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', useHeader: true, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', useHeader: true, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', useHeader: true, useQuery: true },
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent', useHeader: true, useQuery: true }
             ];
 
             let lastError = '';

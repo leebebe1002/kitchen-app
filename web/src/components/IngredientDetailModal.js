@@ -314,12 +314,12 @@ const IngredientDetailModal = {
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: cleanB64 } }] }]
             };
-            // 🌟 支援 Google 官方最新高配額端點 (gemini-3.5-flash, gemini-3.7-flash)
+            // 🌟 支援 Google 官方高配額穩定端點 (gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, gemini-2.0-flash-lite)
             const endpoints = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
             ];
 
             let lastError = '';
