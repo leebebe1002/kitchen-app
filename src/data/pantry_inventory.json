@@ -145,7 +145,10 @@
       "name": "黑木耳",
       "sourceDish": "常備食材",
       "store": "全聯",
-      "isPurchased": false
+      "isPurchased": false,
+      "preferredStores": [
+        "全聯"
+      ]
     },
     {
       "id": "shop_1787455219450",
