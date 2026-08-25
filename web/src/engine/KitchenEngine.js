@@ -56,10 +56,10 @@ export default class KitchenEngine {
         if (!this.data.pantryInventory.shoppingList) this.data.pantryInventory.shoppingList = [];
         if (!this.data.pantryInventory.foodCart) this.data.pantryInventory.foodCart = [];
 
-        // 6. ☁️ 全家雲端同步中樞連通 (拉取雲端最新紀錄並雙向智慧合流)
-        await this.syncWithCloud();
+        // 6. ☁️ 全家雲端同步中樞在背景非同步執行 (不阻塞 App 啟動，實現 0 秒秒開)
+        this.syncWithCloud().catch(err => console.warn("Background sync error:", err));
         
-        console.log("KitchenEngine Initialized with State Protection & Cloud Sync", this.data);
+        console.log("KitchenEngine Initialized with State Protection & Instant Startup", this.data);
     }
 
     // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
@@ -236,19 +236,14 @@ export default class KitchenEngine {
     async syncWithCloud() {
         if (!this.cloudSync) return false;
         try {
-            // 1. 同步飲食日記 (包含手機裡的所有歷史舊紀錄)
+            // 🌟 雲端同步僅限於「全家飲食記錄 (daily_logs.json)」雙向合流，確保採買清單與自訂通路 100% 保留本地原貌
             const cloudDailyLogs = await this.cloudSync.fetchFromCloud('daily_logs.json');
-            this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs);
-            this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
-            // 🌟 關鍵雙向合流：將本地合併後的完整歷史紀錄回推雲端，讓全家其他設備立刻擁有全部舊紀錄！
-            await this.cloudSync.pushToCloud('daily_logs.json', this.data.dailyLogs);
-
-            // 2. 同步智慧冰箱與採買清單
-            const cloudPantry = await this.cloudSync.fetchFromCloud('pantry_inventory.json');
-            this.data.pantryInventory = this.cloudSync.mergePantryInventory(this.data.pantryInventory, cloudPantry);
-            this.safeSetLocalStorage('kitchen_v2_pantry_inventory.json', this.data.pantryInventory);
-            await this.cloudSync.pushToCloud('pantry_inventory.json', this.data.pantryInventory);
-            
+            if (cloudDailyLogs) {
+                this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs);
+                this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+                // 將合併後的完整歷史紀錄回推雲端
+                await this.cloudSync.pushToCloud('daily_logs.json', this.data.dailyLogs);
+            }
             return true;
         } catch (e) {
             console.warn("syncWithCloud warning:", e);
@@ -261,8 +256,8 @@ export default class KitchenEngine {
         // 1. 本地即時存檔 (0 秒離線優先)
         this.safeSetLocalStorage(localKey, dataObj);
 
-        // 2. ☁️ 自動推播至全家雲端同步中樞
-        if (this.cloudSync && ['daily_logs.json', 'pantry_inventory.json', 'ingredients.json'].includes(filename)) {
+        // 2. ☁️ 僅當飲食紀錄更新時，自動推播至全家雲端同步中樞
+        if (this.cloudSync && filename === 'daily_logs.json') {
             this.cloudSync.pushToCloud(filename, dataObj);
         }
 
