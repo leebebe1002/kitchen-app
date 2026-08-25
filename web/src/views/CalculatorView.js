@@ -1695,7 +1695,7 @@ ${JSON.stringify(membersData, null, 2)}
                         <div>{{ aiChefAdvice.chefComment }}</div>
                         <div v-if="aiChefAdvice.source === 'local'" style="margin-top: 10px;">
                             <button @click="showChefKeyInput = true" style="background: var(--color-primary, #FFCA60); color: #78350F; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(255, 202, 96, 0.3);">
-                                🔑 點此更換 / 設定正確的 Gemini Key (AIzaSy...)
+                                🔑 點此更換 / 設定 Gemini API Key (AQ... 或 AIza...)
                             </button>
                         </div>
                     </div>
