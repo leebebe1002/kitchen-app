@@ -75,11 +75,11 @@
         },
         "ariel": {
           "totals": {
-            "kcal": 549.1,
-            "protein": 63.2,
-            "carbs": 18.7,
-            "fat": 24,
-            "sodium": 547.7
+            "kcal": 859.1,
+            "protein": 75.2,
+            "carbs": 61.7,
+            "fat": 35,
+            "sodium": 667.7
           },
           "meals": [
             {
@@ -120,6 +120,21 @@
                 "無糖豆漿 170mL",
                 "黑芝麻粉 5g"
               ]
+            },
+            {
+              "id": "meal_1787652657033_ariel",
+              "dishName": "藍莓芭蕉花生醬優格果昔",
+              "time": "下午06:10",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 310,
+                "protein": 12,
+                "carbs": 43,
+                "fat": 11,
+                "sodium": 120
+              },
+              "aiNote": "AI 已根據食材完成精算，這是一份富含優質蛋白質、好脂肪與抗氧化物的健康果昔！",
+              "photoUrl": null
             }
           ]
         },
