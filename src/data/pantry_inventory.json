@@ -120,8 +120,11 @@
       "targetId": "full_fat_milk_250",
       "name": "全脂鮮奶",
       "sourceDish": "常備食材",
-      "store": "義美",
-      "isPurchased": false
+      "store": "全聯",
+      "isPurchased": false,
+      "preferredStores": [
+        "全聯"
+      ]
     },
     {
       "id": "shop_1786957003299",
