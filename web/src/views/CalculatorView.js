@@ -1070,11 +1070,11 @@ ${JSON.stringify(membersData, null, 2)}
 }
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
-                // 🌟 支援 Google 官方高配額穩定端點 (gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash, gemini-2.0-flash-lite)
+                // 🌟 支援 Google 官方正式生產端點 (首選 gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
@@ -1114,19 +1114,15 @@ ${JSON.stringify(membersData, null, 2)}
                             if (resp.status === 429) {
                                 lastErrDetail = `Google API 額度限制 (429)：若剛剛已等待仍出現此訊息，代表這組金鑰今日免費總配額已用盡，請更換金鑰。`;
                                 break; // 遇到 429 立即中斷，絕不繼續連發燒乾配額
-                            } else if (resp.status === 503 && i === 0) {
-                                console.warn("503 Overloaded, waiting 800ms for fallback...");
-                                await new Promise(r => setTimeout(r, 800));
-                                continue;
                             } else {
                                 lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
-                                break;
+                                continue; // 自動切換至下一個備援模型
                             }
                         }
                     } catch (err) {
                         lastErrDetail = err.message || String(err);
                         console.warn("AI Chef endpoint attempt failed:", fetchUrl, err);
-                        break;
+                        continue;
                     }
                 }
 
