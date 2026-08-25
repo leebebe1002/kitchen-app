@@ -1249,8 +1249,8 @@
             ]
         },
         {
-            "id": "bacon_shrimp_pasta",
-            "name": "鮮蝦培根義大利麵",
+            "id": "pasta_meal",
+            "name": "義大利麵",
             "categories": [
                 "lunch",
                 "dinner",
@@ -1259,15 +1259,18 @@
             "recommendedProteins": [
                 "shrimp",
                 "bacon",
-                "chicken_breast",
+                "sous_vide_chicken",
+                "chicken_thigh",
+                "beef_slice",
                 "egg"
             ],
             "recommendedVeggies": [
                 "spinach",
                 "mushroom",
-                "baby_cabbage",
+                "broccoli",
                 "zucchini",
-                "cucumber"
+                "onion",
+                "baby_cabbage"
             ],
             "recommendedCarbs": [
                 "angel_hair_pasta"
@@ -1385,9 +1388,9 @@
             },
             "sopSteps": [
                 "1. 煮麵：滾水加少許鹽，放入天使義大利麵煮約 3~4 分鐘（約八分熟），撈起瀝乾拌少許橄欖油防沾黏，保留半碗煮麵水。",
-                "2. 煸香培根與炒蝦仁：熱鍋不放油（或少許橄欖油），下培根煎至微焦香出油，接著放入蒜末與蝦仁炒至變色約八分熟先盛起。",
-                "3. 炒蔬菜與煨麵：原鍋利用培根香氣下香菇與菠菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
-                "4. 盛盤享用：加入蝦仁與培根快速拌勻，撒上現磨黑胡椒與少許蒜香椒鹽提味，香氣四溢即可上桌！"
+                "2. 煎香主料：熱鍋下培根/雞肉/蝦仁煎至微焦香變色出香氣，先盛起備用。",
+                "3. 炒蔬菜與煨麵：原鍋下洋蔥、香菇與菠菜/綠花椰菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
+                "4. 盛盤享用：加入主料翻拌均勻，撒上現磨黑胡椒與少許蒜香椒鹽提味即可上桌！"
             ]
         }
     ]
