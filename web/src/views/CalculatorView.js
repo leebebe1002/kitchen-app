@@ -372,31 +372,97 @@ export default {
                 memberIngredients.value = { bebe: [], ariel: [], jason: [] };
                 selectedMasterIngredients.value = [];
             }
+        // --- 🛡️ 備料計算器狀態雙重持久化保險 (State Persistence Shield) ---
+        const STORAGE_KEY = 'family_kitchen_calc_state_v2';
+        let isRestoringState = false;
+
+        const saveStateToStorage = () => {
+            if (isRestoringState) return;
+            try {
+                const state = {
+                    selectedDish: selectedDish.value,
+                    userHasManuallySelected: userHasManuallySelected.value,
+                    activeMembers: activeMembers.value,
+                    selectedMasterIngredients: selectedMasterIngredients.value,
+                    memberIngredients: memberIngredients.value,
+                    isCalculated: isCalculated.value,
+                    isResultStale: isResultStale.value,
+                    aiChefAdvice: aiChefAdvice.value,
+                    showChefNote: showChefNote.value,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
         };
 
-        // 監聽計算屬性 dishesList：確保非同步資料載入完成時依當前時段自動推薦第一道料理並初始化
-        watch(dishesList, (newList) => {
-            if (newList && newList.length > 0 && (!selectedDish.value || !userHasManuallySelected.value)) {
-                selectedDish.value = getBestDefaultDishId();
+        const restoreStateFromStorage = () => {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                const state = JSON.parse(raw);
+                if (!state || !state.selectedDish) return false;
+
+                isRestoringState = true;
+                selectedDish.value = state.selectedDish;
+                userHasManuallySelected.value = !!state.userHasManuallySelected;
+                if (state.activeMembers && Array.isArray(state.activeMembers) && state.activeMembers.length > 0) {
+                    activeMembers.value = state.activeMembers;
+                }
+                if (state.selectedMasterIngredients && Array.isArray(state.selectedMasterIngredients)) {
+                    selectedMasterIngredients.value = state.selectedMasterIngredients;
+                }
+                if (state.memberIngredients) {
+                    memberIngredients.value = state.memberIngredients;
+                }
+                isCalculated.value = !!state.isCalculated;
+                isResultStale.value = !!state.isResultStale;
+                aiChefAdvice.value = state.aiChefAdvice || null;
+                showChefNote.value = !!state.showChefNote;
+                
+                setTimeout(() => {
+                    isRestoringState = false;
+                }, 100);
+                return true;
+            } catch (e) {
+                isRestoringState = false;
+                return false;
             }
-            if (selectedDish.value) {
-                onDishChange();
+        };
+
+        // 自動監聽所有計算與勾選狀態，即時存入 localStorage
+        watch([selectedMasterIngredients, memberIngredients, activeMembers, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
+            saveStateToStorage();
+        }, { deep: true });
+
+        // 監聽計算屬性 dishesList：確保非同步資料載入完成時先嘗試恢復上次狀態，無狀態才依時段推薦
+        let hasInitialized = false;
+
+        const initCalculatorState = () => {
+            if (hasInitialized) return;
+            const restored = restoreStateFromStorage();
+            if (restored) {
+                hasInitialized = true;
+                return;
+            }
+            if (dishesList.value && dishesList.value.length > 0) {
+                if (!selectedDish.value || !userHasManuallySelected.value) {
+                    selectedDish.value = getBestDefaultDishId();
+                }
+                if (selectedDish.value) {
+                    onDishChange();
+                }
+                hasInitialized = true;
+            }
+        };
+
+        watch(dishesList, (newList) => {
+            if (newList && newList.length > 0 && !hasInitialized) {
+                initCalculatorState();
             }
         }, { immediate: true });
 
-        watch(selectedDish, (newId) => {
-            if (newId) {
-                onDishChange();
-            }
-        });
-
         onMounted(() => {
-            if (dishesList.value.length > 0 && (!selectedDish.value || !userHasManuallySelected.value)) {
-                selectedDish.value = getBestDefaultDishId();
-            }
-            if (selectedDish.value) {
-                onDishChange();
-            }
+            initCalculatorState();
         });
 
         // Get only the active ingredients for a member (STRICTLY only selected in-stock ingredients)
@@ -1118,12 +1184,10 @@ ${JSON.stringify(membersData, null, 2)}
 
         const resetToGoldenDefaults = () => {
             if (!currentDish.value) return;
-            const dish = currentDish.value;
-            activeMembers.value.forEach(member => {
-                if (dish.memberPortions && dish.memberPortions[member]) {
-                    memberIngredients.value[member] = JSON.parse(JSON.stringify(dish.memberPortions[member]));
-                }
-            });
+            onDishChange();
+            isCalculated.value = false;
+            aiChefAdvice.value = null;
+            saveStateToStorage();
             alert('✨ 已重置為全家專屬黃金配方推薦值！');
         };
 
