@@ -375,12 +375,12 @@ export default {
                 }
             };
 
-            // 🌟 支援 Google 官方正式端點 (gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-lite)
+            // 🌟 支援 Google 官方永久穩定端點 (gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-pro)
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
             ];
 
             let lastErr = '';
@@ -392,7 +392,7 @@ export default {
                     
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     
@@ -464,10 +464,10 @@ export default {
             };
 
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
             ];
 
             let lastErr = '';
