@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 509.9,
-            "protein": 59.4,
-            "carbs": 13.3,
-            "fat": 23.7,
-            "sodium": 526.2
+            "kcal": 839.9,
+            "protein": 76.4,
+            "carbs": 46.3,
+            "fat": 38.7,
+            "sodium": 1066.2
           },
           "meals": [
             {
@@ -50,6 +50,21 @@
                 "無糖豆漿 170mL",
                 "黑芝麻粉 5g"
               ]
+            },
+            {
+              "id": "meal_1787660260457_bebe",
+              "dishName": "豪記蝦仁水餃 (6顆)",
+              "time": "下午08:17",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 330,
+                "protein": 17,
+                "carbs": 33,
+                "fat": 15,
+                "sodium": 540
+              },
+              "aiNote": "已為您以 6 顆標準蝦仁水餃份量進行精算，數據可點擊進行微調。",
+              "photoUrl": null
             }
           ]
         },
