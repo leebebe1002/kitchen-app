@@ -771,6 +771,29 @@ export default {
             alert(`🎉 已成功將【${resultForm.value.dishName}】記錄至今日時間軸！`);
         };
 
+        const isSyncing = ref(false);
+        const syncNow = async () => {
+            isSyncing.value = true;
+            if (engine.syncWithCloud) {
+                await engine.syncWithCloud();
+            }
+            refreshCounter.value++;
+            setTimeout(() => {
+                isSyncing.value = false;
+            }, 600);
+        };
+
+        onMounted(async () => {
+            await syncNow();
+            if (engine.cloudSync) {
+                engine.cloudSync.onSync((event) => {
+                    if (event === 'refresh_needed' || event === 'sync_success') {
+                        refreshCounter.value++;
+                    }
+                });
+            }
+        });
+
         onUnmounted(() => {
             stopCameraStream();
         });
@@ -785,6 +808,8 @@ export default {
             remaining,
             percent,
             isToday,
+            isSyncing,
+            syncNow,
             showAiModal,
             modalStep,
             isAiAnalyzing,
@@ -822,16 +847,24 @@ export default {
     },
     template: `
         <div class="view-tracker" style="padding-top: 6px;">
-            <!-- Date Switcher -->
+            <!-- Date Switcher & Cloud Sync Pill -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 14px; align-items: center;">
                 <button class="btn-icon" @click="changeDate(-1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                <span style="font-weight: 800; font-size: 1.1rem; color: #111827;">
-                    {{ currentDate }} {{ isToday ? '(今天)' : '' }}
-                </span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 800; font-size: 1.1rem; color: #111827;">
+                        {{ currentDate }} {{ isToday ? '(今天)' : '' }}
+                    </span>
+                    <!-- ☁️ 全家雲端即時同步狀態按鈕 -->
+                    <button class="btn-icon" @click="syncNow" :title="'全家雲端同步'" 
+                            style="padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; border: 1px solid #E5E7EB; background: #F9FAFB; color: #4B5563; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s ease;">
+                        <span :style="{ color: isSyncing ? '#D97706' : '#10B981', fontSize: '0.65rem' }">●</span>
+                        <span>{{ isSyncing ? '同步中...' : '雲端同步' }}</span>
+                    </button>
+                </div>
                 <button class="btn-icon" @click="changeDate(1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>

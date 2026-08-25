@@ -1,6 +1,9 @@
+import CloudSyncEngine from './CloudSyncEngine.js';
+
 export default class KitchenEngine {
     constructor() {
         const { reactive } = Vue;
+        this.cloudSync = new CloudSyncEngine();
         this.data = reactive({
             ingredients: [],
             householdSupplies: [],
@@ -52,8 +55,11 @@ export default class KitchenEngine {
         if (!this.data.pantryInventory.supplyStockStatus) this.data.pantryInventory.supplyStockStatus = {};
         if (!this.data.pantryInventory.shoppingList) this.data.pantryInventory.shoppingList = [];
         if (!this.data.pantryInventory.foodCart) this.data.pantryInventory.foodCart = [];
+
+        // 6. ☁️ 全家雲端同步中樞連通 (拉取雲端最新紀錄並雙向智慧合流)
+        await this.syncWithCloud();
         
-        console.log("KitchenEngine Initialized with State Protection", this.data);
+        console.log("KitchenEngine Initialized with State Protection & Cloud Sync", this.data);
     }
 
     // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
@@ -227,11 +233,37 @@ export default class KitchenEngine {
         }
     }
 
+    async syncWithCloud() {
+        if (!this.cloudSync) return false;
+        try {
+            const cloudDailyLogs = await this.cloudSync.fetchFromCloud('daily_logs.json');
+            if (cloudDailyLogs) {
+                this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs);
+                this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+            }
+            const cloudPantry = await this.cloudSync.fetchFromCloud('pantry_inventory.json');
+            if (cloudPantry) {
+                this.data.pantryInventory = this.cloudSync.mergePantryInventory(this.data.pantryInventory, cloudPantry);
+                this.safeSetLocalStorage('kitchen_v2_pantry_inventory.json', this.data.pantryInventory);
+            }
+            return true;
+        } catch (e) {
+            console.warn("syncWithCloud warning:", e);
+            return false;
+        }
+    }
+
     async saveJson(filename, dataObj) {
         const localKey = 'kitchen_v2_' + filename;
-        // Always persist safely to localStorage for instant offline access
+        // 1. 本地即時存檔 (0 秒離線優先)
         this.safeSetLocalStorage(localKey, dataObj);
 
+        // 2. ☁️ 自動推播至全家雲端同步中樞
+        if (this.cloudSync && ['daily_logs.json', 'pantry_inventory.json', 'ingredients.json'].includes(filename)) {
+            this.cloudSync.pushToCloud(filename, dataObj);
+        }
+
+        // 3. 後端伺服器 (若在本地 dev server 模式)
         try {
             const response = await fetch(`/api/data/${filename}`, {
                 method: 'POST',
