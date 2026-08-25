@@ -179,6 +179,18 @@
         "義美"
       ],
       "isPurchased": false
+    },
+    {
+      "id": "shop_1787651157059",
+      "type": "food",
+      "targetId": "spinach",
+      "name": "菠菜",
+      "sourceDish": "常備食材",
+      "store": "全聯",
+      "preferredStores": [
+        "全聯"
+      ],
+      "isPurchased": false
     }
   ],
   "foodCart": []
