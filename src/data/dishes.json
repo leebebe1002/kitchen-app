@@ -1392,6 +1392,81 @@
                 "3. 炒蔬菜與煨麵：原鍋下洋蔥、香菇與菠菜/綠花椰菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
                 "4. 盛盤享用：加入主料翻拌均勻，撒上現磨黑胡椒與少許蒜香椒鹽提味即可上桌！"
             ]
+        },
+        {
+            "id": "morning_coffee",
+            "name": "晨光咖啡",
+            "categories": [
+                "breakfast",
+                "brunch",
+                "snack"
+            ],
+            "recommendedProteins": [
+                "full_fat_milk_250",
+                "sugar_free_soymilk"
+            ],
+            "recommendedVeggies": [],
+            "recommendedCarbs": [],
+            "recommendedSauces": [
+                "coffee_capsule",
+                "maple_syrup",
+                "unsalted_butter"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "coffee_capsule",
+                    "amount": 1,
+                    "unit": "顆"
+                },
+                {
+                    "id": "full_fat_milk_250",
+                    "amount": 120,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    {
+                        "id": "coffee_capsule",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 120,
+                        "unit": "g"
+                    }
+                ],
+                "ariel": [
+                    {
+                        "id": "coffee_capsule",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 150,
+                        "unit": "g"
+                    }
+                ],
+                "jason": [
+                    {
+                        "id": "coffee_capsule",
+                        "amount": 1,
+                        "unit": "顆"
+                    },
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 150,
+                        "unit": "g"
+                    }
+                ]
+            },
+            "sopSteps": [
+                "1. 萃取濃縮：使用膠囊機萃取 1 顆濃縮咖啡（Espresso，約 40ml）。",
+                "2. 美式咖啡 (Americano)：在杯中注入熱水（或冰水加冰塊）約 120~150ml，倒入濃縮咖啡即成純黑咖啡。",
+                "3. 拿鐵咖啡 (Latte)：將鮮奶（或無糖豆漿）微波加熱或用奶泡機打發細緻奶泡，緩緩倒入濃縮咖啡中即完成溫潤拿鐵！"
+            ]
         }
     ]
 }
