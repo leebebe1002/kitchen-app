@@ -1,10 +1,10 @@
 const { createApp, ref, computed, onMounted } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260825_RELEASE_V59';
-import CalculatorView from './views/CalculatorView.js?v=20260825_RELEASE_V59';
-import TrackerView from './views/TrackerView.js?v=20260825_RELEASE_V59';
-import PantryView from './views/PantryView.js?v=20260825_RELEASE_V59';
-import CameraVisionModal from './components/CameraVisionModal.js?v=20260825_RELEASE_V59';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260825_RELEASE_V60';
+import CalculatorView from './views/CalculatorView.js?v=20260825_RELEASE_V60';
+import TrackerView from './views/TrackerView.js?v=20260825_RELEASE_V60';
+import PantryView from './views/PantryView.js?v=20260825_RELEASE_V60';
+import CameraVisionModal from './components/CameraVisionModal.js?v=20260825_RELEASE_V60';
 
 const App = {
     components: {
@@ -111,9 +111,9 @@ const App = {
             </div>
 
             <main v-else class="view-content">
-                <CalculatorView v-show="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
-                <TrackerView v-show="currentTab === 'tracker'" :engine="engine" />
-                <PantryView v-show="currentTab === 'pantry'" :engine="engine" />
+                <CalculatorView v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
+                <TrackerView v-if="currentTab === 'tracker'" :engine="engine" />
+                <PantryView v-if="currentTab === 'pantry'" :engine="engine" />
             </main>
             
             <!-- 共用 AI 拍照視窗 -->
