@@ -123,6 +123,14 @@ export default {
         const showIngredientDetailModal = ref(false);
         const showAddModal = ref(false);
 
+        // 🤖 【Gemini AI 智能求解變數宣告在 setup 最頂部，避免 TDZ ReferenceError】
+        const isAiChefLoading = ref(false);
+        const aiChefAdvice = ref(null);
+        const showChefNote = ref(false);
+        const showChefKeyInput = ref(false);
+        const chefApiKeyInput = ref('');
+        const isChefKeyVisible = ref(true);
+
         // Modal 背景鎖定機制 (Body Scroll Lock)
         watch([showIngredientDetailModal, showCartModal, showRecordSuccessModal, showAddModal], (newVals) => {
             const isAnyOpen = newVals.some(v => v === true);
@@ -905,14 +913,6 @@ export default {
             await callAiChefAdvisor();
         };
 
-        // 🤖 【Gemini AI 智能求解引擎 (AI-First Multi-Member Nutrition Solver)】
-        const isAiChefLoading = ref(false);
-        const aiChefAdvice = ref(null);
-        const showChefNote = ref(false);
-        const showChefKeyInput = ref(false);
-        const chefApiKeyInput = ref('');
-        const isChefKeyVisible = ref(true);
-
         const openChefKeyModal = () => {
             chefApiKeyInput.value = (
                 localStorage.getItem('family_kitchen_gemini_key') || 
@@ -1466,11 +1466,11 @@ ${JSON.stringify(membersData, null, 2)}
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>01 DISH 選擇料理</span>
                 <span style="font-size: 0.8rem; font-weight: 500; color: var(--color-primary); background: rgba(59, 130, 246, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25);">
-                    {{ currentSlot.name }}推薦
+                    {{ currentSlot ? currentSlot.name : '熱門' }}推薦
                 </span>
             </div>
             <select v-model="selectedDish" @change="userHasManuallySelected = true; onDishChange();" class="select-box" style="margin-bottom: 24px;">
-                <optgroup :label="currentSlot.name + '推薦料理'">
+                <optgroup :label="(currentSlot ? currentSlot.name : '時段') + '推薦料理'">
                     <option v-for="dish in recommendedDishes" :key="'rec_' + dish.id" :value="dish.id">
                         {{ dish.name }}
                     </option>
