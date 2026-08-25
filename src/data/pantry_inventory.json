@@ -151,7 +151,10 @@
       "name": "小番茄",
       "sourceDish": "常備食材",
       "store": "全聯",
-      "isPurchased": false
+      "isPurchased": false,
+      "preferredStores": [
+        "全聯"
+      ]
     },
     {
       "id": "shop_1787468204180",
