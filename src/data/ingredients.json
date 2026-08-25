@@ -720,10 +720,9 @@
         "sodium": 79
       },
       "storageZone": "freezer",
-      "preferredStore": "全聯",
+      "preferredStore": "Costco",
       "preferredStores": [
-        "全聯",
-        "傳統市場"
+        "Costco"
       ],
       "storageZones": [
         "freezer"
@@ -977,8 +976,7 @@
       },
       "preferredStore": "全聯",
       "preferredStores": [
-        "全聯",
-        "傳統市場"
+        "全聯"
       ],
       "storageZone": "fridge",
       "storageZones": [
