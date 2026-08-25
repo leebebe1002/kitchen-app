@@ -1,66 +1,155 @@
 {
   "logs": [
     {
-      "date": "2026-08-12",
+      "date": "2026-08-25",
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 947.8,
-            "protein": 50.1,
-            "carbs": 119.8,
-            "fat": 27.6,
-            "sodium": 827
+            "kcal": 509.9,
+            "protein": 59.4,
+            "carbs": 13.3,
+            "fat": 23.7,
+            "sodium": 526.2
           },
           "meals": [
             {
-              "id": "meal_1786527493359_bebe",
-              "dishId": "yogurt_bowl",
-              "dishName": "🥣 燕麥希臘優格碗",
-              "time": "下午05:38",
+              "id": "meal_1787633740983_bebe",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "下午12:55",
               "nutrients": {
-                "kcal": 182.8,
-                "protein": 14.3,
-                "carbs": 22.8,
-                "fat": 4.4,
-                "sodium": 62
+                "kcal": 329.5,
+                "protein": 33.9,
+                "carbs": 9.3,
+                "fat": 16.9,
+                "sodium": 467.1
               },
               "ingredientsSummary": [
-                "希臘優格 100g",
-                "一般優格 40g",
-                "冷凍莓果 60g",
-                "綜合燕麥 15g",
-                "抹茶粉 2g"
+                "雞胸肉 70g",
+                "蛋 2顆",
+                "綜合生菜 30g",
+                "培根 1條",
+                "馬鈴薯 35g",
+                "小黃瓜 30g"
               ]
             },
             {
-              "id": "meal_1786534029336_bebe",
-              "dishName": "外食健康餐盒 / 排骨便當",
-              "time": "下午07:27",
-              "source": "photo_ai",
+              "id": "meal_1787649759565_bebe",
+              "dishId": "whey_protein_shake",
+              "dishName": "搖搖乳清蛋白",
+              "time": "下午05:22",
               "nutrients": {
-                "kcal": 580,
-                "protein": 32,
-                "carbs": 65,
-                "fat": 18,
-                "sodium": 720
+                "kcal": 180.4,
+                "protein": 25.5,
+                "carbs": 4,
+                "fat": 6.8,
+                "sodium": 59.1
               },
-              "aiNote": "十一粒 AI 視覺估算：含主菜蛋白質、米飯與時蔬配菜，數據可直接點擊微調。",
-              "photoUrl": null
+              "ingredientsSummary": [
+                "乳清蛋白粉 24g",
+                "無糖豆漿 170mL",
+                "黑芝麻粉 5g"
+              ]
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 549.1,
+            "protein": 63.2,
+            "carbs": 18.7,
+            "fat": 24,
+            "sodium": 547.7
+          },
+          "meals": [
+            {
+              "id": "meal_1787633741420_ariel",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "下午12:55",
+              "nutrients": {
+                "kcal": 364.8,
+                "protein": 36.9,
+                "carbs": 14.6,
+                "fat": 17.1,
+                "sodium": 487
+              },
+              "ingredientsSummary": [
+                "雞胸肉 80g",
+                "蛋 2顆",
+                "綜合生菜 30g",
+                "培根 1條",
+                "馬鈴薯 65g",
+                "小黃瓜 35g"
+              ]
             },
             {
-              "id": "meal_1786534328581_bebe",
-              "dishName": "花生大麻糬 (1個)",
-              "time": "下午07:32",
-              "source": "photo_ai",
+              "id": "meal_1787649759670_ariel",
+              "dishId": "whey_protein_shake",
+              "dishName": "搖搖乳清蛋白",
+              "time": "下午05:22",
               "nutrients": {
-                "kcal": 185,
-                "protein": 3.8,
-                "carbs": 32,
-                "fat": 5.2,
-                "sodium": 45
+                "kcal": 184.3,
+                "protein": 26.3,
+                "carbs": 4.1,
+                "fat": 6.9,
+                "sodium": 60.7
               },
-              "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
-              "photoUrl": null
+              "ingredientsSummary": [
+                "乳清蛋白粉 25g",
+                "無糖豆漿 170mL",
+                "黑芝麻粉 5g"
+              ]
+            }
+          ]
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
+      "date": "2026-08-24",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 394,
+            "protein": 41.1,
+            "carbs": 18.5,
+            "fat": 20.3,
+            "sodium": 538.9
+          },
+          "meals": [
+            {
+              "id": "meal_1787547929439_bebe",
+              "dishId": "salad",
+              "dishName": "彩虹生菜沙拉",
+              "time": "下午01:05",
+              "nutrients": {
+                "kcal": 394,
+                "protein": 41.1,
+                "carbs": 18.5,
+                "fat": 20.3,
+                "sodium": 538.9
+              },
+              "ingredientsSummary": [
+                "蝦仁 50g",
+                "水煮鮪魚 50g",
+                "蛋 1顆",
+                "綜合生菜 80g",
+                "小黃瓜 50g",
+                "金黃玉米粒(無加糖) 40g",
+                "地瓜 80g",
+                "松露橄欖油 8g",
+                "煙燻海鹽 1g"
+              ]
             }
           ]
         },
@@ -87,7 +176,156 @@
       }
     },
     {
-      "date": "2026-08-14",
+      "date": "2026-08-23",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 1580.4,
+            "protein": 68.3,
+            "carbs": 180.2,
+            "fat": 68.7,
+            "sodium": 2624.2
+          },
+          "meals": [
+            {
+              "id": "meal_1787450626030_bebe",
+              "dishId": "yogurt_bowl",
+              "dishName": "燕麥希臘優格碗",
+              "time": "上午10:03",
+              "nutrients": {
+                "kcal": 90.4,
+                "protein": 6.7,
+                "carbs": 16.2,
+                "fat": 0.6,
+                "sodium": 22.7
+              },
+              "ingredientsSummary": [
+                "希臘優格 60g",
+                "綜合燕麥 0g",
+                "芒果 110g"
+              ]
+            },
+            {
+              "id": "meal_1787475543511_bebe",
+              "dishId": "poke_bowl",
+              "dishName": "夏威夷波奇碗",
+              "time": "下午04:59",
+              "nutrients": {
+                "kcal": 410,
+                "protein": 33.6,
+                "carbs": 37,
+                "fat": 16.1,
+                "sodium": 781.5
+              },
+              "ingredientsSummary": [
+                "蝦仁 80g",
+                "蛋 1顆",
+                "綜合生菜 80g",
+                "韓式泡菜 30g",
+                "現煮米飯/糙米飯 80g",
+                "金黃玉米粒(無加糖) 40g",
+                "J-Lek是拉差美乃滋 10g",
+                "板豆腐 30g",
+                "毛豆 30g",
+                "小黃瓜 50g",
+                "櫛瓜 50g"
+              ]
+            },
+            {
+              "id": "meal_1787493116141_bebe",
+              "dishName": "阿宗麵線(小碗)、大腸包小腸、脆皮甜甜圈(半個)",
+              "time": "下午09:51",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 1080,
+                "protein": 28,
+                "carbs": 127,
+                "fat": 52,
+                "sodium": 1820
+              },
+              "aiNote": "這款經典台灣小吃組合美味誘人，但整體澱粉、油脂與鈉含量偏高，建議下一餐多補充綠色蔬菜與水分來幫助代謝平衡喔！",
+              "photoUrl": null
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 410,
+            "protein": 33.6,
+            "carbs": 37,
+            "fat": 16.1,
+            "sodium": 781.5
+          },
+          "meals": [
+            {
+              "id": "meal_1787475543695_ariel",
+              "dishId": "poke_bowl",
+              "dishName": "夏威夷波奇碗",
+              "time": "下午04:59",
+              "nutrients": {
+                "kcal": 410,
+                "protein": 33.6,
+                "carbs": 37,
+                "fat": 16.1,
+                "sodium": 781.5
+              },
+              "ingredientsSummary": [
+                "蝦仁 80g",
+                "蛋 1顆",
+                "綜合生菜 80g",
+                "韓式泡菜 30g",
+                "現煮米飯/糙米飯 80g",
+                "金黃玉米粒(無加糖) 40g",
+                "J-Lek是拉差美乃滋 10g",
+                "板豆腐 30g",
+                "毛豆 30g",
+                "小黃瓜 50g",
+                "櫛瓜 50g"
+              ]
+            }
+          ]
+        },
+        "jason": {
+          "totals": {
+            "kcal": 519.3,
+            "protein": 41.4,
+            "carbs": 51.6,
+            "fat": 18.8,
+            "sodium": 973.2
+          },
+          "meals": [
+            {
+              "id": "meal_1787475543777_jason",
+              "dishId": "poke_bowl",
+              "dishName": "夏威夷波奇碗",
+              "time": "下午04:59",
+              "nutrients": {
+                "kcal": 519.3,
+                "protein": 41.4,
+                "carbs": 51.6,
+                "fat": 18.8,
+                "sodium": 973.2
+              },
+              "ingredientsSummary": [
+                "蝦仁 100g",
+                "蛋 1顆",
+                "綜合生菜 80g",
+                "韓式泡菜 40g",
+                "現煮米飯/糙米飯 120g",
+                "金黃玉米粒(無加糖) 50g",
+                "J-Lek是拉差美乃滋 12g",
+                "板豆腐 40g",
+                "毛豆 40g",
+                "小黃瓜 80g",
+                "櫛瓜 80g"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-08-22",
       "diners": {
         "bebe": {
           "totals": {
@@ -98,6 +336,57 @@
             "sodium": 0
           },
           "meals": []
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 102,
+            "protein": 1.3,
+            "carbs": 26,
+            "fat": 0.3,
+            "sodium": 1
+          },
+          "meals": [
+            {
+              "id": "meal_1786937885071_bebe",
+              "dishName": "香蕉 (中型1根)",
+              "time": "上午11:38",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 102,
+                "protein": 1.3,
+                "carbs": 26,
+                "fat": 0.3,
+                "sodium": 1
+              },
+              "aiNote": "以市售中型香蕉（去皮可食重約100-110克）估算，富含碳水化合物、鉀離子與膳食纖維，非常適合運動前後快速補充能量。",
+              "photoUrl": null
+            }
+          ]
         },
         "ariel": {
           "totals": {
@@ -173,30 +462,100 @@
       }
     },
     {
-      "date": "2026-08-17",
+      "date": "2026-08-14",
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 102,
-            "protein": 1.3,
-            "carbs": 26,
-            "fat": 0.3,
-            "sodium": 1
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
+      "date": "2026-08-12",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 947.8,
+            "protein": 50.1,
+            "carbs": 119.8,
+            "fat": 27.6,
+            "sodium": 827
           },
           "meals": [
             {
-              "id": "meal_1786937885071_bebe",
-              "dishName": "香蕉 (中型1根)",
-              "time": "上午11:38",
-              "source": "nlp_ai",
+              "id": "meal_1786527493359_bebe",
+              "dishId": "yogurt_bowl",
+              "dishName": "🥣 燕麥希臘優格碗",
+              "time": "下午05:38",
               "nutrients": {
-                "kcal": 102,
-                "protein": 1.3,
-                "carbs": 26,
-                "fat": 0.3,
-                "sodium": 1
+                "kcal": 182.8,
+                "protein": 14.3,
+                "carbs": 22.8,
+                "fat": 4.4,
+                "sodium": 62
               },
-              "aiNote": "以市售中型香蕉（去皮可食重約100-110克）估算，富含碳水化合物、鉀離子與膳食纖維，非常適合運動前後快速補充能量。",
+              "ingredientsSummary": [
+                "希臘優格 100g",
+                "一般優格 40g",
+                "冷凍莓果 60g",
+                "綜合燕麥 15g",
+                "抹茶粉 2g"
+              ]
+            },
+            {
+              "id": "meal_1786534029336_bebe",
+              "dishName": "外食健康餐盒 / 排骨便當",
+              "time": "下午07:27",
+              "source": "photo_ai",
+              "nutrients": {
+                "kcal": 580,
+                "protein": 32,
+                "carbs": 65,
+                "fat": 18,
+                "sodium": 720
+              },
+              "aiNote": "十一粒 AI 視覺估算：含主菜蛋白質、米飯與時蔬配菜，數據可直接點擊微調。",
+              "photoUrl": null
+            },
+            {
+              "id": "meal_1786534328581_bebe",
+              "dishName": "花生大麻糬 (1個)",
+              "time": "下午07:32",
+              "source": "photo_ai",
+              "nutrients": {
+                "kcal": 185,
+                "protein": 3.8,
+                "carbs": 32,
+                "fat": 5.2,
+                "sodium": 45
+              },
+              "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
               "photoUrl": null
             }
           ]
