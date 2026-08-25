@@ -368,9 +368,17 @@ export default {
                         memberIngredients.value[member] = newIngredients;
                     }
                 });
+
+                // 3. 初始預設自動產出黃金基線配比，確保任何全新設備打開時立即可見完整大白板
+                activeMembers.value.forEach(member => {
+                    autoBalanceMemberPortions(member);
+                });
+                isCalculated.value = true;
+                isResultStale.value = false;
             } else {
                 memberIngredients.value = { bebe: [], ariel: [], jason: [] };
                 selectedMasterIngredients.value = [];
+                isCalculated.value = false;
             }
         };
 
