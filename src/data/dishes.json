@@ -1247,6 +1247,148 @@
                 "3. 原鍋利用少許魚油或橄欖油爆香蒜末，下豬肉片、紅蘿蔔絲與黑木耳絲快炒。",
                 "4. 加入高麗菜大火翻炒至清脆甜美，起鍋盛盤，搭配現煮多穀糙米飯即可享用！"
             ]
+        },
+        {
+            "id": "bacon_shrimp_pasta",
+            "name": "鮮蝦培根義大利麵",
+            "categories": [
+                "lunch",
+                "dinner",
+                "brunch"
+            ],
+            "recommendedProteins": [
+                "shrimp",
+                "bacon",
+                "chicken_breast",
+                "egg"
+            ],
+            "recommendedVeggies": [
+                "spinach",
+                "mushroom",
+                "baby_cabbage",
+                "zucchini",
+                "cucumber"
+            ],
+            "recommendedCarbs": [
+                "angel_hair_pasta"
+            ],
+            "recommendedSauces": [],
+            "defaultIngredients": [
+                {
+                    "id": "angel_hair_pasta",
+                    "amount": 60,
+                    "unit": "g"
+                },
+                {
+                    "id": "shrimp",
+                    "amount": 70,
+                    "unit": "g"
+                },
+                {
+                    "id": "bacon",
+                    "amount": 25,
+                    "unit": "g"
+                },
+                {
+                    "id": "spinach",
+                    "amount": 60,
+                    "unit": "g"
+                },
+                {
+                    "id": "mushroom",
+                    "amount": 30,
+                    "unit": "g"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    {
+                        "id": "angel_hair_pasta",
+                        "amount": 45,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "shrimp",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "bacon",
+                        "amount": 20,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "mushroom",
+                        "amount": 40,
+                        "unit": "g"
+                    }
+                ],
+                "ariel": [
+                    {
+                        "id": "angel_hair_pasta",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "shrimp",
+                        "amount": 70,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "bacon",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "mushroom",
+                        "amount": 30,
+                        "unit": "g"
+                    }
+                ],
+                "jason": [
+                    {
+                        "id": "angel_hair_pasta",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "shrimp",
+                        "amount": 80,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "bacon",
+                        "amount": 40,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "spinach",
+                        "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "mushroom",
+                        "amount": 40,
+                        "unit": "g"
+                    }
+                ]
+            },
+            "sopSteps": [
+                "1. 煮麵：滾水加少許鹽，放入天使義大利麵煮約 3~4 分鐘（約八分熟），撈起瀝乾拌少許橄欖油防沾黏，保留半碗煮麵水。",
+                "2. 煸香培根與炒蝦仁：熱鍋不放油（或少許橄欖油），下培根煎至微焦香出油，接著放入蒜末與蝦仁炒至變色約八分熟先盛起。",
+                "3. 炒蔬菜與煨麵：原鍋利用培根香氣下香菇與菠菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
+                "4. 盛盤享用：加入蝦仁與培根快速拌勻，撒上現磨黑胡椒與少許蒜香椒鹽提味，香氣四溢即可上桌！"
+            ]
         }
     ]
 }
