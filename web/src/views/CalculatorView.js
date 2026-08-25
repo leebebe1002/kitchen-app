@@ -372,6 +372,8 @@ export default {
                 memberIngredients.value = { bebe: [], ariel: [], jason: [] };
                 selectedMasterIngredients.value = [];
             }
+        };
+
         // --- 🛡️ 備料計算器狀態雙重持久化保險 (State Persistence Shield) ---
         const STORAGE_KEY = 'family_kitchen_calc_state_v2';
         let isRestoringState = false;
