@@ -192,9 +192,9 @@
       "targetId": "spinach",
       "name": "菠菜",
       "sourceDish": "常備食材",
-      "store": "全聯",
+      "store": "Costco",
       "preferredStores": [
-        "全聯"
+        "Costco"
       ],
       "isPurchased": false
     }
