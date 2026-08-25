@@ -1072,12 +1072,12 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 支援 Google 官方永久穩定標準端點 (gemini-1.5-flash v1beta & v1, gemini-1.5-pro, gemini-2.0-flash)
+                // 🌟 支援 Google 官方永久穩定標準端點 (gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-pro)
                 const endpoints = [
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
                 let resultJson = null;
@@ -1085,6 +1085,7 @@ ${JSON.stringify(membersData, null, 2)}
 
                 for (let i = 0; i < endpoints.length; i++) {
                     const fetchUrl = endpoints[i];
+                    const modelName = fetchUrl.split('/models/')[1]?.split(':')[0] || 'gemini';
                     try {
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
@@ -1113,16 +1114,16 @@ ${JSON.stringify(membersData, null, 2)}
                         } else {
                             const errTxt = await resp.text();
                             if (resp.status === 429) {
-                                lastErrDetail = `Google API 額度限制 (429)：若剛剛已等待仍出現此訊息，代表這組金鑰今日免費總配額已用盡，請更換金鑰。`;
-                                break; // 遇到 429 立即中斷，絕不繼續連發燒乾配額
+                                lastErrDetail = `[${modelName}] 額度限制 (429)：若剛剛已等待仍出現此訊息，代表今日免費配額已用盡。`;
+                                break;
                             } else {
-                                lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 120)}`;
-                                console.warn(`Model ${fetchUrl.split('/models/')[1]?.split(':')[0]} failed (${resp.status}):`, errTxt);
-                                continue; // 自動切換至下一個備援模型
+                                lastErrDetail = `[${modelName}] HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
+                                console.warn(`Model ${modelName} failed (${resp.status}):`, errTxt);
+                                continue;
                             }
                         }
                     } catch (err) {
-                        lastErrDetail = err.message || String(err);
+                        lastErrDetail = `[${modelName}] ${err.message || String(err)}`;
                         console.warn("AI Chef endpoint attempt failed:", fetchUrl, err);
                         continue;
                     }
