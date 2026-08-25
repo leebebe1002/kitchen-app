@@ -384,7 +384,7 @@ export default {
                 const state = {
                     selectedDish: selectedDish.value,
                     userHasManuallySelected: userHasManuallySelected.value,
-                    activeMembers: activeMembers.value,
+                    diners: diners.value,
                     selectedMasterIngredients: selectedMasterIngredients.value,
                     memberIngredients: memberIngredients.value,
                     isCalculated: isCalculated.value,
@@ -407,10 +407,10 @@ export default {
                 isRestoringState = true;
                 selectedDish.value = state.selectedDish;
                 userHasManuallySelected.value = !!state.userHasManuallySelected;
-                if (state.activeMembers && Array.isArray(state.activeMembers) && state.activeMembers.length > 0) {
-                    activeMembers.value = state.activeMembers;
+                if (state.diners && typeof state.diners === 'object') {
+                    diners.value = state.diners;
                 }
-                if (state.selectedMasterIngredients && Array.isArray(state.selectedMasterIngredients)) {
+                if (state.selectedMasterIngredients && Array.isArray(state.selectedMasterIngredients) && state.selectedMasterIngredients.length > 0) {
                     selectedMasterIngredients.value = state.selectedMasterIngredients;
                 }
                 if (state.memberIngredients) {
@@ -423,7 +423,7 @@ export default {
                 
                 setTimeout(() => {
                     isRestoringState = false;
-                }, 100);
+                }, 80);
                 return true;
             } catch (e) {
                 isRestoringState = false;
@@ -432,25 +432,21 @@ export default {
         };
 
         // 自動監聽所有計算與勾選狀態，即時存入 localStorage
-        watch([selectedMasterIngredients, memberIngredients, activeMembers, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
+        watch([selectedMasterIngredients, memberIngredients, diners, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
             saveStateToStorage();
         }, { deep: true });
 
-        // 監聽計算屬性 dishesList：確保非同步資料載入完成時先嘗試恢復上次狀態，無狀態才依時段推薦
+        // 監聽料理清單與初始化
         let hasInitialized = false;
 
         const initCalculatorState = () => {
             if (hasInitialized) return;
-            const restored = restoreStateFromStorage();
-            if (restored) {
-                hasInitialized = true;
-                return;
-            }
             if (dishesList.value && dishesList.value.length > 0) {
-                if (!selectedDish.value || !userHasManuallySelected.value) {
-                    selectedDish.value = getBestDefaultDishId();
-                }
-                if (selectedDish.value) {
+                const restored = restoreStateFromStorage();
+                if (!restored) {
+                    if (!selectedDish.value || !userHasManuallySelected.value) {
+                        selectedDish.value = getBestDefaultDishId();
+                    }
                     onDishChange();
                 }
                 hasInitialized = true;
@@ -458,10 +454,16 @@ export default {
         };
 
         watch(dishesList, (newList) => {
-            if (newList && newList.length > 0 && !hasInitialized) {
+            if (newList && newList.length > 0) {
                 initCalculatorState();
             }
         }, { immediate: true });
+
+        watch(selectedDish, (newId) => {
+            if (newId && !isRestoringState && hasInitialized) {
+                onDishChange();
+            }
+        });
 
         onMounted(() => {
             initCalculatorState();
