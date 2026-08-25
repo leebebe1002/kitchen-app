@@ -1070,12 +1070,14 @@ ${JSON.stringify(membersData, null, 2)}
 }
 請只輸出合法 JSON，不要輸出任何 markdown 或其他文字。`;
 
-                // 🌟 支援 Google 官方正式生產端點 (首選 gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro)
+                apiKey = (apiKey || '').trim();
+
+                // 🌟 支援 Google 官方永久穩定標準端點 (gemini-1.5-flash v1beta & v1, gemini-1.5-pro, gemini-2.0-flash)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${encodeURIComponent(apiKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
                 let resultJson = null;
@@ -1087,8 +1089,7 @@ ${JSON.stringify(membersData, null, 2)}
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json',
-                                'x-goog-api-key': apiKey 
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
@@ -1115,7 +1116,8 @@ ${JSON.stringify(membersData, null, 2)}
                                 lastErrDetail = `Google API 額度限制 (429)：若剛剛已等待仍出現此訊息，代表這組金鑰今日免費總配額已用盡，請更換金鑰。`;
                                 break; // 遇到 429 立即中斷，絕不繼續連發燒乾配額
                             } else {
-                                lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
+                                lastErrDetail = `HTTP ${resp.status}: ${errTxt.slice(0, 120)}`;
+                                console.warn(`Model ${fetchUrl.split('/models/')[1]?.split(':')[0]} failed (${resp.status}):`, errTxt);
                                 continue; // 自動切換至下一個備援模型
                             }
                         }
