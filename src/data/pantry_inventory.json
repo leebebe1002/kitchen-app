@@ -129,8 +129,12 @@
       "targetId": "edamame",
       "name": "毛豆",
       "sourceDish": "常備食材",
-      "store": "義美",
-      "isPurchased": false
+      "store": "全聯",
+      "isPurchased": false,
+      "preferredStores": [
+        "全聯",
+        "義美"
+      ]
     },
     {
       "id": "shop_1786957025593",
