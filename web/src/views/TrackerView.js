@@ -375,12 +375,12 @@ export default {
                 }
             };
 
-            // 🌟 支援 Google 官方永久穩定端點 (gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-pro)
+            // 🌟 Google 官方 2026 最新指定主力端點 (gemini-3.6-flash, gemini-3.5-flash, gemini-3.7-flash)
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
             ];
 
             let lastErr = '';
@@ -464,10 +464,10 @@ export default {
             };
 
             const attempts = [
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
             ];
 
             let lastErr = '';

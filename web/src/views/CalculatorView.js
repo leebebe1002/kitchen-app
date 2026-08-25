@@ -1072,12 +1072,12 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 支援 Google 官方永久穩定標準端點 (gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-pro)
+                // 🌟 Google 官方 2026 最新指定主力端點 (gemini-3.6-flash, gemini-3.5-flash, gemini-3.7-flash)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${encodeURIComponent(apiKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
                 let resultJson = null;
