@@ -175,9 +175,9 @@ export default {
             jason: false
         });
 
-        // 偵測食材或成員異動：若已產出過結果，自動將下方標記為「待重新計算 (Stale)」
+        // 偵測食材或成員異動：只有在真正初始化完成後的使用者手動異動，才標記為「待重新計算 (Stale)」
         watch([selectedMasterIngredients, diners], () => {
-            if (isCalculated.value) {
+            if (isCalculated.value && !isRestoringState && hasInitialized) {
                 isResultStale.value = true;
             }
         }, { deep: true });
