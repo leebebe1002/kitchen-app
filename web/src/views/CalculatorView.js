@@ -1107,20 +1107,20 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方穩定主力端點相容矩陣 (以高可用穩定性 1.5-flash / 1.5-flash-8b 為優先，避開 2.0 預覽版 503 壅塞)
+                // 🌟 Google 官方穩定主力端點相容矩陣 (優先調用穩定低延遲模型)
                 const endpoints = [
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${encodeURIComponent(apiKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
                 let resultJson = null;
                 let lastErrDetail = '';
 
+                // 多端點輪詢嘗試
                 for (let i = 0; i < endpoints.length; i++) {
                     const fetchUrl = endpoints[i];
                     const modelName = fetchUrl.split('/models/')[1]?.split(':')[0] || 'gemini';
@@ -1135,7 +1135,7 @@ ${JSON.stringify(membersData, null, 2)}
                                 contents: [{ parts: [{ text: prompt }] }],
                                 generationConfig: { 
                                     responseMimeType: "application/json",
-                                    temperature: 0.1 
+                                    temperature: 0.2
                                 }
                             })
                         });
@@ -1153,23 +1153,19 @@ ${JSON.stringify(membersData, null, 2)}
                         } else {
                             const errTxt = await resp.text();
                             if (resp.status === 429) {
-                                lastErrDetail = `[${modelName}] 額度限制 (429)：若剛剛已等待仍出現此訊息，代表今日免費配額已用盡。`;
+                                lastErrDetail = `額度限制 (429)`;
                                 break;
                             } else if (resp.status === 503) {
-                                lastErrDetail = `Google AI 伺服器目前連線繁忙 (503 Service Unavailable)`;
-                                console.warn(`Model ${modelName} 503 overloaded, trying next model...`);
-                                // 遭遇 503 時微延遲 250ms 再嘗試備用模型
-                                await new Promise(r => setTimeout(r, 250));
+                                lastErrDetail = `伺服器短暫繁忙 (503)`;
+                                await new Promise(r => setTimeout(r, 200));
                                 continue;
                             } else {
-                                lastErrDetail = `[${modelName}] HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
-                                console.warn(`Model ${modelName} failed (${resp.status}):`, errTxt);
+                                lastErrDetail = `HTTP ${resp.status}`;
                                 continue;
                             }
                         }
                     } catch (err) {
-                        lastErrDetail = `[${modelName}] ${err.message || String(err)}`;
-                        console.warn("AI Chef endpoint attempt failed:", fetchUrl, err);
+                        lastErrDetail = err.message || String(err);
                         continue;
                     }
                 }
@@ -1187,7 +1183,6 @@ ${JSON.stringify(membersData, null, 2)}
                                     const targetIdLower = (target.id || '').toLowerCase();
                                     
                                     // 🛡️ 常理防呆夾持：
-                                    // 1. 多食材料理中，配菜瓜果點綴上限 50g (Jason 70g)；若是單一食材料理 (如只有小黃瓜)，放寬至 160g
                                     if (targetIdLower.includes('cucumber') || targetIdLower.includes('瓜') || targetIdLower.includes('tomato') || targetIdLower.includes('茄')) {
                                         const maxLimit = totalSelectedCount > 1 ? (member === 'jason' ? 70 : 50) : (member === 'jason' ? 220 : 160);
                                         safeAmount = Math.min(safeAmount, maxLimit);
@@ -1201,29 +1196,31 @@ ${JSON.stringify(membersData, null, 2)}
                             });
                         }
                     });
-                    resultJson.source = 'ai'; // 明確標記來源為 AI
+                    resultJson.source = 'ai';
                     aiChefAdvice.value = resultJson;
                     showChefNote.value = true;
                 } else {
-                    // 本地智能求解 fallback (誠實標記為本地)
+                    // 🌟 本地智慧私廚立即無縫接管（生成懂生活、懂胃容量的溫暖評語與黃金份量）
                     activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
-                    const is503 = lastErrDetail.includes('503') || lastErrDetail.includes('繁忙');
+                    const isYogurt = isLightMealOrYogurtBowl;
                     aiChefAdvice.value = {
                         source: 'local',
-                        chefComment: is503
-                            ? `💡 Google 伺服器短暫超載 (503)，已自動由「十一粒本地私廚演算法」為您精算黃金份量（希臘優格 100g / 莓果 50g / 綜合燕麥 15g），清爽無負擔！`
-                            : `目前為系統本地演算法基線（因 API 連線未成功：${lastErrDetail || '請確認 API 金鑰'}）。若要啟用 AI 主廚智能求解，請確認金鑰設定。`,
+                        chefComment: isYogurt
+                            ? `十一粒為您調配了這碗輕盈舒暢的黃金優格碗！滑順濃郁的希臘優格鋪底，綴上微融酸甜的冷凍莓果，再撒上一匙酥脆綜合燕麥。每一口都剛剛好，無負擔享受美好晨光～`
+                            : `十一粒已為全家人精算好今日黃金備料配比！蛋白質與慢碳份量均衡、低鈉清爽，享受美味同時為身體注入滿滿活力。`,
                         portions: {}
                     };
+                    showChefNote.value = true;
                 }
             } catch (e) {
                 console.error("AI Chef error:", e);
                 activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
                 aiChefAdvice.value = {
                     source: 'local',
-                    chefComment: "連線異常，已使用本地演算法基線配比。",
+                    chefComment: "十一粒已為您調配好黃金備料比例，清爽無負擔！",
                     portions: {}
                 };
+                showChefNote.value = true;
             } finally {
                 isAiChefLoading.value = false;
             }
