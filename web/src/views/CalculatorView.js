@@ -967,9 +967,39 @@ export default {
                     return;
                 }
 
+                const isLightMealOrYogurtBowl = (
+                    dishName.includes('優格') || 
+                    dishName.includes('燕麥') || 
+                    dishName.includes('果昔') || 
+                    dishName.includes('輕食') || 
+                    slotName.includes('輕食') || 
+                    slotName.includes('點心')
+                );
+
                 // 輔助函式：定義食材在真實料理中的合理區間，防止 AI 幻覺爆量
                 const getIngredientTargetRange = (id, cat) => {
                     const idLower = (id || '').toLowerCase();
+                    if (idLower.includes('greek_yogurt') || idLower.includes('希臘優格')) {
+                        return 'Bebe: 90~110g, Ariel: 100~130g, Jason: 150~180g (優格質地厚實，嚴禁超量爆卡)';
+                    }
+                    if (idLower.includes('plain_yogurt') || idLower.includes('一般優格')) {
+                        return '30~50g (調和滑順基底)';
+                    }
+                    if (idLower.includes('berry') || idLower.includes('莓果')) {
+                        return 'Bebe: 50~60g, Ariel: 60~70g, Jason: 70~80g (高花青素抗氧化)';
+                    }
+                    if (idLower.includes('granola') || idLower.includes('燕麥')) {
+                        return 'Bebe: 15~20g (約1大匙脆口), Ariel: 20~25g, Jason: 30~40g';
+                    }
+                    if (idLower.includes('cocoa') || idLower.includes('可可') || idLower.includes('matcha') || idLower.includes('抹茶') || idLower.includes('sesame') || idLower.includes('芝麻')) {
+                        return '2~4g (風味粉約半茶匙，微量提香)';
+                    }
+                    if (idLower.includes('syrup') || idLower.includes('糖漿') || idLower.includes('honey') || idLower.includes('蜂蜜')) {
+                        return '3~5g (半茶匙微甜提味，嚴格控糖)';
+                    }
+                    if (idLower.includes('chia') || idLower.includes('奇亞籽')) {
+                        return '5~8g (膳食纖維與Omega-3)';
+                    }
                     if (idLower.includes('cucumber') || idLower.includes('瓜') || idLower.includes('tomato') || idLower.includes('茄')) {
                         return '30~50g (配菜點綴，絕對不可超過60g)';
                     }
@@ -1007,21 +1037,27 @@ export default {
                             id: 'bebe',
                             name: 'Bebe',
                             profile: '女性，體重 56.6kg, BMR 1189 kcal, 骨骼肌 20.6kg, 體脂 33%（【精緻小食量】，食量偏小約一般人 2/3，極度重視低鈉防水腫與清爽不飽脹）',
-                            mealTarget: '單餐目標：熱量 320~380 kcal, 蛋白質 26~30g（【嚴格總量控制】：多種蛋白時總和達標即可，切勿超量疊加！蛋抓 1 顆，培根僅作提香固定 1 條，主力肉品抓 65~75g 即可）, 碳水 20~35g（低GI慢碳如馬鈴薯/地瓜抓 80~90g 精緻適量）, 脂肪 10~14g, 鈉嚴格 < 400mg（極度控鈉，預防臉部水腫）'
+                            mealTarget: isLightMealOrYogurtBowl 
+                                ? '【輕食/晨光早餐/優格碗目標】：熱量 150~220 kcal, 蛋白質 12~15g (希臘優格固定 90~110g, 冷凍莓果 50~60g, 脆燕麥 15~20g, 風味調味 2~4g。絕對禁止硬湊正餐 30g 蛋白質而給出 200g+ 優格！)'
+                                : '【正餐目標】：熱量 320~380 kcal, 蛋白質 26~30g (多種蛋白時總和達標即可，切勿超量疊加！蛋固定 1 顆，培根僅提香固定 1 條，主力肉品 65~75g), 碳水 20~35g (原型慢碳 80~90g 精緻適量), 脂肪 10~14g, 鈉嚴格 < 400mg (極度控鈉，預防水腫)'
                         };
                     } else if (m === 'ariel') {
                         return {
                             id: 'ariel',
                             name: 'Ariel (樂樂)',
                             profile: '年輕女性，大一生，體重 57.0kg, BMR 1204 kcal, 骨骼肌 21.0kg, 體脂 32.3%（隱性偏胖增肌減脂型，抗發炎抗痘皮膚照護）',
-                            mealTarget: '單餐目標：熱量 380~440 kcal, 蛋白質 28~32g（多種蛋白時總和達標即可，蛋 1 顆，培根 1~2 條，主力海鮮/肉品 75~85g）, 碳水 30~45g（以原型低GI粗糧馬鈴薯 130~150g 為主，充沛腦力與能量）, 脂肪 11~15g, 鈉 < 500mg（防浮腫與抗痘）'
+                            mealTarget: isLightMealOrYogurtBowl
+                                ? '【輕食/晨光早餐/優格碗目標】：熱量 200~280 kcal, 蛋白質 14~18g (希臘優格 100~130g, 莓果 60~70g, 燕麥 20~25g, 調味 3~5g)'
+                                : '【正餐目標】：熱量 380~440 kcal, 蛋白質 28~32g (蛋 1 顆，培根 1~2 條，主力肉品 75~85g), 碳水 30~45g (原型粗糧 130~150g), 脂肪 11~15g, 鈉 < 500mg'
                         };
                     } else {
                         return {
                             id: 'jason',
                             name: 'Jason (阿噗漆)',
                             profile: '男性，50歲高階主管，體重 83.4kg, BMR 1743 kcal, 骨骼肌 36.3kg, 體脂 23.7% (偏胖肌肉型/高活動代謝)',
-                            mealTarget: '單餐目標：熱量 600~720 kcal, 蛋白質 40~48g (大份量肉品/海鮮主菜 120~180g, 蛋可2顆, 培根2~3條), 碳水 65~80g (地瓜/飯麵約150~200g 提供高代謝充沛活力), 脂肪 16~22g, 鈉 < 700mg (護心血管)'
+                            mealTarget: isLightMealOrYogurtBowl
+                                ? '【輕食/晨光早餐/優格碗目標】：熱量 300~380 kcal, 蛋白質 20~25g (希臘優格 150~180g, 莓果 70~80g, 燕麥 30~40g, 調味 4~6g)'
+                                : '【正餐目標】：熱量 600~720 kcal, 蛋白質 40~48g (大份量肉品 120~180g, 蛋 2 顆, 培根 2~3 條), 碳水 65~80g (地瓜/飯麵 150~200g), 脂肪 16~22g, 鈉 < 700mg'
                         };
                     }
                 });
@@ -1044,7 +1080,7 @@ ${JSON.stringify(membersData, null, 2)}
    - 培根在有主肉品時定位為「風味提香配角」：Bebe 固定 1 條（約 15~20g，控鈉防腫），Ariel 1 條（最多 2 條），Jason 2 條。
    - 蛋在有主肉品時固定 1 顆。
    - 主力肉品/海鮮（雞胸肉/牛肉/蝦仁）只需補足剩餘蛋白質缺額（例如 Bebe 雞胸肉只需 65~75g 即可讓總蛋白剛好達到 28g）。
-   - 若整道菜只有【單一蛋白質來源】（如只有蝦仁或只有雞肉），則該食材才獨立扛起 28~35g 蛋白質目標（約 130~150g 肉品）。
+   - 若正餐只有【單一蛋白質來源】（如只有蝦仁或只有雞肉），則該食材才獨立扛起 28~35g 蛋白質目標（約 130~150g 肉品）。
 2. 蔬菜配比與常理分工：
    - 盤邊生菜沙拉單人份抓 50~70g（適量鋪盤清爽，不堆成巨量蔬菜山）。
    - 瓜果配菜（小黃瓜、番茄等）抓 30~50g。
@@ -1054,7 +1090,14 @@ ${JSON.stringify(membersData, null, 2)}
 4. 油脂與調味物理常識：
    - 優質油品（松露橄欖油/酪梨油）抓 5~7g（約 1 茶匙多）。
    - 研磨海鹽/純鹽抓 0.5~1g（提味控鈉）。
-5. 總熱量與各項營養素力求精準平衡，符合各就餐者的單餐營養區間（Bebe 單餐約 320~380 kcal，蛋白質 26~30g，鈉嚴格控制）。
+5. 【輕食 / 晨光早餐 / 優格碗特化原則 (Yogurt Bowl & Light Meal Principles)】：
+   - 當料理為「優格碗」、「燕麥碗」或輕食水果碗時：
+   - 【絕對禁止】為了硬塞 30g 蛋白質而給出 200g~300g 巨量優格！希臘優格質地厚實濃稠，單人份生理舒適量上限為：Bebe 固定 90~110g（約 100g），Ariel 100~130g，Jason 150~180g。
+   - 綜合燕麥 (Granola) 提供脆口感：Bebe 15~20g（約 1 大匙），Ariel 20~25g，Jason 30~40g。
+   - 冷凍莓果/水果：Bebe 50~60g，Ariel 60~70g，Jason 70~80g。
+   - 風味調味（可可粉/抹茶粉/楓糖漿/蜂蜜/芝麻粉）：每種 2~4g（約半茶匙微量提味，嚴格控糖）。
+   - 此類輕食碗總熱量自然落在 150~220 kcal（Bebe），重在高花青素抗氧化、低 GI 與腸道益生菌，帶來晨間輕盈無負擔的活力！
+6. 總熱量與各項營養素力求精準平衡，符合各就餐者的單餐營養區間。
 
 輸出純 JSON 格式如下：
 {
