@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 629.6,
-            "protein": 51.2,
-            "carbs": 43.1,
-            "fat": 28.8,
-            "sodium": 584.7
+            "kcal": 779.6,
+            "protein": 53.2,
+            "carbs": 58.1,
+            "fat": 37.8,
+            "sodium": 614.7
           },
           "meals": [
             {
@@ -55,6 +55,21 @@
                 "義大利綜合香料 1g",
                 "金黃玉米粒(無加糖) 20g"
               ]
+            },
+            {
+              "id": "meal_1787724937990_bebe",
+              "dishName": "曠世奇派 (半根)",
+              "time": "下午02:15",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 150,
+                "protein": 2,
+                "carbs": 15,
+                "fat": 9,
+                "sodium": 30
+              },
+              "aiNote": "已為您以半根經典曠世奇派雪糕進行精算，數據可隨時點擊調整。",
+              "photoUrl": null
             }
           ]
         },
