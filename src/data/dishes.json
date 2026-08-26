@@ -1,102 +1,10 @@
 {
     "dishes": [
         {
-            "id": "whey_protein_shake",
-            "name": "搖搖乳清蛋白",
-            "categories": [
-                "breakfast",
-                "snack",
-                "late_night"
-            ],
-            "recommendedProteins": [
-                "full_fat_milk_250"
-            ],
-            "recommendedVeggies": [],
-            "recommendedCarbs": [],
-            "recommendedSauces": [
-                "matcha_powder",
-                "cocoa_powder",
-                "sesame_powder",
-                "maple_syrup"
-            ],
-            "defaultIngredients": [
-                {
-                    "id": "whey_protein",
-                    "amount": 30,
-                    "unit": "g"
-                },
-                {
-                    "id": "full_fat_milk_250",
-                    "amount": 200,
-                    "unit": "g"
-                }
-            ],
-            "memberPortions": {
-                "bebe": [
-                    {
-                        "id": "whey_protein",
-                        "amount": 25,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 200,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "matcha_powder",
-                        "amount": 2,
-                        "unit": "g"
-                    }
-                ],
-                "ariel": [
-                    {
-                        "id": "whey_protein",
-                        "amount": 25,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 200,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "cocoa_powder",
-                        "amount": 3,
-                        "unit": "g"
-                    }
-                ],
-                "jason": [
-                    {
-                        "id": "whey_protein",
-                        "amount": 35,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 250,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "sesame_powder",
-                        "amount": 5,
-                        "unit": "g"
-                    }
-                ]
-            },
-            "sopSteps": [
-                "1. 在搖搖杯中加入常溫水或鮮奶約 200-250ml。",
-                "2. 倒入 1 份乳清蛋白粉及個人喜好風味粉（抹茶/可可/芝麻）。",
-                "3. 蓋緊杯蓋搖晃 15-20 秒至完全均勻無結塊即可享用！"
-            ]
-        },
-        {
             "id": "yogurt_bowl",
             "name": "燕麥希臘優格碗",
             "categories": [
-                "breakfast",
-                "brunch",
-                "snack"
+                "breakfast"
             ],
             "recommendedProteins": [
                 "greek_yogurt",
@@ -282,8 +190,8 @@
             "id": "brunch_set",
             "name": "陽光美式早午餐",
             "categories": [
-                "brunch",
-                "lunch"
+                "lunch",
+                "dinner"
             ],
             "recommendedProteins": [
                 "sous_vide_chicken",
@@ -450,9 +358,7 @@
             "id": "poke_bowl",
             "name": "夏威夷波奇碗",
             "categories": [
-                "lunch",
-                "dinner",
-                "brunch"
+                "lunch"
             ],
             "recommendedProteins": [
                 "tuna",
@@ -640,9 +546,7 @@
             "id": "salad",
             "name": "彩虹生菜沙拉",
             "categories": [
-                "lunch",
-                "dinner",
-                "brunch"
+                "lunch"
             ],
             "recommendedProteins": [
                 "sous_vide_chicken",
@@ -713,8 +617,8 @@
             "id": "bibimbap",
             "name": "韓式拌飯",
             "categories": [
-                "lunch",
-                "dinner"
+                "dinner",
+                "lunch"
             ],
             "recommendedProteins": [
                 "beef_slice",
@@ -933,8 +837,7 @@
             "name": "營養滿滿泡麵",
             "categories": [
                 "lunch",
-                "dinner",
-                "late_night"
+                "dinner"
             ],
             "recommendedProteins": [
                 "pork_shoulder",
@@ -995,8 +898,7 @@
             "id": "hotpot",
             "name": "暖心火鍋",
             "categories": [
-                "dinner",
-                "lunch"
+                "dinner"
             ],
             "recommendedProteins": [
                 "pork_shoulder",
@@ -1252,9 +1154,7 @@
             "id": "pasta_meal",
             "name": "義大利麵",
             "categories": [
-                "lunch",
-                "dinner",
-                "brunch"
+                "dinner"
             ],
             "recommendedProteins": [
                 "shrimp",
@@ -1391,81 +1291,6 @@
                 "2. 煎香主料：熱鍋下培根/雞肉/蝦仁煎至微焦香變色出香氣，先盛起備用。",
                 "3. 炒蔬菜與煨麵：原鍋下洋蔥、香菇與菠菜/綠花椰菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
                 "4. 盛盤享用：加入主料翻拌均勻，撒上現磨黑胡椒與少許蒜香椒鹽提味即可上桌！"
-            ]
-        },
-        {
-            "id": "morning_coffee",
-            "name": "晨光咖啡",
-            "categories": [
-                "breakfast",
-                "brunch",
-                "snack"
-            ],
-            "recommendedProteins": [
-                "full_fat_milk_250",
-                "sugar_free_soymilk"
-            ],
-            "recommendedVeggies": [],
-            "recommendedCarbs": [],
-            "recommendedSauces": [
-                "coffee_capsule",
-                "maple_syrup",
-                "unsalted_butter"
-            ],
-            "defaultIngredients": [
-                {
-                    "id": "coffee_capsule",
-                    "amount": 1,
-                    "unit": "顆"
-                },
-                {
-                    "id": "full_fat_milk_250",
-                    "amount": 120,
-                    "unit": "g"
-                }
-            ],
-            "memberPortions": {
-                "bebe": [
-                    {
-                        "id": "coffee_capsule",
-                        "amount": 1,
-                        "unit": "顆"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 120,
-                        "unit": "g"
-                    }
-                ],
-                "ariel": [
-                    {
-                        "id": "coffee_capsule",
-                        "amount": 1,
-                        "unit": "顆"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 150,
-                        "unit": "g"
-                    }
-                ],
-                "jason": [
-                    {
-                        "id": "coffee_capsule",
-                        "amount": 1,
-                        "unit": "顆"
-                    },
-                    {
-                        "id": "full_fat_milk_250",
-                        "amount": 150,
-                        "unit": "g"
-                    }
-                ]
-            },
-            "sopSteps": [
-                "1. 萃取濃縮：使用膠囊機萃取 1 顆濃縮咖啡（Espresso，約 40ml）。",
-                "2. 美式咖啡 (Americano)：在杯中注入熱水（或冰水加冰塊）約 120~150ml，倒入濃縮咖啡即成純黑咖啡。",
-                "3. 拿鐵咖啡 (Latte)：將鮮奶（或無糖豆漿）微波加熱或用奶泡機打發細緻奶泡，緩緩倒入濃縮咖啡中即完成溫潤拿鐵！"
             ]
         }
     ]

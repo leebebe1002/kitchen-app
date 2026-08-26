@@ -17,49 +17,31 @@ export default {
             const min = now.getMinutes();
             const totalMin = hour * 60 + min;
 
-            // 07:00 - 11:59: 早餐時段 (優格、早午餐、乳清蛋白)
-            if (totalMin >= 7 * 60 && totalMin < 12 * 60) {
+            // 05:00 - 11:29: 早（晨光早餐）-> 優格碗
+            if (totalMin >= 5 * 60 && totalMin < 11 * 60 + 30) {
                 return {
                     id: 'breakfast',
                     name: '晨光早餐',
                     icon: '🌅',
-                    recommendedDishIds: ['yogurt_bowl', 'brunch_set', 'whey_protein_shake']
+                    recommendedDishIds: ['yogurt_bowl']
                 };
             }
-            // 12:00 - 14:59: 中餐時段 (波奇碗、生菜沙拉、泡麵、早午餐、優格碗、火鍋)
-            else if (totalMin >= 12 * 60 && totalMin < 15 * 60) {
+            // 11:30 - 16:59: 午（元氣午餐）-> 波奇碗、沙拉、泡麵、早午餐
+            else if (totalMin >= 11 * 60 + 30 && totalMin < 17 * 60) {
                 return {
                     id: 'lunch',
-                    name: '元氣中餐',
+                    name: '元氣午餐',
                     icon: '☀️',
-                    recommendedDishIds: ['poke_bowl', 'salad', 'ramen_meal', 'brunch_set', 'yogurt_bowl', 'hotpot']
+                    recommendedDishIds: ['poke_bowl', 'salad', 'ramen_meal', 'brunch_set']
                 };
             }
-            // 15:00 - 16:59: 午後輕食 (優格碗、早午餐、乳清蛋白、生菜沙拉)
-            else if (totalMin >= 15 * 60 && totalMin < 17 * 60) {
-                return {
-                    id: 'snack',
-                    name: '午後輕食',
-                    icon: '☕',
-                    recommendedDishIds: ['yogurt_bowl', 'brunch_set', 'whey_protein_shake', 'salad']
-                };
-            }
-            // 17:00 - 21:59: 晚餐時段 (幸福家常飯、波奇碗、拌飯、泡麵、火鍋)
-            else if (totalMin >= 17 * 60 && totalMin < 22 * 60) {
+            // 17:00 - 04:59: 晚（溫馨晚餐 / 深夜）-> 泡麵、早午餐、火鍋、義大利麵、家常飯
+            else {
                 return {
                     id: 'dinner',
                     name: '溫馨晚餐',
                     icon: '🌙',
-                    recommendedDishIds: ['home_cooking', 'poke_bowl', 'bibimbap', 'ramen_meal', 'hotpot']
-                };
-            }
-            // 22:00 - 06:59: 宵夜 / 深夜食堂 (泡麵、優格碗、乳清蛋白)
-            else {
-                return {
-                    id: 'late_night',
-                    name: '深夜食堂',
-                    icon: '✨',
-                    recommendedDishIds: ['ramen_meal', 'yogurt_bowl', 'whey_protein_shake']
+                    recommendedDishIds: ['ramen_meal', 'brunch_set', 'hotpot', 'pasta_meal', 'home_cooking']
                 };
             }
         };
