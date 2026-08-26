@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 159.4,
-            "protein": 12.4,
-            "carbs": 22.1,
-            "fat": 3.2,
-            "sodium": 44
+            "kcal": 629.6,
+            "protein": 51.2,
+            "carbs": 43.1,
+            "fat": 28.8,
+            "sodium": 584.7
           },
           "meals": [
             {
@@ -31,18 +31,67 @@
                 "可可粉 2g",
                 "楓糖漿 3g"
               ]
+            },
+            {
+              "id": "meal_1787719914825_bebe",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "下午12:51",
+              "nutrients": {
+                "kcal": 470.2,
+                "protein": 38.8,
+                "carbs": 21,
+                "fat": 25.6,
+                "sodium": 540.7
+              },
+              "ingredientsSummary": [
+                "雞胸肉 80g",
+                "蛋 2顆",
+                "綜合生菜 60g",
+                "培根 1條",
+                "馬鈴薯 70g",
+                "綠花椰菜 40g",
+                "橄欖油 8g",
+                "義大利綜合香料 1g",
+                "金黃玉米粒(無加糖) 20g"
+              ]
             }
           ]
         },
         "ariel": {
           "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
+            "kcal": 477.9,
+            "protein": 39,
+            "carbs": 22.7,
+            "fat": 25.7,
+            "sodium": 541.3
           },
-          "meals": []
+          "meals": [
+            {
+              "id": "meal_1787719915206_ariel",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "下午12:51",
+              "nutrients": {
+                "kcal": 477.9,
+                "protein": 39,
+                "carbs": 22.7,
+                "fat": 25.7,
+                "sodium": 541.3
+              },
+              "ingredientsSummary": [
+                "雞胸肉 80g",
+                "蛋 2顆",
+                "綜合生菜 60g",
+                "培根 1條",
+                "馬鈴薯 80g",
+                "綠花椰菜 40g",
+                "橄欖油 8g",
+                "義大利綜合香料 1g",
+                "金黃玉米粒(無加糖) 20g"
+              ]
+            }
+          ]
         },
         "jason": {
           "totals": {
