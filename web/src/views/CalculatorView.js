@@ -548,6 +548,23 @@ export default {
             const name = (ingData.name || '').toLowerCase();
             const cat = (ingData.category || '').toLowerCase();
 
+            // 0. 優格碗與輕食專屬配料 (燕麥脆片、希臘優格、冷凍莓果、糖漿與風味粉)
+            if (id.includes('granola') || name.includes('綜合燕麥') || name.includes('燕麥脆片') || name.includes('穀物脆片')) {
+                return { role: 'crunch', defaultAmount: 15, step: 5, unit: 'g' };
+            }
+            if (id.includes('greek_yogurt') || id.includes('yogurt') || name.includes('優格')) {
+                return { role: 'yogurt_base', defaultAmount: 100, step: 10, unit: 'g' };
+            }
+            if (id.includes('berry') || id.includes('frozen_berry') || name.includes('莓果') || name.includes('藍莓') || name.includes('草莓')) {
+                return { role: 'fruit_side', defaultAmount: 50, step: 10, unit: 'g' };
+            }
+            if (id.includes('maple') || id.includes('syrup') || id.includes('honey') || name.includes('楓糖') || name.includes('糖漿') || name.includes('蜂蜜')) {
+                return { role: 'syrup', defaultAmount: 3, step: 1, unit: 'g' };
+            }
+            if (id.includes('cocoa') || id.includes('matcha') || id.includes('sesame') || name.includes('可可') || name.includes('抹茶') || name.includes('芝麻粉')) {
+                return { role: 'flavor_powder', defaultAmount: 3, step: 1, unit: 'g' };
+            }
+
             // 1. 微量辛香料 (鹽、海鹽、胡椒、七味粉、孜然、辣椒粉、肉桂粉、香草粉、香料等) ➔ 預設 1g, 步進 1g, 上限 5g
             const microKeywords = ['鹽', '海鹽', '胡椒', '七味粉', '孜然', '辣椒粉', '肉桂粉', '香草粉', '香料', '咖哩粉', '薑黃粉'];
             if (microKeywords.some(kw => name.includes(kw)) || id.includes('salt') || id.includes('pepper') || id.includes('spice') || id.includes('powder')) {
@@ -622,6 +639,18 @@ export default {
                 
                 if (roleInfo.role === 'micro') {
                     item.amount = 1;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'syrup' || roleInfo.role === 'flavor_powder') {
+                    item.amount = isJason ? 5 : 3;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'crunch') {
+                    item.amount = isJason ? 30 : 15;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'yogurt_base') {
+                    item.amount = isJason ? 160 : 100;
+                    item.unit = 'g';
+                } else if (roleInfo.role === 'fruit_side') {
+                    item.amount = isJason ? 70 : 50;
                     item.unit = 'g';
                 } else if (roleInfo.role === 'pickle') {
                     item.amount = isJason ? 40 : 30; // 泡菜/海帶芽等醃漬開胃品控制在 30g
@@ -1071,11 +1100,16 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方 2026 最新指定主力端點 (gemini-3.6-flash, gemini-3.5-flash, gemini-3.7-flash)
+                // 🌟 Google 官方主力端點相容矩陣 (涵蓋 2.0-flash, 1.5-flash, 3.5/3.7-flash 等)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
@@ -1089,7 +1123,8 @@ ${JSON.stringify(membersData, null, 2)}
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'x-goog-api-key': apiKey
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
