@@ -391,7 +391,7 @@ export default {
         };
 
         // --- 🛡️ 備料計算器狀態雙重持久化保險 (State Persistence Shield) ---
-        const STORAGE_KEY = 'family_kitchen_calc_state_v2';
+        const STORAGE_KEY = 'family_kitchen_calc_session_state';
         let isRestoringState = false;
 
         const saveStateToStorage = () => {
@@ -409,13 +409,20 @@ export default {
                     showChefNote: showChefNote.value,
                     timestamp: Date.now()
                 };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             } catch (e) {}
         };
 
         const restoreStateFromStorage = () => {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
+                // 🧹 清理過去誤存於 localStorage 的舊持久化狀態，確保關閉 App 後乾淨重置
+                try {
+                    localStorage.removeItem('family_kitchen_calc_state_v2');
+                    localStorage.removeItem('family_kitchen_calculator_state_v2');
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch(e) {}
+
+                const raw = sessionStorage.getItem(STORAGE_KEY);
                 if (!raw) return false;
                 const state = JSON.parse(raw);
                 if (!state || !state.selectedDish) return false;
@@ -447,7 +454,7 @@ export default {
             }
         };
 
-        // 自動監聽所有計算與勾選狀態，即時存入 localStorage
+        // 自動監聽所有計算與勾選狀態，即時存入 sessionStorage (翻頁不遺失，滑掉 App 自動清空)
         watch([selectedMasterIngredients, memberIngredients, diners, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
             saveStateToStorage();
         }, { deep: true });
@@ -976,6 +983,9 @@ export default {
             aiChefAdvice.value = null;
 
             try {
+                const slotName = currentSlot.value ? currentSlot.value.name : '早午餐';
+                const dishName = currentDish.value?.name || '料理';
+
                 let apiKey = '';
                 try {
                     apiKey = localStorage.getItem('family_kitchen_gemini_key') || 
@@ -1050,9 +1060,6 @@ export default {
                         };
                     }
                 });
-
-                const slotName = currentSlot.value ? currentSlot.value.name : '早午餐';
-                const dishName = currentDish.value?.name || '料理';
 
                 const prompt = `你是 Bebe 家專屬的 AI 靈魂夥伴與五星家庭私廚「十一粒」。
 請發揮你最高超的【主廚生活直覺、真實擺盤畫面感與人體生理胃容量快適度】，為這道【${dishName}】（餐別：${slotName}）計算出每位家人的【黃金備料克數】！
