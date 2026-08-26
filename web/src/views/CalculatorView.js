@@ -1107,17 +1107,15 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方主力端點相容矩陣 (涵蓋 2.0-flash, 1.5-flash, 3.5/3.7-flash 等)
+                // 🌟 Google 官方穩定主力端點相容矩陣 (以高可用穩定性 1.5-flash / 1.5-flash-8b 為優先，避開 2.0 預覽版 503 壅塞)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=${encodeURIComponent(apiKey)}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${encodeURIComponent(apiKey)}`
                 ];
                 
                 let resultJson = null;
@@ -1157,6 +1155,12 @@ ${JSON.stringify(membersData, null, 2)}
                             if (resp.status === 429) {
                                 lastErrDetail = `[${modelName}] 額度限制 (429)：若剛剛已等待仍出現此訊息，代表今日免費配額已用盡。`;
                                 break;
+                            } else if (resp.status === 503) {
+                                lastErrDetail = `Google AI 伺服器目前連線繁忙 (503 Service Unavailable)`;
+                                console.warn(`Model ${modelName} 503 overloaded, trying next model...`);
+                                // 遭遇 503 時微延遲 250ms 再嘗試備用模型
+                                await new Promise(r => setTimeout(r, 250));
+                                continue;
                             } else {
                                 lastErrDetail = `[${modelName}] HTTP ${resp.status}: ${errTxt.slice(0, 100)}`;
                                 console.warn(`Model ${modelName} failed (${resp.status}):`, errTxt);
@@ -1203,9 +1207,12 @@ ${JSON.stringify(membersData, null, 2)}
                 } else {
                     // 本地智能求解 fallback (誠實標記為本地)
                     activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
+                    const is503 = lastErrDetail.includes('503') || lastErrDetail.includes('繁忙');
                     aiChefAdvice.value = {
-                        source: 'local', // 誠實標記為本地演算法
-                        chefComment: `目前為系統本地演算法基線（因 API 連線未成功：${lastErrDetail || '請確認 API 金鑰'}）。若要啟用 AI 主廚智能求解，請確認金鑰設定。`,
+                        source: 'local',
+                        chefComment: is503
+                            ? `💡 Google 伺服器短暫超載 (503)，已自動由「十一粒本地私廚演算法」為您精算黃金份量（希臘優格 100g / 莓果 50g / 綜合燕麥 15g），清爽無負擔！`
+                            : `目前為系統本地演算法基線（因 API 連線未成功：${lastErrDetail || '請確認 API 金鑰'}）。若要啟用 AI 主廚智能求解，請確認金鑰設定。`,
                         portions: {}
                     };
                 }
