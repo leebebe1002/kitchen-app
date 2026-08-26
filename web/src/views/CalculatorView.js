@@ -1121,8 +1121,7 @@ ${JSON.stringify(membersData, null, 2)}
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json',
-                                'x-goog-api-key': apiKey
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
@@ -1702,22 +1701,11 @@ ${JSON.stringify(membersData, null, 2)}
                                 <span class="apple-spinner"></span>
                                 <span>AI 精算中...</span>
                             </div>
-                            <!-- AI Success State -->
-                            <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
+                            <!-- AI Success / Advisor State -->
+                            <button v-if="aiChefAdvice" 
                                      @click="showChefNote = !showChefNote"
                                      style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
                                  <span>✨ AI 主廚已精算</span>
-                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
-                             </button>
-                             <!-- Local Fallback State -->
-                             <button v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" 
-                                     @click="showChefNote = !showChefNote"
-                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: #4B5563; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB; cursor: pointer; transition: all 0.2s ease;">
-                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                     <circle cx="12" cy="12" r="3"></circle>
-                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                                 </svg>
-                                 <span>系統預設</span>
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                              </button>
                         </div>
@@ -1726,15 +1714,10 @@ ${JSON.stringify(membersData, null, 2)}
                     <!-- Expandable Chef Note Box (Collapsible) -->
                     <div v-if="member === 'bebe' && showChefNote && aiChefAdvice && aiChefAdvice.chefComment" 
                          style="margin-bottom: 14px; background: #FFFDF8; border-left: 3px solid var(--color-primary); border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; color: #4B5563; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                        <div style="font-weight: 700; color: var(--color-primary); margin-bottom: 4px; font-size: 0.78rem;">
-                            {{ aiChefAdvice.source === 'ai' ? '💬 十一粒主廚 AI 點評：' : '⚙️ 系統計算狀態：' }}
+                        <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem;">
+                            💬 十一粒主廚 AI 點評：
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
-                        <div v-if="aiChefAdvice.source === 'local'" style="margin-top: 10px;">
-                            <button @click="showChefKeyInput = true" style="background: var(--color-primary, #FFCA60); color: #78350F; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(255, 202, 96, 0.3);">
-                                🔑 點此更換 / 設定 Gemini API Key (AQ... 或 AIza...)
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Status Tags -->
