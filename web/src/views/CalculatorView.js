@@ -364,11 +364,11 @@ export default {
                     }
                 });
 
-                // 3. 初始預設自動產出黃金基線配比，確保任何全新設備打開時立即可見完整大白板
+                // 3. 預先準備好每位成員的食材基線，但保持 isCalculated = false，直到使用者點擊計算按鈕
                 activeMembers.value.forEach(member => {
                     autoBalanceMemberPortions(member);
                 });
-                isCalculated.value = true;
+                isCalculated.value = false;
                 isResultStale.value = false;
 
                 setTimeout(() => {
