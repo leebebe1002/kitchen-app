@@ -157,9 +157,11 @@ export default {
             jason: false
         });
 
+        let isSwitchingDish = false;
+
         // 偵測食材或成員異動：只有在真正初始化完成後的使用者手動異動，才標記為「待重新計算 (Stale)」
         watch([selectedMasterIngredients, diners], () => {
-            if (isCalculated.value && !isRestoringState && hasInitialized) {
+            if (isCalculated.value && !isRestoringState && !isSwitchingDish && hasInitialized) {
                 isResultStale.value = true;
             }
         }, { deep: true });
@@ -277,8 +279,11 @@ export default {
 
         // Reset and populate ingredients when dish changes
         const onDishChange = () => {
+            isSwitchingDish = true;
             isCalculated.value = false;
             isResultStale.value = false;
+            aiChefAdvice.value = null;
+            showChefNote.value = false;
             const dish = currentDish.value;
             if (dish) {
                 // 1. 只有「預設食材 (defaultIngredients) 且 有庫存」或「推薦食材中有庫存者」才納入初始選取
@@ -334,7 +339,7 @@ export default {
                                     let safeAmount = 50;
                                     if (ingData) {
                                         if (ingData.isCount || defaultUnit === '顆' || defaultUnit === '包' || defaultUnit === '條') {
-                                            safeAmount = 1;
+                                             safeAmount = 1;
                                         } else if (ingData.category === 'sauces') {
                                             safeAmount = 10;
                                         } else if (ingData.category === 'proteins' || ingData.category === 'carbs') {
@@ -365,10 +370,16 @@ export default {
                 });
                 isCalculated.value = true;
                 isResultStale.value = false;
+
+                setTimeout(() => {
+                    isSwitchingDish = false;
+                    isResultStale.value = false;
+                }, 100);
             } else {
                 memberIngredients.value = { bebe: [], ariel: [], jason: [] };
                 selectedMasterIngredients.value = [];
                 isCalculated.value = false;
+                isSwitchingDish = false;
             }
         };
 
