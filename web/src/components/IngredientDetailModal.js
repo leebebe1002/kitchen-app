@@ -595,11 +595,11 @@ const IngredientDetailModal = {
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
                 </div>
 
-                <!-- 2. 食材實拍照片滿版卡片 (右上角疊加刪除按鈕) -->
-                <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.06); background: #111827;">
-                    <img :src="photo.url" style="width: 100%; max-height: 180px; object-fit: cover; display: block;" />
+                <!-- 2. 食材實拍照片滿版卡片 (高度放大 3 倍，右上角疊加標準垃圾桶刪除按鈕) -->
+                <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.06); background: #1E293B;">
+                    <img :src="photo.url" style="width: 100%; max-height: 360px; min-height: 220px; object-fit: contain; display: block;" />
                     
-                    <!-- 頂部右上角：刪除/移除照片按鈕 (放大至 38px，使用系統標準 20px 垃圾桶 SVG) -->
+                    <!-- 頂部右上角：刪除/移除照片按鈕 (38px 圓形，系統標準 20px 垃圾桶 SVG) -->
                     <button class="btn-icon" @click="photo.url = null; photo.message = ''" 
                             style="position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.68); color: #FFFFFF; border: 1.5px solid rgba(255, 255, 255, 0.45); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); padding: 0;" 
                             title="移除此照片">
@@ -610,11 +610,6 @@ const IngredientDetailModal = {
                             <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
                     </button>
-                    
-                    <!-- 底部左下角：實拍照片標籤 -->
-                    <span style="position: absolute; bottom: 8px; left: 8px; background: rgba(0, 0, 0, 0.65); color: #FFF; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-                        📸 實拍建檔
-                    </span>
                 </div>
 
                 <!-- API Key 輸入列 (折疊) -->
