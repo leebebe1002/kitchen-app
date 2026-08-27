@@ -1,6 +1,73 @@
 {
   "logs": [
     {
+      "date": "2026-08-27",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 295,
+            "protein": 14,
+            "carbs": 42,
+            "fat": 7,
+            "sodium": 440
+          },
+          "meals": [
+            {
+              "id": "meal_1787800966740_bebe",
+              "dishName": "全麥優格蛋沙拉吐司",
+              "time": "上午11:22",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 205,
+                "protein": 13,
+                "carbs": 21,
+                "fat": 7,
+                "sodium": 420
+              },
+              "aiNote": "這是一道高纖高蛋白且清爽低負擔的早餐！AI 精算完成，數據可隨時點擊調整。",
+              "photoUrl": null
+            },
+            {
+              "id": "meal_1787819764329_bebe",
+              "dishName": "一沐日 荔枝烏龍 (無糖)",
+              "time": "下午04:36",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 90,
+                "protein": 1,
+                "carbs": 21,
+                "fat": 0,
+                "sodium": 20
+              },
+              "aiNote": "雖為無糖，但果茶類通常含荔枝濃縮液/果汁基底之天然糖分，數據可隨時點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
       "date": "2026-08-26",
       "diners": {
         "bebe": {
@@ -692,73 +759,6 @@
               },
               "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
               "photoUrl": null
-            }
-          ]
-        },
-        "ariel": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        },
-        "jason": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        }
-      }
-    },
-    {
-      "date": "2026-08-27",
-      "diners": {
-        "bebe": {
-          "totals": {
-            "kcal": 295,
-            "protein": 14,
-            "carbs": 42,
-            "fat": 7,
-            "sodium": 440
-          },
-          "meals": [
-            {
-              "id": "meal_1787800966740_bebe",
-              "dishName": "全麥優格蛋沙拉吐司",
-              "time": "上午11:22",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 205,
-                "protein": 13,
-                "carbs": 21,
-                "fat": 7,
-                "sodium": 420
-              },
-              "aiNote": "這是一道高纖高蛋白且清爽低負擔的早餐！AI 精算完成，數據可隨時點擊調整。",
-              "photoUrl": null
-            },
-            {
-              "id": "meal_1787819764329_bebe",
-              "dishName": "一沐日 荔枝烏龍 (無糖)",
-              "time": "下午04:36",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 90,
-                "protein": 1,
-                "carbs": 21,
-                "fat": 0,
-                "sodium": 20
-              },
-              "aiNote": "雖為無糖，但果茶類通常含荔枝濃縮液/果汁基底之天然糖分，數據可隨時點擊調整。",
-              "photoUrl": null,
-              "portionRatio": "1"
             }
           ]
         },
