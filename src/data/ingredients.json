@@ -1,1862 +1,1879 @@
 {
-  "proteins": [
-    {
-      "id": "whey_protein",
-      "name": "乳清蛋白粉",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 385,
-        "protein": 77,
-        "fat": 5.5,
-        "carbs": 7,
-        "sodium": 160
-      },
-      "storageZone": "pantry",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "tuna",
-      "name": "水煮鮪魚",
-      "brand": "Kirkland 科克蘭",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 131,
-        "protein": 28.6,
-        "fat": 1.8,
-        "carbs": 0,
-        "sodium": 321
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "shrimp",
-      "name": "蝦仁",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 83,
-        "protein": 19.6,
-        "fat": 0.5,
-        "carbs": 0,
-        "sodium": 280
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "sous_vide_chicken",
-      "name": "雞胸肉",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 115,
-        "protein": 23,
-        "fat": 1.5,
-        "carbs": 0,
-        "sodium": 180
-      },
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge",
-        "freezer"
-      ],
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ]
-    },
-    {
-      "id": "pork_shoulder",
-      "name": "豬梅花肉片",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 207,
-        "protein": 18.9,
-        "fat": 14.2,
-        "carbs": 0.4,
-        "sodium": 56
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "egg",
-      "name": "蛋",
-      "category": "proteins",
-      "isCount": true,
-      "unitLabel": "顆",
-      "perUnit": {
-        "kcal": 85,
-        "protein": 6.5,
-        "fat": 6.2,
-        "carbs": 0.6,
-        "sodium": 70
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "tofu",
-      "name": "板豆腐",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 88,
-        "protein": 9,
-        "fat": 5.3,
-        "carbs": 1.9,
-        "sodium": 7
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "plain_yogurt",
-      "name": "一般優格",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 61,
-        "protein": 4,
-        "fat": 3.3,
-        "carbs": 4.7,
-        "sodium": 46
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "bacon",
-      "name": "培根",
-      "category": "proteins",
-      "isCount": true,
-      "unitLabel": "條",
-      "perUnit": {
-        "kcal": 43,
-        "protein": 3.5,
-        "fat": 3.3,
-        "carbs": 0.2,
-        "sodium": 190
-      },
-      "storageZone": "freezer",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ],
-      "brand": "",
-      "servingSize": 100,
-      "servingUnit": "g",
-      "price": 0,
-      "priceUnit": "包",
-      "per100g": {
-        "kcal": 77,
-        "protein": 6.3,
-        "carbs": 0.4,
-        "fat": 5.9,
-        "sodium": 342
-      },
-      "perServing": {
-        "kcal": 77,
-        "protein": 6.3,
-        "carbs": 0.4,
-        "fat": 5.9,
-        "sodium": 342
-      }
-    },
-    {
-      "id": "chicken_thigh",
-      "name": "雞腿肉",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 172,
-        "protein": 18.5,
-        "fat": 10.5,
-        "carbs": 0,
-        "sodium": 75
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "beef_slice",
-      "name": "牛肉片",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 250,
-        "protein": 26,
-        "fat": 15,
-        "carbs": 0,
-        "sodium": 60
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "shrimp_paste",
-      "name": "蝦仁漿",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "frozen_tofu",
-      "name": "凍豆腐",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "edamame",
-      "name": "毛豆",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "salmon",
-      "name": "鮭魚",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "full_fat_milk_250",
-      "name": "全脂鮮奶",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "義美",
-      "preferredStores": [
-        "Costco",
-        "全聯",
-        "義美"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "crab_stick",
-      "name": "蟹肉棒",
-      "category": "proteins",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "century_egg",
-      "name": "皮蛋",
-      "category": "proteins",
-      "unitLabel": "顆",
-      "per100g": {
-        "kcal": 170,
-        "protein": 12.5,
-        "fat": 12.8,
-        "carbs": 1.2,
-        "sodium": 550
-      },
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ]
-    },
-    {
-      "id": "sugar_free_soymilk",
-      "name": "無糖豆漿",
-      "category": "proteins",
-      "unitLabel": "mL",
-      "per100g": {
-        "kcal": 35,
-        "protein": 3.6,
-        "fat": 1.8,
-        "carbs": 0.7,
-        "sodium": 12
-      },
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ],
-      "preferredStore": "義美",
-      "preferredStores": [
-        "義美",
-        "全聯",
-        "Costco"
-      ]
-    },
-    {
-      "id": "mushroom_meatball",
-      "name": "香菇貢丸",
-      "category": "proteins",
-      "unitLabel": "顆",
-      "per100g": {
-        "kcal": 260,
-        "protein": 13.5,
-        "fat": 21,
-        "carbs": 4.5,
-        "sodium": 580
-      },
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco",
-        "傳統市場"
-      ]
-    },
-    {
-      "id": "egg_dumpling",
-      "name": "蛋餃",
-      "category": "proteins",
-      "unitLabel": "顆",
-      "per100g": {
-        "kcal": 185,
-        "protein": 11.2,
-        "fat": 14.5,
-        "carbs": 2.5,
-        "sodium": 380
-      },
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ]
-    },
-    {
-      "id": "taro_meatball",
-      "name": "芋頭貢丸",
-      "category": "proteins",
-      "isCount": false,
-      "unitLabel": "顆",
-      "per100g": {
-        "kcal": 50,
-        "protein": 1,
-        "carbs": 10,
-        "fat": 0.2,
-        "sodium": 5
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "greek_yogurt",
-      "name": "希臘優格",
-      "brand": "",
-      "category": "proteins",
-      "servingSize": 100,
-      "servingUnit": "g",
-      "storageZones": [
-        "fridge"
-      ],
-      "preferredStores": [
-        "Costco"
-      ],
-      "price": 0,
-      "priceUnit": "包",
-      "per100g": {
-        "kcal": 59,
-        "protein": 10,
-        "carbs": 3.6,
-        "fat": 0.4,
-        "sodium": 36
-      },
-      "perServing": {
-        "kcal": 59,
-        "protein": 10,
-        "carbs": 3.6,
-        "fat": 0.4,
-        "sodium": 36
-      }
-    }
-  ],
-  "veggies": [
-    {
-      "id": "mango",
-      "name": "芒果",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 50,
-        "protein": 0.6,
-        "fat": 0.3,
-        "carbs": 12.8,
-        "sodium": 1
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場",
-        "Costco"
-      ],
-      "storageZones": [
-        "fridge",
-        "pantry"
-      ]
-    },
-    {
-      "id": "cabbage",
-      "name": "高麗菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 25,
-        "protein": 1.3,
-        "fat": 0.1,
-        "carbs": 5.8,
-        "sodium": 18
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "baby_cabbage",
-      "name": "娃娃菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 18,
-        "protein": 1.5,
-        "fat": 0.2,
-        "carbs": 3.4,
-        "sodium": 10
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "broccoli",
-      "name": "綠花椰菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 34,
-        "protein": 2.8,
-        "fat": 0.4,
-        "carbs": 6.6,
-        "sodium": 33
-      },
-      "storageZone": "freezer",
-      "storageZones": [
-        "freezer"
-      ],
-      "preferredStores": [
-        "Costco"
-      ],
-      "preferredStore": "Costco"
-    },
-    {
-      "id": "kimchi",
-      "name": "韓式泡菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 32,
-        "protein": 1.6,
-        "fat": 0.5,
-        "carbs": 6,
-        "sodium": 800
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "black_fungus",
-      "name": "黑木耳",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 25,
-        "protein": 1,
-        "fat": 0.2,
-        "carbs": 6.5,
-        "sodium": 10
-      },
-      "storageZone": "fridge",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "baby_corn",
-      "name": "玉米筍",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 31,
-        "protein": 1.5,
-        "fat": 0.3,
-        "carbs": 6.5,
-        "sodium": 2
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "banana",
-      "name": "香蕉",
-      "category": "veggies",
-      "isCount": true,
-      "unitLabel": "根",
-      "perUnit": {
-        "kcal": 88,
-        "protein": 1.2,
-        "fat": 0.2,
-        "carbs": 22,
-        "sodium": 1
-      },
-      "storageZone": "pantry",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "spinach",
-      "name": "菠菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 23,
-        "protein": 2.9,
-        "fat": 0.4,
-        "carbs": 3.6,
-        "sodium": 79
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "chinese_cabbage",
-      "name": "大白菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 13,
-        "protein": 1.2,
-        "fat": 0.2,
-        "carbs": 2.4,
-        "sodium": 15
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "zucchini",
-      "name": "櫛瓜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 17,
-        "protein": 1.2,
-        "carbs": 3.1,
-        "fat": 0.3,
-        "sodium": 8
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge"
-      ],
-      "brand": "",
-      "servingSize": 100,
-      "servingUnit": "g",
-      "price": 0,
-      "priceUnit": "包",
-      "perServing": {
-        "kcal": 17,
-        "protein": 1.2,
-        "carbs": 3.1,
-        "fat": 0.3,
-        "sodium": 8
-      }
-    },
-    {
-      "id": "cucumber",
-      "name": "小黃瓜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 15,
-        "protein": 0.7,
-        "fat": 0.1,
-        "carbs": 3.6,
-        "sodium": 2
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "greens",
-      "name": "綜合生菜",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 15,
-        "protein": 1.4,
-        "fat": 0.2,
-        "carbs": 2.9,
-        "sodium": 28
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "carrot",
-      "name": "紅蘿蔔",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 41,
-        "protein": 0.9,
-        "fat": 0.2,
-        "carbs": 9.6,
-        "sodium": 69
-      },
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge",
-        "freezer",
-        "pantry"
-      ],
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "preferredStore": "全聯"
-    },
-    {
-      "id": "onion",
-      "name": "洋蔥",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 40,
-        "protein": 1.1,
-        "fat": 0.1,
-        "carbs": 9.3,
-        "sodium": 4
-      },
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry",
-        "freezer"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ]
-    },
-    {
-      "id": "mushroom",
-      "name": "香菇",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 38,
-        "protein": 3.1,
-        "fat": 0.3,
-        "carbs": 6.8,
-        "sodium": 6
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "fridge",
-        "freezer"
-      ]
-    },
-    {
-      "id": "beech_mushroom",
-      "name": "鴻喜菇/雪白菇",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 32,
-        "protein": 2.6,
-        "fat": 0.3,
-        "carbs": 6.2,
-        "sodium": 3
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge",
-        "freezer"
-      ]
-    },
-    {
-      "id": "frozen_berry",
-      "name": "冷凍莓果",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 50,
-        "protein": 1,
-        "fat": 0.5,
-        "carbs": 11.5,
-        "sodium": 1
-      },
-      "storageZone": "freezer",
-      "preferredStores": [
-        "Costco"
-      ],
-      "preferredStore": "Costco",
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "nori_strips",
-      "name": "海苔絲",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "cherry_tomatoes",
-      "name": "小番茄",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "bean_sprouts",
-      "name": "黃豆芽",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "scallion",
-      "name": "青蔥",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 32,
-        "protein": 1.8,
-        "fat": 0.2,
-        "carbs": 7.3,
-        "sodium": 10
-      },
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ]
-    },
-    {
-      "id": "enoki_mushroom",
-      "name": "金針菇",
-      "category": "veggies",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 37,
-        "protein": 2.7,
-        "fat": 0.3,
-        "carbs": 7.8,
-        "sodium": 3
-      },
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ]
-    }
-  ],
-  "carbs": [
-    {
-      "id": "green_pepper_noodle",
-      "name": "青花椒乾拌麵",
-      "brand": "賈以食日",
-      "category": "carbs",
-      "isCount": true,
-      "unitLabel": "包",
-      "perServing": {
-        "kcal": 390.9,
-        "protein": 13.1,
-        "fat": 7.7,
-        "carbs": 67.3,
-        "sodium": 1070.1
-      },
-      "storageZone": "pantry",
-      "preferredStore": "EC 電商",
-      "preferredStores": [
-        "EC 電商",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "bagel",
-      "name": "原味貝果",
-      "category": "carbs",
-      "isCount": true,
-      "unitLabel": "個",
-      "perUnit": {
-        "kcal": 250,
-        "protein": 9,
-        "fat": 1.5,
-        "carbs": 48,
-        "sodium": 380
-      },
-      "storageZone": "freezer",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "corn",
-      "name": "金黃玉米粒(無加糖)",
-      "brand": "好市多/綠巨人",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 77,
-        "protein": 2.4,
-        "fat": 1.7,
-        "carbs": 14.3,
-        "sodium": 160
-      },
-      "storageZone": "fridge",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯",
-        "EC 電商",
-        "其他"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "brown_rice",
-      "name": "現煮米飯/糙米飯",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 111,
-        "protein": 2.6,
-        "fat": 0.9,
-        "carbs": 23,
-        "sodium": 5
-      },
-      "storageZone": "freezer",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "freezer"
-      ]
-    },
-    {
-      "id": "potato",
-      "name": "馬鈴薯",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 77,
-        "protein": 2,
-        "fat": 0.1,
-        "carbs": 17,
-        "sodium": 6
-      },
-      "storageZone": "pantry",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZones": [
-        "pantry",
-        "freezer"
-      ]
-    },
-    {
-      "id": "granola",
-      "name": "綜合燕麥",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 420,
-        "protein": 10,
-        "fat": 15,
-        "carbs": 64,
-        "sodium": 45
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "prince_noodles",
-      "name": "王子麵",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "sweet_potato",
-      "name": "地瓜",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "傳統市場"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry",
-        "freezer"
-      ]
-    },
-    {
-      "id": "steamed_noodle",
-      "name": "蒸煮麵",
-      "category": "carbs",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "angel_hair_pasta",
-      "name": "義大利（天使）",
-      "category": "carbs",
-      "storageZones": [
-        "pantry"
-      ],
-      "storageZone": "pantry",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 160,
-        "protein": 3,
-        "carbs": 35,
-        "fat": 1,
-        "sodium": 10
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "Costco"
-      ]
-    },
-    {
-      "id": "shin_ramen",
-      "name": "辛拉麵",
-      "category": "carbs",
-      "storageZones": [
-        "pantry"
-      ],
-      "storageZone": "pantry",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 366,
-        "protein": 9.9,
-        "carbs": 73.8,
-        "fat": 3.5,
-        "sodium": 1939
-      },
-      "preferredStore": "EC 電商",
-      "preferredStores": [
-        "EC 電商"
-      ]
-    },
-    {
-      "id": "potato_ramen",
-      "name": "馬鈴薯泡麵",
-      "category": "carbs",
-      "unitLabel": "包",
-      "per100g": {
-        "kcal": 445,
-        "protein": 9,
-        "fat": 15,
-        "carbs": 68,
-        "sodium": 1750
-      },
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "EC 電商"
-      ]
-    }
-  ],
-  "sauces": [
-    {
-      "id": "bibimbap_secret",
-      "name": "韓式辣醬",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 300,
-        "protein": 6.7,
-        "fat": 10,
-        "carbs": 46.7,
-        "sodium": 2333
-      },
-      "storageZone": "fridge",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "balsamic",
-      "name": "巴薩米克醋",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 93,
-        "protein": 0.7,
-        "fat": 0,
-        "carbs": 18,
-        "sodium": 27
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "sesame_powder",
-      "name": "黑芝麻粉",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 570,
-        "protein": 18,
-        "fat": 49,
-        "carbs": 23,
-        "sodium": 5
-      },
-      "storageZone": "pantry",
-      "preferredStore": "義美",
-      "preferredStores": [
-        "義美",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "matcha_powder",
-      "name": "抹茶粉",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 320,
-        "protein": 30,
-        "fat": 5,
-        "carbs": 40,
-        "sodium": 10
-      },
-      "storageZone": "pantry",
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯",
-        "EC 電商"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "cocoa_powder",
-      "name": "可可粉",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 228,
-        "protein": 20,
-        "fat": 14,
-        "carbs": 58,
-        "sodium": 20
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "chia_seeds",
-      "name": "奇亞籽",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 486,
-        "protein": 16.5,
-        "fat": 30.7,
-        "carbs": 42.1,
-        "sodium": 16
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "smoked_sea_salt",
-      "name": "煙燻海鹽",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "soy_sauce",
-      "name": "醬油",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "shacha_sauce",
-      "name": "沙茶醬",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 100,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 10,
-        "sodium": 100
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ],
-      "storageZone": "fridge",
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "maple_syrup",
-      "name": "楓糖漿",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 260,
-        "protein": 0,
-        "fat": 0.1,
-        "carbs": 67,
-        "sodium": 12
-      },
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "italian_herbs",
-      "name": "義大利綜合香料",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 260,
-        "protein": 10,
-        "fat": 5,
-        "carbs": 45,
-        "sodium": 50
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "lemon_juice",
-      "name": "新鮮檸檬汁",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 22,
-        "protein": 0.4,
-        "fat": 0.2,
-        "carbs": 6.9,
-        "sodium": 1
-      },
-      "storageZone": "fridge",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "yuzu_vinegar",
-      "name": "和風柚子醋/果醋",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 35,
-        "protein": 0.5,
-        "fat": 0,
-        "carbs": 8,
-        "sodium": 120
-      },
-      "storageZone": "fridge",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "fridge"
-      ]
-    },
-    {
-      "id": "horseradish_mayo",
-      "name": "辣根蛋黃醬",
-      "category": "sauces",
-      "storageZones": [
-        "fridge"
-      ],
-      "storageZone": "fridge",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 150,
-        "protein": 10,
-        "carbs": 15,
-        "fat": 5,
-        "sodium": 50
-      },
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ]
-    },
-    {
-      "id": "olive_oil",
-      "name": "橄欖油",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 884,
-        "protein": 0,
-        "fat": 100,
-        "carbs": 0,
-        "sodium": 0
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "truffle_olive_oil",
-      "name": "松露橄欖油",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 884,
-        "protein": 0,
-        "fat": 100,
-        "carbs": 0,
-        "sodium": 0
-      },
-      "storageZone": "pantry",
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "storageZones": [
-        "pantry"
-      ]
-    },
-    {
-      "id": "sriracha_mayo",
-      "name": "J-Lek是拉差美乃滋",
-      "brand": "J-Lek",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 450,
-        "protein": 1,
-        "fat": 45,
-        "carbs": 12,
-        "sodium": 1200
-      },
-      "storageZones": [
-        "fridge"
-      ],
-      "storageZone": "fridge",
-      "preferredStore": "EC 電商",
-      "preferredStores": [
-        "EC 電商",
-        "全聯"
-      ]
-    },
-    {
-      "id": "sugar_free_peanut_butter",
-      "name": "無糖花生醬",
-      "category": "sauces",
-      "storageZones": [
-        "pantry"
-      ],
-      "storageZone": "pantry",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 594,
-        "protein": 21.9,
-        "carbs": 18.8,
-        "fat": 50,
-        "sodium": 312
-      },
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ]
-    },
-    {
-      "id": "avocado_mash",
-      "name": "酪梨泥",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 160,
-        "protein": 2,
-        "fat": 14.7,
-        "carbs": 8.5,
-        "sodium": 7
-      },
-      "storageZones": [
-        "freezer"
-      ],
-      "storageZone": "freezer",
-      "preferredStores": [
-        "Costco"
-      ],
-      "preferredStore": "Costco"
-    },
-    {
-      "id": "avocado_oil",
-      "name": "酪梨油",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 884,
-        "protein": 0,
-        "fat": 100,
-        "carbs": 0,
-        "sodium": 0
-      },
-      "storageZones": [
-        "pantry"
-      ],
-      "storageZone": "pantry",
-      "preferredStores": [
-        "Costco"
-      ],
-      "preferredStore": "Costco"
-    },
-    {
-      "id": "unsalted_butter",
-      "name": "無鹽奶油",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 717,
-        "protein": 0.9,
-        "fat": 81.1,
-        "carbs": 0.1,
-        "sodium": 11
-      },
-      "storageZones": [
-        "fridge"
-      ],
-      "storageZone": "fridge",
-      "preferredStores": [
-        "Costco",
-        "全聯"
-      ],
-      "preferredStore": "Costco"
-    },
-    {
-      "id": "brown_sugar_syrup",
-      "name": "黑糖漿",
-      "category": "sauces",
-      "unitLabel": "g",
-      "per100g": {
-        "kcal": 260,
-        "protein": 0.2,
-        "fat": 0.1,
-        "carbs": 65,
-        "sodium": 15
-      },
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ],
-      "preferredStore": "全聯",
-      "preferredStores": [
-        "全聯"
-      ]
-    },
-    {
-      "id": "coffee_capsule",
-      "name": "咖啡膠囊",
-      "category": "sauces",
-      "unitLabel": "顆",
-      "servingSize": 1,
-      "servingUnit": "顆",
-      "perServing": {
-        "kcal": 2,
-        "protein": 0.1,
-        "fat": 0,
-        "carbs": 0.3,
-        "sodium": 2
-      },
-      "per100g": {
-        "kcal": 2,
-        "protein": 0.1,
-        "fat": 0,
-        "carbs": 0.3,
-        "sodium": 2
-      },
-      "storageZone": "pantry",
-      "storageZones": [
-        "pantry"
-      ],
-      "preferredStore": "Costco",
-      "preferredStores": [
-        "Costco"
-      ]
-    },
-    {
-      "id": "ing_1787563079531",
-      "name": "義美烏醋",
-      "brand": "",
-      "category": "sauces",
-      "servingSize": 100,
-      "servingUnit": "g",
-      "storageZones": [
-        "pantry",
-        "fridge"
-      ],
-      "preferredStores": [
-        "義美"
-      ],
-      "price": 0,
-      "priceUnit": "包",
-      "per100g": {
-        "kcal": 0,
-        "protein": 0,
-        "carbs": 0,
-        "fat": 0,
-        "sodium": 0
-      },
-      "perServing": {
-        "kcal": 0,
-        "protein": 0,
-        "carbs": 0,
-        "fat": 0,
-        "sodium": 0
-      }
-    }
-  ]
+    "proteins": [
+        {
+            "id": "whey_protein",
+            "name": "乳清蛋白粉",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 385,
+                "protein": 77,
+                "fat": 5.5,
+                "carbs": 7,
+                "sodium": 160
+            },
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "tuna",
+            "name": "水煮鮪魚",
+            "brand": "Kirkland 科克蘭",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 131,
+                "protein": 28.6,
+                "fat": 1.8,
+                "carbs": 0,
+                "sodium": 321
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "shrimp",
+            "name": "蝦仁",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 83,
+                "protein": 19.6,
+                "fat": 0.5,
+                "carbs": 0,
+                "sodium": 280
+            },
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "sous_vide_chicken",
+            "name": "雞胸肉",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 115,
+                "protein": 23,
+                "fat": 1.5,
+                "carbs": 0,
+                "sodium": 180
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge",
+                "freezer"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
+        },
+        {
+            "id": "pork_shoulder",
+            "name": "豬梅花肉片",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 207,
+                "protein": 18.9,
+                "fat": 14.2,
+                "carbs": 0.4,
+                "sodium": 56
+            },
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "egg",
+            "name": "蛋",
+            "category": "proteins",
+            "isCount": true,
+            "unitLabel": "顆",
+            "perUnit": {
+                "kcal": 85,
+                "protein": 6.5,
+                "fat": 6.2,
+                "carbs": 0.6,
+                "sodium": 70
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "tofu",
+            "name": "板豆腐",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 88,
+                "protein": 9,
+                "fat": 5.3,
+                "carbs": 1.9,
+                "sodium": 7
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "plain_yogurt",
+            "name": "一般優格",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 61,
+                "protein": 4,
+                "fat": 3.3,
+                "carbs": 4.7,
+                "sodium": 46
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "bacon",
+            "name": "培根",
+            "category": "proteins",
+            "isCount": true,
+            "unitLabel": "條",
+            "perUnit": {
+                "kcal": 43,
+                "protein": 3.5,
+                "fat": 3.3,
+                "carbs": 0.2,
+                "sodium": 190
+            },
+            "storageZone": "freezer",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZones": [
+                "freezer"
+            ],
+            "brand": "",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "price": 0,
+            "priceUnit": "包",
+            "per100g": {
+                "kcal": 77,
+                "protein": 6.3,
+                "carbs": 0.4,
+                "fat": 5.9,
+                "sodium": 342
+            },
+            "perServing": {
+                "kcal": 77,
+                "protein": 6.3,
+                "carbs": 0.4,
+                "fat": 5.9,
+                "sodium": 342
+            }
+        },
+        {
+            "id": "chicken_thigh",
+            "name": "雞腿肉",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 172,
+                "protein": 18.5,
+                "fat": 10.5,
+                "carbs": 0,
+                "sodium": 75
+            },
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "beef_slice",
+            "name": "牛肉片",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 250,
+                "protein": 26,
+                "fat": 15,
+                "carbs": 0,
+                "sodium": 60
+            },
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "shrimp_paste",
+            "name": "蝦仁漿",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "frozen_tofu",
+            "name": "凍豆腐",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "edamame",
+            "name": "毛豆",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "義美",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "義美"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "salmon",
+            "name": "鮭魚",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "full_fat_milk_250",
+            "name": "全脂鮮奶",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "義美",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "義美"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "crab_stick",
+            "name": "蟹肉棒",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "century_egg",
+            "name": "皮蛋",
+            "category": "proteins",
+            "unitLabel": "顆",
+            "per100g": {
+                "kcal": 170,
+                "protein": 12.5,
+                "fat": 12.8,
+                "carbs": 1.2,
+                "sodium": 550
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
+        },
+        {
+            "id": "mushroom_meatball",
+            "name": "香菇貢丸",
+            "category": "proteins",
+            "unitLabel": "顆",
+            "per100g": {
+                "kcal": 260,
+                "protein": 13.5,
+                "fat": 21,
+                "carbs": 4.5,
+                "sodium": 580
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco",
+                "傳統市場"
+            ]
+        },
+        {
+            "id": "egg_dumpling",
+            "name": "蛋餃",
+            "category": "proteins",
+            "unitLabel": "顆",
+            "per100g": {
+                "kcal": 185,
+                "protein": 11.2,
+                "fat": 14.5,
+                "carbs": 2.5,
+                "sodium": 380
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
+        },
+        {
+            "id": "taro_meatball",
+            "name": "芋頭貢丸",
+            "category": "proteins",
+            "isCount": false,
+            "unitLabel": "顆",
+            "per100g": {
+                "kcal": 50,
+                "protein": 1,
+                "carbs": 10,
+                "fat": 0.2,
+                "sodium": 5
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "greek_yogurt",
+            "name": "希臘優格",
+            "brand": "",
+            "category": "proteins",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStores": [
+                "Costco"
+            ],
+            "price": 0,
+            "priceUnit": "包",
+            "per100g": {
+                "kcal": 59,
+                "protein": 10,
+                "carbs": 3.6,
+                "fat": 0.4,
+                "sodium": 36
+            },
+            "perServing": {
+                "kcal": 59,
+                "protein": 10,
+                "carbs": 3.6,
+                "fat": 0.4,
+                "sodium": 36
+            }
+        },
+        {
+            "id": "sugar_free_soymilk",
+            "name": "無糖豆漿",
+            "brand": "",
+            "category": "proteins",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStores": [
+                "義美",
+                "全聯",
+                "Costco"
+            ],
+            "price": 0,
+            "priceUnit": "包",
+            "photoUrl": "data:image/jpeg;base64,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",
+            "per100g": {
+                "kcal": 35,
+                "protein": 3.6,
+                "carbs": 0.7,
+                "fat": 1.8,
+                "sodium": 12
+            },
+            "perServing": {
+                "kcal": 35,
+                "protein": 3.6,
+                "carbs": 0.7,
+                "fat": 1.8,
+                "sodium": 12
+            }
+        }
+    ],
+    "veggies": [
+        {
+            "id": "mango",
+            "name": "芒果",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 50,
+                "protein": 0.6,
+                "fat": 0.3,
+                "carbs": 12.8,
+                "sodium": 1
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge",
+                "pantry"
+            ]
+        },
+        {
+            "id": "cabbage",
+            "name": "高麗菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 25,
+                "protein": 1.3,
+                "fat": 0.1,
+                "carbs": 5.8,
+                "sodium": 18
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "baby_cabbage",
+            "name": "娃娃菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 18,
+                "protein": 1.5,
+                "fat": 0.2,
+                "carbs": 3.4,
+                "sodium": 10
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "broccoli",
+            "name": "綠花椰菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 34,
+                "protein": 2.8,
+                "fat": 0.4,
+                "carbs": 6.6,
+                "sodium": 33
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ],
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco"
+        },
+        {
+            "id": "kimchi",
+            "name": "韓式泡菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 32,
+                "protein": 1.6,
+                "fat": 0.5,
+                "carbs": 6,
+                "sodium": 800
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "black_fungus",
+            "name": "黑木耳",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 25,
+                "protein": 1,
+                "fat": 0.2,
+                "carbs": 6.5,
+                "sodium": 10
+            },
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "baby_corn",
+            "name": "玉米筍",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 31,
+                "protein": 1.5,
+                "fat": 0.3,
+                "carbs": 6.5,
+                "sodium": 2
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "banana",
+            "name": "香蕉",
+            "category": "veggies",
+            "isCount": true,
+            "unitLabel": "根",
+            "perUnit": {
+                "kcal": 88,
+                "protein": 1.2,
+                "fat": 0.2,
+                "carbs": 22,
+                "sodium": 1
+            },
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "spinach",
+            "name": "菠菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 23,
+                "protein": 2.9,
+                "fat": 0.4,
+                "carbs": 3.6,
+                "sodium": 79
+            },
+            "storageZone": "freezer",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "chinese_cabbage",
+            "name": "大白菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 13,
+                "protein": 1.2,
+                "fat": 0.2,
+                "carbs": 2.4,
+                "sodium": 15
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "zucchini",
+            "name": "櫛瓜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 17,
+                "protein": 1.2,
+                "fat": 0.3,
+                "carbs": 3.1,
+                "sodium": 8
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge"
+            ],
+            "brand": "",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "price": 0,
+            "priceUnit": "包",
+            "perServing": {
+                "kcal": 17,
+                "protein": 1.2,
+                "carbs": 3.1,
+                "fat": 0.3,
+                "sodium": 8
+            }
+        },
+        {
+            "id": "cucumber",
+            "name": "小黃瓜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 15,
+                "protein": 0.7,
+                "fat": 0.1,
+                "carbs": 3.6,
+                "sodium": 2
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "greens",
+            "name": "綜合生菜",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 15,
+                "protein": 1.4,
+                "fat": 0.2,
+                "carbs": 2.9,
+                "sodium": 28
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "carrot",
+            "name": "紅蘿蔔",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 41,
+                "protein": 0.9,
+                "fat": 0.2,
+                "carbs": 9.6,
+                "sodium": 69
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge",
+                "freezer",
+                "pantry"
+            ],
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "preferredStore": "全聯"
+        },
+        {
+            "id": "onion",
+            "name": "洋蔥",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 40,
+                "protein": 1.1,
+                "fat": 0.1,
+                "carbs": 9.3,
+                "sodium": 4
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry",
+                "freezer"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
+        },
+        {
+            "id": "mushroom",
+            "name": "香菇",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 38,
+                "protein": 3.1,
+                "fat": 0.3,
+                "carbs": 6.8,
+                "sodium": 6
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "fridge",
+                "freezer"
+            ]
+        },
+        {
+            "id": "beech_mushroom",
+            "name": "鴻喜菇/雪白菇",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 32,
+                "protein": 2.6,
+                "fat": 0.3,
+                "carbs": 6.2,
+                "sodium": 3
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge",
+                "freezer"
+            ]
+        },
+        {
+            "id": "frozen_berry",
+            "name": "冷凍莓果",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 50,
+                "protein": 1,
+                "fat": 0.5,
+                "carbs": 11.5,
+                "sodium": 1
+            },
+            "storageZone": "freezer",
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco",
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "nori_strips",
+            "name": "海苔絲",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "cherry_tomatoes",
+            "name": "小番茄",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "bean_sprouts",
+            "name": "黃豆芽",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "scallion",
+            "name": "青蔥",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 32,
+                "protein": 1.8,
+                "fat": 0.2,
+                "carbs": 7.3,
+                "sodium": 10
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ]
+        },
+        {
+            "id": "enoki_mushroom",
+            "name": "金針菇",
+            "category": "veggies",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 37,
+                "protein": 2.7,
+                "fat": 0.3,
+                "carbs": 7.8,
+                "sodium": 3
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
+        }
+    ],
+    "carbs": [
+        {
+            "id": "green_pepper_noodle",
+            "name": "青花椒乾拌麵",
+            "brand": "賈以食日",
+            "category": "carbs",
+            "isCount": true,
+            "unitLabel": "包",
+            "perServing": {
+                "kcal": 390.9,
+                "protein": 13.1,
+                "fat": 7.7,
+                "carbs": 67.3,
+                "sodium": 1070.1
+            },
+            "storageZone": "pantry",
+            "preferredStore": "EC 電商",
+            "preferredStores": [
+                "EC 電商",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "bagel",
+            "name": "原味貝果",
+            "category": "carbs",
+            "isCount": true,
+            "unitLabel": "個",
+            "perUnit": {
+                "kcal": 250,
+                "protein": 9,
+                "fat": 1.5,
+                "carbs": 48,
+                "sodium": 380
+            },
+            "storageZone": "freezer",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "corn",
+            "name": "金黃玉米粒(無加糖)",
+            "brand": "好市多/綠巨人",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 77,
+                "protein": 2.4,
+                "fat": 1.7,
+                "carbs": 14.3,
+                "sodium": 160
+            },
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯",
+                "EC 電商",
+                "其他"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "brown_rice",
+            "name": "現煮米飯/糙米飯",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 111,
+                "protein": 2.6,
+                "fat": 0.9,
+                "carbs": 23,
+                "sodium": 5
+            },
+            "storageZone": "freezer",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "freezer"
+            ]
+        },
+        {
+            "id": "potato",
+            "name": "馬鈴薯",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 77,
+                "protein": 2,
+                "fat": 0.1,
+                "carbs": 17,
+                "sodium": 6
+            },
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZones": [
+                "pantry",
+                "freezer"
+            ]
+        },
+        {
+            "id": "granola",
+            "name": "綜合燕麥",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 420,
+                "protein": 10,
+                "fat": 15,
+                "carbs": 64,
+                "sodium": 45
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "prince_noodles",
+            "name": "王子麵",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "sweet_potato",
+            "name": "地瓜",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry",
+                "freezer"
+            ]
+        },
+        {
+            "id": "steamed_noodle",
+            "name": "蒸煮麵",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "angel_hair_pasta",
+            "name": "義大利（天使）",
+            "category": "carbs",
+            "storageZones": [
+                "pantry"
+            ],
+            "storageZone": "pantry",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 160,
+                "protein": 3,
+                "carbs": 35,
+                "fat": 1,
+                "sodium": 10
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
+        },
+        {
+            "id": "shin_ramen",
+            "name": "辛拉麵",
+            "category": "carbs",
+            "storageZones": [
+                "pantry"
+            ],
+            "storageZone": "pantry",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 366,
+                "protein": 9.9,
+                "carbs": 73.8,
+                "fat": 3.5,
+                "sodium": 1939
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "Costco"
+            ]
+        },
+        {
+            "id": "potato_ramen",
+            "name": "馬鈴薯泡麵",
+            "category": "carbs",
+            "unitLabel": "包",
+            "per100g": {
+                "kcal": 445,
+                "protein": 9,
+                "fat": 15,
+                "carbs": 68,
+                "sodium": 1750
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "EC 電商"
+            ]
+        }
+    ],
+    "sauces": [
+        {
+            "id": "bibimbap_secret",
+            "name": "韓式辣醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 300,
+                "protein": 6.7,
+                "fat": 10,
+                "carbs": 46.7,
+                "sodium": 2333
+            },
+            "storageZone": "fridge",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "balsamic",
+            "name": "巴薩米克醋",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 93,
+                "protein": 0.7,
+                "fat": 0,
+                "carbs": 18,
+                "sodium": 27
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "sesame_powder",
+            "name": "黑芝麻粉",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 570,
+                "protein": 18,
+                "fat": 49,
+                "carbs": 23,
+                "sodium": 5
+            },
+            "storageZone": "pantry",
+            "preferredStore": "義美",
+            "preferredStores": [
+                "義美",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "matcha_powder",
+            "name": "抹茶粉",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 320,
+                "protein": 30,
+                "fat": 5,
+                "carbs": 40,
+                "sodium": 10
+            },
+            "storageZone": "pantry",
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "EC 電商"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "cocoa_powder",
+            "name": "可可粉",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 228,
+                "protein": 20,
+                "fat": 14,
+                "carbs": 58,
+                "sodium": 20
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "chia_seeds",
+            "name": "奇亞籽",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 486,
+                "protein": 16.5,
+                "fat": 30.7,
+                "carbs": 42.1,
+                "sodium": 16
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "smoked_sea_salt",
+            "name": "煙燻海鹽",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "soy_sauce",
+            "name": "醬油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "shacha_sauce",
+            "name": "沙茶醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 100,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 10,
+                "sodium": 100
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "maple_syrup",
+            "name": "楓糖漿",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 260,
+                "protein": 0,
+                "fat": 0.1,
+                "carbs": 67,
+                "sodium": 12
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "italian_herbs",
+            "name": "義大利綜合香料",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 260,
+                "protein": 10,
+                "fat": 5,
+                "carbs": 45,
+                "sodium": 50
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "lemon_juice",
+            "name": "新鮮檸檬汁",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 22,
+                "protein": 0.4,
+                "fat": 0.2,
+                "carbs": 6.9,
+                "sodium": 1
+            },
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "yuzu_vinegar",
+            "name": "和風柚子醋/果醋",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 35,
+                "protein": 0.5,
+                "fat": 0,
+                "carbs": 8,
+                "sodium": 120
+            },
+            "storageZone": "fridge",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "fridge"
+            ]
+        },
+        {
+            "id": "horseradish_mayo",
+            "name": "辣根蛋黃醬",
+            "category": "sauces",
+            "storageZones": [
+                "fridge"
+            ],
+            "storageZone": "fridge",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 150,
+                "protein": 10,
+                "carbs": 15,
+                "fat": 5,
+                "sodium": 50
+            },
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
+        },
+        {
+            "id": "olive_oil",
+            "name": "橄欖油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 884,
+                "protein": 0,
+                "fat": 100,
+                "carbs": 0,
+                "sodium": 0
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "truffle_olive_oil",
+            "name": "松露橄欖油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 884,
+                "protein": 0,
+                "fat": 100,
+                "carbs": 0,
+                "sodium": 0
+            },
+            "storageZone": "pantry",
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "storageZones": [
+                "pantry"
+            ]
+        },
+        {
+            "id": "sriracha_mayo",
+            "name": "J-Lek是拉差美乃滋",
+            "brand": "J-Lek",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 450,
+                "protein": 1,
+                "fat": 45,
+                "carbs": 12,
+                "sodium": 1200
+            },
+            "storageZones": [
+                "fridge"
+            ],
+            "storageZone": "fridge",
+            "preferredStore": "EC 電商",
+            "preferredStores": [
+                "EC 電商",
+                "全聯"
+            ]
+        },
+        {
+            "id": "sugar_free_peanut_butter",
+            "name": "無糖花生醬",
+            "category": "sauces",
+            "storageZones": [
+                "pantry"
+            ],
+            "storageZone": "pantry",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 594,
+                "protein": 21.9,
+                "carbs": 18.8,
+                "fat": 50,
+                "sodium": 312
+            },
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ]
+        },
+        {
+            "id": "avocado_mash",
+            "name": "酪梨泥",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 160,
+                "protein": 2,
+                "fat": 14.7,
+                "carbs": 8.5,
+                "sodium": 7
+            },
+            "storageZones": [
+                "freezer"
+            ],
+            "storageZone": "freezer",
+            "preferredStores": [
+                "Costco",
+                "義美"
+            ],
+            "preferredStore": "義美"
+        },
+        {
+            "id": "avocado_oil",
+            "name": "酪梨油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 884,
+                "protein": 0,
+                "fat": 100,
+                "carbs": 0,
+                "sodium": 0
+            },
+            "storageZones": [
+                "pantry"
+            ],
+            "storageZone": "pantry",
+            "preferredStores": [
+                "Costco"
+            ],
+            "preferredStore": "Costco"
+        },
+        {
+            "id": "unsalted_butter",
+            "name": "無鹽奶油",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 717,
+                "protein": 0.9,
+                "fat": 81.1,
+                "carbs": 0.1,
+                "sodium": 11
+            },
+            "storageZones": [
+                "fridge"
+            ],
+            "storageZone": "fridge",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "preferredStore": "Costco"
+        },
+        {
+            "id": "brown_sugar_syrup",
+            "name": "黑糖漿",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 260,
+                "protein": 0.2,
+                "fat": 0.1,
+                "carbs": 65,
+                "sodium": 15
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
+        },
+        {
+            "id": "coffee_capsule",
+            "name": "咖啡膠囊",
+            "category": "sauces",
+            "unitLabel": "顆",
+            "servingSize": 1,
+            "servingUnit": "顆",
+            "perServing": {
+                "kcal": 2,
+                "protein": 0.1,
+                "fat": 0,
+                "carbs": 0.3,
+                "sodium": 2
+            },
+            "per100g": {
+                "kcal": 2,
+                "protein": 0.1,
+                "fat": 0,
+                "carbs": 0.3,
+                "sodium": 2
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ]
+        },
+        {
+            "id": "ing_1787563079531",
+            "name": "義美烏醋",
+            "brand": "",
+            "category": "sauces",
+            "servingSize": 100,
+            "servingUnit": "g",
+            "storageZones": [
+                "pantry",
+                "fridge"
+            ],
+            "preferredStores": [
+                "義美"
+            ],
+            "price": 0,
+            "priceUnit": "包",
+            "per100g": {
+                "kcal": 0,
+                "protein": 0,
+                "carbs": 0,
+                "fat": 0,
+                "sodium": 0
+            },
+            "perServing": {
+                "kcal": 0,
+                "protein": 0,
+                "carbs": 0,
+                "fat": 0,
+                "sodium": 0
+            }
+        }
+    ]
 }

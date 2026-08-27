@@ -136,8 +136,10 @@ const IngredientDetailModal = {
                 }
 
                 form.displayBasis = isSauceOrOil ? 'serving' : '100g';
+                photo.url = ing.photoUrl || ing.photo || null;
+            } else {
+                photo.url = null;
             }
-            photo.url = null;
             photo.isAnalyzing = false;
             photo.status = 'idle';
             photo.message = '';
@@ -485,6 +487,7 @@ const IngredientDetailModal = {
                 preferredStores: [...form.preferredStores],
                 price: Number(form.price) || 0,
                 priceUnit: form.priceUnit || '包',
+                photoUrl: photo.url || null,
                 per100g: {
                     kcal: Number(form.per100g.kcal) || 0,
                     protein: Number(form.per100g.protein) || 0,
@@ -592,19 +595,26 @@ const IngredientDetailModal = {
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
                 </div>
 
-                <!-- 2. AI 圖片辨識狀態與預覽卡片 -->
-                <div v-if="photo.url" style="margin-bottom: 16px; background: #FFFFFF; border: 1.5px solid var(--color-mint-active); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 52px; height: 52px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #F3F4F6;">
-                        <img :src="photo.url" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-                    </div>
-                    <div style="flex: 1;">
-                        <div v-if="photo.status === 'success'" style="font-size: 0.85rem; color: #065F46; font-weight: 700;">
-                            {{ photo.message || '✨ 已自動帶入營養數據！' }}
-                        </div>
-                        <div v-else-if="photo.status === 'error'" style="font-size: 0.85rem; color: #DC2626; font-weight: 600;">
-                            {{ photo.message }}
-                        </div>
-                    </div>
+                <!-- 2. 食材實拍照片滿版卡片 (右上角疊加刪除按鈕) -->
+                <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.06); background: #111827;">
+                    <img :src="photo.url" style="width: 100%; max-height: 180px; object-fit: cover; display: block;" />
+                    
+                    <!-- 頂部右上角：刪除/移除照片按鈕 (放大至 38px，使用系統標準 20px 垃圾桶 SVG) -->
+                    <button class="btn-icon" @click="photo.url = null; photo.message = ''" 
+                            style="position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.68); color: #FFFFFF; border: 1.5px solid rgba(255, 255, 255, 0.45); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); padding: 0;" 
+                            title="移除此照片">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                    
+                    <!-- 底部左下角：實拍照片標籤 -->
+                    <span style="position: absolute; bottom: 8px; left: 8px; background: rgba(0, 0, 0, 0.65); color: #FFF; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+                        📸 實拍建檔
+                    </span>
                 </div>
 
                 <!-- API Key 輸入列 (折疊) -->
