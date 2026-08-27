@@ -1395,8 +1395,8 @@ export default {
                                 </span>
                             </div>
 
-                            <!-- Dish Name & Portion Row (料理名稱 + 右側份量下拉選單) -->
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--color-border);">
+                            <!-- Dish Name Row (料理名稱全寬無壓迫) -->
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--color-border);">
                                 <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0;">
                                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
@@ -1410,20 +1410,22 @@ export default {
                                     <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted);">推算料理名稱 (可點擊修改)</div>
                                     <input type="text" v-model="resultForm.dishName" class="search-input" style="padding: 6px 10px; font-weight: 700; font-size: 0.95rem; background: #FFF; margin-top: 4px; width: 100%;">
                                 </div>
-                                <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
-                                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 4px;">份量</div>
-                                    <select v-model="selectedPortionRatio" @change="applyPortionRatio" class="select-box" style="width: auto; min-width: 68px; padding: 6px 8px; font-weight: 700; font-size: 0.95rem; border-radius: 8px; background: #FFFFFF; border: 1.5px solid var(--color-primary); color: #92400E; cursor: pointer; text-align: center;">
-                                        <option value="1">1</option>
-                                        <option value="0.5">1/2</option>
-                                        <option value="0.33">1/3</option>
-                                    </select>
-                                </div>
                             </div>
 
                             <!-- 5 Editable Nutrients (熱量、蛋白、碳水、脂肪、鈉) -->
                             <div style="background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
-                                <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 10px; font-weight: 600;">
-                                    營養數據 (數字皆可手動點擊微調)：
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px;">
+                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">
+                                        數字可手動微調：
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">份量</span>
+                                        <select v-model="selectedPortionRatio" @change="applyPortionRatio" class="select-box" style="width: auto; min-width: 68px; padding: 3px 8px; font-weight: 700; font-size: 0.9rem; border-radius: 8px; background: #FFFDF8; border: 1.5px solid var(--color-primary); color: #92400E; cursor: pointer; text-align: center;">
+                                            <option value="1">1</option>
+                                            <option value="0.5">1/2</option>
+                                            <option value="0.33">1/3</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
