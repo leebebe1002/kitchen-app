@@ -1,5 +1,5 @@
 const { ref, computed, watch } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260827_V100_FIX_TALL_PHOTO';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260827_V105_COVER_TALL_PHOTO';
 
 export default {
     components: {
