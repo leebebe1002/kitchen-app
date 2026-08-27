@@ -882,6 +882,58 @@
           "meals": []
         }
       }
+    },
+    {
+      "date": "2026-08-28",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 165,
+            "protein": 14,
+            "carbs": 16,
+            "fat": 5,
+            "sodium": 260
+          },
+          "meals": [
+            {
+              "id": "meal_1787872780685_bebe",
+              "dishName": "鮪魚蛋沙拉全麥吐司配希臘優格",
+              "time": "上午07:19",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 165,
+                "protein": 14,
+                "carbs": 16,
+                "fat": 5,
+                "sodium": 260
+              },
+              "aiNote": "十一粒 AI 語意精算完成，這是一份高蛋白且低負擔的輕食早餐，數據可隨時點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
     }
   ]
 }
