@@ -27,6 +27,17 @@ export default {
         let mediaStream = null;
 
         // Editable Result Form for 畫面 C
+        const selectedPortionRatio = ref('1');
+        const baseNutrients = ref({
+            dishName: '便當店排骨便當',
+            kcal: 680,
+            protein: 28.5,
+            carbs: 82.0,
+            fat: 24.0,
+            sodium: 980,
+            aiNote: '估算自信度 88%，包含大油炒高麗菜與排骨裹粉。'
+        });
+
         const resultForm = ref({
             dishName: '便當店排骨便當',
             kcal: 680,
@@ -37,7 +48,41 @@ export default {
             aiNote: '估算自信度 88%，包含大油炒高麗菜與排骨裹粉。'
         });
 
+        const setResultFormWithBase = (formObj) => {
+            selectedPortionRatio.value = '1';
+            baseNutrients.value = {
+                dishName: formObj.dishName || '',
+                kcal: Number(formObj.kcal) || 0,
+                protein: Number(formObj.protein) || 0,
+                carbs: Number(formObj.carbs) || 0,
+                fat: Number(formObj.fat) || 0,
+                sodium: Number(formObj.sodium) || 0,
+                aiNote: formObj.aiNote || ''
+            };
+            resultForm.value = {
+                dishName: formObj.dishName || '',
+                kcal: Number(formObj.kcal) || 0,
+                protein: Number(formObj.protein) || 0,
+                carbs: Number(formObj.carbs) || 0,
+                fat: Number(formObj.fat) || 0,
+                sodium: Number(formObj.sodium) || 0,
+                aiNote: formObj.aiNote || ''
+            };
+            modalStep.value = 'result';
+            isAiAnalyzing.value = false;
+        };
 
+        const applyPortionRatio = () => {
+            const ratio = parseFloat(selectedPortionRatio.value) || 1.0;
+            const base = baseNutrients.value;
+            const round1 = (val) => Math.round(val * ratio * 10) / 10;
+            
+            resultForm.value.kcal = Math.round(base.kcal * ratio);
+            resultForm.value.protein = round1(base.protein);
+            resultForm.value.carbs = round1(base.carbs);
+            resultForm.value.fat = round1(base.fat);
+            resultForm.value.sodium = round1(base.sodium);
+        };
 
         const targetProfile = computed(() => {
             return engine.profiles[currentMember.value] || {
@@ -49,7 +94,7 @@ export default {
 
         const selectFavoriteFood = (fav) => {
             capturedPhotoUrl.value = null;
-            resultForm.value = {
+            setResultFormWithBase({
                 dishName: fav.name,
                 kcal: Number(fav.nutrients?.kcal) || 0,
                 protein: Number(fav.nutrients?.protein) || 0,
@@ -57,9 +102,7 @@ export default {
                 fat: Number(fav.nutrients?.fat) || 0,
                 sodium: Number(fav.nutrients?.sodium) || 0,
                 aiNote: fav.aiNote || '常用快捷精確數據'
-            };
-            modalStep.value = 'result';
-            isAiAnalyzing.value = false;
+            });
         };
 
         const saveAsFavorite = async () => {
@@ -574,8 +617,7 @@ export default {
 
             if (!apiKey) {
                 console.warn('⚠️ 未設定 Gemini API Key，自動開啟設定視窗');
-                isAiAnalyzing.value = false;
-                resultForm.value = {
+                setResultFormWithBase({
                     dishName: hintText || '外食拍照餐點',
                     kcal: 520,
                     protein: 30,
@@ -583,7 +625,7 @@ export default {
                     fat: 16,
                     sodium: 680,
                     aiNote: '⚠️ 尚未設定 Gemini API Key，請點擊右上角「🔑 設定 Key」輸入你的 Google 金鑰，即可開啟秒速視覺辨識！'
-                };
+                });
                 openApiKeySettings();
                 return;
             }
@@ -594,7 +636,7 @@ export default {
                 try {
                     const clientRes = await callClientGeminiVision(photoData, apiKey);
                     if (clientRes.status === 'success' && clientRes.result) {
-                        resultForm.value = {
+                        setResultFormWithBase({
                             dishName: clientRes.result.dishName || '拍照餐點',
                             kcal: Number(clientRes.result.kcal) || 0,
                             protein: Number(clientRes.result.protein) || 0,
@@ -602,8 +644,7 @@ export default {
                             fat: Number(clientRes.result.fat) || 0,
                             sodium: Number(clientRes.result.sodium) || 0,
                             aiNote: clientRes.result.aiNote || '十一粒 AI 視覺辨識完成，數據可點擊微調。'
-                        };
-                        isAiAnalyzing.value = false;
+                        });
                         return;
                     } else {
                         lastFailMessage = clientRes.message || '';
@@ -625,7 +666,7 @@ export default {
                     });
                     const data = await res.json();
                     if (data.status === 'success' && data.result) {
-                        resultForm.value = {
+                        setResultFormWithBase({
                             dishName: data.result.dishName || '拍照餐點',
                             kcal: Number(data.result.kcal) || 0,
                             protein: Number(data.result.protein) || 0,
@@ -633,8 +674,7 @@ export default {
                             fat: Number(data.result.fat) || 0,
                             sodium: Number(data.result.sodium) || 0,
                             aiNote: data.result.aiNote || '十一粒 AI 視覺辨識估算完成，數據可點擊手動微調。'
-                        };
-                        isAiAnalyzing.value = false;
+                        });
                         return;
                     }
                 } catch (e) {
@@ -649,7 +689,7 @@ export default {
             }
 
             // 若視覺辨識異常時的備援與清楚錯誤提示
-            resultForm.value = {
+            setResultFormWithBase({
                 dishName: fallbackName,
                 kcal: 520,
                 protein: 30,
@@ -659,8 +699,7 @@ export default {
                 aiNote: lastFailMessage 
                     ? `⚠️ AI 分析暫時未回應（${lastFailMessage}），已帶入備援數值，可直接點擊手動修改。`
                     : (apiKey ? '十一粒 AI 視覺推算：含主菜與配菜，數值皆可直接點擊手動微調。' : '⚠️ 尚未設定 Gemini API Key，已帶入標準備援估算數值。')
-            };
-            isAiAnalyzing.value = false;
+            });
         };
 
         // 🎙️ 真正的 Gemini LLM 自然語言深度語意解析
@@ -684,7 +723,7 @@ export default {
                 try {
                     const clientRes = await callClientGeminiNLP(text, apiKey);
                     if (clientRes.status === 'success' && clientRes.result) {
-                        resultForm.value = {
+                        setResultFormWithBase({
                             dishName: clientRes.result.dishName || text,
                             kcal: Number(clientRes.result.kcal) || 0,
                             protein: Number(clientRes.result.protein) || 0,
@@ -692,8 +731,7 @@ export default {
                             fat: Number(clientRes.result.fat) || 0,
                             sodium: Number(clientRes.result.sodium) || 0,
                             aiNote: clientRes.result.aiNote || '十一粒 AI 語意精算完成，數據可點擊手動微調。'
-                        };
-                        isAiAnalyzing.value = false;
+                        });
                         return;
                     } else {
                         lastFailReason = clientRes.message || '';
@@ -713,7 +751,7 @@ export default {
                 });
                 const data = await res.json();
                 if (data.status === 'success' && data.result) {
-                    resultForm.value = {
+                    setResultFormWithBase({
                         dishName: data.result.dishName || text,
                         kcal: Number(data.result.kcal) || 0,
                         protein: Number(data.result.protein) || 0,
@@ -721,8 +759,7 @@ export default {
                         fat: Number(data.result.fat) || 0,
                         sodium: Number(data.result.sodium) || 0,
                         aiNote: data.result.aiNote || '十一粒 AI 語意精算完成，數據可點擊手動微調。'
-                    };
-                    isAiAnalyzing.value = false;
+                    });
                     return;
                 }
             } catch (e) {
@@ -730,7 +767,7 @@ export default {
             }
 
             // 網路離線或無 Key 時的備援與清楚錯誤提示
-            resultForm.value = {
+            setResultFormWithBase({
                 dishName: text,
                 kcal: 450,
                 protein: 20,
@@ -740,8 +777,7 @@ export default {
                 aiNote: !apiKey 
                     ? '⚠️ 尚未設定 Gemini API Key：請點右上角 🔑 貼上金鑰，即可開啟即時 AI 語意精算！'
                     : (lastFailReason ? `⚠️ AI 分析未完成（${lastFailReason}），已帶入備援估算數值。` : '十一粒 AI 語意估算：已記錄餐點名稱，數據可直接手動微調。')
-            };
-            isAiAnalyzing.value = false;
+            });
         };
 
         // 畫面 C: 確認寫入今日紀錄
@@ -750,9 +786,26 @@ export default {
             const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 
             const isFromPhoto = Boolean(capturedPhotoUrl.value);
+            
+            // 份量比例標籤處理
+            const ratio = selectedPortionRatio.value;
+            const ratioLabels = {
+                '0.25': '1/4 份',
+                '0.33': '1/3 份',
+                '0.5': '1/2 份',
+                '0.67': '2/3 份',
+                '0.75': '3/4 份',
+                '1.5': '1.5 份',
+                '2': '2 份'
+            };
+            let recordDishName = resultForm.value.dishName;
+            if (ratio !== '1' && ratioLabels[ratio] && !recordDishName.includes(ratioLabels[ratio])) {
+                recordDishName = `${recordDishName} (${ratioLabels[ratio]})`;
+            }
+
             const meal = {
                 id: 'meal_' + Date.now() + '_' + currentMember.value,
-                dishName: resultForm.value.dishName,
+                dishName: recordDishName,
                 time: timeStr,
                 source: isFromPhoto ? 'photo_ai' : 'nlp_ai',
                 nutrients: {
@@ -763,12 +816,13 @@ export default {
                     sodium: Number(resultForm.value.sodium) || 0
                 },
                 aiNote: resultForm.value.aiNote,
-                photoUrl: capturedPhotoUrl.value
+                photoUrl: capturedPhotoUrl.value,
+                portionRatio: ratio
             };
 
             await engine.recordMeal(currentDate.value, currentMember.value, meal);
             closeAiModal();
-            alert(`🎉 已成功將【${resultForm.value.dishName}】記錄至今日時間軸！`);
+            alert(`🎉 已成功將【${recordDishName}】記錄至今日時間軸！`);
         };
 
         const isSyncing = ref(false);
@@ -820,6 +874,8 @@ export default {
             nativeCameraInput,
             albumInput,
             resultForm,
+            selectedPortionRatio,
+            applyPortionRatio,
             changeDate,
             deleteMeal,
             openAiModal,
@@ -1339,9 +1395,9 @@ export default {
                                 </span>
                             </div>
 
-                            <!-- Dish Name Row -->
+                            <!-- Dish Name & Portion Row (料理名稱 + 右側份量下拉選單) -->
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--color-border);">
-                                <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                                <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0;">
                                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
                                         <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
@@ -1350,9 +1406,17 @@ export default {
                                         <line x1="14" y1="1" x2="14" y2="4"></line>
                                     </svg>
                                 </div>
-                                <div style="flex: 1;">
-                                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">推算料理名稱 (可點擊修改)</div>
-                                    <input type="text" v-model="resultForm.dishName" class="search-input" style="padding: 6px 10px; font-weight: 700; font-size: 1rem; background: #FFF; margin-top: 4px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted);">推算料理名稱 (可點擊修改)</div>
+                                    <input type="text" v-model="resultForm.dishName" class="search-input" style="padding: 6px 10px; font-weight: 700; font-size: 0.95rem; background: #FFF; margin-top: 4px; width: 100%;">
+                                </div>
+                                <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 4px;">份量</div>
+                                    <select v-model="selectedPortionRatio" @change="applyPortionRatio" class="select-box" style="width: auto; min-width: 68px; padding: 6px 8px; font-weight: 700; font-size: 0.95rem; border-radius: 8px; background: #FFFFFF; border: 1.5px solid var(--color-primary); color: #92400E; cursor: pointer; text-align: center;">
+                                        <option value="1">1</option>
+                                        <option value="0.5">1/2</option>
+                                        <option value="0.33">1/3</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -1403,22 +1467,20 @@ export default {
                                 </div>
                             </div>
 
-                            <!-- AI Context Note (附帶重新辨識按鈕) -->
+                            <!-- AI Context Note (附帶純圓形 icon 重新精算按鈕) -->
                             <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                                 <div style="flex: 1;"><strong>AI 說明：</strong>{{ resultForm.aiNote }}</div>
-                                <button v-if="capturedPhotoUrl" class="btn-icon" @click="processPhotoResult('', capturedPhotoUrl)" style="padding: 4px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; color: var(--color-primary);" title="立即重新分析照片">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <button v-if="capturedPhotoUrl" class="btn-icon" @click="processPhotoResult('', capturedPhotoUrl)" style="width: 34px; height: 34px; border-radius: 50%; padding: 0; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新辨識照片">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="23 4 23 10 17 10"></polyline>
                                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                                     </svg>
-                                    <span>重新辨識</span>
                                 </button>
-                                <button v-else class="btn-icon" @click="triggerVoiceAnalysis" style="padding: 4px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; color: var(--color-primary);" title="重新進行 AI 語意推算">
-                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <button v-else class="btn-icon" @click="triggerVoiceAnalysis" style="width: 34px; height: 34px; border-radius: 50%; padding: 0; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新進行 AI 語意推算">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="23 4 23 10 17 10"></polyline>
                                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                                     </svg>
-                                    <span>重新精算</span>
                                 </button>
                             </div>
 
