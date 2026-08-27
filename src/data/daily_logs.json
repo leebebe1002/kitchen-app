@@ -716,6 +716,57 @@
           "meals": []
         }
       }
+    },
+    {
+      "date": "2026-08-27",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 205,
+            "protein": 13,
+            "carbs": 21,
+            "fat": 7,
+            "sodium": 420
+          },
+          "meals": [
+            {
+              "id": "meal_1787800966740_bebe",
+              "dishName": "全麥優格蛋沙拉吐司",
+              "time": "上午11:22",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 205,
+                "protein": 13,
+                "carbs": 21,
+                "fat": 7,
+                "sodium": 420
+              },
+              "aiNote": "這是一道高纖高蛋白且清爽低負擔的早餐！AI 精算完成，數據可隨時點擊調整。",
+              "photoUrl": null
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
     }
   ]
 }
