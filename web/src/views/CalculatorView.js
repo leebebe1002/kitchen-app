@@ -1100,14 +1100,14 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方穩定主力端點相容矩陣 (優先調用穩定低延遲模型)
+                // 🌟 Google 官方 2026 最新指定主力端點 (與拍照 OCR 模組 100% 同步)
                 const endpoints = [
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`,
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite-preview-02-05:generateContent?key=${encodeURIComponent(apiKey)}`
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
                 ];
                 
                 let resultJson = null;
@@ -1115,13 +1115,14 @@ ${JSON.stringify(membersData, null, 2)}
 
                 // 多端點輪詢嘗試
                 for (let i = 0; i < endpoints.length; i++) {
-                    const fetchUrl = endpoints[i];
-                    const modelName = fetchUrl.split('/models/')[1]?.split(':')[0] || 'gemini';
+                    const endpoint = endpoints[i];
+                    const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
                     try {
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'x-goog-api-key': apiKey
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
@@ -1139,24 +1140,23 @@ ${JSON.stringify(membersData, null, 2)}
                                 const jsonMatch = rawText.match(/\{[\s\S]*\}/);
                                 if (jsonMatch) {
                                     resultJson = JSON.parse(jsonMatch[0]);
+                                    console.log('🎉 [十一粒 AI] 成功獲取線上 Gemini AI 配餐結果：', resultJson);
                                     break;
                                 }
                             }
                         } else {
                             const errTxt = await resp.text();
+                            console.warn(`[Gemini API] 端點 ${endpoint} 回應失敗:`, resp.status, errTxt);
                             if (resp.status === 429) {
                                 lastErrDetail = `額度限制 (429)`;
                                 break;
-                            } else if (resp.status === 503) {
-                                lastErrDetail = `伺服器短暫繁忙 (503)`;
-                                await new Promise(r => setTimeout(r, 200));
-                                continue;
                             } else {
                                 lastErrDetail = `HTTP ${resp.status}`;
                                 continue;
                             }
                         }
                     } catch (err) {
+                        console.warn(`[Gemini API] 連線例外:`, err);
                         lastErrDetail = err.message || String(err);
                         continue;
                     }
@@ -1192,14 +1192,11 @@ ${JSON.stringify(membersData, null, 2)}
                     aiChefAdvice.value = resultJson;
                     showChefNote.value = true;
                 } else {
-                    // 🌟 本地智慧私廚立即無縫接管（生成懂生活、懂胃容量的溫暖評語與黃金份量）
+                    // 🌟 本地系統配比無縫接管（純系統推薦，不使用十一粒稱呼）
                     activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
-                    const isYogurt = isLightMealOrYogurtBowl;
                     aiChefAdvice.value = {
                         source: 'local',
-                        chefComment: isYogurt
-                            ? `十一粒為您調配了這碗輕盈舒暢的黃金優格碗！滑順濃郁的希臘優格鋪底，綴上微融酸甜的冷凍莓果，再撒上一匙酥脆綜合燕麥。每一口都剛剛好，無負擔享受美好晨光～`
-                            : `十一粒已為全家人精算好今日黃金備料配比！蛋白質與慢碳份量均衡、低鈉清爽，享受美味同時為身體注入滿滿活力。`,
+                        chefComment: `系統已依據每位成員的每日熱量與巨量營養素目標，完成基礎均衡備料分配。`,
                         portions: {}
                     };
                     showChefNote.value = true;
@@ -1209,7 +1206,7 @@ ${JSON.stringify(membersData, null, 2)}
                 activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
                 aiChefAdvice.value = {
                     source: 'local',
-                    chefComment: "十一粒已為您調配好黃金備料比例，清爽無負擔！",
+                    chefComment: "系統已依據每位成員的每日熱量目標完成基礎備料分配。",
                     portions: {}
                 };
                 showChefNote.value = true;
@@ -1724,7 +1721,7 @@ ${JSON.stringify(membersData, null, 2)}
                     <div v-if="member === 'bebe' && showChefNote && aiChefAdvice && aiChefAdvice.chefComment" 
                          style="margin-bottom: 14px; background: #FFFDF8; border-left: 3px solid var(--color-primary); border-radius: 8px; padding: 10px 12px; font-size: 0.85rem; color: #4B5563; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                         <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem;">
-                            💬 十一粒主廚 AI 點評：
+                            {{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : '⚙️ 系統推薦配比說明：' }}
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                     </div>
