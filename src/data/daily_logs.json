@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 575.1,
-            "protein": 38.4,
-            "carbs": 58,
-            "fat": 21.9,
-            "sodium": 552.5
+            "kcal": 710.1,
+            "protein": 40.4,
+            "carbs": 72,
+            "fat": 30.4,
+            "sodium": 582.5
           },
           "meals": [
             {
@@ -69,6 +69,22 @@
                 "和風柚子醋/果醋 15g",
                 "金針菇 30g"
               ]
+            },
+            {
+              "id": "meal_1787840641485_bebe",
+              "dishName": "曠世奇派雪糕 (半根)",
+              "time": "下午10:24",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 135,
+                "protein": 2,
+                "carbs": 14,
+                "fat": 8.5,
+                "sodium": 30
+              },
+              "aiNote": "已按半根曠世奇派雪糕估算熱量與三大營養素，數據已精算的完成，可點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
             }
           ]
         },
