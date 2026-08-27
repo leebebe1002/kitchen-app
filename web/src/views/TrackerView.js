@@ -1415,16 +1415,16 @@ export default {
                             <!-- 5 Editable Nutrients (熱量、蛋白、碳水、脂肪、鈉) -->
                             <div style="background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px;">
-                                    <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">
-                                        數字可手動微調：
-                                    </div>
                                     <div style="display: flex; align-items: center; gap: 6px;">
-                                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted);">份量</span>
-                                        <select v-model="selectedPortionRatio" @change="applyPortionRatio" class="select-box" style="width: auto; min-width: 68px; padding: 3px 8px; font-weight: 700; font-size: 0.9rem; border-radius: 8px; background: #FFFDF8; border: 1.5px solid var(--color-primary); color: #92400E; cursor: pointer; text-align: center;">
+                                        <span style="font-size: 0.78rem; font-weight: 700; color: var(--color-text-main);">份量</span>
+                                        <select v-model="selectedPortionRatio" @change="applyPortionRatio" class="select-box" style="width: auto; min-width: 52px; padding: 2px 6px; font-weight: 700; font-size: 0.9rem; border-radius: 6px; background: #FFFDF8; border: 1.5px solid var(--color-primary); color: #92400E; cursor: pointer; text-align: center;">
                                             <option value="1">1</option>
                                             <option value="0.5">1/2</option>
                                             <option value="0.33">1/3</option>
                                         </select>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: var(--color-text-muted); font-weight: 500;">
+                                        數字可手動微調
                                     </div>
                                 </div>
                                 
