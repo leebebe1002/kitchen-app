@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 295,
-            "protein": 14,
-            "carbs": 42,
-            "fat": 7,
-            "sodium": 440
+            "kcal": 575.1,
+            "protein": 38.4,
+            "carbs": 58,
+            "fat": 21.9,
+            "sodium": 552.5
           },
           "meals": [
             {
@@ -42,28 +42,111 @@
               "aiNote": "雖為無糖，但果茶類通常含荔枝濃縮液/果汁基底之天然糖分，數據可隨時點擊調整。",
               "photoUrl": null,
               "portionRatio": "1"
+            },
+            {
+              "id": "meal_1787832194372_bebe",
+              "dishId": "hotpot",
+              "dishName": "暖心火鍋",
+              "time": "下午08:03",
+              "nutrients": {
+                "kcal": 280.1,
+                "protein": 24.4,
+                "carbs": 16,
+                "fat": 14.9,
+                "sodium": 112.5
+              },
+              "ingredientsSummary": [
+                "豬梅花肉片 70g",
+                "板豆腐 60g",
+                "蟹肉棒 20g",
+                "蛋餃 1顆",
+                "芋頭貢丸 1顆",
+                "香菇貢丸 1顆",
+                "高麗菜 70g",
+                "娃娃菜 50g",
+                "黑木耳 20g",
+                "鴻喜菇/雪白菇 30g",
+                "和風柚子醋/果醋 15g",
+                "金針菇 30g"
+              ]
             }
           ]
         },
         "ariel": {
           "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
+            "kcal": 357.3,
+            "protein": 31.2,
+            "carbs": 21.1,
+            "fat": 18.8,
+            "sodium": 147.8
           },
-          "meals": []
+          "meals": [
+            {
+              "id": "meal_1787832194862_ariel",
+              "dishId": "hotpot",
+              "dishName": "暖心火鍋",
+              "time": "下午08:03",
+              "nutrients": {
+                "kcal": 357.3,
+                "protein": 31.2,
+                "carbs": 21.1,
+                "fat": 18.8,
+                "sodium": 147.8
+              },
+              "ingredientsSummary": [
+                "豬梅花肉片 85g",
+                "板豆腐 80g",
+                "蟹肉棒 30g",
+                "蛋餃 2顆",
+                "芋頭貢丸 1顆",
+                "香菇貢丸 1顆",
+                "高麗菜 90g",
+                "娃娃菜 60g",
+                "黑木耳 25g",
+                "鴻喜菇/雪白菇 40g",
+                "和風柚子醋/果醋 20g",
+                "金針菇 40g"
+              ]
+            }
+          ]
         },
         "jason": {
           "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
+            "kcal": 564.3,
+            "protein": 49.7,
+            "carbs": 28.2,
+            "fat": 31.2,
+            "sodium": 221.6
           },
-          "meals": []
+          "meals": [
+            {
+              "id": "meal_1787832194963_jason",
+              "dishId": "hotpot",
+              "dishName": "暖心火鍋",
+              "time": "下午08:03",
+              "nutrients": {
+                "kcal": 564.3,
+                "protein": 49.7,
+                "carbs": 28.2,
+                "fat": 31.2,
+                "sodium": 221.6
+              },
+              "ingredientsSummary": [
+                "豬梅花肉片 150g",
+                "板豆腐 120g",
+                "蟹肉棒 40g",
+                "蛋餃 3顆",
+                "芋頭貢丸 2顆",
+                "香菇貢丸 2顆",
+                "高麗菜 120g",
+                "娃娃菜 80g",
+                "黑木耳 35g",
+                "鴻喜菇/雪白菇 50g",
+                "和風柚子醋/果醋 25g",
+                "金針菇 50g"
+              ]
+            }
+          ]
         }
       }
     },
