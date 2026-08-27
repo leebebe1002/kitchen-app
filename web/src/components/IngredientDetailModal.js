@@ -595,9 +595,9 @@ const IngredientDetailModal = {
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
                 </div>
 
-                <!-- 2. 食材實拍照片滿版卡片 (高度放大 3 倍，右上角疊加標準垃圾桶刪除按鈕) -->
-                <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.06); background: #1E293B;">
-                    <img :src="photo.url" style="width: 100%; max-height: 360px; min-height: 220px; object-fit: contain; display: block;" />
+                <!-- 2. 食材實拍照片滿版卡片 (高度鎖定 260px 滿版高視野，右上角疊加標準垃圾桶刪除按鈕) -->
+                <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #0F172A; height: 260px; display: flex; align-items: center; justify-content: center;">
+                    <img :src="photo.url" style="width: 100%; height: 100%; object-fit: contain; display: block;" />
                     
                     <!-- 頂部右上角：刪除/移除照片按鈕 (38px 圓形，系統標準 20px 垃圾桶 SVG) -->
                     <button class="btn-icon" @click="photo.url = null; photo.message = ''" 
