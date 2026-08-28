@@ -888,11 +888,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 500,
-            "protein": 30,
-            "carbs": 49,
-            "fat": 22,
-            "sodium": 1135
+            "kcal": 680,
+            "protein": 30.2,
+            "carbs": 93,
+            "fat": 22.1,
+            "sodium": 1150
           },
           "meals": [
             {
@@ -924,6 +924,22 @@
                 "sodium": 875
               },
               "aiNote": "AI 語意精算完成，提醒您泡麵與皮蛋鈉含量較高，數據可隨時點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1787907804253_bebe",
+              "dishName": "油切蕎麥茶（無糖加粉粿）",
+              "time": "下午05:03",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 180,
+                "protein": 0.2,
+                "carbs": 44,
+                "fat": 0.1,
+                "sodium": 15
+              },
+              "aiNote": "無糖蕎麥茶接近零熱量，熱量與碳水主要來自Q彈的粉粿配料，數據已為您精算完成。",
               "photoUrl": null,
               "portionRatio": "1"
             }
