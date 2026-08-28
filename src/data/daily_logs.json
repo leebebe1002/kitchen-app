@@ -1,6 +1,90 @@
 {
   "logs": [
     {
+      "date": "2026-08-28",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 680,
+            "protein": 30.2,
+            "carbs": 93,
+            "fat": 22.1,
+            "sodium": 1150
+          },
+          "meals": [
+            {
+              "id": "meal_1787872780685_bebe",
+              "dishName": "鮪魚蛋沙拉全麥吐司配希臘優格",
+              "time": "上午07:19",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 165,
+                "protein": 14,
+                "carbs": 16,
+                "fat": 5,
+                "sodium": 260
+              },
+              "aiNote": "十一粒 AI 語意精算完成，這是一份高蛋白且低負擔的輕食早餐，數據可隨時點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1787907686042_bebe",
+              "dishName": "皮蛋豆腐花椰菜王子麵",
+              "time": "下午05:01",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 335,
+                "protein": 16,
+                "carbs": 33,
+                "fat": 17,
+                "sodium": 875
+              },
+              "aiNote": "AI 語意精算完成，提醒您泡麵與皮蛋鈉含量較高，數據可隨時點擊調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1787907804253_bebe",
+              "dishName": "油切蕎麥茶（無糖加粉粿）",
+              "time": "下午05:03",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 180,
+                "protein": 0.2,
+                "carbs": 44,
+                "fat": 0.1,
+                "sodium": 15
+              },
+              "aiNote": "無糖蕎麥茶接近零熱量，熱量與碳水主要來自Q彈的粉粿配料，數據已為您精算完成。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
       "date": "2026-08-27",
       "diners": {
         "bebe": {
@@ -858,90 +942,6 @@
               },
               "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
               "photoUrl": null
-            }
-          ]
-        },
-        "ariel": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        },
-        "jason": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        }
-      }
-    },
-    {
-      "date": "2026-08-28",
-      "diners": {
-        "bebe": {
-          "totals": {
-            "kcal": 680,
-            "protein": 30.2,
-            "carbs": 93,
-            "fat": 22.1,
-            "sodium": 1150
-          },
-          "meals": [
-            {
-              "id": "meal_1787872780685_bebe",
-              "dishName": "鮪魚蛋沙拉全麥吐司配希臘優格",
-              "time": "上午07:19",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 165,
-                "protein": 14,
-                "carbs": 16,
-                "fat": 5,
-                "sodium": 260
-              },
-              "aiNote": "十一粒 AI 語意精算完成，這是一份高蛋白且低負擔的輕食早餐，數據可隨時點擊調整。",
-              "photoUrl": null,
-              "portionRatio": "1"
-            },
-            {
-              "id": "meal_1787907686042_bebe",
-              "dishName": "皮蛋豆腐花椰菜王子麵",
-              "time": "下午05:01",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 335,
-                "protein": 16,
-                "carbs": 33,
-                "fat": 17,
-                "sodium": 875
-              },
-              "aiNote": "AI 語意精算完成，提醒您泡麵與皮蛋鈉含量較高，數據可隨時點擊調整。",
-              "photoUrl": null,
-              "portionRatio": "1"
-            },
-            {
-              "id": "meal_1787907804253_bebe",
-              "dishName": "油切蕎麥茶（無糖加粉粿）",
-              "time": "下午05:03",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 180,
-                "protein": 0.2,
-                "carbs": 44,
-                "fat": 0.1,
-                "sodium": 15
-              },
-              "aiNote": "無糖蕎麥茶接近零熱量，熱量與碳水主要來自Q彈的粉粿配料，數據已為您精算完成。",
-              "photoUrl": null,
-              "portionRatio": "1"
             }
           ]
         },
