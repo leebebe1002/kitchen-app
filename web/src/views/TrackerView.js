@@ -244,6 +244,15 @@ export default {
             }
         };
 
+        const editVoiceInput = () => {
+            modalStep.value = 'voice';
+            isAiAnalyzing.value = false;
+        };
+
+        const clearVoiceInput = () => {
+            voiceText.value = '';
+        };
+
         const openAiModal = async (type = 'camera') => {
             modalStep.value = type;
             capturedPhotoUrl.value = null;
@@ -821,6 +830,7 @@ export default {
             };
 
             await engine.recordMeal(currentDate.value, currentMember.value, meal);
+            voiceText.value = ''; // 記錄完成後清空輸入字串
             closeAiModal();
             alert(`🎉 已成功將【${recordDishName}】記錄至今日時間軸！`);
         };
@@ -880,6 +890,8 @@ export default {
             deleteMeal,
             openAiModal,
             closeAiModal,
+            editVoiceInput,
+            clearVoiceInput,
             currentFacingMode,
             toggleFacingMode,
             triggerShutter,
@@ -1304,6 +1316,10 @@ export default {
                         </div>
 
                         <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <label style="font-size: 0.8rem; font-weight: 700; color: var(--color-text-muted);">請輸入吃了什麼：</label>
+                                <button v-if="voiceText" @click="clearVoiceInput" style="background: none; border: none; font-size: 0.78rem; color: #EF4444; cursor: pointer; text-decoration: underline; padding: 0;">清空內容</button>
+                            </div>
                             <textarea v-model="voiceText" 
                                       placeholder="請直接輸入或說出你吃了什麼 (例如：麥克雙牛堡、大杯無糖燕麥拿鐵)..." 
                                       rows="4" 
@@ -1395,6 +1411,21 @@ export default {
                                 </span>
                             </div>
 
+                            <!-- 語音/文字輸入模式下的提示與重新輸入按鈕 (解決卡在結果頁無法換字問題) -->
+                            <div v-else style="margin-bottom: 14px; background: #FAF8F5; border: 1px solid var(--color-border); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted);">輸入的語意內容：</div>
+                                    <div style="font-size: 0.9rem; font-weight: 600; color: #1F2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ voiceText || resultForm.dishName }}</div>
+                                </div>
+                                <button class="btn-icon" @click="editVoiceInput" style="font-size: 0.82rem; padding: 6px 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid var(--color-border); color: var(--color-primary); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新輸入或修改內容">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 20h9"></path>
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                    </svg>
+                                    <span>重新輸入</span>
+                                </button>
+                            </div>
+
                             <!-- Dish Name Row (料理名稱全寬無壓迫) -->
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; background: #FAF8F5; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--color-border);">
                                 <div style="width: 36px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0;">
@@ -1469,7 +1500,7 @@ export default {
                                 </div>
                             </div>
 
-                            <!-- AI Context Note (附帶純圓形 icon 重新精算按鈕) -->
+                            <!-- AI Context Note (附帶純圓形 icon 重新精算/修改按鈕) -->
                             <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                                 <div style="flex: 1;"><strong>AI 說明：</strong>{{ resultForm.aiNote }}</div>
                                 <button v-if="capturedPhotoUrl" class="btn-icon" @click="processPhotoResult('', capturedPhotoUrl)" style="width: 34px; height: 34px; border-radius: 50%; padding: 0; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新辨識照片">
@@ -1478,7 +1509,7 @@ export default {
                                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                                     </svg>
                                 </button>
-                                <button v-else class="btn-icon" @click="triggerVoiceAnalysis" style="width: 34px; height: 34px; border-radius: 50%; padding: 0; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新進行 AI 語意推算">
+                                <button v-else class="btn-icon" @click="editVoiceInput" style="width: 34px; height: 34px; border-radius: 50%; padding: 0; background: #FFFFFF; border: 1px solid var(--color-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; color: var(--color-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.05);" title="重新輸入或修改內容">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="23 4 23 10 17 10"></polyline>
                                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
