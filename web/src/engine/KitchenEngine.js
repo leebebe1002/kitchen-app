@@ -64,7 +64,7 @@ export default class KitchenEngine {
 
     // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
     isUserStateFile(filename) {
-        return ['pantry_inventory.json', 'daily_logs.json', 'config.json', 'ingredients.json', 'household_supplies.json'].includes(filename);
+        return ['pantry_inventory.json', 'daily_logs.json', 'config.json', 'ingredients.json', 'household_supplies.json', 'dishes.json'].includes(filename);
     }
 
     async fetchJson(filename, key, defaultValue) {
@@ -193,6 +193,52 @@ export default class KitchenEngine {
             if (merged.gemini_api_key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
                 merged.gemini_api_key = '';
             }
+            return merged;
+        } else if (filename === 'dishes.json') {
+            if (!serverData || !localData) return localData || serverData;
+            const merged = { ...serverData };
+            const serverDishes = serverData.dishes || [];
+            const localDishes = localData.dishes || [];
+            const localMap = new Map(localDishes.map(d => [d.id, d]));
+
+            merged.dishes = serverDishes.map(sDish => {
+                const lDish = localMap.get(sDish.id);
+                if (!lDish) return sDish;
+
+                // 增量合併各食材分類
+                const mergedDish = { ...sDish, ...lDish };
+                ['recommendedProteins', 'recommendedVeggies', 'recommendedCarbs', 'recommendedSauces'].forEach(prop => {
+                    const combined = Array.from(new Set([...(sDish[prop] || []), ...(lDish[prop] || [])]));
+                    mergedDish[prop] = combined;
+                });
+
+                // 合併 defaultIngredients
+                const defMap = new Map((sDish.defaultIngredients || []).map(i => [i.id, i]));
+                (lDish.defaultIngredients || []).forEach(i => defMap.set(i.id, i));
+                mergedDish.defaultIngredients = Array.from(defMap.values());
+
+                // 合併 memberPortions
+                mergedDish.memberPortions = { ...(sDish.memberPortions || {}) };
+                if (lDish.memberPortions) {
+                    ['bebe', 'ariel', 'jason'].forEach(m => {
+                        const sList = sDish.memberPortions?.[m] || [];
+                        const lList = lDish.memberPortions?.[m] || [];
+                        const mMap = new Map(sList.map(i => [i.id, i]));
+                        lList.forEach(i => mMap.set(i.id, i));
+                        mergedDish.memberPortions[m] = Array.from(mMap.values());
+                    });
+                }
+
+                return mergedDish;
+            });
+
+            // 加入使用者自建的全新料理
+            localDishes.forEach(lDish => {
+                if (!merged.dishes.some(d => d.id === lDish.id)) {
+                    merged.dishes.push(lDish);
+                }
+            });
+
             return merged;
         }
         return localData || serverData;

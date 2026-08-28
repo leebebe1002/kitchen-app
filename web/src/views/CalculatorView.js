@@ -157,10 +157,13 @@ export default {
             jason: false
         });
 
+        // 🌟 配比模式：'standard' (標準份量) vs 'remaining' (吃剩餘額度)
+        const portionMode = ref('standard');
+
         let isSwitchingDish = false;
 
         // 偵測食材或成員異動：只有在真正初始化完成後的使用者手動異動，才標記為「待重新計算 (Stale)」
-        watch([selectedMasterIngredients, diners], () => {
+        watch([selectedMasterIngredients, diners, portionMode], () => {
             if (isCalculated.value && !isRestoringState && !isSwitchingDish && hasInitialized) {
                 isResultStale.value = true;
             }
@@ -847,29 +850,62 @@ export default {
             if (!dish[prop].includes(ing.id)) {
                 dish[prop].push(ing.id);
             }
+
+            const defaultUnit = ing.unitLabel || (ing.isCount ? '顆' : 'g');
+            let safeAmount = 50;
+            if (ing.isCount) safeAmount = 1;
+            else if (ing.category === 'sauces') safeAmount = 8;
+            else if (ing.category === 'veggies') safeAmount = 50;
+            else if (ing.category === 'proteins') safeAmount = 60;
+            else if (ing.category === 'carbs') safeAmount = 80;
+
+            // 1. 寫入料理的 defaultIngredients (預設打勾食材名單)
+            if (!dish.defaultIngredients) dish.defaultIngredients = [];
+            if (!dish.defaultIngredients.some(i => i.id === ing.id)) {
+                dish.defaultIngredients.push({
+                    id: ing.id,
+                    amount: safeAmount,
+                    unit: defaultUnit
+                });
+            }
+
+            // 2. 寫入料理的 memberPortions (全家各成員預設份量)
+            if (!dish.memberPortions) dish.memberPortions = { bebe: [], ariel: [], jason: [] };
+            ['bebe', 'ariel', 'jason'].forEach(m => {
+                if (!dish.memberPortions[m]) dish.memberPortions[m] = [];
+                if (!dish.memberPortions[m].some(i => i.id === ing.id)) {
+                    const memberAmount = (m === 'jason' && !ing.isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
+                    dish.memberPortions[m].push({
+                        id: ing.id,
+                        amount: memberAmount,
+                        unit: defaultUnit
+                    });
+                }
+            });
             
-            // Auto select in 02
+            // 3. 立即在當前 02 區塊打勾選取
             if (!selectedMasterIngredients.value.includes(ing.id)) {
                 selectedMasterIngredients.value.push(ing.id);
             }
             
-            dishUpdateTrigger.value++;
-
-            // Save dishes.json
-            await engine.saveJson('dishes.json', engine.data.rawDishes || { dishes: engine.data.dishes });
-            
-            // Init member default amount
+            // 4. 即時更新當前成員視圖中的食材清單
             ['bebe', 'ariel', 'jason'].forEach(m => {
                 if (!memberIngredients.value[m]) memberIngredients.value[m] = [];
                 const list = memberIngredients.value[m];
                 if (!list.some(i => i.id === ing.id)) {
+                    const memberAmount = (m === 'jason' && !ing.isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
                     list.push({
                         id: ing.id,
-                        amount: ing.isCount ? 1 : (ing.category === 'sauces' ? 5 : 50),
-                        unit: ing.unitLabel || (ing.isCount ? '顆' : 'g')
+                        amount: memberAmount,
+                        unit: defaultUnit
                     });
                 }
             });
+
+            dishUpdateTrigger.value++;
+
+            // 5. 永久存檔至 dishes.json 與 localStorage
+            await engine.saveJson('dishes.json', engine.data.rawDishes || { dishes: engine.data.dishes });
             
             closeAddModal();
         };
@@ -1054,9 +1090,33 @@ export default {
                     }
                 });
 
+                // 計算吃剩餘額度模式下的目標上限
+                const isRemainingMode = portionMode.value === 'remaining';
+                let remainingBudgetText = '';
+                if (isRemainingMode) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayLogs = engine.data.dailyLogs?.[todayStr]?.meals || [];
+                    const remainingInfo = activeMembers.value.map(m => {
+                        const targetKcal = m === 'jason' ? 2200 : (m === 'ariel' ? 1600 : 1400);
+                        const targetP = m === 'jason' ? 120 : (m === 'ariel' ? 80 : 75);
+                        let consumedKcal = 0;
+                        let consumedP = 0;
+                        todayLogs.forEach(meal => {
+                            if (meal.members?.[m]) {
+                                consumedKcal += (meal.members[m].kcal || 0);
+                                consumedP += (meal.members[m].protein || 0);
+                            }
+                        });
+                        const remKcal = Math.max(150, Math.round(targetKcal - consumedKcal));
+                        const remP = Math.max(5, Math.round(targetP - consumedP));
+                        return `${m}（今日已吃 ${consumedKcal}k/${consumedP}gP，今餐剩餘配平上限：約 ${remKcal} kcal、約 ${remP} g 蛋白質）`;
+                    }).join('；');
+                    remainingBudgetText = `\n【🌟 最高優先級指令：吃剩餘額度動態配平模式】\n使用者選擇了「吃剩餘額度」，請嚴格依據各成員今日剩餘額度進行動態配平調配：${remainingInfo}。\n若某成員剩餘熱量較低，請大幅降低主肉品與精緻澱粉，改以高纖蔬菜與清爽食材填補飽足感；若蛋白質仍有大缺口，則優先補足優質瘦肉/海鮮。\n請在 chefComment 中明確說明今日針對剩餘額度的貼心調整原因！\n`;
+                }
+
                 const prompt = `你是 Bebe 家專屬的 AI 靈魂夥伴與五星家庭私廚「十一粒」。
 請發揮你最高超的【主廚生活直覺、真實擺盤畫面感與人體生理胃容量快適度】，為這道【${dishName}】（餐別：${slotName}）計算出每位家人的【黃金備料克數】！
-
+${remainingBudgetText}
 【選取的食材庫存與屬性】：
 ${JSON.stringify(selectedIngs, null, 2)}
 
@@ -1422,6 +1482,7 @@ ${JSON.stringify(membersData, null, 2)}
             selectedDish,
             memberIngredients,
             diners,
+            portionMode,
             hideOutOfStock,
             isCalculated,
             isResultStale,
@@ -1473,10 +1534,6 @@ ${JSON.stringify(membersData, null, 2)}
             isIngredientSelected,
             getMemberActiveIngredients,
             adjustMemberAmount,
-            openAddModal,
-            closeAddModal,
-            addExistingToDish,
-            createAndAddToDish,
             isAiChefLoading,
             aiChefAdvice,
             showChefNote,
@@ -1579,9 +1636,9 @@ ${JSON.stringify(membersData, null, 2)}
                     </div>
                 </div>
 
-                <!-- DINERS -->
-                <div class="section-title">人數與計算橫列</div>
-                <div class="capsule-group" style="margin-bottom: 24px; align-items: center;">
+                <!-- DINERS 就餐成員 (獨立橫列) -->
+                <div class="section-title">03 就餐成員</div>
+                <div class="capsule-group" style="margin-bottom: 18px;">
                     <label class="capsule" :class="{ 'selected': diners.bebe }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                         <input type="checkbox" v-model="diners.bebe" style="display:none;">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1609,7 +1666,54 @@ ${JSON.stringify(membersData, null, 2)}
                         </svg>
                         <span>Jason</span>
                     </label>
-                    <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; margin-left: auto; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
+                </div>
+
+                <!-- 模式切換與計算操作橫列 (極簡雙切滑塊 ＋ 純 SVG 正圓計算按鈕) -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px;">
+                    <!-- 極簡純文字雙切膠囊 (Segmented Control) -->
+                    <div style="display: inline-flex; background: #F3F4F6; padding: 3px; border-radius: 20px; border: 1px solid #E5E7EB; flex: 1; max-width: 220px;">
+                        <button 
+                            type="button"
+                            @click="portionMode = 'standard'"
+                            :style="{
+                                flex: '1',
+                                padding: '6px 0',
+                                fontSize: '0.85rem',
+                                fontWeight: portionMode === 'standard' ? '700' : '500',
+                                color: portionMode === 'standard' ? '#1F2937' : '#6B7280',
+                                background: portionMode === 'standard' ? '#FFFFFF' : 'transparent',
+                                borderRadius: '16px',
+                                border: 'none',
+                                boxShadow: portionMode === 'standard' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                textAlign: 'center'
+                            }">
+                            標準份量
+                        </button>
+                        <button 
+                            type="button"
+                            @click="portionMode = 'remaining'"
+                            :style="{
+                                flex: '1',
+                                padding: '6px 0',
+                                fontSize: '0.85rem',
+                                fontWeight: portionMode === 'remaining' ? '700' : '500',
+                                color: portionMode === 'remaining' ? '#1F2937' : '#6B7280',
+                                background: portionMode === 'remaining' ? '#FFFFFF' : 'transparent',
+                                borderRadius: '16px',
+                                border: 'none',
+                                boxShadow: portionMode === 'remaining' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                textAlign: 'center'
+                            }">
+                            吃剩餘額度
+                        </button>
+                    </div>
+
+                    <!-- 純 SVG 正圓計算按鈕 -->
+                    <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="4" y="2" width="16" height="20" rx="2"></rect>
                             <line x1="8" y1="6" x2="16" y2="6"></line>

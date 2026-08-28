@@ -204,7 +204,8 @@
             ],
             "recommendedVeggies": [
                 "greens",
-                "cherry_tomatoes"
+                "cherry_tomatoes",
+                "broccoli"
             ],
             "recommendedCarbs": [
                 "bagel",
@@ -262,6 +263,11 @@
                     "id": "cherry_tomatoes",
                     "amount": 50,
                     "unit": "g"
+                },
+                {
+                    "id": "broccoli",
+                    "amount": 60,
+                    "unit": "g"
                 }
             ],
             "memberPortions": {
@@ -290,6 +296,11 @@
                         "id": "cherry_tomatoes",
                         "amount": 40,
                         "unit": "g"
+                    },
+                    {
+                        "id": "broccoli",
+                        "amount": 50,
+                        "unit": "g"
                     }
                 ],
                 "ariel": [
@@ -317,6 +328,11 @@
                         "id": "cherry_tomatoes",
                         "amount": 50,
                         "unit": "g"
+                    },
+                    {
+                        "id": "broccoli",
+                        "amount": 60,
+                        "unit": "g"
                     }
                 ],
                 "jason": [
@@ -343,6 +359,11 @@
                     {
                         "id": "cherry_tomatoes",
                         "amount": 60,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "broccoli",
+                        "amount": 80,
                         "unit": "g"
                     }
                 ]
