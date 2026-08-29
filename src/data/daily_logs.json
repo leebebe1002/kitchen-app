@@ -1,6 +1,58 @@
 {
   "logs": [
     {
+      "date": "2026-08-29",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 245,
+            "protein": 16,
+            "carbs": 20,
+            "fat": 11,
+            "sodium": 370
+          },
+          "meals": [
+            {
+              "id": "meal_1787970542970_bebe",
+              "dishName": "全麥起司鮪魚蛋吐司",
+              "time": "上午10:29",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 245,
+                "protein": 16,
+                "carbs": 20,
+                "fat": 11,
+                "sodium": 370
+              },
+              "aiNote": "AI 語意精算完成！這份餐點富含優質蛋白與複合碳水，營養均衡無負擔，數據可隨時點擊微調。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
       "date": "2026-08-28",
       "diners": {
         "bebe": {
@@ -942,58 +994,6 @@
               },
               "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
               "photoUrl": null
-            }
-          ]
-        },
-        "ariel": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        },
-        "jason": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        }
-      }
-    },
-    {
-      "date": "2026-08-29",
-      "diners": {
-        "bebe": {
-          "totals": {
-            "kcal": 245,
-            "protein": 16,
-            "carbs": 20,
-            "fat": 11,
-            "sodium": 370
-          },
-          "meals": [
-            {
-              "id": "meal_1787970542970_bebe",
-              "dishName": "全麥起司鮪魚蛋吐司",
-              "time": "上午10:29",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 245,
-                "protein": 16,
-                "carbs": 20,
-                "fat": 11,
-                "sodium": 370
-              },
-              "aiNote": "AI 語意精算完成！這份餐點富含優質蛋白與複合碳水，營養均衡無負擔，數據可隨時點擊微調。",
-              "photoUrl": null,
-              "portionRatio": "1"
             }
           ]
         },
