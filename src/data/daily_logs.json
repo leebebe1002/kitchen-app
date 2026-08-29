@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 245,
-            "protein": 16,
-            "carbs": 20,
-            "fat": 11,
-            "sodium": 370
+            "kcal": 653,
+            "protein": 31,
+            "carbs": 67,
+            "fat": 29,
+            "sodium": 913
           },
           "meals": [
             {
@@ -25,6 +25,22 @@
                 "sodium": 370
               },
               "aiNote": "AI 語意精算完成！這份餐點富含優質蛋白與複合碳水，營養均衡無負擔，數據可隨時點擊微調。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1787980287657_bebe",
+              "dishName": "麥當勞點心組合（半個麥香魚、5根薯條、2塊雞塊、1/3冰炫風）",
+              "time": "下午01:11",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 408,
+                "protein": 15,
+                "carbs": 47,
+                "fat": 18,
+                "sodium": 543
+              },
+              "aiNote": "已為您精算各項餐點的特定比例與數量，數據可隨時點擊調整。",
               "photoUrl": null,
               "portionRatio": "1"
             }
