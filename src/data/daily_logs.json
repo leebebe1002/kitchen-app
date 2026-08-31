@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 195.4,
-            "protein": 9.5,
-            "carbs": 27.9,
-            "fat": 5.5,
-            "sodium": 37.9
+            "kcal": 680.4,
+            "protein": 40.5,
+            "carbs": 47.9,
+            "fat": 37.5,
+            "sodium": 1137.9
           },
           "meals": [
             {
@@ -29,6 +29,22 @@
                 "綜合燕麥 35g",
                 "楓糖漿 5g"
               ]
+            },
+            {
+              "id": "meal_1788153187170_bebe",
+              "dishName": "IKEA香菜小龍蝦沙拉佐鱈魚條、雞翅與雞肉丸",
+              "time": "下午01:13",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 485,
+                "protein": 31,
+                "carbs": 20,
+                "fat": 32,
+                "sodium": 1100
+              },
+              "aiNote": "已為您精算 IKEA 複合餐點，醬料與油炸物為熱量及脂肪主要來源，數據可隨時調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
             }
           ]
         },
