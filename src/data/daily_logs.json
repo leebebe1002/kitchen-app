@@ -1,6 +1,60 @@
 {
   "logs": [
     {
+      "date": "2026-08-31",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 195.4,
+            "protein": 9.5,
+            "carbs": 27.9,
+            "fat": 5.5,
+            "sodium": 37.9
+          },
+          "meals": [
+            {
+              "id": "meal_1788139566424_bebe",
+              "dishId": "yogurt_bowl",
+              "dishName": "燕麥希臘優格碗",
+              "time": "上午09:26",
+              "nutrients": {
+                "kcal": 195.4,
+                "protein": 9.5,
+                "carbs": 27.9,
+                "fat": 5.5,
+                "sodium": 37.9
+              },
+              "ingredientsSummary": [
+                "希臘優格 60g",
+                "綜合燕麥 35g",
+                "楓糖漿 5g"
+              ]
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
+    },
+    {
       "date": "2026-08-29",
       "diners": {
         "bebe": {
@@ -1010,60 +1064,6 @@
               },
               "aiNote": "十一粒 AI 推算：花生麻糬含糯米碳水與香濃花生粉油脂。",
               "photoUrl": null
-            }
-          ]
-        },
-        "ariel": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        },
-        "jason": {
-          "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
-          },
-          "meals": []
-        }
-      }
-    },
-    {
-      "date": "2026-08-31",
-      "diners": {
-        "bebe": {
-          "totals": {
-            "kcal": 195.4,
-            "protein": 9.5,
-            "carbs": 27.9,
-            "fat": 5.5,
-            "sodium": 37.9
-          },
-          "meals": [
-            {
-              "id": "meal_1788139566424_bebe",
-              "dishId": "yogurt_bowl",
-              "dishName": "燕麥希臘優格碗",
-              "time": "上午09:26",
-              "nutrients": {
-                "kcal": 195.4,
-                "protein": 9.5,
-                "carbs": 27.9,
-                "fat": 5.5,
-                "sodium": 37.9
-              },
-              "ingredientsSummary": [
-                "希臘優格 60g",
-                "綜合燕麥 35g",
-                "楓糖漿 5g"
-              ]
             }
           ]
         },
