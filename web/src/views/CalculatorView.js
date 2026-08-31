@@ -662,10 +662,10 @@ export default {
                     item.amount = isJason ? 12 : (item.id.includes('mayo') ? 10 : 8);
                     item.unit = 'g';
                 } else if (roleInfo.role === 'veggie_leafy') {
-                    item.amount = 80;
+                    item.amount = isJason ? 60 : 45;
                     item.unit = 'g';
                 } else if (roleInfo.role === 'veggie_side') {
-                    item.amount = isJason ? 80 : 50;
+                    item.amount = isJason ? 50 : 35;
                     item.unit = 'g';
                 } else if (roleInfo.role === 'count') {
                     item.amount = 1;
@@ -720,23 +720,24 @@ export default {
             const countProteins = proteins.filter(p => p.roleInfo.role === 'count');
 
             if (mainProteins.length === 0 && countProteins.length > 0) {
-                // 蛋為主力蛋白時，自動配置 2~3 顆以達標蛋白質門檻
+                // 蛋/丸餃為主力蛋白時，自動配置 2~3 顆以達標蛋白質門檻
                 countProteins.forEach(cp => {
-                    cp.item.amount = isJason ? 3 : 2;
-                    cp.item.unit = '顆';
+                    cp.item.amount = isJason ? 2 : 1;
+                    cp.item.unit = cp.roleInfo.unit || '顆';
                 });
             } else if (mainProteins.length === 1) {
                 if (countProteins.length === 0 && sideProteins.length === 0) {
                     mainProteins[0].item.amount = isJason ? 150 : 110;
                 } else if (countProteins.length > 0) {
-                    // 例如：蝦仁 80g + 蛋 1 顆 (合計 ~23-25g 蛋白)
-                    mainProteins[0].item.amount = isJason ? 100 : 80;
+                    // 例如：肉片 80g + 蛋 1 顆 / 貢丸 1 顆
+                    mainProteins[0].item.amount = isJason ? 100 : 70;
                 } else {
                     mainProteins[0].item.amount = isJason ? 110 : 80;
                 }
             } else if (mainProteins.length > 1) {
+                const perProtein = isJason ? Math.max(45, Math.round(140 / mainProteins.length)) : Math.max(30, Math.round(80 / mainProteins.length));
                 mainProteins.forEach(p => {
-                    p.item.amount = isJason ? 70 : 50;
+                    p.item.amount = perProtein;
                 });
             }
 
@@ -1044,7 +1045,7 @@ export default {
                     slotName.includes('點心')
                 );
 
-                // 收集當前勾選的所有食材
+                // 收集當前勾選的所有食材 (包含食物優先級階梯)
                 const selectedIngs = selectedMasterIngredients.value.map(id => {
                     const ing = engine.getIngredientById(id);
                     const cat = ing?.category || 'proteins';
@@ -1052,6 +1053,7 @@ export default {
                         id: id,
                         name: ing?.name || id,
                         category: cat,
+                        priorityTier: ing?.priorityTier || 1, // 1: 原型營養, 2: 原型慢碳, 3: 加工精緻, 4: 高脂厚醬
                         unit: ing?.unitLabel || (['egg'].includes(id) ? '顆' : (['bacon'].includes(id) ? '條' : 'g')),
                         isCount: ['egg', 'bacon', 'bagel'].includes(id),
                         per100g: ing?.per100g || { kcal: 50, protein: 1, carbs: 10, fat: 0.2, sodium: 5 }
@@ -1111,44 +1113,38 @@ export default {
                         const remP = Math.max(5, Math.round(targetP - consumedP));
                         return `${m}（今日已吃 ${consumedKcal}k/${consumedP}gP，今餐剩餘配平上限：約 ${remKcal} kcal、約 ${remP} g 蛋白質）`;
                     }).join('；');
-                    remainingBudgetText = `\n【🌟 最高優先級指令：吃剩餘額度動態配平模式】\n使用者選擇了「吃剩餘額度」，請嚴格依據各成員今日剩餘額度進行動態配平調配：${remainingInfo}。\n若某成員剩餘熱量較低，請大幅降低主肉品與精緻澱粉，改以高纖蔬菜與清爽食材填補飽足感；若蛋白質仍有大缺口，則優先補足優質瘦肉/海鮮。\n請在 chefComment 中明確說明今日針對剩餘額度的貼心調整原因！\n`;
+                    remainingBudgetText = `\n【🌟 最高優先級指令：吃剩餘額度動態配平模式】\n使用者選擇了「吃剩餘額度」，請嚴格依據各成員今日剩餘額度進行動態配平調配：${remainingInfo}。\n`;
                 }
 
                 const prompt = `你是 Bebe 家專屬的 AI 靈魂夥伴與五星家庭私廚「十一粒」。
 請發揮你最高超的【主廚生活直覺、真實擺盤畫面感與人體生理胃容量快適度】，為這道【${dishName}】（餐別：${slotName}）計算出每位家人的【黃金備料克數】！
 ${remainingBudgetText}
-【選取的食材庫存與屬性】：
+【選取的食材庫存與屬性 (共 ${selectedIngs.length} 項，含優先級階梯 priorityTier)】：
 ${JSON.stringify(selectedIngs, null, 2)}
 
 【用餐成員與個人食量畫像】：
 ${JSON.stringify(membersData, null, 2)}
 
 ══════════════════════════════════════════════════════════════
-🌟 十一粒私廚核心心法（最高思考準則）：
+🚨【最高決策鐵則：4 階梯營養裁量與透明通報法則】
 ══════════════════════════════════════════════════════════════
-1. 【畫面感與胃容量第一，絕不當死板計算機】：
-   - 忘記冰冷硬湊數字的計算機邏輯！料理是生活的美好體驗，份量必須符合真實餐桌上的「盤中黃金視覺比例」與「人體進食的舒適度」。
-   - 【絕對禁止】為了硬湊正餐 30g 蛋白質而將單一食材暴衝（例如給出 250g 巨量厚重優格、4 顆蛋、或 500g 蔬菜）！這在真實生活中會膩到反胃，是毀滅料理體驗的重大錯誤。
+1. 【4 大食物優先級階梯 (Nutrient Priority Hierarchy)】：
+   - 🥇 Tier 1【原型營養 (priorityTier: 1)】：瘦肉、海鮮、雞肉、豆腐、蛋、所有蔬菜、菇類、蒟蒻麵。
+     👉 【生命線絕對守護】：提供優質蛋白質與飽足感，額度再緊也優先配置足量（肉 50~70g、蔬菜 40~60g），絕不歸零！
+   - 🥈 Tier 2【原型慢碳 (priorityTier: 2)】：地瓜、糙米、燕麥、南瓜、馬鈴薯、玉米。
+     👉 【彈性調節】：依剩餘碳水額度給予適當慢碳（30~60g）。
+   - 🥉 Tier 3【加工精緻 (priorityTier: 3)】：貢丸、芋頭貢丸、蛋餃、蟹肉棒、甜不辣、王子麵、油麵、炸豆皮。
+     👉 【額度吃緊時優先讓位】：在「吃剩餘額度」或熱量緊繃時，自動將其份量降為 0，或全數移交給大食量成員 (Jason)。
+   - 🫒 Tier 4【高脂厚醬 (priorityTier: 4)】：沙茶醬、麻醬、花生醬、美乃滋、辣油、香油。
+     👉 【高卡防線】：額度吃緊時優先降至 0 或極微量，評語中建議改沾柚子醋或蔥蒜生辣椒。
 
-2. 【晨光輕食 / 優格碗 / 點心碗 (Yogurt Bowl & Light Meals) 黃金直覺】：
-   - 優格碗是優雅精緻的晨間輕食，目標是「好菌、低GI抗性澱粉、高花青素抗氧化與輕盈活力」：
-     * 【希臘優格】：作為濃郁滑順的基底鋪在碗底。Bebe 固定 90~110g（約 100g，小碗剛好不飽脹），Ariel 100~130g，Jason 150~180g。
-     * 【冷凍莓果】：50~60g（Bebe），微融釋放天然果酸與花青素。
-     * 【綜合燕麥 (Granola)】：15~20g（約 1 大匙，Bebe），提供每一口挖下去都有的酥脆對比。
-     * 【風味提香（可可粉/抹茶粉/楓糖漿/蜂蜜/芝麻粉）】：每種微量 2~4g（約半茶匙提香點綴，嚴格控糖）。
-     * 營養自然水到渠成：此類輕食熱量自然落在 150~220 kcal（Bebe），蛋白質約 12~15g，這就是最完美的輕食狀態！
+2. 【多樣化精緻均分 (額度充裕/標準模式時)】：
+   - 當處於標準模式或額度充裕時，每一種勾選的食材都全數保留，單項克數等比縮小（肉 30~50g、丸餃各 1 顆、豆腐 30g、蔬菜各 30~50g），讓每個人都能享受到多樣美味！
 
-3. 【正餐 / 排餐 / 拌飯 / 早午餐大盤 (Main Dish) 黃金直覺】：
-   - 主肉品/海鮮扛起主要蛋白質：Bebe 抓 65~75g，Ariel 抓 75~85g，Jason 抓 130~160g。
-   - 培根在有主肉品時定位為「風味提香配角」：Bebe 固定 1 條（約 15g，控鈉防腫），Ariel 1 條，Jason 2 條。
-   - 蛋在有主肉品時固定 1 顆。
-   - 盤邊生菜沙拉抓 50~70g（適量鋪盤清爽），瓜果配菜抓 30~50g。
-   - 慢碳粗糧（地瓜/馬鈴薯/飯）：Bebe 精緻小食量抓 80~90g，Ariel 120~140g，Jason 160~200g。
+3. 【💬 主廚透明評語 (Chef Comment)】：
+   - 凡是有食材因為額度吃緊而被調降或歸零（例如沙茶醬、貢丸或王子麵被扣除），十一粒【必須】在評語中以親切、溫暖、懂生活的語氣主動向 Bebe 說明原因（例如：「今晚 Bebe 額度較精緻，十一粒為妳把沙茶醬與芋頭貢丸省下讓給 Jason，把熱量全部留給滿滿的鮮嫩肉片與高麗菜喔！」）。
 
-4. 【主廚評語 (Chef Comment)】：
-   - 以十一粒溫暖、懂生活、有品味的親切語氣，寫 2~3 句主廚評語，點出這道料理的口感層次、食材搭配亮點與清爽無負擔之處。
-
-請輸出嚴格的合法 JSON（不要 markdown 標籤）：
+請輸出嚴格的合法 JSON（不要 markdown 標籤，必須包含所有 ${selectedIngs.length} 種食材）：
 {
   "chefComment": "十一粒主廚溫暖且懂生活的評語",
   "portions": {

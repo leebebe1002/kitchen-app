@@ -19,7 +19,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "tuna",
@@ -41,7 +42,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "shrimp",
@@ -63,7 +65,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "sous_vide_chicken",
@@ -86,7 +89,8 @@
             "preferredStores": [
                 "Costco",
                 "全聯"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "pork_shoulder",
@@ -107,7 +111,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "egg",
@@ -130,7 +135,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "tofu",
@@ -151,7 +157,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "plain_yogurt",
@@ -173,7 +180,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "bacon",
@@ -215,7 +223,8 @@
                 "carbs": 0.4,
                 "fat": 5.9,
                 "sodium": 342
-            }
+            },
+            "priorityTier": 3
         },
         {
             "id": "chicken_thigh",
@@ -236,7 +245,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "beef_slice",
@@ -257,7 +267,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "shrimp_paste",
@@ -278,7 +289,8 @@
             "storageZone": "freezer",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "frozen_tofu",
@@ -299,7 +311,8 @@
             "storageZone": "freezer",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "edamame",
@@ -322,7 +335,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "salmon",
@@ -343,7 +357,8 @@
             "storageZone": "freezer",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "full_fat_milk_250",
@@ -366,7 +381,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "crab_stick",
@@ -387,7 +403,8 @@
             "storageZone": "freezer",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "century_egg",
@@ -409,7 +426,8 @@
             "preferredStores": [
                 "全聯",
                 "傳統市場"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "mushroom_meatball",
@@ -432,7 +450,8 @@
                 "全聯",
                 "Costco",
                 "傳統市場"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "egg_dumpling",
@@ -454,7 +473,8 @@
             "preferredStores": [
                 "全聯",
                 "傳統市場"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "taro_meatball",
@@ -476,7 +496,8 @@
             "storageZone": "freezer",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "greek_yogurt",
@@ -506,7 +527,8 @@
                 "carbs": 3.6,
                 "fat": 0.4,
                 "sodium": 36
-            }
+            },
+            "priorityTier": 1
         },
         {
             "id": "sugar_free_soymilk",
@@ -539,7 +561,8 @@
                 "carbs": 0.7,
                 "fat": 1.8,
                 "sodium": 12
-            }
+            },
+            "priorityTier": 1
         }
     ],
     "veggies": [
@@ -565,7 +588,8 @@
             "storageZones": [
                 "fridge",
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "cabbage",
@@ -587,7 +611,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "baby_cabbage",
@@ -609,7 +634,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "broccoli",
@@ -630,7 +656,8 @@
             "preferredStores": [
                 "Costco"
             ],
-            "preferredStore": "Costco"
+            "preferredStore": "Costco",
+            "priorityTier": 1
         },
         {
             "id": "kimchi",
@@ -652,7 +679,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "black_fungus",
@@ -674,7 +702,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "baby_corn",
@@ -695,7 +724,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "banana",
@@ -718,7 +748,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "spinach",
@@ -740,7 +771,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "chinese_cabbage",
@@ -762,7 +794,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "zucchini",
@@ -796,7 +829,8 @@
                 "carbs": 3.1,
                 "fat": 0.3,
                 "sodium": 8
-            }
+            },
+            "priorityTier": 1
         },
         {
             "id": "cucumber",
@@ -818,7 +852,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "greens",
@@ -839,7 +874,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "carrot",
@@ -863,7 +899,8 @@
                 "全聯",
                 "傳統市場"
             ],
-            "preferredStore": "全聯"
+            "preferredStore": "全聯",
+            "priorityTier": 1
         },
         {
             "id": "onion",
@@ -886,7 +923,8 @@
             "preferredStores": [
                 "全聯",
                 "傳統市場"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "mushroom",
@@ -909,7 +947,8 @@
             "storageZones": [
                 "fridge",
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "beech_mushroom",
@@ -931,7 +970,8 @@
             "storageZones": [
                 "fridge",
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "frozen_berry",
@@ -952,7 +992,8 @@
             "preferredStore": "Costco",
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "nori_strips",
@@ -974,7 +1015,8 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "cherry_tomatoes",
@@ -996,7 +1038,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "bean_sprouts",
@@ -1018,7 +1061,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "scallion",
@@ -1040,7 +1084,8 @@
             "preferredStores": [
                 "全聯",
                 "傳統市場"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "enoki_mushroom",
@@ -1061,7 +1106,8 @@
             "preferredStore": "全聯",
             "preferredStores": [
                 "全聯"
-            ]
+            ],
+            "priorityTier": 1
         }
     ],
     "carbs": [
@@ -1087,7 +1133,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "bagel",
@@ -1109,7 +1156,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "corn",
@@ -1134,7 +1182,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "brown_rice",
@@ -1155,7 +1204,8 @@
             ],
             "storageZones": [
                 "freezer"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "potato",
@@ -1178,7 +1228,8 @@
             "storageZones": [
                 "pantry",
                 "freezer"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "granola",
@@ -1200,7 +1251,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "prince_noodles",
@@ -1221,7 +1273,8 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "sweet_potato",
@@ -1244,7 +1297,8 @@
             "storageZones": [
                 "pantry",
                 "freezer"
-            ]
+            ],
+            "priorityTier": 2
         },
         {
             "id": "steamed_noodle",
@@ -1265,7 +1319,8 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "angel_hair_pasta",
@@ -1287,7 +1342,8 @@
             "preferredStores": [
                 "全聯",
                 "Costco"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "shin_ramen",
@@ -1309,7 +1365,8 @@
             "preferredStores": [
                 "全聯",
                 "Costco"
-            ]
+            ],
+            "priorityTier": 3
         },
         {
             "id": "potato_ramen",
@@ -1331,7 +1388,8 @@
             "preferredStores": [
                 "全聯",
                 "EC 電商"
-            ]
+            ],
+            "priorityTier": 2
         }
     ],
     "sauces": [
@@ -1354,7 +1412,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "balsamic",
@@ -1376,7 +1435,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "sesame_powder",
@@ -1398,7 +1458,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "matcha_powder",
@@ -1420,7 +1481,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "cocoa_powder",
@@ -1442,7 +1504,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "chia_seeds",
@@ -1464,7 +1527,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "smoked_sea_salt",
@@ -1486,7 +1550,8 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "soy_sauce",
@@ -1507,7 +1572,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "shacha_sauce",
@@ -1528,7 +1594,8 @@
             "storageZone": "fridge",
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "maple_syrup",
@@ -1550,7 +1617,8 @@
             "storageZone": "pantry",
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "italian_herbs",
@@ -1572,7 +1640,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "lemon_juice",
@@ -1594,7 +1663,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "yuzu_vinegar",
@@ -1616,7 +1686,8 @@
             ],
             "storageZones": [
                 "fridge"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "horseradish_mayo",
@@ -1637,7 +1708,8 @@
             "preferredStore": "全聯",
             "preferredStores": [
                 "全聯"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "olive_oil",
@@ -1659,7 +1731,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "truffle_olive_oil",
@@ -1681,7 +1754,8 @@
             ],
             "storageZones": [
                 "pantry"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "sriracha_mayo",
@@ -1704,7 +1778,8 @@
             "preferredStores": [
                 "EC 電商",
                 "全聯"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "sugar_free_peanut_butter",
@@ -1726,7 +1801,8 @@
             "preferredStores": [
                 "Costco",
                 "全聯"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "avocado_mash",
@@ -1748,7 +1824,8 @@
                 "Costco",
                 "義美"
             ],
-            "preferredStore": "義美"
+            "preferredStore": "義美",
+            "priorityTier": 1
         },
         {
             "id": "avocado_oil",
@@ -1769,7 +1846,8 @@
             "preferredStores": [
                 "Costco"
             ],
-            "preferredStore": "Costco"
+            "preferredStore": "Costco",
+            "priorityTier": 4
         },
         {
             "id": "unsalted_butter",
@@ -1791,7 +1869,8 @@
                 "Costco",
                 "全聯"
             ],
-            "preferredStore": "Costco"
+            "preferredStore": "Costco",
+            "priorityTier": 4
         },
         {
             "id": "brown_sugar_syrup",
@@ -1812,7 +1891,8 @@
             "preferredStore": "全聯",
             "preferredStores": [
                 "全聯"
-            ]
+            ],
+            "priorityTier": 4
         },
         {
             "id": "coffee_capsule",
@@ -1842,7 +1922,8 @@
             "preferredStore": "Costco",
             "preferredStores": [
                 "Costco"
-            ]
+            ],
+            "priorityTier": 1
         },
         {
             "id": "ing_1787563079531",
@@ -1873,7 +1954,8 @@
                 "carbs": 0,
                 "fat": 0,
                 "sodium": 0
-            }
+            },
+            "priorityTier": 1
         }
     ]
 }

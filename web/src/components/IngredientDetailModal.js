@@ -85,6 +85,7 @@ const IngredientDetailModal = {
                 form.preferredStores = ['全聯'];
                 form.price = 0;
                 form.priceUnit = '包';
+                form.priorityTier = 1;
                 form.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
                 form.perServing = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
             } else if (props.initialIngredient) {
@@ -93,6 +94,7 @@ const IngredientDetailModal = {
                 form.name = ing.name || (ing.id === 'whey_protein' ? '乳清蛋白粉 (舊版標籤)' : ing.id);
                 form.brand = ing.brand || '';
                 form.category = ing.category || 'proteins';
+                form.priorityTier = ing.priorityTier || 1;
                 const isSauceOrOil = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category);
                 form.servingSize = Number(ing.servingSize) || (isSauceOrOil ? 10 : 100);
                 form.servingUnit = ing.servingUnit || 'g';
@@ -487,6 +489,7 @@ const IngredientDetailModal = {
                 preferredStores: [...form.preferredStores],
                 price: Number(form.price) || 0,
                 priceUnit: form.priceUnit || '包',
+                priorityTier: Number(form.priorityTier) || 1,
                 photoUrl: photo.url || null,
                 per100g: {
                     kcal: Number(form.per100g.kcal) || 0,
@@ -727,6 +730,29 @@ const IngredientDetailModal = {
                         <option value="carbs">🍚 碳水主食</option>
                         <option value="sauces">🧂 油脂/調味/其他</option>
                     </select>
+                </div>
+
+                <!-- 4.1 食物優先級與裁量屬性 (4大階梯) -->
+                <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 8px;">
+                        食物優先級 (熱量緊繃時取捨)：
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button v-for="tier in [
+                            { id: 1, label: '🥩 原型營養 (保底守護)' },
+                            { id: 2, label: '🍠 原型慢碳 (彈性調節)' },
+                            { id: 3, label: '🍢 加工精緻 (緊繃讓位)' },
+                            { id: 4, label: '🍯 高脂厚醬 (高卡防線)' }
+                        ]" 
+                        :key="tier.id"
+                        type="button"
+                        class="capsule"
+                        :class="form.priorityTier === tier.id ? 'selected' : 'in-stock'"
+                        style="padding: 5px 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer;"
+                        @click="form.priorityTier = tier.id">
+                            {{ tier.label }}
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 5. 存放分區 (冷藏/冷凍/常溫) -->
