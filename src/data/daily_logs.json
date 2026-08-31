@@ -50,13 +50,30 @@
         },
         "ariel": {
           "totals": {
-            "kcal": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "sodium": 0
+            "kcal": 680,
+            "protein": 39,
+            "carbs": 40,
+            "fat": 39,
+            "sodium": 1365
           },
-          "meals": []
+          "meals": [
+            {
+              "id": "meal_1788153259442_ariel",
+              "dishName": "IKEA雞肉丸與炸物沙拉餐",
+              "time": "下午01:14",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 680,
+                "protein": 39,
+                "carbs": 40,
+                "fat": 39,
+                "sodium": 1365
+              },
+              "aiNote": "已為您精算 7顆雞肉丸、馬鈴薯泥、1.5條鱈魚條、炸雞翅與少許沙拉的營養數據，可點擊數值隨時調整喔！",
+              "photoUrl": null,
+              "portionRatio": "1"
+            }
+          ]
         },
         "jason": {
           "totals": {
