@@ -1222,11 +1222,12 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方真實端點輪詢 (支援 iOS Safari 跨域標準 Fetch)
+                // 🌟 Google 官方真實端點輪詢 (擴充高抗壓輕量模型 gemini-2.0-flash-lite / gemini-1.5-flash-8b)
                 const endpoints = [
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
                 ];
@@ -1234,7 +1235,7 @@ ${JSON.stringify(membersData, null, 2)}
                 let resultJson = null;
                 let lastErrDetail = '';
 
-                // 多端點輪詢嘗試
+                // 多端點輪詢嘗試 (自動抗 503 尖峰塞車)
                 for (let i = 0; i < endpoints.length; i++) {
                     const endpoint = endpoints[i];
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
@@ -1272,6 +1273,7 @@ ${JSON.stringify(membersData, null, 2)}
                                 break;
                             } else {
                                 lastErrDetail = `HTTP ${resp.status}`;
+                                // 若遇 503 伺服器過載，自動換下一個輕量備援端點繼續嘗試
                                 continue;
                             }
                         }
