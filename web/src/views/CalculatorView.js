@@ -1222,14 +1222,13 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方真實端點輪詢 (擴充高抗壓輕量模型 gemini-2.0-flash-lite / gemini-1.5-flash-8b)
+                // 🌟 Google 官方真實有效端點輪詢 (精確對齊官方名稱，徹底排除 404)
                 const endpoints = [
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent'
                 ];
                 
                 let resultJson = null;
