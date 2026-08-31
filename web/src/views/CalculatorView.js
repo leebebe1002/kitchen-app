@@ -1315,7 +1315,9 @@ ${JSON.stringify(membersData, null, 2)}
                 } else {
                     // 🌟 本地系統配比無縫接管（帶出具體失敗原因提示）
                     let friendlyReason = "連線逾時或 API 無回應";
-                    if (lastErrDetail.includes('429') || lastErrDetail.includes('額度')) {
+                    if (lastErrDetail.includes('503')) {
+                        friendlyReason = "Google AI 官方伺服器目前過載或短暫維護中 (503 Service Unavailable)";
+                    } else if (lastErrDetail.includes('429') || lastErrDetail.includes('額度')) {
                         friendlyReason = "Google API 呼叫額度暫時用盡或請求過於頻繁 (429 Rate Limit)";
                     } else if (lastErrDetail.includes('403') || lastErrDetail.includes('400')) {
                         friendlyReason = "Gemini API Key 金鑰無效或權限受限";

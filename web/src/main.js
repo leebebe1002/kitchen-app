@@ -1,10 +1,10 @@
 const { createApp, ref, computed, onMounted } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260831_V137_AI_HUD_MODAL';
-import CalculatorView from './views/CalculatorView.js?v=20260831_V137_AI_HUD_MODAL';
-import TrackerView from './views/TrackerView.js?v=20260831_V137_AI_HUD_MODAL';
-import PantryView from './views/PantryView.js?v=20260831_V137_AI_HUD_MODAL';
-import CameraVisionModal from './components/CameraVisionModal.js?v=20260831_V137_AI_HUD_MODAL';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260831_V138_TRUE_RELOAD_FIX';
+import CalculatorView from './views/CalculatorView.js?v=20260831_V138_TRUE_RELOAD_FIX';
+import TrackerView from './views/TrackerView.js?v=20260831_V138_TRUE_RELOAD_FIX';
+import PantryView from './views/PantryView.js?v=20260831_V138_TRUE_RELOAD_FIX';
+import CameraVisionModal from './components/CameraVisionModal.js?v=20260831_V138_TRUE_RELOAD_FIX';
 
 const App = {
     components: {
@@ -38,8 +38,12 @@ const App = {
 
         const refreshData = async () => {
             isLoading.value = true;
-            await engine.value.initialize();
-            isLoading.value = false;
+            try {
+                sessionStorage.removeItem('family_kitchen_calc_session_state');
+                sessionStorage.removeItem('family_kitchen_calc_state_v2');
+            } catch (e) {}
+            // 執行真正的乾淨重載：載入最新版本程式碼、最新冰箱庫存與重置計算機
+            window.location.reload();
         };
 
         return {
