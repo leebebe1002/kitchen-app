@@ -628,7 +628,27 @@ export default {
 
         // 🧠 智慧總預算動態求解器 (Macro Budget Constraint Solver)
         const autoBalanceMemberPortions = (member) => {
-            const list = memberIngredients.value[member] || [];
+            if (!memberIngredients.value[member]) memberIngredients.value[member] = [];
+            const list = memberIngredients.value[member];
+
+            // 🛡️ 強制防護：確保勾選的所有有庫存食材 100% 存在於該成員的配料清單中
+            selectedMasterIngredients.value.forEach(id => {
+                if (!checkStock(id)) return;
+                if (!list.some(item => item.id === id)) {
+                    const ingData = engine.getIngredientById(id);
+                    const roleInfo = getIngredientRole(ingData);
+                    let defAmt = roleInfo.defaultAmount || 50;
+                    if (member === 'jason' && (roleInfo.role === 'main_protein' || roleInfo.role === 'staple')) {
+                        defAmt = Math.round(defAmt * 1.3);
+                    }
+                    list.push({
+                        id: id,
+                        amount: defAmt,
+                        unit: roleInfo.unit || 'g'
+                    });
+                }
+            });
+
             const activeList = list.filter(item => selectedMasterIngredients.value.includes(item.id) && checkStock(item.id));
             if (activeList.length === 0) return;
 
@@ -1156,14 +1176,13 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方 2026 最新指定主力端點 (與拍照 OCR 模組 100% 同步)
+                // 🌟 Google 官方真實端點輪詢
                 const endpoints = [
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
                 ];
                 
                 let resultJson = null;
@@ -1738,7 +1757,7 @@ ${JSON.stringify(membersData, null, 2)}
                                 <span>AI 精算中...</span>
                             </span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
-                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #E5E7EB;">
+                            <span v-else style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #E5E7EB;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1806,7 +1825,7 @@ ${JSON.stringify(membersData, null, 2)}
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                             <!-- Local Solver State -->
-                            <div v-else-if="aiChefAdvice && aiChefAdvice.source === 'local'" 
+                            <div v-else 
                                  style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #4B5563; background: #F3F4F6; padding: 3px 10px; border-radius: 12px; border: 1px solid #E5E7EB;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
