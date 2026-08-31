@@ -1176,13 +1176,13 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方真實端點輪詢
+                // 🌟 Google 官方真實端點輪詢 (支援 iOS Safari 跨域標準 Fetch)
                 const endpoints = [
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
                 ];
                 
                 let resultJson = null;
@@ -1196,8 +1196,7 @@ ${JSON.stringify(membersData, null, 2)}
                         const resp = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json',
-                                'x-goog-api-key': apiKey
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
                                 contents: [{ parts: [{ text: prompt }] }],
