@@ -1222,20 +1222,20 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方真實有效端點輪詢 (涵蓋 v1 正式版與 v1beta 測試版)
+                // 🌟 Google 官方 2026 真實有效端點輪詢 (100% 精確對齊 Google 官方返回清單)
                 const endpoints = [
-                    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent'
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent'
                 ];
                 
                 let resultJson = null;
                 let lastErrDetail = '';
 
-                // 1. 先嘗試標準端點
+                // 1. 先嘗試 2026 最新官方主力端點
                 for (let i = 0; i < endpoints.length; i++) {
                     const endpoint = endpoints[i];
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
@@ -1290,15 +1290,25 @@ ${JSON.stringify(membersData, null, 2)}
                         const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
                         if (listResp.ok) {
                             const listData = await listResp.json();
-                            const available = (listData?.models || []).filter(m => m.supportedGenerationMethods?.includes('generateContent'));
-                            console.log('📋 [Gemini API] 探測到支援模型:', available.map(m => m.name));
-                            for (const vm of available.slice(0, 3)) {
+                            const available = (listData?.models || []).filter(m => 
+                                m.supportedGenerationMethods?.includes('generateContent') &&
+                                !m.name.includes('tts') &&
+                                !m.name.includes('image') &&
+                                !m.name.includes('robotics') &&
+                                !m.name.includes('embedding')
+                            );
+                            console.log('📋 [Gemini API] 探測到支援文字模型:', available.map(m => m.name));
+                            for (const vm of available.slice(0, 5)) {
                                 const vmUrl = `https://generativelanguage.googleapis.com/v1beta/${vm.name}:generateContent?key=${encodeURIComponent(apiKey)}`;
                                 const vmResp = await fetch(vmUrl, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
-                                        contents: [{ parts: [{ text: prompt }] }]
+                                        contents: [{ parts: [{ text: prompt }] }],
+                                        generationConfig: {
+                                            responseMimeType: "application/json",
+                                            temperature: 0.2
+                                        }
                                     })
                                 });
                                 if (vmResp.ok) {
