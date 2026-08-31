@@ -1222,19 +1222,20 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方真實有效端點輪詢 (精確對齊官方名稱，徹底排除 404)
+                // 🌟 Google 官方真實有效端點輪詢 (涵蓋 v1 正式版與 v1beta 測試版)
                 const endpoints = [
+                    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+                    'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent'
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent'
                 ];
                 
                 let resultJson = null;
                 let lastErrDetail = '';
 
-                // 多端點輪詢嘗試 (自動抗 503 尖峰塞車)
+                // 1. 先嘗試標準端點
                 for (let i = 0; i < endpoints.length; i++) {
                     const endpoint = endpoints[i];
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
@@ -1272,7 +1273,6 @@ ${JSON.stringify(membersData, null, 2)}
                                 break;
                             } else {
                                 lastErrDetail = `HTTP ${resp.status}`;
-                                // 若遇 503 伺服器過載，自動換下一個輕量備援端點繼續嘗試
                                 continue;
                             }
                         }
@@ -1280,6 +1280,41 @@ ${JSON.stringify(membersData, null, 2)}
                         console.warn(`[Gemini API] 連線例外:`, err);
                         lastErrDetail = err.message || String(err);
                         continue;
+                    }
+                }
+
+                // 2. 🛡️ 終極動態探測 (Auto-Discovery)：若預設端點未命中，主動向 Google 查詢該 Key 真正支援的模型
+                if (!resultJson) {
+                    try {
+                        console.log('🔍 [Gemini API] 啟動動態模型自適應探測 (ListModels)...');
+                        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+                        if (listResp.ok) {
+                            const listData = await listResp.json();
+                            const available = (listData?.models || []).filter(m => m.supportedGenerationMethods?.includes('generateContent'));
+                            console.log('📋 [Gemini API] 探測到支援模型:', available.map(m => m.name));
+                            for (const vm of available.slice(0, 3)) {
+                                const vmUrl = `https://generativelanguage.googleapis.com/v1beta/${vm.name}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                                const vmResp = await fetch(vmUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        contents: [{ parts: [{ text: prompt }] }]
+                                    })
+                                });
+                                if (vmResp.ok) {
+                                    const vmData = await vmResp.json();
+                                    const rawText = vmData.candidates?.[0]?.content?.parts?.[0]?.text;
+                                    const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
+                                    if (jsonMatch) {
+                                        resultJson = JSON.parse(jsonMatch[0]);
+                                        console.log('🎉 [十一粒 AI] 動態探測調用成功！使用模型:', vm.name, resultJson);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (probeErr) {
+                        console.warn('[Gemini API] 動態探測例外:', probeErr);
                     }
                 }
 
