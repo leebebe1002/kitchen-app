@@ -978,25 +978,71 @@ export default {
             return engine.getMemberStatusColor(member, getMemberNutrition(member));
         };
 
-        const calculate = async () => {
-            // 1. 先以優化後本地智能求解器初始化基線 (確保 0 秒有優質底層)
-            activeMembers.value.forEach(m => {
-                autoBalanceMemberPortions(m);
-            });
+        // 🌟 AI 智能計算 HUD 遮罩狀態機
+        const aiHudState = reactive({
+            isOpen: false,
+            status: 'loading', // 'loading' | 'success' | 'error'
+            title: '十一粒 AI 主廚精算中...',
+            subTitle: '正在依據全家 InBody 與 4 階梯營養目標精算黃金備料...',
+            errorReason: ''
+        });
+
+        const acceptLocalCalculation = () => {
+            aiHudState.isOpen = false;
             isCalculated.value = true;
             isResultStale.value = false;
-            showChefNote.value = false;
-
-            // 🌟 點擊計算後，自動平滑滾動至「全家備料大白板」
+            showChefNote.value = true;
             setTimeout(() => {
                 const target = document.getElementById('portions-section');
                 if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 80);
+            }, 100);
+        };
 
-            // 2. 立即呼叫 Gemini AI 進行全家 InBody 智能精算與直接覆寫右側主數值
-            await callAiChefAdvisor();
+        const retryAiCalculation = async () => {
+            await calculate();
+        };
+
+        const calculate = async () => {
+            // 1. 先以優化後本地智能求解器初始化基線 (確保 0 秒有優質底層)
+            activeMembers.value.forEach(m => {
+                autoBalanceMemberPortions(m);
+            });
+            isResultStale.value = false;
+
+            // 2. 開啟 AI HUD 遮罩
+            aiHudState.isOpen = true;
+            aiHudState.status = 'loading';
+            aiHudState.title = '十一粒 AI 主廚精算中...';
+            aiHudState.subTitle = '正在依據全家 InBody 與 4 階梯營養目標精算黃金備料...';
+            aiHudState.errorReason = '';
+
+            // 3. 呼叫 Gemini AI
+            const aiSuccess = await callAiChefAdvisor();
+
+            if (aiSuccess) {
+                aiHudState.status = 'success';
+                aiHudState.title = '🎉 AI 智能精算完成！';
+                aiHudState.subTitle = '已依據 InBody 目標完成各成員專屬份量調配。';
+                setTimeout(() => {
+                    aiHudState.isOpen = false;
+                    isCalculated.value = true;
+                    showChefNote.value = false;
+                    setTimeout(() => {
+                        const target = document.getElementById('portions-section');
+                        if (target) {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
+                }, 400);
+            } else {
+                // 失敗或超時，停在 HUD 遮罩並秀出原因與按鈕
+                aiHudState.status = 'error';
+                aiHudState.title = '線上 AI 暫時無法連線';
+                aiHudState.errorReason = aiChefAdvice.value?.errReason || '連線逾時或 API 無回應';
+                aiHudState.subTitle = '系統已為您準備好安全的「本地智慧配比」，您可選擇立即查看或重新嘗試。';
+            }
         };
 
         const openChefKeyModal = () => {
@@ -1264,7 +1310,8 @@ ${JSON.stringify(membersData, null, 2)}
                     });
                     resultJson.source = 'ai';
                     aiChefAdvice.value = resultJson;
-                    showChefNote.value = true;
+                    showChefNote.value = false;
+                    return true;
                 } else {
                     // 🌟 本地系統配比無縫接管（帶出具體失敗原因提示）
                     let friendlyReason = "連線逾時或 API 無回應";
@@ -1286,6 +1333,7 @@ ${JSON.stringify(membersData, null, 2)}
                         portions: {}
                     };
                     showChefNote.value = true;
+                    return false;
                 }
             } catch (e) {
                 console.error("AI Chef error:", e);
@@ -1298,6 +1346,7 @@ ${JSON.stringify(membersData, null, 2)}
                     portions: {}
                 };
                 showChefNote.value = true;
+                return false;
             } finally {
                 isAiChefLoading.value = false;
             }
@@ -1575,7 +1624,10 @@ ${JSON.stringify(membersData, null, 2)}
             chefApiKeyInput,
             isChefKeyVisible,
             openChefKeyModal,
-            saveChefKey
+            saveChefKey,
+            aiHudState,
+            acceptLocalCalculation,
+            retryAiCalculation
         };
     },
     template: `
@@ -1819,28 +1871,22 @@ ${JSON.stringify(membersData, null, 2)}
                 <!-- 04 MEMBER CARDS -->
                 <div class="section-title">04 MEMBER CARDS 全家成員卡片</div>
                 <div class="card" v-for="member in activeMembers" :key="member" style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h3 style="margin-bottom: 0; font-size: 1.1rem;">{{ engine.profiles[member].name }} 的專屬份量</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;">
+                        <h3 style="margin-bottom: 0; font-size: 1.02rem; white-space: nowrap; flex-shrink: 0;">{{ engine.profiles[member].name }} 的專屬份量</h3>
                         
                         <!-- ✨ AI vs Local Status Indicator -->
                         <div>
-                            <!-- Loading State (Minimalist Apple-style Single Ring Spinner) -->
-                            <div v-if="isAiChefLoading" 
-                                 style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: #92400E; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A;">
-                                <span class="apple-spinner"></span>
-                                <span>AI 精算中...</span>
-                            </div>
                             <!-- AI Success / Advisor State -->
                             <button v-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
                                      @click="showChefNote = !showChefNote"
-                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
+                                     style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
                                  <span>✨ AI 主廚已精算</span>
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                             <!-- Local Solver State (Clickable to view takeover reason) -->
                             <button v-else 
                                     @click="showChefNote = !showChefNote"
-                                    style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #92400E; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease;">
+                                    style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #92400E; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -2066,6 +2112,59 @@ ${JSON.stringify(membersData, null, 2)}
                             留在此頁繼續
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 🌟 AI 主廚智能精算 HUD 遮罩模態框 (Apple-style Frosted Glass HUD) -->
+            <div v-if="aiHudState.isOpen" class="modal-overlay" style="z-index: 1200; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div class="card" style="width: 100%; max-width: 360px; padding: 28px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+                    
+                    <!-- 1. LOADING 狀態 -->
+                    <div v-if="aiHudState.status === 'loading'" style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="position: relative; width: 64px; height: 64px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                            <span class="apple-spinner" style="width: 48px; height: 48px; border-width: 3.5px; border-top-color: var(--color-primary, #F5A623);"></span>
+                            <span style="position: absolute; font-size: 1.3rem;">✨</span>
+                        </div>
+                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: var(--color-text-main); font-weight: 700;">{{ aiHudState.title }}</h3>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 0;">{{ aiHudState.subTitle }}</p>
+                    </div>
+
+                    <!-- 2. SUCCESS 狀態 -->
+                    <div v-else-if="aiHudState.status === 'success'" style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #ECFDF5; border: 2px solid #10B981; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 16px;">
+                            ✓
+                        </div>
+                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: #065F46; font-weight: 700;">{{ aiHudState.title }}</h3>
+                        <p style="font-size: 0.85rem; color: #047857; line-height: 1.5; margin-bottom: 0;">{{ aiHudState.subTitle }}</p>
+                    </div>
+
+                    <!-- 3. ERROR 狀態 (超時 / 429 額度 / 連線中斷) -->
+                    <div v-else-if="aiHudState.status === 'error'" style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #FEF3C7; border: 2px solid #F59E0B; color: #D97706; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 14px;">
+                            ⚠️
+                        </div>
+                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: #92400E; font-weight: 700;">{{ aiHudState.title }}</h3>
+                        
+                        <div style="margin-bottom: 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 10px 14px; font-size: 0.82rem; color: #B45309; line-height: 1.5; text-align: left; width: 100%; box-sizing: border-box;">
+                            <strong>💡 狀況原因：</strong>{{ aiHudState.errorReason }}
+                        </div>
+                        
+                        <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 20px;">
+                            系統已準備好安全的「本地智慧配比」，您可直接查看或稍後重試。
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                            <button @click="acceptLocalCalculation" 
+                                    style="width: 100%; padding: 12px 16px; border-radius: 14px; background: var(--color-primary, #F5A623); color: #FFFFFF; font-weight: 700; font-size: 0.92rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245, 166, 35, 0.35);">
+                                <span>⚙️ 使用系統配比 (立即查看)</span>
+                            </button>
+                            <button @click="retryAiCalculation" 
+                                    style="width: 100%; padding: 10px 16px; border-radius: 14px; background: #F3F4F6; color: #4B5563; font-weight: 600; font-size: 0.85rem; border: 1px solid #E5E7EB; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>🔄 重新嘗試 AI 精算</span>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
