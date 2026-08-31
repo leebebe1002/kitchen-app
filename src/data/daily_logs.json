@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 680.4,
-            "protein": 40.5,
-            "carbs": 47.9,
-            "fat": 37.5,
-            "sodium": 1137.9
+            "kcal": 945.4,
+            "protein": 44,
+            "carbs": 75.9,
+            "fat": 53.5,
+            "sodium": 1202.9
           },
           "meals": [
             {
@@ -43,6 +43,22 @@
                 "sodium": 1100
               },
               "aiNote": "已為您精算 IKEA 複合餐點，醬料與油炸物為熱量及脂肪主要來源，數據可隨時調整。",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1788163620932_bebe",
+              "dishName": "曠世奇派雪糕",
+              "time": "下午04:07",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 265,
+                "protein": 3.5,
+                "carbs": 28,
+                "fat": 16,
+                "sodium": 65
+              },
+              "aiNote": "以常見經典巧克力口味曠世奇派（1支約85g）估算，外層巧克力脆皮與堅果熱量及脂肪較高，數據可隨時點擊調整。",
               "photoUrl": null,
               "portionRatio": "1"
             }
