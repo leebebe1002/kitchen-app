@@ -39,11 +39,11 @@
         },
         "ariel": {
           "totals": {
-            "kcal": 650.7,
-            "protein": 56.1,
-            "carbs": 41.5,
-            "fat": 30.1,
-            "sodium": 327
+            "kcal": 324.4,
+            "protein": 21.1,
+            "carbs": 22.3,
+            "fat": 17.9,
+            "sodium": 159
           },
           "meals": [
             {
@@ -68,22 +68,6 @@
                 "松露橄欖油 5g",
                 "小黃瓜 40g"
               ]
-            },
-            {
-              "id": "meal_1788251502595_ariel",
-              "dishName": "乳清蛋白飲 (法式可可) + 鮮奶",
-              "time": "下午04:31",
-              "source": "nlp_ai",
-              "nutrients": {
-                "kcal": 326.3,
-                "protein": 35,
-                "carbs": 19.2,
-                "fat": 12.2,
-                "sodium": 168
-              },
-              "aiNote": "Body Goals 乳清蛋白飲 Pro (法式可可 40g) ＋ 統一全脂鮮乳 250g。極低鈉、高吸收、補鈣可可乳清。",
-              "photoUrl": null,
-              "portionRatio": "1"
             }
           ]
         },
