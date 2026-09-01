@@ -1201,6 +1201,89 @@
           "meals": []
         }
       }
+    },
+    {
+      "date": "2026-09-01",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 254.2,
+            "protein": 17.5,
+            "carbs": 15.7,
+            "fat": 14.3,
+            "sodium": 136.7
+          },
+          "meals": [
+            {
+              "id": "meal_1788234277197_bebe",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "上午11:44",
+              "nutrients": {
+                "kcal": 254.2,
+                "protein": 17.5,
+                "carbs": 15.7,
+                "fat": 14.3,
+                "sodium": 136.7
+              },
+              "ingredientsSummary": [
+                "蛋 1顆",
+                "綜合生菜 40g",
+                "毛豆 25g",
+                "雞腿肉 35g",
+                "馬鈴薯 60g",
+                "洋菇 35g",
+                "松露橄欖油 3g",
+                "小黃瓜 35g"
+              ]
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 324.4,
+            "protein": 21.1,
+            "carbs": 22.3,
+            "fat": 17.9,
+            "sodium": 159
+          },
+          "meals": [
+            {
+              "id": "meal_1788234277698_ariel",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "上午11:44",
+              "nutrients": {
+                "kcal": 324.4,
+                "protein": 21.1,
+                "carbs": 22.3,
+                "fat": 17.9,
+                "sodium": 159
+              },
+              "ingredientsSummary": [
+                "蛋 1顆",
+                "綜合生菜 50g",
+                "毛豆 35g",
+                "雞腿肉 45g",
+                "馬鈴薯 90g",
+                "洋菇 45g",
+                "松露橄欖油 5g",
+                "小黃瓜 40g"
+              ]
+            }
+          ]
+        },
+        "jason": {
+          "totals": {
+            "kcal": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0,
+            "sodium": 0
+          },
+          "meals": []
+        }
+      }
     }
   ]
 }
