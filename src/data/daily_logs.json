@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 254.2,
-            "protein": 17.5,
-            "carbs": 15.7,
-            "fat": 14.3,
-            "sodium": 136.7
+            "kcal": 580.5,
+            "protein": 52.5,
+            "carbs": 34.9,
+            "fat": 26.5,
+            "sodium": 304.7
           },
           "meals": [
             {
@@ -34,6 +34,22 @@
                 "松露橄欖油 3g",
                 "小黃瓜 35g"
               ]
+            },
+            {
+              "id": "meal_1788251518407_bebe",
+              "dishName": "乳清蛋白飲 (法式可可) + 鮮奶",
+              "time": "下午04:31",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 326.3,
+                "protein": 35,
+                "carbs": 19.2,
+                "fat": 12.2,
+                "sodium": 168
+              },
+              "aiNote": "Body Goals 乳清蛋白飲 Pro (法式可可 40g) ＋ 統一全脂鮮乳 250g。極低鈉、高吸收、補鈣可可乳清。",
+              "photoUrl": null,
+              "portionRatio": "1"
             }
           ]
         },
