@@ -1313,6 +1313,117 @@
                 "3. 炒蔬菜與煨麵：原鍋下洋蔥、香菇與菠菜/綠花椰菜炒軟，倒入少許煮麵水與義大利麵翻炒收汁。",
                 "4. 盛盤享用：加入主料翻拌均勻，撒上現磨黑胡椒與少許蒜香椒鹽提味即可上桌！"
             ]
+        },
+        {
+            "id": "special_drink",
+            "name": "慢活特調飲品吧",
+            "categories": [
+                "breakfast",
+                "lunch",
+                "dinner"
+            ],
+            "recommendedProteins": [
+                "full_fat_milk_250",
+                "sugar_free_soymilk",
+                "low_sugar_soymilk",
+                "whey_protein_cocoa",
+                "pea_protein_sesame",
+                "whey_protein"
+            ],
+            "recommendedVeggies": [
+                "banana",
+                "frozen_berry"
+            ],
+            "recommendedCarbs": [
+                "granola"
+            ],
+            "recommendedSauces": [
+                "coffee_capsule",
+                "black_coffee",
+                "cocoa_powder",
+                "sesame_powder",
+                "matcha_powder",
+                "yuzu_jam",
+                "yuzu_liqueur",
+                "chia_seeds",
+                "maple_syrup"
+            ],
+            "defaultIngredients": [
+                {
+                    "id": "full_fat_milk_250",
+                    "amount": 200,
+                    "unit": "ml"
+                },
+                {
+                    "id": "whey_protein_cocoa",
+                    "amount": 30,
+                    "unit": "g"
+                },
+                {
+                    "id": "black_coffee",
+                    "amount": 50,
+                    "unit": "ml"
+                }
+            ],
+            "memberPortions": {
+                "bebe": [
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 150,
+                        "unit": "ml"
+                    },
+                    {
+                        "id": "whey_protein_cocoa",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "black_coffee",
+                        "amount": 50,
+                        "unit": "ml"
+                    }
+                ],
+                "ariel": [
+                    {
+                        "id": "full_fat_milk_250",
+                        "amount": 200,
+                        "unit": "ml"
+                    },
+                    {
+                        "id": "pea_protein_sesame",
+                        "amount": 25,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "sesame_powder",
+                        "amount": 5,
+                        "unit": "g"
+                    }
+                ],
+                "jason": [
+                    {
+                        "id": "sugar_free_soymilk",
+                        "amount": 250,
+                        "unit": "ml"
+                    },
+                    {
+                        "id": "whey_protein_cocoa",
+                        "amount": 35,
+                        "unit": "g"
+                    },
+                    {
+                        "id": "black_coffee",
+                        "amount": 100,
+                        "unit": "ml"
+                    }
+                ]
+            },
+            "sopSteps": [
+                "1. 基底選擇：依個人喜好於搖搖杯或調理杯中倒入鮮奶、無糖/低糖豆漿（約 150~250ml）。",
+                "2. 蛋白與風味粉：加入法式可可乳清蛋白或芝麻歐蕾豌豆蛋白，並依口味撒入黑芝麻粉、純可可粉或奇亞籽。",
+                "3. 咖啡與特調提味：萃取一顆咖啡膠囊（或加入黑咖啡）；若想喝果香風味可加入一匙柚子果醬，夜晚微醺時光可滴入少許柚子酒調香。",
+                "4. 搖勻享用：蓋緊搖搖杯充分搖晃 15 秒（或用奶泡器/攪拌棒打勻），即可享用兼具高蛋白與濃郁層次的慢活特調飲！"
+            ]
         }
     ]
 }

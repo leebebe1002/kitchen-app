@@ -563,6 +563,103 @@
                 "sodium": 12
             },
             "priorityTier": 1
+        },
+        {
+            "id": "whey_protein_cocoa",
+            "name": "乳清蛋白（法式可可）",
+            "brand": "Myprotein / 戰神 / 果果",
+            "category": "proteins",
+            "unitLabel": "g",
+            "servingSize": 30,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 118,
+                "protein": 21.0,
+                "fat": 2.1,
+                "carbs": 3.5,
+                "sodium": 140
+            },
+            "per100g": {
+                "kcal": 393,
+                "protein": 70.0,
+                "fat": 7.0,
+                "carbs": 11.6,
+                "sodium": 466
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "EC",
+            "preferredStores": [
+                "EC"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "pea_protein_sesame",
+            "name": "豌豆蛋白（芝麻歐蕾）",
+            "brand": "樂維根 / 果果",
+            "category": "proteins",
+            "unitLabel": "g",
+            "servingSize": 30,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 122,
+                "protein": 22.0,
+                "fat": 2.8,
+                "carbs": 2.4,
+                "sodium": 180
+            },
+            "per100g": {
+                "kcal": 406,
+                "protein": 73.3,
+                "fat": 9.3,
+                "carbs": 8.0,
+                "sodium": 600
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "EC",
+            "preferredStores": [
+                "EC"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "low_sugar_soymilk",
+            "name": "低糖豆漿",
+            "brand": "義美 / 光泉",
+            "category": "proteins",
+            "unitLabel": "ml",
+            "servingSize": 100,
+            "servingUnit": "ml",
+            "perServing": {
+                "kcal": 48,
+                "protein": 3.4,
+                "fat": 1.6,
+                "carbs": 5.0,
+                "sodium": 15
+            },
+            "per100g": {
+                "kcal": 48,
+                "protein": 3.4,
+                "fat": 1.6,
+                "carbs": 5.0,
+                "sodium": 15
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "義美"
+            ],
+            "priorityTier": 1
         }
     ],
     "veggies": [
@@ -1956,6 +2053,107 @@
                 "sodium": 0
             },
             "priorityTier": 1
+        },
+        {
+            "id": "black_coffee",
+            "name": "黑咖啡",
+            "brand": "Nespresso / 現煮美式",
+            "category": "sauces",
+            "unitLabel": "ml",
+            "servingSize": 100,
+            "servingUnit": "ml",
+            "perServing": {
+                "kcal": 2,
+                "protein": 0.2,
+                "fat": 0.0,
+                "carbs": 0.3,
+                "sodium": 3
+            },
+            "per100g": {
+                "kcal": 2,
+                "protein": 0.2,
+                "fat": 0.0,
+                "carbs": 0.3,
+                "sodium": 3
+            },
+            "storageZone": "pantry",
+            "storageZones": [
+                "pantry"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "yuzu_liqueur",
+            "name": "柚子酒",
+            "brand": "日本梅乃宿 / 自釀",
+            "category": "sauces",
+            "unitLabel": "ml",
+            "servingSize": 30,
+            "servingUnit": "ml",
+            "perServing": {
+                "kcal": 48,
+                "protein": 0.1,
+                "fat": 0.0,
+                "carbs": 6.5,
+                "sodium": 2
+            },
+            "per100g": {
+                "kcal": 160,
+                "protein": 0.3,
+                "fat": 0.0,
+                "carbs": 21.6,
+                "sodium": 6
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge",
+                "pantry"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "EC"
+            ],
+            "priorityTier": 3
+        },
+        {
+            "id": "yuzu_jam",
+            "name": "柚子果醬",
+            "brand": "韓式黃金柚子茶醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "servingSize": 20,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 52,
+                "protein": 0.0,
+                "fat": 0.0,
+                "carbs": 13.0,
+                "sodium": 5
+            },
+            "per100g": {
+                "kcal": 260,
+                "protein": 0.0,
+                "fat": 0.0,
+                "carbs": 65.0,
+                "sodium": 25
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge",
+                "pantry"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "priorityTier": 3
         }
     ]
 }
