@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 377.4,
-            "protein": 36.7,
-            "carbs": 12,
-            "fat": 20.7,
-            "sodium": 492.8
+            "kcal": 476.6,
+            "protein": 41.5,
+            "carbs": 19.5,
+            "fat": 26.3,
+            "sodium": 556.9
           },
           "meals": [
             {
@@ -48,6 +48,23 @@
                 "水煮鮪魚 65g",
                 "薄脆雞翅 45g",
                 "起司 20g"
+              ]
+            },
+            {
+              "id": "meal_1788330562068_bebe",
+              "dishId": "special_drink",
+              "dishName": "慢活特調飲品吧",
+              "time": "下午02:29",
+              "nutrients": {
+                "kcal": 99.2,
+                "protein": 4.8,
+                "carbs": 7.5,
+                "fat": 5.6,
+                "sodium": 64.1
+              },
+              "ingredientsSummary": [
+                "全脂鮮奶 150g",
+                "咖啡膠囊 1顆"
               ]
             }
           ]
