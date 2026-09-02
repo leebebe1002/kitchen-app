@@ -1996,21 +1996,21 @@
             "name": "咖啡膠囊",
             "category": "sauces",
             "unitLabel": "顆",
-            "servingSize": 1,
-            "servingUnit": "顆",
+            "servingSize": 16,
+            "servingUnit": "ml",
             "perServing": {
-                "kcal": 2,
-                "protein": 0.1,
-                "fat": 0,
-                "carbs": 0.3,
-                "sodium": 2
+                "kcal": 20,
+                "protein": 0.3,
+                "fat": 0.0,
+                "carbs": 4.6,
+                "sodium": 18
             },
             "per100g": {
-                "kcal": 2,
-                "protein": 0.1,
-                "fat": 0,
-                "carbs": 0.3,
-                "sodium": 2
+                "kcal": 124,
+                "protein": 1.9,
+                "fat": 0.0,
+                "carbs": 28.7,
+                "sodium": 110
             },
             "storageZone": "pantry",
             "storageZones": [
