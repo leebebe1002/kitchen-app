@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 118.8,
-            "protein": 5.8,
-            "carbs": 8.9,
-            "fat": 6.7,
-            "sodium": 76.7
+            "kcal": 377.4,
+            "protein": 36.7,
+            "carbs": 12,
+            "fat": 20.7,
+            "sodium": 492.8
           },
           "meals": [
             {
@@ -27,6 +27,27 @@
               "ingredientsSummary": [
                 "全脂鮮奶 180g",
                 "咖啡膠囊 1顆"
+              ]
+            },
+            {
+              "id": "meal_1788323042654_bebe",
+              "dishId": "brunch_set",
+              "dishName": "陽光美式早午餐",
+              "time": "下午12:24",
+              "nutrients": {
+                "kcal": 258.6,
+                "protein": 30.9,
+                "carbs": 3.1,
+                "fat": 14,
+                "sodium": 416.1
+              },
+              "ingredientsSummary": [
+                "蛋 1顆",
+                "綜合生菜 20g",
+                "櫛瓜 40g",
+                "水煮鮪魚 65g",
+                "薄脆雞翅 45g",
+                "起司 20g"
               ]
             }
           ]
