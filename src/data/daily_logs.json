@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 970,
-            "protein": 36.8,
-            "carbs": 115.5,
+            "kcal": 1050,
+            "protein": 37.8,
+            "carbs": 135.5,
             "fat": 39.5,
-            "sodium": 1130
+            "sodium": 1132
           },
           "meals": [
             {
@@ -41,6 +41,22 @@
                 "sodium": 50
               },
               "aiNote": "外酥內軟的脆皮年糕十分誘人！因經過油炸且糯米與糖分比例高，熱量與油脂不可小覷，建議適量享用並搭配無糖茶飲解膩喔！",
+              "photoUrl": null,
+              "portionRatio": "1"
+            },
+            {
+              "id": "meal_1788423185974_bebe",
+              "dishName": "芭蕉",
+              "time": "下午04:13",
+              "source": "nlp_ai",
+              "nutrients": {
+                "kcal": 80,
+                "protein": 1,
+                "carbs": 20,
+                "fat": 0,
+                "sodium": 2
+              },
+              "aiNote": "以一根中型芭蕉（約80克可食重）估算，富含膳食纖維與鉀，是優質健康的能量補充來源。",
               "photoUrl": null,
               "portionRatio": "1"
             }
