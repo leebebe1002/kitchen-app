@@ -62,18 +62,19 @@
         },
         "ariel": {
           "totals": {
-            "kcal": 758.8,
-            "protein": 81.4,
-            "carbs": 29.8,
-            "fat": 37.8,
-            "sodium": 1078.6
+            "kcal": 1172.8,
+            "protein": 105.4,
+            "carbs": 60.8,
+            "fat": 59.8,
+            "sodium": 1585.1
           },
           "meals": [
             {
               "id": "meal_1788499090932_ariel",
-              "dishId": "salad",
               "dishName": "彩虹生菜沙拉",
               "time": "下午01:18",
+              "source": "manual",
+              "portionRatio": "1",
               "nutrients": {
                 "kcal": 379.4,
                 "protein": 40.7,
@@ -81,7 +82,7 @@
                 "fat": 18.9,
                 "sodium": 539.3
               },
-              "ingredientsSummary": [
+              "items": [
                 "無糖花生醬 10g",
                 "水煮鮪魚 80g",
                 "蝦仁 30g",
@@ -93,7 +94,9 @@
                 "蛋 1顆",
                 "綜合生菜 100g",
                 "小黃瓜 50g"
-              ]
+              ],
+              "aiNote": "",
+              "photoUrl": null
             },
             {
               "id": "meal_1788499091579_ariel",
@@ -120,6 +123,23 @@
                 "綜合生菜 100g",
                 "小黃瓜 50g"
               ]
+            },
+            {
+              "id": "meal_1788527102825_ariel",
+              "dishName": "麥克雙牛堡 (客製)",
+              "time": "下午09:05",
+              "source": "nlp_ai",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 414,
+                "protein": 24,
+                "carbs": 31,
+                "fat": 22,
+                "sodium": 506.5
+              },
+              "items": [],
+              "aiNote": "麥當勞官方精確數據：無芥末醬、無酸黃瓜、無番茄醬。",
+              "photoUrl": null
             }
           ]
         },
