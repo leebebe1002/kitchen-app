@@ -1,4 +1,6 @@
-const { ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+import SupabaseService from '../services/SupabaseService.js';
+
+const { ref, computed, onMounted, onUnmounted, nextTick, watch } = Vue;
 
 export default {
     props: ['engine'],
@@ -28,6 +30,22 @@ export default {
 
         // Editable Result Form for 畫面 C
         const selectedPortionRatio = ref('1');
+        const expandedMeals = ref({});
+        const toggleMealItems = (mealId) => {
+            expandedMeals.value[mealId] = !expandedMeals.value[mealId];
+        };
+
+        const getMealItems = (meal) => {
+            if (!meal) return [];
+            if (Array.isArray(meal.items) && meal.items.length > 0) return meal.items;
+            if (Array.isArray(meal.ingredientsSummary) && meal.ingredientsSummary.length > 0) return meal.ingredientsSummary;
+            return [];
+        };
+
+        const previewPhotoUrl = ref(null);
+        const openPhotoPreview = (url) => { previewPhotoUrl.value = url; };
+        const closePhotoPreview = () => { previewPhotoUrl.value = null; };
+
         const baseNutrients = ref({
             dishName: '便當店排骨便當',
             kcal: 680,
@@ -35,6 +53,7 @@ export default {
             carbs: 82.0,
             fat: 24.0,
             sodium: 980,
+            items: [],
             aiNote: '估算自信度 88%，包含大油炒高麗菜與排骨裹粉。'
         });
 
@@ -45,6 +64,7 @@ export default {
             carbs: 82.0,
             fat: 24.0,
             sodium: 980,
+            items: [],
             aiNote: '估算自信度 88%，包含大油炒高麗菜與排骨裹粉。'
         });
 
@@ -57,6 +77,7 @@ export default {
                 carbs: Number(formObj.carbs) || 0,
                 fat: Number(formObj.fat) || 0,
                 sodium: Number(formObj.sodium) || 0,
+                items: Array.isArray(formObj.items) ? formObj.items : [],
                 aiNote: formObj.aiNote || ''
             };
             resultForm.value = {
@@ -66,6 +87,7 @@ export default {
                 carbs: Number(formObj.carbs) || 0,
                 fat: Number(formObj.fat) || 0,
                 sodium: Number(formObj.sodium) || 0,
+                items: Array.isArray(formObj.items) ? formObj.items : [],
                 aiNote: formObj.aiNote || ''
             };
             modalStep.value = 'result';
@@ -402,16 +424,23 @@ export default {
 
             const prompt = `你是一位極具洞察力的頂級營養師與 AI 視覺估算專家。
 請仔細辨識這張照片中的食物/餐點（若照片非食物，請如實說明）。
-請提取出『料理/餐點名稱 (dishName)』，並根據視覺份量精準估算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』，並給出一句簡短親切的估算備註說明 (aiNote)。
+請提取出『料理/餐點名稱 (dishName)』，並根據視覺份量精準估算全份餐點的『熱量 (kcal)』、『蛋白質 (protein, 克)』、『碳水化合物 (carbs, 克)』、『脂肪 (fat, 克)』與『鈉含量 (sodium, 毫克)』。
+若為複合餐點（如簡餐套餐、便當、丼飯、早午餐拼盤等），請將辨識到的食材組成與配菜拆解為清單（items，陣列格式，如 ["主菜：泰式椒麻雞腿排 (~420 kcal)", "主食：白飯一碗 (~280 kcal)", "配菜：荷包蛋＋時蔬 (~110 kcal)"]）。若為單一簡單食物，亦可列出主要原料。
+並給出一句簡短親切的估算備註說明 (aiNote)。
 
 請嚴格只輸出合法 JSON 物件，不要包在 Markdown 或其他文字中：
 {
-  "dishName": "精準料理品名 (如: 台式高麗菜荷包蛋便當 / 炙燒鮭魚丼 / 舒肥雞胸溫沙拉)",
+  "dishName": "精準料理品名 (如: 泰式椒麻雞套餐 / 台式高麗菜荷包蛋便當 / 炙燒鮭魚丼)",
   "kcal": 520,
   "protein": 32,
   "carbs": 58,
   "fat": 18,
   "sodium": 750,
+  "items": [
+    "主菜：泰式椒麻雞腿排 (~420 kcal)",
+    "主食：白飯一碗 (~280 kcal)",
+    "配菜：荷包蛋＋炒高麗菜 (~110 kcal)"
+  ],
   "aiNote": "十一粒 AI 視覺估算：含主菜與配菜，數據可隨時點擊調整。"
 }`;
 
@@ -812,6 +841,20 @@ export default {
                 recordDishName = `${recordDishName} (${ratioLabels[ratio]})`;
             }
 
+            // ☁️ 優先將實拍照片上傳至 Supabase 雲端圖床 (避免 Base64 塞爆 JSON 與 iCloud 同步)
+            let finalPhotoUrl = capturedPhotoUrl.value;
+            if (isFromPhoto && capturedPhotoUrl.value && capturedPhotoUrl.value.startsWith('data:')) {
+                try {
+                    const cloudUrl = await SupabaseService.uploadMealPhoto(capturedPhotoUrl.value, currentMember.value);
+                    if (cloudUrl) {
+                        finalPhotoUrl = cloudUrl;
+                        console.log('🎉 [Tracker] 食物照片已成功儲存至 Supabase 雲端圖床:', cloudUrl);
+                    }
+                } catch (e) {
+                    console.warn('⚠️ [Tracker] 雲端圖床上傳異常，使用本地照片快照:', e);
+                }
+            }
+
             const meal = {
                 id: 'meal_' + Date.now() + '_' + currentMember.value,
                 dishName: recordDishName,
@@ -825,7 +868,8 @@ export default {
                     sodium: Number(resultForm.value.sodium) || 0
                 },
                 aiNote: resultForm.value.aiNote,
-                photoUrl: capturedPhotoUrl.value,
+                photoUrl: finalPhotoUrl,
+                items: Array.isArray(resultForm.value.items) ? resultForm.value.items : [],
                 portionRatio: ratio
             };
 
@@ -847,7 +891,18 @@ export default {
             }, 600);
         };
 
+        watch([currentDate, currentMember], async ([newDate, newMember]) => {
+            if (engine.fetchMealsFromSupabase) {
+                await engine.fetchMealsFromSupabase(newDate, newMember);
+                refreshCounter.value++;
+            }
+        });
+
         onMounted(async () => {
+            if (engine.fetchMealsFromSupabase) {
+                await engine.fetchMealsFromSupabase(currentDate.value, currentMember.value);
+                refreshCounter.value++;
+            }
             await syncNow();
             if (engine.cloudSync) {
                 engine.cloudSync.onSync((event) => {
@@ -910,7 +965,13 @@ export default {
             isKeyVisible,
             openApiKeySettings,
             saveApiKeySetting,
-            getGeminiApiKey
+            getGeminiApiKey,
+            expandedMeals,
+            toggleMealItems,
+            getMealItems,
+            previewPhotoUrl,
+            openPhotoPreview,
+            closePhotoPreview
         };
     },
     template: `
@@ -1103,12 +1164,26 @@ export default {
 
             <!-- Recorded Meals List -->
             <div v-else style="margin-bottom: 24px;">
-                <div v-for="meal in meals" :key="meal.id" class="card" style="margin-bottom: 14px; border-left: 4px solid var(--color-primary); background: #FFFFFF; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--color-border);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                        <div style="flex: 1;">
-                            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #111827;">{{ meal.dishName }}</h4>
-                            <span style="font-size: 0.78rem; color: #6B7280;">🕒 {{ meal.time }}</span>
+                <div v-for="meal in meals" :key="meal.id" class="card" style="margin-bottom: 14px; border-left: 4px solid var(--color-primary); background: #FFFFFF; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <!-- 左側：照片縮圖 + 標題資訊 -->
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                            <!-- 實拍照片縮圖 (放在餐點名稱左邊，點擊放大預覽) -->
+                            <div v-if="meal.photoUrl" 
+                                 @click.stop="openPhotoPreview(meal.photoUrl)" 
+                                 style="width: 56px; height: 56px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--color-border); flex-shrink: 0; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06); position: relative;"
+                                 title="點擊查看餐點實拍照片">
+                                <img :src="meal.photoUrl" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                <div style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.6); border-radius: 4px; padding: 1px 3px; font-size: 0.55rem; color: #FFF; line-height: 1;">📷</div>
+                            </div>
+
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #111827; word-break: break-word; line-height: 1.3;">{{ meal.dishName }}</h4>
+                                <span style="font-size: 0.78rem; color: #6B7280; display: block; margin-top: 3px;">🕒 {{ meal.time }}</span>
+                            </div>
                         </div>
+
+                        <!-- 右側：刪除按鈕 -->
                         <button class="btn-icon" 
                                 @click.stop="deleteMeal(meal.id)" 
                                 style="color: #EF4444; border: 1px solid #FECACA; background: #FEF2F2; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex-shrink: 0;" 
@@ -1121,6 +1196,7 @@ export default {
                             </svg>
                         </button>
                     </div>
+
                     <!-- 4 格極簡圓角數據方塊 (熱量淡紅 + 無 icon) -->
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px;">
                         <!-- 1. 卡路里 (系統刷淡紅背景) -->
@@ -1142,6 +1218,26 @@ export default {
                         <div style="background: #FAF8F5; border: 1px solid #F3F4F6; border-radius: 10px; padding: 6px 2px; text-align: center;">
                             <div style="font-size: 0.72rem; color: #6B7280; font-weight: 500; margin-bottom: 2px;">脂肪</div>
                             <div style="font-size: 0.85rem; font-weight: 700; color: #1F2937; font-family: 'Inter', sans-serif;">{{ meal.nutrients?.fat || 0 }}g</div>
+                        </div>
+                    </div>
+
+                    <!-- 📋 餐點詳細資料 (食材組成 + AI 備註折疊抽屜) -->
+                    <div v-if="getMealItems(meal).length > 0 || meal.aiNote" style="margin-top: 10px; border-top: 1px dashed var(--color-border); padding-top: 8px;">
+                        <button @click.stop="toggleMealItems(meal.id)" style="background: none; border: none; padding: 0; font-size: 0.78rem; font-weight: 600; color: var(--color-primary); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <span>{{ expandedMeals[meal.id] ? '▾ 收起詳細資料' : '▸ 查看詳細資料' }}</span>
+                        </button>
+                        <div v-if="expandedMeals[meal.id]" style="margin-top: 6px; padding: 8px 12px; background: #FAF8F5; border-radius: 8px; font-size: 0.8rem; color: #374151; border: 1px solid var(--color-border); line-height: 1.4;">
+                            <!-- 食材組成細項清單 -->
+                            <div v-if="getMealItems(meal).length > 0">
+                                <div v-for="(it, i) in getMealItems(meal)" :key="i" style="margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                                    <span style="color: var(--color-primary); font-weight: 700;">•</span>
+                                    <span>{{ it }}</span>
+                                </div>
+                            </div>
+                            <!-- AI 備註說明 -->
+                            <div v-if="meal.aiNote" :style="getMealItems(meal).length > 0 ? 'margin-top: 6px; padding-top: 6px; border-top: 1px dashed #E5E7EB; color: #4B5563;' : 'color: #4B5563;'">
+                                💡 {{ meal.aiNote }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1500,6 +1596,15 @@ export default {
                                 </div>
                             </div>
 
+                            <!-- 📋 辨識出的餐點組成細項 (畫面 C 預覽) -->
+                            <div v-if="resultForm.items && resultForm.items.length" style="background: #FFFFFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+                                <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 8px;">📋 辨識出的餐點組成：</div>
+                                <div v-for="(it, i) in resultForm.items" :key="i" style="font-size: 0.84rem; color: #374151; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                    <span style="color: var(--color-primary); font-weight: 700;">•</span>
+                                    <span>{{ it }}</span>
+                                </div>
+                            </div>
+
                             <!-- AI Context Note (附帶純圓形 icon 重新精算/修改按鈕) -->
                             <div style="font-size: 0.85rem; color: #4B5563; background: #FAF8F5; border: 1px solid var(--color-border); padding: 10px 14px; border-radius: 10px; margin-bottom: 20px; line-height: 1.4; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                                 <div style="flex: 1;"><strong>AI 說明：</strong>{{ resultForm.aiNote }}</div>
@@ -1580,6 +1685,14 @@ export default {
                             儲存金鑰
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 食物照片放大預覽 Lightbox Modal -->
+            <div v-if="previewPhotoUrl" class="modal-overlay" @click.self="closePhotoPreview" style="background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div style="position: relative; max-width: 92vw; max-height: 85vh;">
+                    <img :src="previewPhotoUrl" style="max-width: 100%; max-height: 80vh; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: block;">
+                    <button @click="closePhotoPreview" style="position: absolute; top: -14px; right: -14px; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; border: none; font-size: 1.1rem; font-weight: 700; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">✕</button>
                 </div>
             </div>
         </div>

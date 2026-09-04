@@ -489,6 +489,46 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode('utf-8'))
+        elif self.path == '/api/upload-supabase-photo':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            try:
+                req_json = json.loads(post_data.decode('utf-8'))
+                filename = req_json.get('filename', '')
+                mime_type = req_json.get('mimeType', 'image/jpeg')
+                b64_data = req_json.get('base64', '')
+                
+                raw_bytes = base64.b64decode(b64_data)
+                
+                service_role_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZ2RuZWFjdXp3eWZpYnB1dXBxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODQxODk0MywiZXhwIjoyMTAzOTk0OTQzfQ.TCy79Vt8e8LZ_tyd53UeIkSed_9VP-PmzUjf-h-9URM"
+                supabase_url = "https://zfgdneacuzwyfibpuupq.supabase.co"
+                bucket = "meal-photos"
+                
+                upload_url = f"{supabase_url}/storage/v1/object/{bucket}/{filename}"
+                req = urllib.request.Request(
+                    upload_url,
+                    data=raw_bytes,
+                    headers={
+                        'apikey': service_role_key,
+                        'Authorization': f'Bearer {service_role_key}',
+                        'Content-Type': mime_type
+                    },
+                    method='POST'
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    public_url = f"{supabase_url}/storage/v1/object/public/{bucket}/{filename}"
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "success",
+                        "publicUrl": public_url
+                    }).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode('utf-8'))
         elif self.path.startswith('/api/data/'):
             filename = os.path.basename(self.path)
             filepath = os.path.join(DIRECTORY, 'src', 'data', filename)

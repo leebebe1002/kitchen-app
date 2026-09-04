@@ -1,9 +1,11 @@
 import CloudSyncEngine from './CloudSyncEngine.js';
+import supabaseService from '../services/SupabaseService.js';
 
 export default class KitchenEngine {
     constructor() {
         const { reactive } = Vue;
         this.cloudSync = new CloudSyncEngine();
+        this.supabase = supabaseService;
         this.data = reactive({
             ingredients: [],
             householdSupplies: [],
@@ -635,7 +637,73 @@ export default class KitchenEngine {
         return dayEntry.diners[member];
     }
 
+    async fetchMealsFromSupabase(date, member) {
+        if (!this.supabase) return;
+        try {
+            const cloudMeals = await this.supabase.getMealsByDate(date, member);
+            if (Array.isArray(cloudMeals) && cloudMeals.length > 0) {
+                if (!this.data.dailyLogs) this.data.dailyLogs = { logs: [] };
+                if (!this.data.dailyLogs.logs) this.data.dailyLogs.logs = [];
+
+                let dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
+                if (!dayEntry) {
+                    dayEntry = {
+                        date: date,
+                        diners: {
+                            bebe: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
+                            ariel: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
+                            jason: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] }
+                        }
+                    };
+                    this.data.dailyLogs.logs.push(dayEntry);
+                }
+
+                if (!dayEntry.diners[member]) {
+                    dayEntry.diners[member] = { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
+                }
+
+                dayEntry.diners[member].meals = cloudMeals;
+
+                // Recalculate totals
+                const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+                cloudMeals.forEach(m => {
+                    const n = m.nutrients || {};
+                    totals.kcal += (n.kcal || 0);
+                    totals.protein += (n.protein || 0);
+                    totals.carbs += (n.carbs || 0);
+                    totals.fat += (n.fat || 0);
+                    totals.sodium += (n.sodium || 0);
+                });
+
+                Object.keys(totals).forEach(k => {
+                    totals[k] = Math.round(totals[k] * 10) / 10;
+                });
+                dayEntry.diners[member].totals = totals;
+
+                this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+            }
+        } catch (err) {
+            console.warn('⚠️ [Supabase] 讀取雲端飲食紀錄失敗，維持本地離線資料:', err);
+        }
+    }
+
     async recordMeal(date, member, meal) {
+        if (!meal.id) {
+            meal.id = 'meal_' + Date.now() + '_' + member;
+        }
+
+        // 1. 若附帶 Base64 實拍照片，上傳至 Supabase Storage 圖床並替換為公開 URL (徹底避免本機儲存空間膨脹)
+        if (meal.photoUrl && meal.photoUrl.startsWith('data:') && this.supabase) {
+            try {
+                const uploadedUrl = await this.supabase.uploadMealPhoto(meal.photoUrl, member);
+                if (uploadedUrl) {
+                    meal.photoUrl = uploadedUrl;
+                }
+            } catch (pErr) {
+                console.warn('⚠️ [Supabase] 照片上傳失敗，保留本地暫存:', pErr);
+            }
+        }
+
         if (!this.data.dailyLogs) this.data.dailyLogs = { logs: [] };
         if (!this.data.dailyLogs.logs) this.data.dailyLogs.logs = [];
         
@@ -676,7 +744,17 @@ export default class KitchenEngine {
         });
         dayEntry.diners[member].totals = totals;
         
-        await this.saveJson('daily_logs.json', this.data.dailyLogs);
+        // 2. 本地離線暫存保護
+        this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+
+        // 3. 異步同步至 Supabase 雲端資料庫
+        if (this.supabase) {
+            try {
+                await this.supabase.saveMeal(date, member, meal);
+            } catch (dbErr) {
+                console.warn('⚠️ [Supabase] 寫入雲端資料庫失敗 (已保存在本地離線快取):', dbErr);
+            }
+        }
     }
 
     async deleteMeal(date, member, mealId) {
@@ -702,7 +780,17 @@ export default class KitchenEngine {
         });
         dayEntry.diners[member].totals = totals;
 
-        await this.saveJson('daily_logs.json', this.data.dailyLogs);
+        // 本地更新
+        this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+
+        // 雲端刪除
+        if (this.supabase) {
+            try {
+                await this.supabase.deleteMeal(mealId);
+            } catch (dbErr) {
+                console.warn('⚠️ [Supabase] 刪除雲端餐點失敗:', dbErr);
+            }
+        }
     }
 
     // --- Favorite Foods Methods ---
