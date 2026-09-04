@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 379.5,
-            "protein": 43.8,
-            "carbs": 17.9,
-            "fat": 17.8,
-            "sodium": 540.1
+            "kcal": 659.5,
+            "protein": 47.3,
+            "carbs": 62.9,
+            "fat": 27.3,
+            "sodium": 660.1
           },
           "meals": [
             {
@@ -39,6 +39,23 @@
                 "煙燻海鹽 1g"
               ],
               "aiNote": "",
+              "photoUrl": null
+            },
+            {
+              "id": "meal_1788505727330_bebe",
+              "dishName": "脆皮年糕",
+              "time": "下午03:08",
+              "source": "nlp_ai",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 280,
+                "protein": 3.5,
+                "carbs": 45,
+                "fat": 9.5,
+                "sodium": 120
+              },
+              "items": [],
+              "aiNote": "已為您估算炸脆皮年糕的平均熱量與油脂，數據可隨時點擊調整。",
               "photoUrl": null
             }
           ]
