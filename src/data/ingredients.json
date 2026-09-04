@@ -271,6 +271,30 @@
             "priorityTier": 1
         },
         {
+            "id": "boneless_short_rib",
+            "name": "無骨牛小排",
+            "brand": "Costco 好市多",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 310,
+                "protein": 17.2,
+                "fat": 26.8,
+                "carbs": 0,
+                "sodium": 58
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer",
+                "fridge"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "priorityTier": 1
+        },
+        {
             "id": "shrimp_paste",
             "name": "蝦仁漿",
             "category": "proteins",
