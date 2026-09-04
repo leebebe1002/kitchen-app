@@ -20,6 +20,9 @@
    - 6.6 統一 AI 視覺取景視窗 (Camera Vision Modal)
 7. [時段智慧推薦規則 (Time-Slot Recommendation Engine)](#7-時段智慧推薦規則-time-slot-recommendation-engine)
 8. [佈局與手勢操作規範 (Layout & Motion Standards)](#8-佈局與手勢操作規範-layout--motion-standards)
+9. [系統全面向量 SVG 圖示規範 (SVG Vector Icon Matrix)](#9-系統全面向量-svg-圖示規範-svg-vector-icon-matrix)
+   - 9.1 [全系統 SVG 統一線條粗細原則 (Strict Uniform Stroke Width)](#91-全系統-svg-統一線條粗細原則-strict-uniform-stroke-width)
+   - 9.2 [FM 風格旗艦底部導航 5 大 Dock Icon 規範 (Final Confirmed)](#92-fm-風格旗艦底部導航-5-大-dock-icon-規範-final-confirmed)
 
 ---
 
@@ -213,7 +216,17 @@ graph LR
 
 ## 9. 系統全面向量 SVG 圖示規範 (SVG Vector Icon Matrix)
 
-全系統已徹底告別 Emoji 與外掛圖庫，統一使用輕量原生 SVG 向量圖示（`viewBox="0 0 24 24"`，`stroke="currentColor"`，`stroke-width="2"`，`fill="none"`）：
+全系統已徹底告別 Emoji 與外掛圖庫，統一使用輕量原生 SVG 向量圖示。
+
+### 9.1 全系統 SVG 統一線條粗細原則 (Strict Uniform Stroke Width)
+為了杜絕視覺不協調與粗細割裂感，全系統所有 SVG 線條**強制遵守嚴格的統一線寬規範**：
+1. **統一線寬基準**：全站所有圖示一律採用 **`stroke-width: 2`**（或 `stroke-width="2"`）。
+2. **十字與邊框對齊**：包含中央大圓鈕的 `＋` 十字、小磅秤托盤支架、購物車輪軸、冰箱邊框，**嚴禁使用 2.2 或 2.3 等不同線寬**，一律維持標準 `2px`。
+3. **向量統一規範**：
+   - 視圖：`viewBox="0 0 24 24"`
+   - 描邊端點：`stroke-linecap="round"`
+   - 描邊折角：`stroke-linejoin="round"`
+   - 預設填充：`fill="none"`（除特定實心指示點或 AI 星芒外）
 
 | 介面功能 / 位置 | 定案 SVG 款式 | 設計語意說明 |
 | :--- | :--- | :--- |
@@ -226,17 +239,19 @@ graph LR
 | **今日紀錄時間軸** | **日期人字 Chevron ｜ C1 微單相機 ｜ 語音-1 專業麥克風 ｜ 經典調味鹽罐** | 全天熱量達標採用系統珊瑚朱紅標籤 |
 | **智慧冰箱與新增食材** | **俐落加號（新增食材） ｜ C1 微單相機（AI 實拍） ｜ 相簿選圖 ｜ 磁片存檔** | 點擊直接開啟新增食材抽屜，取消原生相機直接彈出 |
 
-### 9.1 FM 風格旗艦底部導航 5 大 Dock Icon 規範 (Final Confirmed)
+---
+
+### 9.2 FM 風格旗艦底部導航 5 大 Dock Icon 規範 (Final Confirmed)
 
 參考 FM（FatSecret / 慢生活）極簡溫潤質感，底部常駐 5 個核心操作（4 個功能分頁 + 1 個中央突出 AI 記帳大圓鈕）：
 
-| 順序 | 功能 Tab | 定案圖示 (Icon) | 規格與視覺語意 |
-| :---: | :--- | :--- | :--- |
-| **1** | **備料計算器** | **日系指針烘焙機械秤** | 頂部盛料托盤 + 梯形秤身 + 圓形指針刻度錶盤（比起辦公室計算機，更貼近廚房料理與精準克數計算情境）。 |
-| **2** | **今日紀錄** | **動態進度三圓環（缺口左下）** | 三重同心進度環，長度依達成度漸次展現，**缺口全部統一朝向左下角**（象徵熱量、蛋白質、營養三大活動環）。 |
-| **3** | **中央大圓鈕 (CTA)** | **正中 ＋ 伴右上 AI 雙星芒** | 58px 純白大圓底座 + `#EBB5A8` 溫潤粉紅光圈；十字 `＋` **以 (12,12) 絕對居中**，右上角點綴一大一小 4 角璀璨星芒。點擊即滑出整合記一餐 UI。 |
-| **4** | **智慧冰箱** | **雙門分層冰箱** | 圓角矩形雙門分界線，上下分層明確（冷藏/冷凍），線條洗練對稱。 |
-| **5** | **採買清單** | **超市手推車** | 雙輪經典購物車輪廓，買菜時一秒直達 Checklist。 |
+| 順序 | 功能 Tab | 定案圖示 (Icon) | 規格與視覺語意 | 標準 SVG 代碼 (統一 stroke-width: 2) |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | **備料計算器** | **日系指針烘焙機械秤** | 頂部盛料托盤 + 梯形秤身 + 圓形指針刻度錶盤（比起辦公室計算機，更貼近廚房料理與精準克數計算情境）。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path><line x1="12" y1="8" x2="12" y2="10"></line><path d="M6 10h12l1.5 11H4.5L6 10z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>` |
+| **2** | **今日紀錄** | **動態進度三圓環（缺口左下）** | 三重同心進度環，長度依達成度漸次展現，**缺口全部統一朝向「左下角」**（象徵熱量、蛋白質、水份三大活動達成環）。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(155 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5"></circle></g></svg>` |
+| **3** | **中央大圓鈕 (CTA)** | **正中 ＋ 伴右上單顆 AI 星芒** | 58px 純白大圓底座 + `#EBB5A8` 溫潤粉紅光圈；十字 `＋` **以 (12,12) 絕對居中（線寬統一為 2）**，右上角點綴**「單顆晶耀 4 角星芒」**（代表 Gemini AI 視覺與智能辨識，取消雙星芒改為單星芒更顯洗練高級）。點擊即滑出整合記一餐 UI。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4.5" x2="12" y2="19.5"></line><line x1="4.5" y1="12" x2="19.5" y2="12"></line><path d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z" fill="currentColor"></path></svg>` |
+| **4** | **智慧冰箱** | **雙門分層冰箱** | 圓角矩形雙門分界線，上下分層明確（冷藏/冷凍），線條洗練對稱。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="5" y1="10" x2="19" y2="10"></line><line x1="8" y1="6" x2="8" y2="8"></line><line x1="8" y1="13" x2="8" y2="16"></line></svg>` |
+| **5** | **採買清單** | **超市手推車** | 雙輪經典購物車輪廓，買菜時一秒直達 Checklist。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.2"></circle><circle cx="20" cy="21" r="1.2"></circle><path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path></svg>` |
 
 ---
 
