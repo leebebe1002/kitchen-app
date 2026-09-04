@@ -5,11 +5,11 @@
       "diners": {
         "bebe": {
           "totals": {
-            "kcal": 659.5,
-            "protein": 47.3,
-            "carbs": 62.9,
-            "fat": 27.3,
-            "sodium": 660.1
+            "kcal": 1073.5,
+            "protein": 71.3,
+            "carbs": 93.9,
+            "fat": 49.3,
+            "sodium": 1166.6
           },
           "meals": [
             {
@@ -56,6 +56,23 @@
               },
               "items": [],
               "aiNote": "已為您估算炸脆皮年糕的平均熱量與油脂，數據可隨時點擊調整。",
+              "photoUrl": null
+            },
+            {
+              "id": "meal_1788527052151_bebe",
+              "dishName": "麥克雙牛堡 (客製)",
+              "time": "下午09:04",
+              "source": "nlp_ai",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 414,
+                "protein": 24,
+                "carbs": 31,
+                "fat": 22,
+                "sodium": 506.5
+              },
+              "items": [],
+              "aiNote": "麥當勞官方精確數據：無芥末醬、無酸黃瓜、無番茄醬。",
               "photoUrl": null
             }
           ]
