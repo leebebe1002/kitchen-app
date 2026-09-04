@@ -20,6 +20,13 @@ export default class KitchenEngine {
             ariel: { name: 'Ariel', targetKcal: 1450, targetProtein: 95, targetCarbs: 165, targetFat: 45, targetSodium: 1800 },
             jason: { name: 'Jason', targetKcal: 1800, targetProtein: 130, targetCarbs: 200, targetFat: 50, targetSodium: 2000 }
         };
+        // 墓碑機制 (Tombstone)：記錄已刪除餐點 ID，防止雲端拉取歷史或合流時死而復生
+        try {
+            const savedTombstones = localStorage.getItem('kitchen_v2_deleted_meal_ids');
+            this.deletedMealIds = new Set(savedTombstones ? JSON.parse(savedTombstones) : []);
+        } catch (e) {
+            this.deletedMealIds = new Set();
+        }
     }
 
     async initialize() {
@@ -187,8 +194,11 @@ export default class KitchenEngine {
                     merged.supplies.push(lSup);
                 }
             });
-            return merged;
         } else if (filename === 'daily_logs.json') {
+            // 🛡️ 飲食記錄合流：使用深度智慧合流，且絕對遵守墓碑機制
+            if (this.cloudSync && typeof this.cloudSync.mergeDailyLogs === 'function') {
+                return this.cloudSync.mergeDailyLogs(localData, serverData, this.deletedMealIds);
+            }
             return { ...(serverData || {}), ...(localData || {}) };
         } else if (filename === 'config.json') {
             const merged = { ...(serverData || {}), ...(localData || {}) };
@@ -287,7 +297,7 @@ export default class KitchenEngine {
             // 🌟 雲端同步僅限於「全家飲食記錄 (daily_logs.json)」雙向合流，確保採買清單與自訂通路 100% 保留本地原貌
             const cloudDailyLogs = await this.cloudSync.fetchFromCloud('daily_logs.json');
             if (cloudDailyLogs) {
-                this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs);
+                this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs, this.deletedMealIds);
                 this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
                 // 將合併後的完整歷史紀錄回推雲端
                 await this.cloudSync.pushToCloud('daily_logs.json', this.data.dailyLogs);
@@ -662,11 +672,16 @@ export default class KitchenEngine {
                     dayEntry.diners[member] = { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
                 }
 
-                dayEntry.diners[member].meals = cloudMeals;
+                // 墓碑過濾：剔除已被標記刪除的紀錄
+                const validCloudMeals = (this.deletedMealIds && this.deletedMealIds.size > 0)
+                    ? cloudMeals.filter(m => !this.deletedMealIds.has(String(m.id)))
+                    : cloudMeals;
+
+                dayEntry.diners[member].meals = validCloudMeals;
 
                 // Recalculate totals
                 const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-                cloudMeals.forEach(m => {
+                validCloudMeals.forEach(m => {
                     const n = m.nutrients || {};
                     totals.kcal += (n.kcal || 0);
                     totals.protein += (n.protein || 0);
@@ -780,10 +795,18 @@ export default class KitchenEngine {
         });
         dayEntry.diners[member].totals = totals;
 
-        // 本地更新
-        this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
+        // 記錄墓碑 (Tombstone)：防止雲端拉取或合流時死而復生
+        if (mealId) {
+            this.deletedMealIds.add(String(mealId));
+            try {
+                localStorage.setItem('kitchen_v2_deleted_meal_ids', JSON.stringify(Array.from(this.deletedMealIds)));
+            } catch (e) {}
+        }
 
-        // 雲端刪除
+        // 雙向持久化：儲存至本地快取並推播至 GitHub 雲端中樞
+        await this.saveJson('daily_logs.json', this.data.dailyLogs);
+
+        // 雲端刪除 (Supabase)
         if (this.supabase) {
             try {
                 await this.supabase.deleteMeal(mealId);

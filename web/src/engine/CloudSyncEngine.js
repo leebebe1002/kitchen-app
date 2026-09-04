@@ -179,9 +179,13 @@ class CloudSyncEngine {
      * 🧬 深度智慧合流：飲食記錄 (daily_logs)
      * 依據日期與成員 (bebe, ariel, jason) 各自的餐點 ID/時間戳進行聯集合併，確保媽媽與小孩記的每一餐都不會遺失！
      */
-    mergeDailyLogs(localLogs = {}, cloudLogs = {}) {
+    mergeDailyLogs(localLogs = {}, cloudLogs = {}, deletedMealIds = null) {
         if (!cloudLogs || !cloudLogs.logs) return localLogs || { logs: [] };
         if (!localLogs || !localLogs.logs) return cloudLogs || { logs: [] };
+
+        const tombstoneSet = (deletedMealIds instanceof Set) 
+            ? deletedMealIds 
+            : new Set(Array.isArray(deletedMealIds) ? deletedMealIds : []);
 
         const localList = Array.isArray(localLogs.logs) ? localLogs.logs : [];
         const cloudList = Array.isArray(cloudLogs.logs) ? cloudLogs.logs : [];
@@ -205,15 +209,17 @@ class CloudSyncEngine {
                 const cMeals = Array.isArray(cM.meals) ? cM.meals : [];
 
                 const mealMap = new Map();
-                // 雲端紀錄先入 Map
+                // 雲端紀錄先入 Map (若被標記為墓碑刪除，絕對不放入)
                 cMeals.forEach(meal => {
                     if (!meal) return;
+                    if (meal.id && tombstoneSet.has(String(meal.id))) return;
                     const key = meal.id || `${meal.time || ''}_${meal.dishName || ''}_${meal.dishId || ''}`;
                     mealMap.set(key, meal);
                 });
-                // 本地紀錄覆蓋或新增入 Map
+                // 本地紀錄覆蓋或新增入 Map (若被標記為墓碑刪除，絕對不放入)
                 lMeals.forEach(meal => {
                     if (!meal) return;
+                    if (meal.id && tombstoneSet.has(String(meal.id))) return;
                     const key = meal.id || `${meal.time || ''}_${meal.dishName || ''}_${meal.dishId || ''}`;
                     mealMap.set(key, meal);
                 });
