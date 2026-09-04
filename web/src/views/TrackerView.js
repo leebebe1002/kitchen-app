@@ -127,6 +127,13 @@ export default {
             });
         };
 
+        const removeFavoriteFood = async (fav, event) => {
+            if (event) event.stopPropagation();
+            if (confirm(`確定要將【${fav.name}】從常用餐點快捷移除嗎？`)) {
+                await engine.deleteFavoriteFood(fav.id || fav.name);
+            }
+        };
+
         const saveAsFavorite = async () => {
             const newFav = {
                 id: 'fav_' + Date.now(),
@@ -1050,6 +1057,7 @@ export default {
             confirmSaveRecord,
             favoriteFoods,
             selectFavoriteFood,
+            removeFavoriteFood,
             saveAsFavorite,
             showApiKeyModal,
             inputApiKey,
@@ -1520,10 +1528,13 @@ export default {
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button v-for="fav in favoriteFoods" :key="fav.id" 
                                         class="capsule" 
-                                        style="font-size: 0.85rem; padding: 6px 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer;" 
+                                        style="font-size: 0.85rem; padding: 6px 10px; font-weight: 600; display: flex; align-items: center; gap: 6px; background: #FFF9E6; border: 1px solid #FFE082; color: #6D4C00; cursor: pointer; border-radius: 20px;" 
                                         @click="selectFavoriteFood(fav)">
                                     <span>{{ fav.icon || '🍱' }}</span>
                                     <span>{{ fav.name }}</span>
+                                    <span @click.stop="removeFavoriteFood(fav, $event)" 
+                                          style="margin-left: 2px; color: #B45309; font-size: 0.72rem; padding: 2px 5px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(180, 83, 9, 0.1);" 
+                                          title="移除此常用餐點">✕</span>
                                 </button>
                             </div>
                         </div>

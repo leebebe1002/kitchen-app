@@ -13,34 +13,6 @@
                 "sodium": 506.5
             },
             "aiNote": "麥當勞官方精確數據：無芥末醬、無酸黃瓜、無番茄醬。"
-        },
-        {
-            "id": "fav_pea_protein_soy_milk",
-            "name": "豌豆蛋白飲 (芝麻歐蕾) + 豆漿",
-            "icon": "🥤",
-            "category": "高蛋白飲品",
-            "nutrients": {
-                "kcal": 293.5,
-                "protein": 38.6,
-                "carbs": 13.3,
-                "fat": 10.9,
-                "sodium": 337.0
-            },
-            "aiNote": "Body Goals 豌豆蛋白飲 Pro (芝麻歐蕾 40g) ＋ 統一陽光黃金豆無加糖豆漿 350g。高纖高植萃雙重蛋白。"
-        },
-        {
-            "id": "fav_whey_protein_fresh_milk",
-            "name": "乳清蛋白飲 (法式可可) + 鮮奶",
-            "icon": "🍫",
-            "category": "高蛋白飲品",
-            "nutrients": {
-                "kcal": 326.3,
-                "protein": 35.0,
-                "carbs": 19.2,
-                "fat": 12.2,
-                "sodium": 168.0
-            },
-            "aiNote": "Body Goals 乳清蛋白飲 Pro (法式可可 40g) ＋ 統一全脂鮮乳 250g。極低鈉、高吸收、補鈣可可乳清。"
         }
     ]
 }

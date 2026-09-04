@@ -809,6 +809,12 @@ export default class KitchenEngine {
         await this.saveJson('favorite_foods.json', { favorites: this.data.favoriteFoods });
     }
 
+    async deleteFavoriteFood(id) {
+        if (!this.data.favoriteFoods) return;
+        this.data.favoriteFoods = this.data.favoriteFoods.filter(f => f.id !== id && f.name !== id);
+        await this.saveJson('favorite_foods.json', { favorites: this.data.favoriteFoods });
+    }
+
     /**
      * 🧠 3層巨量營養素主導自動分類法則 (Macro Dominance Auto Categorization)
      * @param {string} name - 食材名稱
