@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Kitchen 2.0 - 底部 Icon 設計挑選展演廳</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #F8F6F0;
+            --color-card: #FFFFFF;
+            --color-border: #E8E5DD;
+            --color-text-main: #2D2A26;
+            --color-text-muted: #8C867A;
+            --accent-circle: #EBB5A8; /* 參考 FM 的溫潤柔粉 */
+            --accent-circle-inner: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', -apple-system, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text-main);
+            padding: 24px 16px 160px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+
+        p.desc {
+            font-size: 0.86rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+        }
+
+        .category-card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 14px rgba(45, 42, 38, 0.03);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .category-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #F3F0EA;
+            color: var(--color-text-muted);
+            font-weight: 600;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 8px 12px;
+            border-radius: 14px;
+            border: 1.5px solid var(--color-border);
+            background: #FAF8F5;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .icon-item:hover, .icon-item.selected {
+            background: #FFFFFF;
+            border-color: #2D2A26;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        }
+
+        .icon-item.selected {
+            border-width: 2px;
+            border-color: #1F2937;
+        }
+
+        .icon-box {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .icon-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--color-text-main);
+            margin-bottom: 2px;
+        }
+
+        .icon-desc {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* SVG 通用線條風格 (與 FM 1:1 極簡細線感) */
+        svg.tab-icon {
+            width: 26px;
+            height: 26px;
+            stroke: #2D2A26;
+            stroke-width: 1.85;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.2s;
+        }
+
+        /* 📱 底部常駐展示 Dock (即時預覽妳所選擇的組合！) */
+        .bottom-preview-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(232, 229, 221, 0.9);
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom, 14px);
+        }
+
+        .preview-title {
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--color-text-muted);
+            padding: 6px 0 2px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .bottom-dock {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 64px;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 16px;
+            position: relative;
+        }
+
+        .dock-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .dock-tab svg {
+            width: 25px;
+            height: 25px;
+            stroke: #6B7280;
+            stroke-width: 1.85;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .dock-tab.active svg {
+            stroke: #1F2937;
+        }
+
+        .dock-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 8px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #1F2937;
+        }
+
+        /* 中央大圓鈕 (突出感 1:1 還原截圖) */
+        .dock-center-wrap {
+            position: relative;
+            top: -14px;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dock-center-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 4px solid var(--accent-circle); /* FM 柔粉外環 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(235, 181, 168, 0.45);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .dock-center-btn:active {
+            transform: scale(0.92);
+        }
+
+        .dock-center-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: #1F2937;
+            stroke-width: 2.2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .note-card {
+            background: #FFFDF9;
+            border: 1px dashed #D5CBB9;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            color: #5C5549;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Family Kitchen 2.0 底部 Icon 設計展演</h1>
+        <p class="desc">點擊下方任一款 Icon，最下方的即時底欄會跟著動態切換！</p>
+    </header>
+
+    <div class="note-card">
+        💡 <strong>設計語言說明</strong>：完全遵循 FM 的<strong>「韓系 1.85px 極簡圓角細線、無文字、微圓弧導角」</strong>。點選各候選款式，在最底部的即時效果欄中感受手感與視覺平衡。
+    </div>
+
+    <!-- 1. 備料計算器 (平底鍋 vs 計算機) -->
+    <div class="category-card">
+        <div class="category-header">
+            <span class="category-title">01 備料計算器</span>
+            <span class="badge">平底鍋 vs 計算機</span>
+        </div>
+        <div class="icon-grid">
+            <!-- 款式 A: 極簡平底鍋 -->
+            <div class="icon-item selected" onclick="selectIcon('calc', 'pan-simple', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <!-- 圓弧平底鍋身 + 傾斜鍋把 -->
+                        <path d="M4 14a6 6 0 0 0 11.3 2.7L21 21"></path>
+                        <path d="M15.3 16.7A6 6 0 0 0 16 14H2a2 2 0 0 0 2 2h9.3"></path>
+                        <!-- 鍋體簡潔外輪廓 -->
+                        <rect x="2" y="11" width="13" height="4" rx="2"></rect>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 A</span>
+                <span class="icon-desc">極簡平底鍋<br>(側向長把手)</span>
+            </div>
+
+            <!-- 款式 B: 雙耳雙蓋料理燉鍋 -->
+            <div class="icon-item" onclick="selectIcon('calc', 'pan-pot', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <!-- 鍋蓋弧度 -->
+                        <path d="M7 9a5 5 0 0 1 10 0"></path>
+                        <line x1="12" y1="4" x2="12" y2="6"></line>
+                        <!-- 鍋身圓角 -->
+                        <path d="M4 9h16v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z"></path>
+                        <!-- 雙耳 -->
+                        <path d="M2 12h2"></path>
+                        <path d="M20 12h2"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 B</span>
+                <span class="icon-desc">雙耳燉鍋<br>(料理氛圍濃)</span>
+            </div>
+
+            <!-- 款式 C: 極簡口袋計算機 -->
+            <div class="icon-item" onclick="selectIcon('calc', 'calculator', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <rect x="4" y="2" width="16" height="20" rx="3"></rect>
+                        <line x1="8" y1="6" x2="16" y2="6"></line>
+                        <circle cx="8" cy="11" r="1"></circle>
+                        <circle cx="12" cy="11" r="1"></circle>
+                        <circle cx="16" cy="11" r="1"></circle>
+                        <circle cx="8" cy="16" r="1"></circle>
+                        <circle cx="12" cy="16" r="1"></circle>
+                        <circle cx="16" cy="16" r="1"></circle>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 C</span>
+                <span class="icon-desc">現代計算機<br>(數字配比感)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 今日紀錄 (進度圓環 / 日曆 / 折線趨勢) -->
+    <div class="category-card">
+        <div class="category-header">
+            <span class="category-title">02 今日紀錄</span>
+            <span class="badge">健康 / 達成 / 日誌</span>
+        </div>
+        <div class="icon-grid">
+            <!-- 款式 A: 活動圓環 (呼應熱量圓環) -->
+            <div class="icon-item selected" onclick="selectIcon('today', 'donut', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <!-- 75% 圓弧圓餅，露出缺口 -->
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 A</span>
+                <span class="icon-desc">圓環進度<br>(呼應熱量圓餅)</span>
+            </div>
+
+            <!-- 款式 B: 日期日曆 (當天感) -->
+            <div class="icon-item" onclick="selectIcon('today', 'calendar', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <circle cx="12" cy="15" r="1.5" fill="#2D2A26"></circle>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 B</span>
+                <span class="icon-desc">今日日曆<br>(日誌時間感)</span>
+            </div>
+
+            <!-- 款式 C: 飲食能量心率/火苗 (活力感) -->
+            <div class="icon-item" onclick="selectIcon('today', 'flame', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 C</span>
+                <span class="icon-desc">卡路里火苗<br>(代謝能量感)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 中央記錄大圓鈕 (突出 Action) -->
+    <div class="category-card">
+        <div class="category-header">
+            <span class="category-title">03 中央記錄大圓鈕</span>
+            <span class="badge">核心記一筆入口</span>
+        </div>
+        <div class="icon-grid">
+            <!-- 款式 A: 純粹極簡十字 (1:1 截圖) -->
+            <div class="icon-item selected" onclick="selectIcon('action', 'plus-pure', this)">
+                <div class="icon-box">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid var(--accent-circle); display: flex; align-items: center; justify-content: center;">
+                        <svg class="tab-icon" style="width: 18px; height: 18px; stroke-width: 2.4;" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                </div>
+                <span class="icon-label">款式 A (推薦)</span>
+                <span class="icon-desc">純粹極簡 ＋<br>(最耐看、經典)</span>
+            </div>
+
+            <!-- 款式 B: 相機快門圖示 -->
+            <div class="icon-item" onclick="selectIcon('action', 'camera', this)">
+                <div class="icon-box">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid var(--accent-circle); display: flex; align-items: center; justify-content: center;">
+                        <svg class="tab-icon" style="width: 18px; height: 18px; stroke-width: 2;" viewBox="0 0 24 24">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="3.5"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <span class="icon-label">款式 B</span>
+                <span class="icon-desc">相機快門<br>(強調拍照直覺)</span>
+            </div>
+
+            <!-- 款式 C: 閃爍星星/AI筆記 -->
+            <div class="icon-item" onclick="selectIcon('action', 'spark', this)">
+                <div class="icon-box">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid var(--accent-circle); display: flex; align-items: center; justify-content: center;">
+                        <svg class="tab-icon" style="width: 18px; height: 18px; stroke-width: 2;" viewBox="0 0 24 24">
+                            <path d="M12 2l2.4 5 5 2.4-5 2.4-2.4 5-2.4-5-5-2.4 5-2.4z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <span class="icon-label">款式 C</span>
+                <span class="icon-desc">智慧星芒<br>(AI 智能辨識感)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 智慧冰箱 (雙門 / 單門 / 晶片食材庫) -->
+    <div class="category-card">
+        <div class="category-header">
+            <span class="category-title">04 智慧冰箱</span>
+            <span class="badge">庫存與溫層</span>
+        </div>
+        <div class="icon-grid">
+            <!-- 款式 A: 雙門立體冰箱 -->
+            <div class="icon-item selected" onclick="selectIcon('pantry', 'fridge-double', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                        <line x1="5" y1="10" x2="19" y2="10"></line>
+                        <line x1="8" y1="6" x2="8" y2="8"></line>
+                        <line x1="8" y1="13" x2="8" y2="16"></line>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 A (推薦)</span>
+                <span class="icon-desc">雙門冰箱<br>(冷藏/冷凍分層)</span>
+            </div>
+
+            <!-- 款式 B: 簡約儲藏櫃/收納盒 -->
+            <div class="icon-item" onclick="selectIcon('pantry', 'pantry-box', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                        <path d="m3.3 7 8.7 5 8.7-5"></path>
+                        <path d="M12 22V12"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 B</span>
+                <span class="icon-desc">立方食材箱<br>(收納庫存感)</span>
+            </div>
+
+            <!-- 款式 C: 冰塊晶體 (極凍保鮮) -->
+            <div class="icon-item" onclick="selectIcon('pantry', 'ice-cube', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <path d="M12 2v20"></path>
+                        <path d="m19 5-14 14"></path>
+                        <path d="m5 5 14 14"></path>
+                        <path d="M2 12h20"></path>
+                        <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 C</span>
+                <span class="icon-desc">保鮮雪花<br>(清新低溫感)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 採買清單 (購物車 / 提籃 / 清單) -->
+    <div class="category-card">
+        <div class="category-header">
+            <span class="category-title">05 採買清單</span>
+            <span class="badge">賣場與 CheckList</span>
+        </div>
+        <div class="icon-grid">
+            <!-- 款式 A: 極簡手推購物車 -->
+            <div class="icon-item selected" onclick="selectIcon('cart', 'cart-wheels', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="21" r="1.2"></circle>
+                        <circle cx="20" cy="21" r="1.2"></circle>
+                        <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 A (推薦)</span>
+                <span class="icon-desc">超市推車<br>(賣場血拼直覺)</span>
+            </div>
+
+            <!-- 款式 B: 採買手提購物袋 -->
+            <div class="icon-item" onclick="selectIcon('cart', 'shopping-bag', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 B</span>
+                <span class="icon-desc">日系紙袋<br>(採買生活感)</span>
+            </div>
+
+            <!-- 款式 C: 勾選待辦清單 (CheckList) -->
+            <div class="icon-item" onclick="selectIcon('cart', 'checklist', this)">
+                <div class="icon-box">
+                    <svg class="tab-icon" viewBox="0 0 24 24">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <span class="icon-label">款式 C</span>
+                <span class="icon-desc">打勾清單<br>(完成清點感)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📱 畫面最下方：即時全真模擬底欄 (FM 風格) -->
+    <div class="bottom-preview-container">
+        <div class="preview-title">即時視覺組合預覽 (Live Preview)</div>
+        <div class="bottom-dock">
+            <!-- 1. 備料計算 -->
+            <button class="dock-tab active" id="dock-calc">
+                <span id="dock-calc-svg">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 14a6 6 0 0 0 11.3 2.7L21 21"></path>
+                        <path d="M15.3 16.7A6 6 0 0 0 16 14H2a2 2 0 0 0 2 2h9.3"></path>
+                        <rect x="2" y="11" width="13" height="4" rx="2"></rect>
+                    </svg>
+                </span>
+            </button>
+
+            <!-- 2. 今日紀錄 -->
+            <button class="dock-tab" id="dock-today">
+                <span id="dock-today-svg">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </span>
+            </button>
+
+            <!-- 3. 中央突出大圓鈕 (＋ 記一餐) -->
+            <div class="dock-center-wrap">
+                <div class="dock-center-btn" id="dock-action-btn">
+                    <span id="dock-action-svg">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 4. 智慧冰箱 -->
+            <button class="dock-tab" id="dock-pantry">
+                <span id="dock-pantry-svg">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                        <line x1="5" y1="10" x2="19" y2="10"></line>
+                        <line x1="8" y1="6" x2="8" y2="8"></line>
+                        <line x1="8" y1="13" x2="8" y2="16"></line>
+                    </svg>
+                </span>
+            </button>
+
+            <!-- 5. 採買清單 -->
+            <button class="dock-tab" id="dock-cart">
+                <span id="dock-cart-svg">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="9" cy="21" r="1.2"></circle>
+                        <circle cx="20" cy="21" r="1.2"></circle>
+                        <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const svgs = {
+            calc: {
+                'pan-simple': `<svg viewBox="0 0 24 24"><path d="M4 14a6 6 0 0 0 11.3 2.7L21 21"></path><path d="M15.3 16.7A6 6 0 0 0 16 14H2a2 2 0 0 0 2 2h9.3"></path><rect x="2" y="11" width="13" height="4" rx="2"></rect></svg>`,
+                'pan-pot': `<svg viewBox="0 0 24 24"><path d="M7 9a5 5 0 0 1 10 0"></path><line x1="12" y1="4" x2="12" y2="6"></line><path d="M4 9h16v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z"></path><path d="M2 12h2"></path><path d="M20 12h2"></path></svg>`,
+                'calculator': `<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="3"></rect><line x1="8" y1="6" x2="16" y2="6"></line><circle cx="8" cy="11" r="1"></circle><circle cx="12" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><circle cx="8" cy="16" r="1"></circle><circle cx="12" cy="16" r="1"></circle><circle cx="16" cy="16" r="1"></circle></svg>`
+            },
+            today: {
+                'donut': `<svg viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>`,
+                'calendar': `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="12" cy="15" r="1.5" fill="#2D2A26"></circle></svg>`,
+                'flame': `<svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`
+            },
+            action: {
+                'plus-pure': `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+                'camera': `<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>`,
+                'spark': `<svg viewBox="0 0 24 24"><path d="M12 2l2.4 5 5 2.4-5 2.4-2.4 5-2.4-5-5-2.4 5-2.4z"></path></svg>`
+            },
+            pantry: {
+                'fridge-double': `<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="5" y1="10" x2="19" y2="10"></line><line x1="8" y1="6" x2="8" y2="8"></line><line x1="8" y1="13" x2="8" y2="16"></line></svg>`,
+                'pantry-box': `<svg viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>`,
+                'ice-cube': `<svg viewBox="0 0 24 24"><path d="M12 2v20"></path><path d="m19 5-14 14"></path><path d="m5 5 14 14"></path><path d="M2 12h20"></path><circle cx="12" cy="12" r="2"></circle></svg>`
+            },
+            cart: {
+                'cart-wheels': `<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.2"></circle><circle cx="20" cy="21" r="1.2"></circle><path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path></svg>`,
+                'shopping-bag': `<svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`,
+                'checklist': `<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`
+            }
+        };
+
+        function selectIcon(category, type, element) {
+            // 切換選中樣式
+            const parent = element.closest('.icon-grid');
+            parent.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+
+            // 更新下方即時預覽
+            const targetContainer = document.getElementById(`dock-${category}-svg`);
+            if (targetContainer && svgs[category][type]) {
+                targetContainer.innerHTML = svgs[category][type];
+            }
+        }
+    </script>
+</body>
+</html>
