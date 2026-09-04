@@ -139,15 +139,20 @@
             line-height: 1.2;
         }
 
-        /* SVG 通用線條風格 (全系統嚴格統一 2px 線寬) */
-        svg.tab-icon {
-            width: 26px;
-            height: 26px;
-            stroke: #2D2A26;
-            stroke-width: 2;
-            fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+        /* SVG 通用線條風格 (全系統嚴格統一定案：1.8px 線寬，光學重量平衡) */
+        svg, svg * {
+            stroke-width: 1.8 !important;
+            stroke-linecap: round !important;
+            stroke-linejoin: round !important;
+        }
+
+        svg.tab-icon, 
+        .dock-tab svg, 
+        .dock-center-btn svg,
+        .icon-box svg {
+            width: 25px;
+            height: 25px;
+            fill: none !important;
             transition: stroke 0.2s;
         }
 
@@ -201,13 +206,8 @@
         }
 
         .dock-tab svg {
-            width: 25px;
-            height: 25px;
             stroke: #6B7280;
-            stroke-width: 2;
             fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
         }
 
         .dock-tab.active svg {
@@ -224,7 +224,7 @@
             background: #1F2937;
         }
 
-        /* 中央大圓鈕 (突出感 1:1 還原截圖，線寬統一為 2) */
+        /* 中央大圓鈕 (突出感 1:1 還原截圖，線寬與全系統嚴格一致 1.8) */
         .dock-center-wrap {
             position: relative;
             top: -14px;
@@ -253,13 +253,8 @@
         }
 
         .dock-center-btn svg {
-            width: 25px;
-            height: 25px;
             stroke: #1F2937;
-            stroke-width: 2; /* 與全系統嚴格統一為 2 */
             fill: none;
-            stroke-linecap: round;
-            stroke-linejoin: round;
         }
 
         .note-card {
@@ -293,13 +288,13 @@
             <span class="badge" style="background: #10B981; color: #FFFFFF;">ALL CONFIRMED</span>
         </div>
         <div style="display: flex; align-items: center; justify-content: space-around; padding: 12px 0 6px;">
-            <!-- 1. 備料計算器 -->
+            <!-- 1. 備料計算器 (日系指針烘焙秤) -->
             <div style="text-align: center;">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
                     <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
-                        <path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path>
-                        <line x1="12" y1="8" x2="12" y2="10"></line>
-                        <path d="M6 10h12l1.5 11H4.5L6 10z"></path>
+                        <path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path>
+                        <line x1="12" y1="8.5" x2="12" y2="10.5"></line>
+                        <path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path>
                         <circle cx="12" cy="15.5" r="3.2"></circle>
                         <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
                     </svg>
@@ -308,14 +303,14 @@
                 <div style="font-size: 0.65rem; color: #6B7280;">備料計算</div>
             </div>
 
-            <!-- 2. 今日紀錄 (缺口左下) -->
+            <!-- 2. 今日紀錄 (缺口左下動態三環，透氣間距) -->
             <div style="text-align: center;">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
                     <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
                         <g transform="rotate(155 12 12)">
-                            <circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="9" stroke-dasharray="47 11"></circle>
+                            <circle cx="12" cy="12" r="6" stroke-dasharray="27 12"></circle>
+                            <circle cx="12" cy="12" r="3" stroke-dasharray="11 8"></circle>
                         </g>
                     </svg>
                 </div>
@@ -323,13 +318,14 @@
                 <div style="font-size: 0.65rem; color: #6B7280;">今日紀錄</div>
             </div>
 
-            <!-- 3. 記一餐 (突出大圓鈕) -->
+            <!-- 3. 記一餐 (正中十字 + 右上線條單星芒) -->
             <div style="text-align: center;">
                 <div style="width: 48px; height: 48px; border-radius: 50%; background: #FFFFFF; border: 3px solid var(--accent-circle); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; box-shadow: 0 4px 12px rgba(235, 181, 168, 0.4);">
-                    <svg viewBox="0 0 24 24" style="width: 25px; height: 25px; stroke: #1F2937; fill: none; stroke-linecap: round; stroke-linejoin: round;">
-                        <line x1="12" y1="4.5" x2="12" y2="19.5"></line>
-                        <line x1="4.5" y1="12" x2="19.5" y2="12"></line>
-                        <path d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z" fill="#1F2937"></path>
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #1F2937;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <!-- 純線條單星芒 (與十字完全一模一樣的線條粗細，無實心突兀感) -->
+                        <path d="M 19,2 Q 19,5 22,5 Q 19,5 19,8 Q 19,5 16,5 Q 19,5 19,2 Z"></path>
                     </svg>
                 </div>
                 <div style="font-size: 0.72rem; font-weight: 700; color: #B45309;">置中＋單星芒</div>
@@ -340,10 +336,10 @@
             <div style="text-align: center;">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
                     <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
-                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
-                        <line x1="5" y1="10" x2="19" y2="10"></line>
-                        <line x1="8" y1="6" x2="8" y2="8"></line>
-                        <line x1="8" y1="13" x2="8" y2="16"></line>
+                        <rect x="5.5" y="2.5" width="13" height="19" rx="3"></rect>
+                        <line x1="5.5" y1="10" x2="18.5" y2="10"></line>
+                        <line x1="8.5" y1="6" x2="8.5" y2="8"></line>
+                        <line x1="8.5" y1="13" x2="8.5" y2="16"></line>
                     </svg>
                 </div>
                 <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">雙門冰箱</div>
@@ -354,9 +350,9 @@
             <div style="text-align: center;">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
                     <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
-                        <circle cx="9" cy="21" r="1.2"></circle>
-                        <circle cx="20" cy="21" r="1.2"></circle>
-                        <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                        <path d="M2 3h3.5l2.4 11.5a1.8 1.8 0 0 0 1.8 1.5h9.5a1.8 1.8 0 0 0 1.8-1.5L22.5 7H6"></path>
+                        <circle cx="9.5" cy="20" r="1.4"></circle>
+                        <circle cx="18.5" cy="20" r="1.4"></circle>
                     </svg>
                 </div>
                 <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">超市手推車</div>
@@ -588,9 +584,9 @@
             <button class="dock-tab active" id="dock-calc">
                 <span id="dock-calc-svg">
                     <svg viewBox="0 0 24 24">
-                        <path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path>
-                        <line x1="12" y1="8" x2="12" y2="10"></line>
-                        <path d="M6 10h12l1.5 11H4.5L6 10z"></path>
+                        <path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path>
+                        <line x1="12" y1="8.5" x2="12" y2="10.5"></line>
+                        <path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path>
                         <circle cx="12" cy="15.5" r="3.2"></circle>
                         <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
                     </svg>
@@ -602,22 +598,22 @@
                 <span id="dock-today-svg">
                     <svg viewBox="0 0 24 24">
                         <g transform="rotate(155 12 12)">
-                            <circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="9" stroke-dasharray="47 11"></circle>
+                            <circle cx="12" cy="12" r="6" stroke-dasharray="27 12"></circle>
+                            <circle cx="12" cy="12" r="3" stroke-dasharray="11 8"></circle>
                         </g>
                     </svg>
                 </span>
             </button>
 
-            <!-- 3. 中央突出大圓鈕 (選定：嚴格置中 ＋，右上單顆星芒) -->
+            <!-- 3. 中央突出大圓鈕 (選定：嚴格置中 ＋，右上線條單星芒) -->
             <div class="dock-center-wrap">
                 <div class="dock-center-btn" id="dock-action-btn">
                     <span id="dock-action-svg">
-                        <svg viewBox="0 0 24 24" style="width: 25px; height: 25px;">
-                            <line x1="12" y1="4.5" x2="12" y2="19.5"></line>
-                            <line x1="4.5" y1="12" x2="19.5" y2="12"></line>
-                            <path d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z" fill="#1F2937"></path>
+                        <svg viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <path d="M 19,2 Q 19,5 22,5 Q 19,5 19,8 Q 19,5 16,5 Q 19,5 19,2 Z"></path>
                         </svg>
                     </span>
                 </div>
@@ -627,10 +623,10 @@
             <button class="dock-tab" id="dock-pantry">
                 <span id="dock-pantry-svg">
                     <svg viewBox="0 0 24 24">
-                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
-                        <line x1="5" y1="10" x2="19" y2="10"></line>
-                        <line x1="8" y1="6" x2="8" y2="8"></line>
-                        <line x1="8" y1="13" x2="8" y2="16"></line>
+                        <rect x="5.5" y="2.5" width="13" height="19" rx="3"></rect>
+                        <line x1="5.5" y1="10" x2="18.5" y2="10"></line>
+                        <line x1="8.5" y1="6" x2="8.5" y2="8"></line>
+                        <line x1="8.5" y1="13" x2="8.5" y2="16"></line>
                     </svg>
                 </span>
             </button>
@@ -639,9 +635,9 @@
             <button class="dock-tab" id="dock-cart">
                 <span id="dock-cart-svg">
                     <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="21" r="1.2"></circle>
-                        <circle cx="20" cy="21" r="1.2"></circle>
-                        <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                        <path d="M2 3h3.5l2.4 11.5a1.8 1.8 0 0 0 1.8 1.5h9.5a1.8 1.8 0 0 0 1.8-1.5L22.5 7H6"></path>
+                        <circle cx="9.5" cy="20" r="1.4"></circle>
+                        <circle cx="18.5" cy="20" r="1.4"></circle>
                     </svg>
                 </span>
             </button>
@@ -651,25 +647,25 @@
     <script>
         const svgs = {
             calc: {
-                'scale-flat': `<svg viewBox="0 0 24 24"><path d="M3 5h18c.5 0 1 .5 1 1s-.5 1-1 1H3c-.5 0-1-.5-1-1s.5-1 1-1z"></path><rect x="4.5" y="8" width="15" height="12" rx="2.5"></rect><rect x="8" y="11" width="8" height="3.5" rx="0.8"></rect><circle cx="7.5" cy="17" r="1" fill="#1F2937"></circle><circle cx="16.5" cy="17" r="1" fill="#1F2937"></circle></svg>`,
-                'scale-dial': `<svg viewBox="0 0 24 24"><path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path><line x1="12" y1="8" x2="12" y2="10"></line><path d="M6 10h12l1.5 11H4.5L6 10z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>`,
-                'scale-round': `<svg viewBox="0 0 24 24"><rect x="3.5" y="3" width="17" height="18" rx="4"></rect><circle cx="12" cy="9.5" r="4.2"></circle><circle cx="12" cy="9.5" r="1" fill="#1F2937"></circle><rect x="7.5" y="15.5" width="9" height="3" rx="0.8"></rect></svg>`
+                'scale-flat': `<svg viewBox="0 0 24 24"><path d="M3 5h18c.5 0 1 .5 1 1s-.5 1-1 1H3c-.5 0-1-.5-1-1s.5-1 1-1z"></path><rect x="4.5" y="8" width="15" height="12" rx="2.5"></rect><rect x="8" y="11" width="8" height="3.5" rx="0.8"></rect><circle cx="7.5" cy="17" r="1"></circle><circle cx="16.5" cy="17" r="1"></circle></svg>`,
+                'scale-dial': `<svg viewBox="0 0 24 24"><path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path><line x1="12" y1="8.5" x2="12" y2="10.5"></line><path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>`,
+                'scale-round': `<svg viewBox="0 0 24 24"><rect x="3.5" y="3" width="17" height="18" rx="4"></rect><circle cx="12" cy="9.5" r="4.2"></circle><circle cx="12" cy="9.5" r="1"></circle><rect x="7.5" y="15.5" width="9" height="3" rx="0.8"></rect></svg>`
             },
             today: {
-                'rings-concentric': `<svg viewBox="0 0 24 24"><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="45 12" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="28 9.5" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="13 6" stroke-linecap="round"></circle></g></svg>`,
-                'rings-progress': `<svg viewBox="0 0 24 24"><g transform="rotate(155 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle></g></svg>`,
-                'rings-trio': `<svg viewBox="0 0 24 24"><g transform="rotate(135 8 8)"><circle cx="8" cy="8" r="4.2" stroke-dasharray="20 7" stroke-linecap="round"></circle></g><g transform="rotate(135 16 8)"><circle cx="16" cy="8" r="3.2" stroke-dasharray="15 6" stroke-linecap="round"></circle></g><g transform="rotate(135 12 16)"><circle cx="12" cy="16" r="4.6" stroke-dasharray="22 8" stroke-linecap="round"></circle></g></svg>`
+                'rings-concentric': `<svg viewBox="0 0 24 24"><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="9" stroke-dasharray="45 12"></circle><circle cx="12" cy="12" r="6" stroke-dasharray="28 9.5"></circle><circle cx="12" cy="12" r="3" stroke-dasharray="13 6"></circle></g></svg>`,
+                'rings-progress': `<svg viewBox="0 0 24 24"><g transform="rotate(155 12 12)"><circle cx="12" cy="12" r="9" stroke-dasharray="47 11"></circle><circle cx="12" cy="12" r="6" stroke-dasharray="27 12"></circle><circle cx="12" cy="12" r="3" stroke-dasharray="11 8"></circle></g></svg>`,
+                'rings-trio': `<svg viewBox="0 0 24 24"><g transform="rotate(135 8 8)"><circle cx="8" cy="8" r="4.2" stroke-dasharray="20 7"></circle></g><g transform="rotate(135 16 8)"><circle cx="16" cy="8" r="3.2" stroke-dasharray="15 6"></circle></g><g transform="rotate(135 12 16)"><circle cx="12" cy="16" r="4.6" stroke-dasharray="22 8"></circle></g></svg>`
             },
             action: {
-                'plus-centered-single': `<svg viewBox="0 0 24 24" style="width: 25px; height: 25px;"><line x1="12" y1="4.5" x2="12" y2="19.5"></line><line x1="4.5" y1="12" x2="19.5" y2="12"></line><path d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z" fill="#1F2937"></path></svg>`,
-                'plus-centered-twin': `<svg viewBox="0 0 24 24" style="width: 25px; height: 25px;"><line x1="12" y1="4.5" x2="12" y2="19.5"></line><line x1="4.5" y1="12" x2="19.5" y2="12"></line><path d="M 18.5,1.5 Q 18.5,4.5 21.5,4.5 Q 18.5,4.5 18.5,7.5 Q 18.5,4.5 15.5,4.5 Q 18.5,4.5 18.5,1.5 Z" fill="#1F2937"></path><path d="M 21.5,8 Q 21.5,9.8 23.3,9.8 Q 21.5,9.8 21.5,11.6 Q 21.5,9.8 19.7,9.8 Q 21.5,9.8 21.5,8 Z" fill="#1F2937"></path></svg>`,
-                'plus-pure': `<svg viewBox="0 0 24 24" style="width: 24px; height: 24px;"><line x1="12" y1="4.5" x2="12" y2="19.5"></line><line x1="4.5" y1="12" x2="19.5" y2="12"></line></svg>`
+                'plus-centered-single': `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line><path d="M 19,2 Q 19,5 22,5 Q 19,5 19,8 Q 19,5 16,5 Q 19,5 19,2 Z"></path></svg>`,
+                'plus-centered-twin': `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line><path d="M 18.5,2 Q 18.5,4.5 21,4.5 Q 18.5,4.5 18.5,7 Q 18.5,4.5 16,4.5 Q 18.5,4.5 18.5,2 Z"></path><path d="M 21.5,8 Q 21.5,9.5 23,9.5 Q 21.5,9.5 21.5,11 Q 21.5,9.5 20,9.5 Q 21.5,9.5 21.5,8 Z"></path></svg>`,
+                'plus-pure': `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`
             },
             pantry: {
-                'fridge-double': `<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"></rect><line x1="5" y1="10" x2="19" y2="10"></line><line x1="8" y1="6" x2="8" y2="8"></line><line x1="8" y1="13" x2="8" y2="16"></line></svg>`
+                'fridge-double': `<svg viewBox="0 0 24 24"><rect x="5.5" y="2.5" width="13" height="19" rx="3"></rect><line x1="5.5" y1="10" x2="18.5" y2="10"></line><line x1="8.5" y1="6" x2="8.5" y2="8"></line><line x1="8.5" y1="13" x2="8.5" y2="16"></line></svg>`
             },
             cart: {
-                'cart-wheels': `<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.2"></circle><circle cx="20" cy="21" r="1.2"></circle><path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path></svg>`
+                'cart-wheels': `<svg viewBox="0 0 24 24"><path d="M2 3h3.5l2.4 11.5a1.8 1.8 0 0 0 1.8 1.5h9.5a1.8 1.8 0 0 0 1.8-1.5L22.5 7H6"></path><circle cx="9.5" cy="20" r="1.4"></circle><circle cx="18.5" cy="20" r="1.4"></circle></svg>`
             }
         };
 
