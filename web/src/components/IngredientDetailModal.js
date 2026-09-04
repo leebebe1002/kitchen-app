@@ -318,12 +318,15 @@ const IngredientDetailModal = {
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: cleanB64 } }] }]
             };
-            // 🌟 Google 官方 2026 最新指定主力端點 (gemini-3.6-flash, gemini-3.5-flash, gemini-3.7-flash)
+            // 🌟 Google 官方高可用模型階梯 (Lite 首選極速低負載，徹底避免 503 伺服器尖峰壅塞)
             const endpoints = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent'
             ];
 
             let lastError = '';

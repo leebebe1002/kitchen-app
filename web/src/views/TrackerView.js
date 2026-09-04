@@ -456,12 +456,15 @@ export default {
                 }
             };
 
-            // 🌟 Google 官方 2026 最新指定主力端點 (gemini-3.6-flash, gemini-3.5-flash, gemini-3.7-flash)
+            // 🌟 Google 官方高可用模型階梯 (Lite 首選極速低負載，徹底避免 503 伺服器尖峰壅塞)
             const attempts = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent'
             ];
 
             let lastErr = '';
@@ -499,11 +502,12 @@ export default {
                                 lastErr = `Google API 每分鐘請求頻率限制 (Rate Limit 429)。若頻繁發生，建議點擊右上角「🔑」更換金鑰。`;
                             }
                             console.warn(`⚠️ [十一粒 AI] 遇到 429 額度限制: ${rawErrMsg}`);
-                            // 遇到 429 時立即終止迴圈，避免連續請求加劇封鎖
                             break;
                         } else if (resp.status === 503) {
+                            console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 遇到 503 尖峰，自動切換備援模型...`);
                             lastErr = `Google 伺服器尖峰負載 (503)，已自動切換備援模型...`;
-                            await new Promise(r => setTimeout(r, 400));
+                            await new Promise(r => setTimeout(r, 300));
+                            continue;
                         } else {
                             lastErr = `HTTP ${resp.status}: ${rawErrMsg}`;
                         }
@@ -514,6 +518,42 @@ export default {
                     console.warn(`⚠️ [十一粒 AI] 連線模型 ${endpoint} 失敗:`, e);
                 }
             }
+
+            // 🛡️ 終極動態探測 (Auto-Discovery)：若預設端點皆繁忙，主動向 Google 查詢該 Key 真正支援且可用的視覺模型
+            try {
+                console.log('🔍 [Gemini Vision] 啟動動態模型自適應探測 (ListModels)...');
+                const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+                if (listResp.ok) {
+                    const listData = await listResp.json();
+                    const available = (listData?.models || []).filter(m => 
+                        m.supportedGenerationMethods?.includes('generateContent') &&
+                        !m.name.includes('tts') &&
+                        !m.name.includes('robotics') &&
+                        !m.name.includes('embedding')
+                    );
+                    for (const vm of available.slice(0, 5)) {
+                        const vmUrl = `https://generativelanguage.googleapis.com/v1beta/${vm.name}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                        const vmResp = await fetch(vmUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (vmResp.ok) {
+                            const resData = await vmResp.json();
+                            const rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                console.log('🎉 [十一粒 AI] 視覺動態探測調用成功！使用模型:', vm.name, parsed);
+                                return { status: 'success', result: parsed, isRealAi: true };
+                            }
+                        }
+                    }
+                }
+            } catch (probeErr) {
+                console.warn('[Gemini Vision] 動態探測例外:', probeErr);
+            }
+
             return { status: 'error', message: lastErr || 'Gemini Vision 呼叫失敗' };
         };
 
@@ -544,17 +584,24 @@ export default {
                 }
             };
 
+            // 🌟 Google 官方高可用模型階梯 (Lite 首選極速低負載，徹底避免 503 伺服器尖峰壅塞)
             const attempts = [
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
                 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
-                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent'
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent'
             ];
 
             let lastErr = '';
             for (const endpoint of attempts) {
                 try {
                     const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
+                    const modelName = endpoint.split('/models/')[1]?.split(':')[0];
+                    console.log(`📡 [十一粒 AI NLP] 嘗試連線模型: ${modelName}`);
+
                     const resp = await fetch(fetchUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -586,12 +633,56 @@ export default {
                             return { status: 'error', message: `Google API 配額限制 (429): ${errMsg}` };
                         } else if (resp.status === 400 || resp.status === 403) {
                             return { status: 'error', message: `API 金鑰無效或驗證未通過 (${errMsg})` };
+                        } else if (resp.status === 503) {
+                            console.warn(`⚠️ [十一粒 AI] 模型 ${modelName} 遇到 503 尖峰，自動切換備援模型...`);
+                            await new Promise(r => setTimeout(r, 300));
+                            continue;
                         }
                     }
                 } catch (e) {
                     lastErr = e.message || String(e);
                 }
             }
+
+            // 🛡️ 終極動態探測 (Auto-Discovery)：若預設端點遇到 503 或未命中，動態向 Google 查詢該 Key 真正支援且可用的文字模型
+            try {
+                console.log('🔍 [Gemini NLP] 啟動動態模型自適應探測 (ListModels)...');
+                const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+                if (listResp.ok) {
+                    const listData = await listResp.json();
+                    const available = (listData?.models || []).filter(m => 
+                        m.supportedGenerationMethods?.includes('generateContent') &&
+                        !m.name.includes('tts') &&
+                        !m.name.includes('image') &&
+                        !m.name.includes('robotics') &&
+                        !m.name.includes('embedding')
+                    );
+                    for (const vm of available.slice(0, 5)) {
+                        const vmUrl = `https://generativelanguage.googleapis.com/v1beta/${vm.name}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                        const vmResp = await fetch(vmUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (vmResp.ok) {
+                            const resData = await vmResp.json();
+                            let rawText = resData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+                            if (rawText.startsWith('```')) {
+                                rawText = rawText.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+                            }
+                            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                console.log('🎉 [十一粒 AI] NLP 動態探測調用成功！使用模型:', vm.name, parsed);
+                                return { status: 'success', result: parsed, isRealAi: true };
+                            }
+                        }
+                    }
+                }
+            } catch (probeErr) {
+                console.warn('[Gemini NLP] 動態探測例外:', probeErr);
+            }
+
             return { status: 'error', message: lastErr || 'Gemini NLP 呼叫失敗' };
         };
 

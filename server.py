@@ -12,25 +12,54 @@ PORT_HTTP = 8000
 PORT_HTTPS = 8443
 DIRECTORY = "."
 
+def get_resolved_gemini_key(client_api_key=None):
+    key = client_api_key or os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY')
+    if key and (key.startswith('AIza') or key.startswith('AQ.')):
+        return key
+    
+    # 1. Check local config.json
+    cfg_path = os.path.join(DIRECTORY, 'src', 'data', 'config.json')
+    if os.path.exists(cfg_path):
+        try:
+            with open(cfg_path, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+                val = cfg.get('gemini_api_key')
+                if val and (val.startswith('AIza') or val.startswith('AQ.')):
+                    return val
+        except Exception:
+            pass
+
+    # 2. Check parent workspace .secrets.json
+    secrets_path = os.path.abspath(os.path.join(DIRECTORY, '..', '..', '.secrets.json'))
+    if os.path.exists(secrets_path):
+        try:
+            with open(secrets_path, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+                val = cfg.get('gemini_api_key')
+                if val and (val.startswith('AIza') or val.startswith('AQ.')):
+                    return val
+        except Exception:
+            pass
+
+    return key or ""
+
+GEMINI_MODELS_CASCADE = [
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-flash-latest",
+    "gemini-3.7-flash"
+]
+
 def analyze_vision_image(image_base64_str, client_api_key=None):
-    """使用 LLM Vision API (Gemini 1.5 / OpenAI GPT-4o) 圖片解析包裝營養標示，換算為每 100g 數據"""
+    """使用 LLM Vision API (Gemini / OpenAI GPT-4o) 圖片解析包裝營養標示，換算為每 100g 數據"""
     if not image_base64_str:
         return {"status": "error", "message": "未接收到圖片資料"}
 
-    gemini_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY') or client_api_key
+    gemini_key = get_resolved_gemini_key(client_api_key)
     openai_key = os.environ.get('OPENAI_API_KEY')
-
-    config_path = os.path.join(DIRECTORY, 'src', 'data', 'config.json')
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                cfg = json.load(f)
-                if not gemini_key and cfg.get('gemini_api_key'):
-                    gemini_key = cfg.get('gemini_api_key')
-                if not openai_key and cfg.get('openai_api_key'):
-                    openai_key = cfg.get('openai_api_key')
-        except Exception:
-            pass
 
     mime_type = "image/jpeg"
     clean_b64 = image_base64_str
@@ -80,8 +109,8 @@ def analyze_vision_image(image_base64_str, client_api_key=None):
                 "message": f"Gemini API Key 格式不正確！您輸入的金鑰開頭為 '{gemini_key[:8]}...'。"
             }
 
-        # 依序嘗試 model (包含 Gemini 3.5 / 3.7 / 3.6 最新高配額主力模型)
-        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+        # 依序嘗試 model (Lite 首選極速低負載，徹底避免 503 尖峰壅塞)
+        models_to_try = GEMINI_MODELS_CASCADE
         last_error = ""
 
         for model_name in models_to_try:
@@ -217,8 +246,9 @@ def analyze_meal_image(image_base64_str, client_api_key=None):
         "}"
     )
 
+    gemini_key = get_resolved_gemini_key(client_api_key)
     if gemini_key:
-        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+        models_to_try = GEMINI_MODELS_CASCADE
         last_error = ""
 
         for model_name in models_to_try:
@@ -339,8 +369,9 @@ def analyze_food_nlp(text_input, client_api_key=None):
         "}"
     )
 
+    gemini_key = get_resolved_gemini_key(client_api_key)
     if gemini_key:
-        models_to_try = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"]
+        models_to_try = GEMINI_MODELS_CASCADE
         last_error = ""
 
         for model_name in models_to_try:
