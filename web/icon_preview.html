@@ -277,47 +277,121 @@
 <body>
 
     <header>
-        <h1>Family Kitchen 2.0 底部 Icon 設計展演</h1>
-        <p class="desc">已確定：【智慧冰箱 A 款】與【採買清單 A 款】！<br>最新調整：【廚房小磅秤 3 款】、【今日紀錄：同向缺口三圓環】與【➕ 絕對置中 + 雙星芒微放大】✨</p>
+        <div style="display: inline-block; padding: 4px 14px; background: #ECFDF5; border: 1.5px solid #10B981; border-radius: 20px; color: #059669; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px;">
+            🎉 全套 5 大專屬 Dock Icon 拍板集結！
+        </div>
+        <h1>Family Kitchen 2.0 底部導航正式 Demo</h1>
+        <p class="desc">備料計算器 (日系指針秤) ＋ 今日紀錄 (缺口左下三進度環) ＋ 記一餐大圓鈕 ＋ 雙門冰箱 ＋ 超市推車</p>
     </header>
 
-    <div class="note-card">
-        💡 <strong>本輪依妳的反饋全新升級</strong>：
-        <br>1. <strong>備料計算器</strong> ➜ 換成<strong>「廚房用小磅秤」</strong>（現代薄型電子秤 / 日系指針烘焙秤 / 極簡圓形秤）。
-        <br>2. <strong>今日紀錄</strong> ➜ 換成<strong>「三個未閉合圓圈（缺口統一在同一側）」</strong>（象徵熱量、蛋白質、營養三大進度環，缺口一致朝向右上）。
-        <br>3. <strong>中央大圓鈕</strong> ➜ <strong>整體以 <code>＋</code> 為嚴格正中心</strong>，右上角雙星芒微調放大（AI 智慧感更亮眼）！
+    <!-- 0. 拍板總覽卡 (Final Confirmed Suite) -->
+    <div class="category-card" style="border: 2px solid #10B981; background: #FAFDFB;">
+        <div class="category-header">
+            <span class="category-title" style="color: #065F46;">
+                ✨ 最終拍板全家福 (The Confirmed 5)
+            </span>
+            <span class="badge" style="background: #10B981; color: #FFFFFF;">ALL CONFIRMED</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-around; padding: 12px 0 6px;">
+            <!-- 1. 備料計算器 -->
+            <div style="text-align: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
+                        <path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path>
+                        <line x1="12" y1="8" x2="12" y2="10"></line>
+                        <path d="M6 10h12l1.5 11H4.5L6 10z"></path>
+                        <circle cx="12" cy="15.5" r="3.2"></circle>
+                        <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
+                    </svg>
+                </div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">指針烘焙秤</div>
+                <div style="font-size: 0.65rem; color: #6B7280;">備料計算</div>
+            </div>
+
+            <!-- 2. 今日紀錄 (缺口左下) -->
+            <div style="text-align: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
+                        <g transform="rotate(155 12 12)">
+                            <circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle>
+                        </g>
+                    </svg>
+                </div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">左下缺口三環</div>
+                <div style="font-size: 0.65rem; color: #6B7280;">今日紀錄</div>
+            </div>
+
+            <!-- 3. 記一餐 (突出大圓鈕) -->
+            <div style="text-align: center;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: #FFFFFF; border: 3px solid var(--accent-circle); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; box-shadow: 0 4px 12px rgba(235, 181, 168, 0.4);">
+                    <svg viewBox="0 0 24 24" style="width: 25px; height: 25px; stroke: #1F2937; fill: none; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round;">
+                        <line x1="12" y1="4.5" x2="12" y2="19.5"></line>
+                        <line x1="4.5" y1="12" x2="19.5" y2="12"></line>
+                        <path d="M 18.5,1.5 Q 18.5,4.5 21.5,4.5 Q 18.5,4.5 18.5,7.5 Q 18.5,4.5 15.5,4.5 Q 18.5,4.5 18.5,1.5 Z" stroke-width="1.1" fill="#1F2937"></path>
+                        <path d="M 21.5,8 Q 21.5,9.8 23.3,9.8 Q 21.5,9.8 21.5,11.6 Q 21.5,9.8 19.7,9.8 Q 21.5,9.8 21.5,8 Z" stroke-width="0.9" fill="#1F2937"></path>
+                    </svg>
+                </div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #B45309;">置中＋雙星芒</div>
+                <div style="font-size: 0.65rem; color: #6B7280;">AI 記一餐</div>
+            </div>
+
+            <!-- 4. 智慧冰箱 -->
+            <div style="text-align: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
+                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                        <line x1="5" y1="10" x2="19" y2="10"></line>
+                        <line x1="8" y1="6" x2="8" y2="8"></line>
+                        <line x1="8" y1="13" x2="8" y2="16"></line>
+                    </svg>
+                </div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">雙門冰箱</div>
+                <div style="font-size: 0.65rem; color: #6B7280;">智慧庫存</div>
+            </div>
+
+            <!-- 5. 採買清單 -->
+            <div style="text-align: center;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D1FAE5; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px;">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #065F46;">
+                        <circle cx="9" cy="21" r="1.2"></circle>
+                        <circle cx="20" cy="21" r="1.2"></circle>
+                        <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6L23 6H6"></path>
+                    </svg>
+                </div>
+                <div style="font-size: 0.72rem; font-weight: 700; color: #065F46;">超市手推車</div>
+                <div style="font-size: 0.65rem; color: #6B7280;">採買清單</div>
+            </div>
+        </div>
     </div>
 
-    <!-- 1. 備料計算器 (廚房小磅秤 Kitchen Scale 3 款) -->
-    <div class="category-card">
+    <!-- 1. 備料計算器 (已選定 款式 2) -->
+    <div class="category-card" style="border: 1.5px solid #10B981;">
         <div class="category-header">
-            <span class="category-title">01 備料計算器 (廚房小磅秤 3 款)</span>
-            <span class="badge">磅秤比計算機更有廚房靈魂！⚖️</span>
+            <span class="category-title">01 備料計算器 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 已選定 款式 2 (日系指針烘焙秤)</span></span>
+            <span class="badge" style="background: #ECFDF5; color: #059669;">CONFIRMED</span>
         </div>
         <div class="icon-grid">
-            <!-- 磅秤 款式 1: 現代薄型電子秤 (推薦) -->
-            <div class="icon-item selected" onclick="selectIcon('calc', 'scale-flat', this)">
+            <!-- 磅秤 款式 1: 現代薄型電子秤 -->
+            <div class="icon-item" onclick="selectIcon('calc', 'scale-flat', this)">
                 <div class="icon-box">
                     <svg class="tab-icon" viewBox="0 0 24 24">
-                        <!-- 頂部平整秤台 -->
                         <path d="M3 5h18c.5 0 1 .5 1 1s-.5 1-1 1H3c-.5 0-1-.5-1-1s.5-1 1-1z"></path>
-                        <!-- 秤身機體 -->
                         <rect x="4.5" y="8" width="15" height="12" rx="2.5"></rect>
-                        <!-- 液晶數字螢幕 -->
                         <rect x="8" y="11" width="8" height="3.5" rx="0.8"></rect>
-                        <!-- 左右觸控按鈕 (Tare 歸零 / 電源) -->
                         <circle cx="7.5" cy="17" r="1" fill="#2D2A26"></circle>
                         <circle cx="16.5" cy="17" r="1" fill="#2D2A26"></circle>
                     </svg>
                 </div>
-                <span class="icon-label">款式 1 (推薦)</span>
-                <span class="icon-desc">現代薄型電子秤<br>(頂部秤台+液晶螢幕)</span>
+                <span class="icon-label">款式 1</span>
+                <span class="icon-desc">現代薄型電子秤</span>
             </div>
 
-            <!-- 磅秤 款式 2: 日系經典指針機械磅秤 -->
-            <div class="icon-item" onclick="selectIcon('calc', 'scale-dial', this)">
+            <!-- 磅秤 款式 2: 日系經典指針機械磅秤 (已選中) -->
+            <div class="icon-item selected" onclick="selectIcon('calc', 'scale-dial', this)" style="border-color: #059669;">
                 <div class="icon-box">
-                    <svg class="tab-icon" viewBox="0 0 24 24">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #059669;">
                         <!-- 上方盛料托盤 (Bowl Tray) -->
                         <path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path>
                         <!-- 托盤支柱 -->
@@ -330,106 +404,96 @@
                         <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
                     </svg>
                 </div>
-                <span class="icon-label">款式 2</span>
-                <span class="icon-desc">日系指針烘焙秤<br>(托盤+圓錶盤，超經典)</span>
+                <span class="icon-label" style="color: #059669;">款式 2 (妳的選擇)</span>
+                <span class="icon-desc">日系指針烘焙秤<br>托盤＋圓錶盤超有靈魂</span>
             </div>
 
-            <!-- 磅秤 款式 3: 極簡圓盤咖啡/烘焙智慧秤 -->
+            <!-- 磅秤 款式 3: 極簡圓盤感應智慧秤 -->
             <div class="icon-item" onclick="selectIcon('calc', 'scale-round', this)">
                 <div class="icon-box">
                     <svg class="tab-icon" viewBox="0 0 24 24">
-                        <!-- 大圓形極簡秤盤 -->
                         <rect x="3.5" y="3" width="17" height="18" rx="4"></rect>
-                        <!-- 內部圓形稱重感應環 -->
                         <circle cx="12" cy="9.5" r="4.2"></circle>
-                        <!-- 中心精準微十字點 -->
                         <circle cx="12" cy="9.5" r="1" fill="#2D2A26"></circle>
-                        <!-- 底部橫式液晶螢幕 -->
                         <rect x="7.5" y="15.5" width="9" height="3" rx="0.8"></rect>
                     </svg>
                 </div>
                 <span class="icon-label">款式 3</span>
-                <span class="icon-desc">極簡感應磅秤<br>(圓形感應環+底座)</span>
+                <span class="icon-desc">極簡感應磅秤</span>
             </div>
         </div>
     </div>
 
-    <!-- 2. 今日紀錄 (三個未閉合圓圈，缺口同側) -->
-    <div class="category-card">
+    <!-- 2. 今日紀錄 (已選定 款式 2，缺口改左下) -->
+    <div class="category-card" style="border: 1.5px solid #10B981;">
         <div class="category-header">
-            <span class="category-title">02 今日紀錄 (三個未閉合圓圈，缺口在同一側)</span>
-            <span class="badge">三大營養素進度環！◎</span>
+            <span class="category-title">02 今日紀錄 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 已選定 款式 2 (缺口改左下角)</span></span>
+            <span class="badge" style="background: #ECFDF5; color: #059669;">CONFIRMED</span>
         </div>
         <div class="icon-grid">
-            <!-- 圓環 款式 A: 同心三圓環 (缺口同在右上角，推薦) -->
-            <div class="icon-item selected" onclick="selectIcon('today', 'rings-concentric', this)">
+            <!-- 圓環 款式 1: 同心三圓環 (缺口左下) -->
+            <div class="icon-item" onclick="selectIcon('today', 'rings-concentric', this)">
                 <div class="icon-box">
                     <svg class="tab-icon" viewBox="0 0 24 24">
-                        <g transform="rotate(-45 12 12)">
-                            <!-- 外環 (熱量) -->
+                        <g transform="rotate(135 12 12)">
                             <circle cx="12" cy="12" r="8.8" stroke-dasharray="45 12" stroke-linecap="round"></circle>
-                            <!-- 中環 (蛋白質) -->
                             <circle cx="12" cy="12" r="5.8" stroke-dasharray="28 9.5" stroke-linecap="round"></circle>
-                            <!-- 內環 (碳水/水分) -->
                             <circle cx="12" cy="12" r="2.9" stroke-dasharray="13 6" stroke-linecap="round"></circle>
                         </g>
                     </svg>
                 </div>
-                <span class="icon-label">款式 A (推薦)</span>
-                <span class="icon-desc">同心三進度環<br>(缺口齊聚右上角)</span>
+                <span class="icon-label">款式 1</span>
+                <span class="icon-desc">同心齊頭環<br>(缺口在左下)</span>
             </div>
 
-            <!-- 圓環 款式 B: 動態進度差同心環 (缺口同側，進度不同) -->
-            <div class="icon-item" onclick="selectIcon('today', 'rings-progress', this)">
+            <!-- 圓環 款式 2: 動態進度差同心環 (缺口在左下，已選中！) -->
+            <div class="icon-item selected" onclick="selectIcon('today', 'rings-progress', this)" style="border-color: #059669;">
                 <div class="icon-box">
-                    <svg class="tab-icon" viewBox="0 0 24 24">
-                        <g transform="rotate(-40 12 12)">
+                    <svg class="tab-icon" viewBox="0 0 24 24" style="stroke: #059669;">
+                        <g transform="rotate(155 12 12)">
                             <!-- 外環 (85% 完成) -->
                             <circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle>
-                            <!-- 中環 (65% 完成) -->
-                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="24 14" stroke-linecap="round"></circle>
-                            <!-- 內環 (45% 完成) -->
-                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="10 9" stroke-linecap="round"></circle>
+                            <!-- 中環 (68% 完成) -->
+                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle>
+                            <!-- 內環 (48% 完成) -->
+                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle>
                         </g>
                     </svg>
                 </div>
-                <span class="icon-label">款式 B</span>
-                <span class="icon-desc">動態進度同心環<br>(起點同側、長度漸次)</span>
+                <span class="icon-label" style="color: #059669;">款式 2 (妳的選擇)</span>
+                <span class="icon-desc">動態進度三圓環<br>缺口全部精準朝向左下</span>
             </div>
 
-            <!-- 圓環 款式 C: 三個獨立錯落未閉合圈圈 (缺口同朝右上) -->
+            <!-- 圓環 款式 3: 錯落三環 (缺口左下) -->
             <div class="icon-item" onclick="selectIcon('today', 'rings-trio', this)">
                 <div class="icon-box">
                     <svg class="tab-icon" viewBox="0 0 24 24">
-                        <!-- 左上圓圈 (缺口朝右上) -->
-                        <g transform="rotate(-45 8 8)">
+                        <g transform="rotate(135 8 8)">
                             <circle cx="8" cy="8" r="4.2" stroke-dasharray="20 7" stroke-linecap="round"></circle>
                         </g>
-                        <!-- 右上小圓圈 (缺口朝右上) -->
-                        <g transform="rotate(-45 16 8)">
+                        <g transform="rotate(135 16 8)">
                             <circle cx="16" cy="8" r="3.2" stroke-dasharray="15 6" stroke-linecap="round"></circle>
                         </g>
-                        <!-- 下方主圓圈 (缺口朝右上) -->
-                        <g transform="rotate(-45 12 16)">
+                        <g transform="rotate(135 12 16)">
                             <circle cx="12" cy="16" r="4.6" stroke-dasharray="22 8" stroke-linecap="round"></circle>
                         </g>
                     </svg>
                 </div>
-                <span class="icon-label">款式 C</span>
-                <span class="icon-desc">三星陣錯落三環<br>(三大圓圈各展缺口)</span>
+                <span class="icon-label">款式 3</span>
+                <span class="icon-desc">錯落三星陣<br>(缺口在左下)</span>
             </div>
         </div>
     </div>
 
     <!-- 3. 中央記錄大圓鈕 (突出 Action) -->
-    <div class="category-card">
+    <div class="category-card" style="border: 1.5px solid #10B981;">
         <div class="category-header">
-            <span class="category-title">03 中央記錄大圓鈕 (嚴格置中 ＋，星芒微放大)</span>
-            <span class="badge">＋ 置中 + AI 雙星芒 ✨</span>
+            <span class="category-title">03 中央記錄大圓鈕 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 嚴格正中置中 ＋ 右上微放大雙星芒</span></span>
+            <span class="badge" style="background: #ECFDF5; color: #059669;">CONFIRMED</span>
         </div>
         <div class="icon-grid">
-            <!-- 款式 A: 十字嚴格正中置中 ＋ 右上微放大雙星芒 (推薦) -->
-            <div class="icon-item selected" onclick="selectIcon('action', 'plus-centered-twin', this)">
+            <!-- 款式 A: 十字嚴格正中置中 ＋ 右上微放大雙星芒 (已選中) -->
+            <div class="icon-item selected" onclick="selectIcon('action', 'plus-centered-twin', this)" style="border-color: #059669;">
                 <div class="icon-box">
                     <div style="width: 42px; height: 42px; border-radius: 50%; border: 2.8px solid var(--accent-circle); display: flex; align-items: center; justify-content: center; position: relative;">
                         <svg class="tab-icon" style="width: 25px; height: 25px;" viewBox="0 0 24 24">
@@ -443,8 +507,8 @@
                         </svg>
                     </div>
                 </div>
-                <span class="icon-label">置中＋放大雙星芒</span>
-                <span class="icon-desc">＋ 完美在正中心<br>右上雙星芒清晰搶眼</span>
+                <span class="icon-label" style="color: #059669;">置中＋雙星芒 (已鎖定)</span>
+                <span class="icon-desc">＋ 絕對居中<br>右上雙星芒 AI 靈動</span>
             </div>
 
             <!-- 款式 B: 置中 ＋ 右上單顆放大晶耀星芒 -->
@@ -454,13 +518,12 @@
                         <svg class="tab-icon" style="width: 25px; height: 25px;" viewBox="0 0 24 24">
                             <line x1="12" y1="4.5" x2="12" y2="19.5" stroke-width="2.3"></line>
                             <line x1="4.5" y1="12" x2="19.5" y2="12" stroke-width="2.3"></line>
-                            <!-- 單顆稍微再大一點點的晶耀星芒 -->
                             <path d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z" stroke-width="1.2" fill="#2D2A26"></path>
                         </svg>
                     </div>
                 </div>
-                <span class="icon-label">置中＋大單星芒</span>
-                <span class="icon-desc">＋ 完美居中<br>右上單顆大星芒</span>
+                <span class="icon-label">置中＋單星芒</span>
+                <span class="icon-desc">＋ 居中<br>單顆大星芒</span>
             </div>
 
             <!-- 款式 C: 經典純十字 (置中對照) -->
@@ -474,15 +537,15 @@
                     </div>
                 </div>
                 <span class="icon-label">純十字 (對照)</span>
-                <span class="icon-desc">無星芒純十字<br>對比置中視覺感</span>
+                <span class="icon-desc">無星芒純十字</span>
             </div>
         </div>
     </div>
 
     <!-- 4. 智慧冰箱 (已鎖定 款式 A) -->
-    <div class="category-card" style="opacity: 0.95; border: 1.5px solid #10B981;">
+    <div class="category-card" style="border: 1.5px solid #10B981;">
         <div class="category-header">
-            <span class="category-title">04 智慧冰箱 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 已選定 A 款 (雙門冰箱)</span></span>
+            <span class="category-title">04 智慧冰箱 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 已選定 A 款 (雙門分層冰箱)</span></span>
             <span class="badge" style="background: #ECFDF5; color: #059669;">CONFIRMED</span>
         </div>
         <div style="display: flex; align-items: center; gap: 14px; padding: 6px 12px; background: #F8FAF9; border-radius: 12px;">
@@ -501,7 +564,7 @@
     </div>
 
     <!-- 5. 採買清單 (已鎖定 款式 A) -->
-    <div class="category-card" style="opacity: 0.95; border: 1.5px solid #10B981;">
+    <div class="category-card" style="border: 1.5px solid #10B981;">
         <div class="category-header">
             <span class="category-title">05 採買清單 <span style="color: #10B981; font-size: 0.85rem; font-weight: 700;">✓ 已選定 A 款 (超市手推車)</span></span>
             <span class="badge" style="background: #ECFDF5; color: #059669;">CONFIRMED</span>
@@ -520,37 +583,37 @@
         </div>
     </div>
 
-    <!-- 📱 畫面最下方：即時全真模擬底欄 (FM 風格) -->
+    <!-- 📱 畫面最下方：即時全真模擬底欄 (FM 風格) - 載入全套選定款！ -->
     <div class="bottom-preview-container">
-        <div class="preview-title">即時視覺組合預覽 (Live Preview)</div>
+        <div class="preview-title">即時全真模擬底欄 (FM 旗艦樣式)</div>
         <div class="bottom-dock">
-            <!-- 1. 備料計算 (小磅秤) -->
+            <!-- 1. 備料計算 (選定：款式 2 日系指針烘焙秤) -->
             <button class="dock-tab active" id="dock-calc">
                 <span id="dock-calc-svg">
                     <svg viewBox="0 0 24 24">
-                        <path d="M3 5h18c.5 0 1 .5 1 1s-.5 1-1 1H3c-.5 0-1-.5-1-1s.5-1 1-1z"></path>
-                        <rect x="4.5" y="8" width="15" height="12" rx="2.5"></rect>
-                        <rect x="8" y="11" width="8" height="3.5" rx="0.8"></rect>
-                        <circle cx="7.5" cy="17" r="1" fill="#2D2A26"></circle>
-                        <circle cx="16.5" cy="17" r="1" fill="#2D2A26"></circle>
+                        <path d="M4 4.5h16c-.4 2.2-2.8 3.5-5 3.5H9C6.8 8 4.4 6.7 4 4.5z"></path>
+                        <line x1="12" y1="8" x2="12" y2="10"></line>
+                        <path d="M6 10h12l1.5 11H4.5L6 10z"></path>
+                        <circle cx="12" cy="15.5" r="3.2"></circle>
+                        <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
                     </svg>
                 </span>
             </button>
 
-            <!-- 2. 今日紀錄 (同向缺口三圓環) -->
+            <!-- 2. 今日紀錄 (選定：款式 2 缺口左下動態三圓環) -->
             <button class="dock-tab" id="dock-today">
                 <span id="dock-today-svg">
                     <svg viewBox="0 0 24 24">
-                        <g transform="rotate(-45 12 12)">
-                            <circle cx="12" cy="12" r="8.8" stroke-dasharray="45 12" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="28 9.5" stroke-linecap="round"></circle>
-                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="13 6" stroke-linecap="round"></circle>
+                        <g transform="rotate(155 12 12)">
+                            <circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle>
+                            <circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle>
                         </g>
                     </svg>
                 </span>
             </button>
 
-            <!-- 3. 中央突出大圓鈕 (嚴格置中 ＋，右上微放大雙星芒) -->
+            <!-- 3. 中央突出大圓鈕 (選定：嚴格置中 ＋，右上微放大雙星芒) -->
             <div class="dock-center-wrap">
                 <div class="dock-center-btn" id="dock-action-btn">
                     <span id="dock-action-svg">
@@ -564,7 +627,7 @@
                 </div>
             </div>
 
-            <!-- 4. 智慧冰箱 (鎖定雙門冰箱) -->
+            <!-- 4. 智慧冰箱 (選定：雙門冰箱) -->
             <button class="dock-tab" id="dock-pantry">
                 <span id="dock-pantry-svg">
                     <svg viewBox="0 0 24 24">
@@ -576,7 +639,7 @@
                 </span>
             </button>
 
-            <!-- 5. 採買清單 (鎖定手推車) -->
+            <!-- 5. 採買清單 (選定：超市手推車) -->
             <button class="dock-tab" id="dock-cart">
                 <span id="dock-cart-svg">
                     <svg viewBox="0 0 24 24">
@@ -597,9 +660,9 @@
                 'scale-round': `<svg viewBox="0 0 24 24"><rect x="3.5" y="3" width="17" height="18" rx="4"></rect><circle cx="12" cy="9.5" r="4.2"></circle><circle cx="12" cy="9.5" r="1" fill="#1F2937"></circle><rect x="7.5" y="15.5" width="9" height="3" rx="0.8"></rect></svg>`
             },
             today: {
-                'rings-concentric': `<svg viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="45 12" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="28 9.5" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="13 6" stroke-linecap="round"></circle></g></svg>`,
-                'rings-progress': `<svg viewBox="0 0 24 24"><g transform="rotate(-40 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="24 14" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="10 9" stroke-linecap="round"></circle></g></svg>`,
-                'rings-trio': `<svg viewBox="0 0 24 24"><g transform="rotate(-45 8 8)"><circle cx="8" cy="8" r="4.2" stroke-dasharray="20 7" stroke-linecap="round"></circle></g><g transform="rotate(-45 16 8)"><circle cx="16" cy="8" r="3.2" stroke-dasharray="15 6" stroke-linecap="round"></circle></g><g transform="rotate(-45 12 16)"><circle cx="12" cy="16" r="4.6" stroke-dasharray="22 8" stroke-linecap="round"></circle></g></svg>`
+                'rings-concentric': `<svg viewBox="0 0 24 24"><g transform="rotate(135 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="45 12" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="28 9.5" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="13 6" stroke-linecap="round"></circle></g></svg>`,
+                'rings-progress': `<svg viewBox="0 0 24 24"><g transform="rotate(155 12 12)"><circle cx="12" cy="12" r="8.8" stroke-dasharray="46 11" stroke-linecap="round"></circle><circle cx="12" cy="12" r="5.8" stroke-dasharray="26 12" stroke-linecap="round"></circle><circle cx="12" cy="12" r="2.9" stroke-dasharray="11 8.5" stroke-linecap="round"></circle></g></svg>`,
+                'rings-trio': `<svg viewBox="0 0 24 24"><g transform="rotate(135 8 8)"><circle cx="8" cy="8" r="4.2" stroke-dasharray="20 7" stroke-linecap="round"></circle></g><g transform="rotate(135 16 8)"><circle cx="16" cy="8" r="3.2" stroke-dasharray="15 6" stroke-linecap="round"></circle></g><g transform="rotate(135 12 16)"><circle cx="12" cy="16" r="4.6" stroke-dasharray="22 8" stroke-linecap="round"></circle></g></svg>`
             },
             action: {
                 'plus-centered-twin': `<svg viewBox="0 0 24 24" style="width: 25px; height: 25px;"><line x1="12" y1="4.5" x2="12" y2="19.5" stroke-width="2.3"></line><line x1="4.5" y1="12" x2="19.5" y2="12" stroke-width="2.3"></line><path d="M 18.5,1.5 Q 18.5,4.5 21.5,4.5 Q 18.5,4.5 18.5,7.5 Q 18.5,4.5 15.5,4.5 Q 18.5,4.5 18.5,1.5 Z" stroke-width="1.1" fill="#1F2937"></path><path d="M 21.5,8 Q 21.5,9.8 23.3,9.8 Q 21.5,9.8 21.5,11.6 Q 21.5,9.8 19.7,9.8 Q 21.5,9.8 21.5,8 Z" stroke-width="0.9" fill="#1F2937"></path></svg>`,
