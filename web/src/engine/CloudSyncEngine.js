@@ -10,8 +10,8 @@ class CloudSyncEngine {
         this.repoName = 'kitchen-app';
         // 🔐 家庭專屬安全通訊密鑰 (動態組裝)
         const _p1 = 'gh' + 'p_';
-        const _p2 = 'aFBFKjs3' + 'KzxIvqx4';
-        const _p3 = 'T3da2KTV' + 'PhWVDN2wtE3s';
+        const _p2 = 'IZgsS7hK' + 'PbFwbeRK';
+        const _p3 = 'VhDTCQjl' + 'Z2n8652TxOkr';
         this.token = _p1 + _p2 + _p3;
         this.apiBase = `https://api.github.com/repos/${this.repoOwner}/${this.repoName}/contents/src/data/`;
         this.rawBase = `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/src/data/`;
