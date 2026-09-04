@@ -574,3 +574,22 @@ body.modal-open {
     flex-shrink: 0;
 }
 
+/* 🔢 極簡美觀數字輸入框：隱藏瀏覽器原生上下箭頭 */
+input[type=number].no-spin::-webkit-inner-spin-button,
+input[type=number].no-spin::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number].no-spin {
+    -moz-appearance: textfield;
+}
+
+.stepper-btn:hover {
+    background-color: #F3F4F6 !important;
+}
+.stepper-btn:active {
+    background-color: #E5E7EB !important;
+    transform: scale(0.95);
+}
+
+

@@ -812,24 +812,20 @@ export default {
             }
         };
 
-        // 1g / 5g / 10g 精準 Stepper increments
+        // 🔢 統一按鈕加 1、減 1，最小為 0
         const adjustMemberAmount = (member, ing, delta) => {
-            const ingData = engine.getIngredientById(ing.id);
-            const roleInfo = getIngredientRole(ingData);
-            let step = roleInfo.step || 5;
+            const current = Number(ing.amount) || 0;
+            const newAmount = Math.max(0, current + (delta > 0 ? 1 : -1));
+            ing.amount = Math.round(newAmount * 10) / 10;
+        };
 
-            if (roleInfo.role === 'micro') {
-                step = 1;
-            } else if (roleInfo.role === 'count') {
-                step = 1;
-            } else if (ing.amount <= 5 && delta < 0) {
-                step = 1;
+        // 🔢 中間數字直接修改時的失焦防呆與格式化校驗
+        const onAmountBlur = (ing) => {
+            if (ing.amount === '' || isNaN(ing.amount) || ing.amount < 0) {
+                ing.amount = 0;
+            } else {
+                ing.amount = Math.round(Number(ing.amount) * 10) / 10;
             }
-
-            const minAmount = 0;
-            const maxAmount = (roleInfo.role === 'micro') ? 5 : 999;
-            const newAmount = Math.max(minAmount, Math.min(maxAmount, ing.amount + (delta > 0 ? step : -step)));
-            ing.amount = newAmount;
         };
 
         // Drawer Controls
@@ -1659,6 +1655,7 @@ ${JSON.stringify(membersData, null, 2)}
             isIngredientSelected,
             getMemberActiveIngredients,
             adjustMemberAmount,
+            onAmountBlur,
             isAiChefLoading,
             aiChefAdvice,
             showChefNote,
@@ -1994,10 +1991,35 @@ ${JSON.stringify(membersData, null, 2)}
                                 ({{ getDefaultAmount(member, ing.id) }})
                             </span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <button class="btn-icon" @click="adjustMemberAmount(member, ing, -1)" style="padding: 4px 10px;">-</button>
-                            <span style="width: 50px; text-align: center; font-weight: 600;">{{ ing.amount }}{{ ing.unit }}</span>
-                            <button class="btn-icon" @click="adjustMemberAmount(member, ing, 1)" style="padding: 4px 10px;">+</button>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button class="btn-icon stepper-btn" 
+                                    @click="adjustMemberAmount(member, ing, -1)" 
+                                    title="減 1"
+                                    style="width: 32px; height: 32px; padding: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--color-border); background: #FFFFFF; cursor: pointer; color: var(--color-text-main); user-select: none; transition: all 0.15s ease;">
+                                -
+                            </button>
+                            
+                            <!-- 可直接修改的中間數字輸入框 -->
+                            <div style="display: flex; align-items: center; justify-content: center; background: #F9FAFB; border: 1px solid var(--color-border); border-radius: 8px; padding: 2px 6px; min-width: 68px; height: 32px; box-sizing: border-box;">
+                                <input type="number" 
+                                       v-model.number="ing.amount" 
+                                       @focus="$event.target.select()" 
+                                       @blur="onAmountBlur(ing)"
+                                       @keyup.enter="$event.target.blur()"
+                                       class="no-spin"
+                                       min="0" 
+                                       max="9999" 
+                                       step="1"
+                                       style="width: 44px; text-align: right; border: none; background: transparent; font-weight: 700; font-size: 0.95rem; color: #111827; outline: none; padding: 0; font-family: inherit;">
+                                <span style="font-size: 0.75rem; color: #6B7280; margin-left: 2px; font-weight: 500; white-space: nowrap; user-select: none;">{{ ing.unit }}</span>
+                            </div>
+
+                            <button class="btn-icon stepper-btn" 
+                                    @click="adjustMemberAmount(member, ing, 1)" 
+                                    title="加 1"
+                                    style="width: 32px; height: 32px; padding: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--color-border); background: #FFFFFF; cursor: pointer; color: var(--color-text-main); user-select: none; transition: all 0.15s ease;">
+                                +
+                            </button>
                         </div>
                     </div>
                 </div>
