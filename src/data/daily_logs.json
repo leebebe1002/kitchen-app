@@ -1767,41 +1767,15 @@
         },
         "jason": {
           "totals": {
-            "kcal": 2113.2,
-            "protein": 91.6,
-            "carbs": 242.8,
-            "fat": 91,
-            "sodium": 456.6
+            "kcal": 1056.6,
+            "protein": 45.8,
+            "carbs": 121.4,
+            "fat": 45.5,
+            "sodium": 228.3
           },
           "meals": [
             {
               "id": "meal_1788583802309_jason",
-              "dishName": "義大利麵",
-              "time": "下午12:50",
-              "source": "manual",
-              "portionRatio": "1",
-              "nutrients": {
-                "kcal": 1056.6,
-                "protein": 45.8,
-                "carbs": 121.4,
-                "fat": 45.5,
-                "sodium": 228.3
-              },
-              "items": [
-                "義大利（天使） 150g",
-                "綠花椰菜 36g",
-                "無骨牛小排 100g",
-                "櫛瓜 20g",
-                "蛋 2顆",
-                "洋菇 20g",
-                "綜合生菜 60g",
-                "金黃玉米粒(無加糖) 0g"
-              ],
-              "aiNote": "",
-              "photoUrl": null
-            },
-            {
-              "id": "meal_1788583803029_jason",
               "dishName": "義大利麵",
               "time": "下午12:50",
               "source": "manual",
