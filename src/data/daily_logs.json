@@ -1,6 +1,122 @@
 {
   "logs": [
     {
+      "date": "2026-09-05",
+      "diners": {
+        "bebe": {
+          "totals": {
+            "kcal": 523.6,
+            "protein": 23.1,
+            "carbs": 56.5,
+            "fat": 23.9,
+            "sodium": 114.8
+          },
+          "meals": [
+            {
+              "id": "meal_1788583800801_bebe",
+              "dishName": "義大利麵",
+              "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 523.6,
+                "protein": 23.1,
+                "carbs": 56.5,
+                "fat": 23.9,
+                "sodium": 114.8
+              },
+              "items": [
+                "義大利（天使） 70g",
+                "綠花椰菜 10g",
+                "無骨牛小排 55g",
+                "櫛瓜 15g",
+                "蛋 1顆",
+                "洋菇 10g",
+                "綜合生菜 30g",
+                "金黃玉米粒(無加糖) 0g"
+              ],
+              "aiNote": "",
+              "photoUrl": null
+            }
+          ]
+        },
+        "ariel": {
+          "totals": {
+            "kcal": 677.4,
+            "protein": 28.4,
+            "carbs": 80.8,
+            "fat": 28.4,
+            "sodium": 128.5
+          },
+          "meals": [
+            {
+              "id": "meal_1788583802103_ariel",
+              "dishName": "義大利麵",
+              "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 677.4,
+                "protein": 28.4,
+                "carbs": 80.8,
+                "fat": 28.4,
+                "sodium": 128.5
+              },
+              "items": [
+                "義大利（天使） 100g",
+                "綠花椰菜 20g",
+                "無骨牛小排 67g",
+                "櫛瓜 23g",
+                "蛋 1顆",
+                "洋菇 10g",
+                "綜合生菜 40g",
+                "金黃玉米粒(無加糖) 0g"
+              ],
+              "aiNote": "",
+              "photoUrl": null
+            }
+          ]
+        },
+        "jason": {
+          "totals": {
+            "kcal": 1056.6,
+            "protein": 45.8,
+            "carbs": 121.4,
+            "fat": 45.5,
+            "sodium": 228.3
+          },
+          "meals": [
+            {
+              "id": "meal_1788583802309_jason",
+              "dishName": "義大利麵",
+              "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
+              "nutrients": {
+                "kcal": 1056.6,
+                "protein": 45.8,
+                "carbs": 121.4,
+                "fat": 45.5,
+                "sodium": 228.3
+              },
+              "items": [
+                "義大利（天使） 150g",
+                "綠花椰菜 36g",
+                "無骨牛小排 100g",
+                "櫛瓜 20g",
+                "蛋 2顆",
+                "洋菇 20g",
+                "綜合生菜 60g",
+                "金黃玉米粒(無加糖) 0g"
+              ],
+              "aiNote": "",
+              "photoUrl": null
+            }
+          ]
+        }
+      }
+    },
+    {
       "date": "2026-09-04",
       "diners": {
         "bebe": {
@@ -1685,122 +1801,6 @@
             "sodium": 0
           },
           "meals": []
-        }
-      }
-    },
-    {
-      "date": "2026-09-05",
-      "diners": {
-        "bebe": {
-          "totals": {
-            "kcal": 523.6,
-            "protein": 23.1,
-            "carbs": 56.5,
-            "fat": 23.9,
-            "sodium": 114.8
-          },
-          "meals": [
-            {
-              "id": "meal_1788583800801_bebe",
-              "dishName": "義大利麵",
-              "time": "下午12:50",
-              "source": "manual",
-              "portionRatio": "1",
-              "nutrients": {
-                "kcal": 523.6,
-                "protein": 23.1,
-                "carbs": 56.5,
-                "fat": 23.9,
-                "sodium": 114.8
-              },
-              "items": [
-                "義大利（天使） 70g",
-                "綠花椰菜 10g",
-                "無骨牛小排 55g",
-                "櫛瓜 15g",
-                "蛋 1顆",
-                "洋菇 10g",
-                "綜合生菜 30g",
-                "金黃玉米粒(無加糖) 0g"
-              ],
-              "aiNote": "",
-              "photoUrl": null
-            }
-          ]
-        },
-        "ariel": {
-          "totals": {
-            "kcal": 677.4,
-            "protein": 28.4,
-            "carbs": 80.8,
-            "fat": 28.4,
-            "sodium": 128.5
-          },
-          "meals": [
-            {
-              "id": "meal_1788583802103_ariel",
-              "dishName": "義大利麵",
-              "time": "下午12:50",
-              "source": "manual",
-              "portionRatio": "1",
-              "nutrients": {
-                "kcal": 677.4,
-                "protein": 28.4,
-                "carbs": 80.8,
-                "fat": 28.4,
-                "sodium": 128.5
-              },
-              "items": [
-                "義大利（天使） 100g",
-                "綠花椰菜 20g",
-                "無骨牛小排 67g",
-                "櫛瓜 23g",
-                "蛋 1顆",
-                "洋菇 10g",
-                "綜合生菜 40g",
-                "金黃玉米粒(無加糖) 0g"
-              ],
-              "aiNote": "",
-              "photoUrl": null
-            }
-          ]
-        },
-        "jason": {
-          "totals": {
-            "kcal": 1056.6,
-            "protein": 45.8,
-            "carbs": 121.4,
-            "fat": 45.5,
-            "sodium": 228.3
-          },
-          "meals": [
-            {
-              "id": "meal_1788583802309_jason",
-              "dishName": "義大利麵",
-              "time": "下午12:50",
-              "source": "manual",
-              "portionRatio": "1",
-              "nutrients": {
-                "kcal": 1056.6,
-                "protein": 45.8,
-                "carbs": 121.4,
-                "fat": 45.5,
-                "sodium": 228.3
-              },
-              "items": [
-                "義大利（天使） 150g",
-                "綠花椰菜 36g",
-                "無骨牛小排 100g",
-                "櫛瓜 20g",
-                "蛋 2顆",
-                "洋菇 20g",
-                "綜合生菜 60g",
-                "金黃玉米粒(無加糖) 0g"
-              ],
-              "aiNote": "",
-              "photoUrl": null
-            }
-          ]
         }
       }
     }
