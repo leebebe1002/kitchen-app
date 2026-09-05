@@ -1730,18 +1730,19 @@
         },
         "ariel": {
           "totals": {
-            "kcal": 1354.8,
-            "protein": 56.8,
-            "carbs": 161.6,
-            "fat": 56.8,
-            "sodium": 257
+            "kcal": 677.4,
+            "protein": 28.4,
+            "carbs": 80.8,
+            "fat": 28.4,
+            "sodium": 128.5
           },
           "meals": [
             {
               "id": "meal_1788583802103_ariel",
-              "dishId": "pasta_meal",
               "dishName": "義大利麵",
               "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
               "nutrients": {
                 "kcal": 677.4,
                 "protein": 28.4,
@@ -1749,7 +1750,7 @@
                 "fat": 28.4,
                 "sodium": 128.5
               },
-              "ingredientsSummary": [
+              "items": [
                 "義大利（天使） 100g",
                 "綠花椰菜 20g",
                 "無骨牛小排 67g",
@@ -1758,30 +1759,9 @@
                 "洋菇 10g",
                 "綜合生菜 40g",
                 "金黃玉米粒(無加糖) 0g"
-              ]
-            },
-            {
-              "id": "meal_1788583802819_ariel",
-              "dishId": "pasta_meal",
-              "dishName": "義大利麵",
-              "time": "下午12:50",
-              "nutrients": {
-                "kcal": 677.4,
-                "protein": 28.4,
-                "carbs": 80.8,
-                "fat": 28.4,
-                "sodium": 128.5
-              },
-              "ingredientsSummary": [
-                "義大利（天使） 100g",
-                "綠花椰菜 20g",
-                "無骨牛小排 67g",
-                "櫛瓜 23g",
-                "蛋 1顆",
-                "洋菇 10g",
-                "綜合生菜 40g",
-                "金黃玉米粒(無加糖) 0g"
-              ]
+              ],
+              "aiNote": "",
+              "photoUrl": null
             }
           ]
         },
@@ -1796,9 +1776,10 @@
           "meals": [
             {
               "id": "meal_1788583802309_jason",
-              "dishId": "pasta_meal",
               "dishName": "義大利麵",
               "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
               "nutrients": {
                 "kcal": 1056.6,
                 "protein": 45.8,
@@ -1806,7 +1787,7 @@
                 "fat": 45.5,
                 "sodium": 228.3
               },
-              "ingredientsSummary": [
+              "items": [
                 "義大利（天使） 150g",
                 "綠花椰菜 36g",
                 "無骨牛小排 100g",
@@ -1815,13 +1796,16 @@
                 "洋菇 20g",
                 "綜合生菜 60g",
                 "金黃玉米粒(無加糖) 0g"
-              ]
+              ],
+              "aiNote": "",
+              "photoUrl": null
             },
             {
               "id": "meal_1788583803029_jason",
-              "dishId": "pasta_meal",
               "dishName": "義大利麵",
               "time": "下午12:50",
+              "source": "manual",
+              "portionRatio": "1",
               "nutrients": {
                 "kcal": 1056.6,
                 "protein": 45.8,
@@ -1829,7 +1813,7 @@
                 "fat": 45.5,
                 "sodium": 228.3
               },
-              "ingredientsSummary": [
+              "items": [
                 "義大利（天使） 150g",
                 "綠花椰菜 36g",
                 "無骨牛小排 100g",
@@ -1838,7 +1822,9 @@
                 "洋菇 20g",
                 "綜合生菜 60g",
                 "金黃玉米粒(無加糖) 0g"
-              ]
+              ],
+              "aiNote": "",
+              "photoUrl": null
             }
           ]
         }
