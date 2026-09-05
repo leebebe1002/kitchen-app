@@ -157,58 +157,55 @@ const App = {
                 <ShoppingView v-if="currentTab === 'shopping'" :engine="engine" />
             </main>
 
-            <!-- 📱 FM 風格 5 鍵式毛玻璃底部常駐導航列 (1.8px 統一線寬，純線條空心設計) -->
+            <!-- 📱 1:1 復刻記帳 App 5 鍵式純白浮空底部導航列 -->
             <nav class="bottom-dock-container">
                 <div class="bottom-dock">
                     <!-- Tab 1: 備料計算器 (日系指針烘焙機械秤) -->
                     <button class="dock-tab" :class="{ active: currentTab === 'calculator' }" @click="setTab('calculator')" title="備料計算器" aria-label="備料計算器">
                         <svg viewBox="0 0 24 24">
-                            <path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path>
-                            <line x1="12" y1="8.5" x2="12" y2="10.5"></line>
-                            <path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path>
+                            <path d="M3.5 5h17c-.6 2-2.5 3-5.5 3h-6C6 8 4.1 7 3.5 5z"></path>
+                            <line x1="12" y1="8" x2="12" y2="10"></line>
+                            <path d="M5.5 10h13l1.5 10.5a1 1 0 0 1-1 1.5H5a1 1 0 0 1-1-1.5L5.5 10z"></path>
                             <circle cx="12" cy="15.5" r="3.2"></circle>
                             <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
                         </svg>
                     </button>
 
-                    <!-- Tab 2: 今日紀錄 (動態進度三圓環，缺口統一朝左下) -->
+                    <!-- Tab 2: 今日紀錄 (優雅同心三圓環進度) -->
                     <button class="dock-tab" :class="{ active: currentTab === 'tracker' }" @click="setTab('tracker')" title="今日紀錄" aria-label="今日紀錄">
                         <svg viewBox="0 0 24 24">
-                            <g transform="rotate(155 12 12)">
-                                <circle cx="12" cy="12" r="9" stroke-dasharray="47 11"></circle>
-                                <circle cx="12" cy="12" r="6" stroke-dasharray="27 12"></circle>
-                                <circle cx="12" cy="12" r="3" stroke-dasharray="11 8"></circle>
-                            </g>
+                            <path d="M 12,3.5 A 8.5,8.5 0 1,1 5.5,6.5"></path>
+                            <path d="M 12,6.2 A 5.8,5.8 0 1,1 7.5,8.5"></path>
+                            <path d="M 12,9 A 3,3 0 1,1 9.5,10.5"></path>
                         </svg>
                     </button>
 
-                    <!-- Tab 3 (CTA): 中央突出記一餐大圓鈕 (正中 ＋ 伴右上純線條 AI 星芒) -->
+                    <!-- Tab 3 (CTA): 中央突出純白大圓鈕 (100% 復刻：純粹正中圓角十字，無星芒) -->
                     <div class="dock-center-wrap">
                         <button class="dock-center-btn" @click="toggleActionSheet" title="記一餐" aria-label="記一餐">
                             <svg viewBox="0 0 24 24">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <path d="M 19,2 Q 19,5 22,5 Q 19,5 19,8 Q 19,5 16,5 Q 19,5 19,2 Z"></path>
                             </svg>
                         </button>
                     </div>
 
-                    <!-- Tab 4: 智慧冰箱 (雙門分層冰箱) -->
+                    <!-- Tab 4: 智慧冰箱 (飽滿雙門分層冰箱) -->
                     <button class="dock-tab" :class="{ active: currentTab === 'pantry' }" @click="setTab('pantry')" title="智慧冰箱" aria-label="智慧冰箱">
                         <svg viewBox="0 0 24 24">
-                            <rect x="5.5" y="2.5" width="13" height="19" rx="3"></rect>
-                            <line x1="5.5" y1="10" x2="18.5" y2="10"></line>
-                            <line x1="8.5" y1="6" x2="8.5" y2="8"></line>
-                            <line x1="8.5" y1="13" x2="8.5" y2="16"></line>
+                            <rect x="4.5" y="2.5" width="15" height="19" rx="3.5"></rect>
+                            <line x1="4.5" y1="9.5" x2="19.5" y2="9.5"></line>
+                            <line x1="7.5" y1="5.5" x2="7.5" y2="7.5"></line>
+                            <line x1="7.5" y1="12.5" x2="7.5" y2="15.5"></line>
                         </svg>
                     </button>
 
-                    <!-- Tab 5: 採買清單 (超市手推車，空心雙輪) -->
+                    <!-- Tab 5: 採買清單 (超市手推車) -->
                     <button class="dock-tab" :class="{ active: currentTab === 'shopping' }" @click="setTab('shopping')" title="採買清單" aria-label="採買清單">
                         <svg viewBox="0 0 24 24">
-                            <path d="M2 3h3.5l2.4 11.5a1.8 1.8 0 0 0 1.8 1.5h9.5a1.8 1.8 0 0 0 1.8-1.5L22.5 7H6"></path>
-                            <circle cx="9.5" cy="20" r="1.4"></circle>
-                            <circle cx="18.5" cy="20" r="1.4"></circle>
+                            <path d="M2.5 3.5h3.2l2.3 11a1.8 1.8 0 0 0 1.8 1.5h9.4a1.8 1.8 0 0 0 1.8-1.5L22.5 7.5H6.2"></path>
+                            <circle cx="9.5" cy="19.5" r="1.5"></circle>
+                            <circle cx="17.5" cy="19.5" r="1.5"></circle>
                         </svg>
                     </button>
                 </div>

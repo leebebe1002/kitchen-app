@@ -565,7 +565,7 @@ input[type=number].no-spin {
 }
 
 /* ========================================================
-   📱 FM 風格 5 鍵式毛玻璃底部導航列 (Bottom Navigation Dock)
+   📱 1:1 復刻記帳 App 底部導航列 (Bottom Navigation Dock)
    ======================================================== */
 .bottom-dock-container {
     position: fixed;
@@ -573,19 +573,19 @@ input[type=number].no-spin {
     left: 0;
     right: 0;
     background: #FFFFFF;
-    border-top: 1px solid #EFEFEF;
+    border-top: 1px solid #ECECEC;
     z-index: 900;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 .bottom-dock {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    height: 60px;
+    height: 54px;
     max-width: 480px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0 10px;
     position: relative;
 }
 
@@ -606,34 +606,30 @@ input[type=number].no-spin {
 }
 
 .dock-tab:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
 }
 
 .dock-tab svg {
-    width: 25px;
-    height: 25px;
-    stroke: #333333;
+    width: 27px;
+    height: 27px;
+    stroke: #2D2A26;
     fill: none !important;
-    stroke-width: 1.6 !important;
+    stroke-width: 1.8 !important;
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
-    transition: opacity 0.2s ease;
+    opacity: 0.9;
+    transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-/* 截圖風格完全無下方微點 */
 .dock-tab.active svg {
-    stroke: #222222;
+    stroke: #1F1D1A;
     opacity: 1;
 }
 
-.dock-tab:not(.active) svg {
-    opacity: 0.85;
-}
-
-/* 中央突出大圓鈕 (CTA) - 1:1 精確復刻截圖 */
+/* 中央突出純白大圓鈕 (CTA) - 1:1 像素級復刻：大幅懸浮飄出白底，外環柔光奶粉 */
 .dock-center-wrap {
     position: relative;
-    top: -15px;
+    top: -26px; /* 懸浮躍出白色底欄頂線，剛好半露半嵌 */
     flex: 1.1;
     display: flex;
     justify-content: center;
@@ -641,31 +637,32 @@ input[type=number].no-spin {
 }
 
 .dock-center-btn {
-    width: 62px;
-    height: 62px;
+    width: 66px;
+    height: 66px;
     border-radius: 50%;
     background: #FFFFFF;
-    border: 3.5px solid #E5A89B; /* 截圖珊瑚柔粉邊框 */
+    border: 3.5px solid #ECA498; /* 目標截圖珊瑚奶粉外框 */
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 18px rgba(229, 168, 155, 0.48); /* 柔和珊瑚光暈陰影 */
+    box-shadow: 0 4px 18px rgba(236, 164, 152, 0.45); /* 柔和珊瑚擴散光暈 */
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    padding: 0;
 }
 
 .dock-center-btn:active {
     transform: scale(0.92);
-    box-shadow: 0 2px 10px rgba(229, 168, 155, 0.4);
+    box-shadow: 0 2px 10px rgba(236, 164, 152, 0.4);
 }
 
 .dock-center-btn svg {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     stroke: #2D2A26;
     fill: none !important;
-    stroke-width: 1.8 !important;
+    stroke-width: 2.3 !important;
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
 }
