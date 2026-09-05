@@ -4,7 +4,7 @@ import KitchenEngine from './engine/KitchenEngine.js?v=20260905_SHOPPING_RECOVER
 import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
 import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
 import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
-import ShoppingView from './views/ShoppingView.js?v=20260905_DOCK_V1';
+import ShoppingView from './views/ShoppingView.js?v=20260905_SHOPPING_RECOVERY_V1';
 
 const App = {
     components: {

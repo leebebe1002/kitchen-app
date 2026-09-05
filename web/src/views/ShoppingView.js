@@ -12,7 +12,7 @@ export default {
         const availableStores = ['全聯', 'Costco', '義美', 'EC 電商', '傳統市場', '其他'];
 
         const shoppingList = computed(() => {
-            return engine?.data?.shoppingList || [];
+            return engine?.data?.pantryInventory?.shoppingList || [];
         });
 
         const foodShoppingItems = computed(() => {
@@ -66,26 +66,12 @@ export default {
         const toggleItemPurchased = async (id) => {
             if (engine?.toggleShoppingItemPurchased) {
                 await engine.toggleShoppingItemPurchased(id);
-            } else {
-                const item = shoppingList.value.find(it => it.id === id);
-                if (item) {
-                    item.isPurchased = !item.isPurchased;
-                    await engine.saveData();
-                }
             }
         };
 
         const deleteShoppingItem = async (id) => {
-            if (confirm('確定要從採買清單移除此項目嗎？')) {
-                if (engine?.removeFromShoppingList) {
-                    await engine.removeFromShoppingList(id);
-                } else {
-                    const idx = (engine?.data?.shoppingList || []).findIndex(it => it.id === id);
-                    if (idx !== -1) {
-                        engine.data.shoppingList.splice(idx, 1);
-                        await engine.saveData();
-                    }
-                }
+            if (confirm('確定要從採買清單移除此項目嗎？') && engine?.deleteShoppingItem) {
+                await engine.deleteShoppingItem(id);
             }
         };
 
@@ -118,13 +104,13 @@ export default {
             } else {
                 item.preferredStores = updatedStores;
                 item.preferredStore = updatedLabel;
-                const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.id);
+                const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.targetId);
                 if (ingInMaster) {
                     ingInMaster.preferredStores = updatedStores;
                     ingInMaster.preferredStore = updatedLabel;
                 }
             }
-            await engine.saveData();
+            await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
 
             lastStoreAction.value = {
                 itemId: item.id,
@@ -138,7 +124,7 @@ export default {
         const undoLastStoreAction = async () => {
             if (!lastStoreAction.value) return;
             const action = lastStoreAction.value;
-            const item = (engine.data.shoppingList || []).find(it => it.id === action.itemId);
+            const item = (engine.data.pantryInventory?.shoppingList || []).find(it => it.id === action.itemId);
             if (item) {
                 const revertedStores = action.previousStores;
                 const revertedLabel = revertedStores.join(' / ');
@@ -147,38 +133,25 @@ export default {
                 } else {
                     item.preferredStores = revertedStores;
                     item.preferredStore = revertedLabel;
-                    const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.id);
+                    const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.targetId);
                     if (ingInMaster) {
                         ingInMaster.preferredStores = revertedStores;
                         ingInMaster.preferredStore = revertedLabel;
                     }
                 }
-                await engine.saveData();
+                await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
             }
             lastStoreAction.value = null;
         };
 
         const clearPurchased = async () => {
-            const purchasedCount = (engine.data.shoppingList || []).filter(it => it.isPurchased).length;
+            const purchasedCount = (engine.data.pantryInventory?.shoppingList || []).filter(it => it.isPurchased).length;
             if (purchasedCount === 0) {
                 alert('目前沒有已勾選購買的項目！請先勾選已買到的食材。');
                 return;
             }
             if (confirm(`確定要清除這 ${purchasedCount} 項已買到的食材，並自動恢復庫存嗎？`)) {
-                if (engine.clearPurchasedItemsAndRestock) {
-                    await engine.clearPurchasedItemsAndRestock();
-                } else {
-                    const toRestock = (engine.data.shoppingList || []).filter(it => it.isPurchased);
-                    toRestock.forEach(it => {
-                        if (it.type !== 'supply') {
-                            engine.setStock(it.id, true);
-                        } else {
-                            engine.setSupplyStock(it.id, true);
-                        }
-                    });
-                    engine.data.shoppingList = (engine.data.shoppingList || []).filter(it => !it.isPurchased);
-                    await engine.saveData();
-                }
+                await engine.clearPurchasedShoppingList();
                 alert(`🎉 已成功清除 ${purchasedCount} 個品項並恢復為有庫存！`);
             }
         };
