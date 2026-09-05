@@ -1,32 +1,43 @@
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
 import KitchenEngine from './engine/KitchenEngine.js?v=20260905_DOCK_V1';
 import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
-import TrackerView from './views/TrackerView.js?v=20260905_DOCK_V1';
-import PantryView from './views/PantryView.js?v=20260905_DOCK_V1';
+import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
+import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
 import ShoppingView from './views/ShoppingView.js?v=20260905_DOCK_V1';
-import CameraVisionModal from './components/CameraVisionModal.js?v=20260905_DOCK_V1';
 
 const App = {
     components: {
         CalculatorView,
         TrackerView,
         PantryView,
-        ShoppingView,
-        CameraVisionModal
+        ShoppingView
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
-        const showActionSheet = ref(false);
-
-        // 原生相機與相簿觸發 input
-        const nativeCameraInput = ref(null);
-        const albumInput = ref(null);
+        const isKeyboardOpen = ref(false);
+        const trackerView = ref(null);
+        let viewport = null;
+        let removeKeyboardListeners = () => {};
 
         onMounted(async () => {
+            // iOS 鍵盤開啟時收起固定 Dock，避免 FAB 被推到鍵盤上方。
+            viewport = window.visualViewport;
+            if (viewport) {
+                const updateKeyboardState = () => {
+                    isKeyboardOpen.value = window.innerHeight - viewport.height > 150;
+                };
+                viewport.addEventListener('resize', updateKeyboardState);
+                viewport.addEventListener('scroll', updateKeyboardState);
+                removeKeyboardListeners = () => {
+                    viewport.removeEventListener('resize', updateKeyboardState);
+                    viewport.removeEventListener('scroll', updateKeyboardState);
+                };
+            }
+
             try {
                 engine.value = new KitchenEngine();
                 await engine.value.initialize();
@@ -38,62 +49,20 @@ const App = {
             }
         });
 
+        onBeforeUnmount(() => {
+            removeKeyboardListeners();
+        });
+
         const setTab = (tab) => {
             document.body.classList.remove('modal-open');
             currentTab.value = tab;
-            showActionSheet.value = false;
         };
 
-        const toggleActionSheet = () => {
-            showActionSheet.value = !showActionSheet.value;
-        };
-
-        const closeActionSheet = () => {
-            showActionSheet.value = false;
-        };
-
-        // 記一餐快捷操作：切換至今日紀錄並啟動對應功能
-        const triggerCameraRecord = () => {
-            closeActionSheet();
+        // Camera-first：全域 FAB 直接開啟今日紀錄既有的即時相機，不重複實作串流與辨識流程。
+        const openCameraFirst = async () => {
             currentTab.value = 'tracker';
-            // 若有原生相機觸發，直接喚醒相機
-            setTimeout(() => {
-                if (nativeCameraInput.value) {
-                    nativeCameraInput.value.click();
-                } else {
-                    const el = document.querySelector('input[capture="environment"]');
-                    if (el) el.click();
-                }
-            }, 150);
-        };
-
-        const triggerAlbumRecord = () => {
-            closeActionSheet();
-            currentTab.value = 'tracker';
-            setTimeout(() => {
-                if (albumInput.value) {
-                    albumInput.value.click();
-                } else {
-                    const el = document.querySelector('input[type="file"]:not([capture])');
-                    if (el) el.click();
-                }
-            }, 150);
-        };
-
-        const triggerVoiceRecord = () => {
-            closeActionSheet();
-            currentTab.value = 'tracker';
-            setTimeout(() => {
-                // 自動尋找 TrackerView 內的語音記錄觸發鈕
-                const btns = Array.from(document.querySelectorAll('button'));
-                const voiceBtn = btns.find(b => b.textContent && b.textContent.includes('語音'));
-                if (voiceBtn) voiceBtn.click();
-            }, 150);
-        };
-
-        const triggerManualRecord = () => {
-            closeActionSheet();
-            currentTab.value = 'tracker';
+            await nextTick();
+            trackerView.value?.openAiModal('camera');
         };
 
         const refreshData = async () => {
@@ -111,15 +80,9 @@ const App = {
             engine,
             isLoading,
             error,
-            showActionSheet,
-            toggleActionSheet,
-            closeActionSheet,
-            triggerCameraRecord,
-            triggerAlbumRecord,
-            triggerVoiceRecord,
-            triggerManualRecord,
-            nativeCameraInput,
-            albumInput,
+            isKeyboardOpen,
+            trackerView,
+            openCameraFirst,
             refreshData
         };
     },
@@ -150,7 +113,7 @@ const App = {
                 <!-- 1. 備料計算器 -->
                 <CalculatorView v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
                 <!-- 2. 今日紀錄 -->
-                <TrackerView v-if="currentTab === 'tracker'" :engine="engine" />
+                <TrackerView v-if="currentTab === 'tracker'" ref="trackerView" :engine="engine" />
                 <!-- 4. 智慧冰箱 -->
                 <PantryView v-if="currentTab === 'pantry'" :engine="engine" />
                 <!-- 5. 獨立採買清單 -->
@@ -158,124 +121,67 @@ const App = {
             </main>
 
             <!-- 📱 1:1 復刻記帳 App 5 鍵式純白浮空底部導航列 -->
-            <nav class="bottom-dock-container">
+            <nav class="bottom-dock-container" :class="{ 'is-keyboard-open': isKeyboardOpen }" aria-label="主要功能導覽">
                 <div class="bottom-dock">
-                    <!-- Tab 1: 備料計算器 (日系指針烘焙機械秤) -->
-                    <button class="dock-tab" :class="{ active: currentTab === 'calculator' }" @click="setTab('calculator')" title="備料計算器" aria-label="備料計算器">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3.5 5h17c-.6 2-2.5 3-5.5 3h-6C6 8 4.1 7 3.5 5z"></path>
-                            <line x1="12" y1="8" x2="12" y2="10"></line>
-                            <path d="M5.5 10h13l1.5 10.5a1 1 0 0 1-1 1.5H5a1 1 0 0 1-1-1.5L5.5 10z"></path>
-                            <circle cx="12" cy="15.5" r="3.2"></circle>
-                            <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
-                        </svg>
-                    </button>
-
-                    <!-- Tab 2: 今日紀錄 (優雅同心三圓環進度) -->
-                    <button class="dock-tab" :class="{ active: currentTab === 'tracker' }" @click="setTab('tracker')" title="今日紀錄" aria-label="今日紀錄">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M 12,3.5 A 8.5,8.5 0 1,1 5.5,6.5"></path>
-                            <path d="M 12,6.2 A 5.8,5.8 0 1,1 7.5,8.5"></path>
-                            <path d="M 12,9 A 3,3 0 1,1 9.5,10.5"></path>
-                        </svg>
-                    </button>
-
-                    <!-- Tab 3 (CTA): 中央突出純白大圓鈕 (100% 復刻：純粹正中圓角十字，無星芒) -->
-                    <div class="dock-center-wrap">
-                        <button class="dock-center-btn" @click="toggleActionSheet" title="記一餐" aria-label="記一餐">
+                    <div class="dock-side-group" aria-label="主要功能">
+                        <!-- Tab 1: 備料計算器 (日系指針烘焙機械秤) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'calculator' }" :aria-pressed="currentTab === 'calculator'" @click="setTab('calculator')" title="備料計算器" aria-label="備料計算器">
                             <svg viewBox="0 0 24 24">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path>
+                                <line x1="12" y1="8.5" x2="12" y2="10.5"></line>
+                                <path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path>
+                                <circle cx="12" cy="15.5" r="3"></circle>
+                                <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
+                            </svg>
+                        </button>
+
+                        <!-- Tab 2: 今日紀錄 (優雅同心三圓環進度) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'tracker' }" :aria-pressed="currentTab === 'tracker'" @click="setTab('tracker')" title="今日紀錄" aria-label="今日紀錄">
+                            <svg viewBox="0 0 24 24">
+                                <g transform="rotate(155 12 12)">
+                                    <circle cx="12" cy="12" r="8.5" stroke-dasharray="45 10"></circle>
+                                    <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 10"></circle>
+                                    <circle cx="12" cy="12" r="3.1" stroke-dasharray="11 7"></circle>
+                                </g>
                             </svg>
                         </button>
                     </div>
 
-                    <!-- Tab 4: 智慧冰箱 (飽滿雙門分層冰箱) -->
-                    <button class="dock-tab" :class="{ active: currentTab === 'pantry' }" @click="setTab('pantry')" title="智慧冰箱" aria-label="智慧冰箱">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="4.5" y="2.5" width="15" height="19" rx="3.5"></rect>
-                            <line x1="4.5" y1="9.5" x2="19.5" y2="9.5"></line>
-                            <line x1="7.5" y1="5.5" x2="7.5" y2="7.5"></line>
-                            <line x1="7.5" y1="12.5" x2="7.5" y2="15.5"></line>
-                        </svg>
-                    </button>
+                    <!-- Tab 3 (CTA): 中央突出純白大圓鈕 (正中十字 ＋ 右上晶耀單星芒) -->
+                    <div class="dock-center-wrap">
+                        <button class="dock-center-btn" @click="openCameraFirst" title="拍照 AI 補記" aria-label="拍照 AI 補記">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <!-- 單顆晶耀星芒 (右上角) -->
+                                <path class="starburst" d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z"></path>
+                            </svg>
+                        </button>
+                    </div>
 
-                    <!-- Tab 5: 採買清單 (超市手推車) -->
-                    <button class="dock-tab" :class="{ active: currentTab === 'shopping' }" @click="setTab('shopping')" title="採買清單" aria-label="採買清單">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M2.5 3.5h3.2l2.3 11a1.8 1.8 0 0 0 1.8 1.5h9.4a1.8 1.8 0 0 0 1.8-1.5L22.5 7.5H6.2"></path>
-                            <circle cx="9.5" cy="19.5" r="1.5"></circle>
-                            <circle cx="17.5" cy="19.5" r="1.5"></circle>
-                        </svg>
-                    </button>
+                    <div class="dock-side-group" aria-label="庫存與採買功能">
+                        <!-- Tab 4: 智慧冰箱 (飽滿雙門分層冰箱) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'pantry' }" :aria-pressed="currentTab === 'pantry'" @click="setTab('pantry')" title="智慧冰箱" aria-label="智慧冰箱">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="5" y="2.5" width="14" height="19" rx="3"></rect>
+                                <line x1="5" y1="10" x2="19" y2="10"></line>
+                                <line x1="8" y1="6" x2="8" y2="8"></line>
+                                <line x1="8" y1="13" x2="8" y2="16"></line>
+                            </svg>
+                        </button>
+
+                        <!-- Tab 5: 採買清單 (超市手推車) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'shopping' }" :aria-pressed="currentTab === 'shopping'" @click="setTab('shopping')" title="採買清單" aria-label="採買清單">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M2 3.5h3.2l2.3 11a1.6 1.6 0 0 0 1.6 1.4h9.6a1.6 1.6 0 0 0 1.6-1.4L22 7.5H5.8"></path>
+                                <circle cx="9.5" cy="19.5" r="1.3"></circle>
+                                <circle cx="17.5" cy="19.5" r="1.3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </nav>
 
-            <!-- 📱 中央大圓鈕滑出 Action Sheet (記一餐快捷入口) -->
-            <div v-if="showActionSheet" class="action-sheet-overlay" @click.self="closeActionSheet">
-                <div class="action-sheet">
-                    <div class="action-sheet-title">✨ 記一餐</div>
-                    <div class="action-sheet-subtitle">選擇方便的記錄方式，AI 自動估算營養素</div>
-
-                    <div class="action-sheet-grid">
-                        <!-- 1. AI 拍照記錄 -->
-                        <div class="action-sheet-btn" @click="triggerCameraRecord">
-                            <div class="action-sheet-btn-icon" style="background: #FEF3C7; color: #D97706;">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                                    <circle cx="12" cy="13" r="4"></circle>
-                                </svg>
-                            </div>
-                            <div class="action-sheet-btn-title">AI 拍照記錄</div>
-                            <div class="action-sheet-btn-desc">鏡頭實拍自動估算</div>
-                        </div>
-
-                        <!-- 2. 相簿選取解析 -->
-                        <div class="action-sheet-btn" @click="triggerAlbumRecord">
-                            <div class="action-sheet-btn-icon" style="background: #E0E7FF; color: #4338CA;">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                    <polyline points="21 15 16 10 5 21"></polyline>
-                                </svg>
-                            </div>
-                            <div class="action-sheet-btn-title">相簿選照片</div>
-                            <div class="action-sheet-btn-desc">解析過去拍攝餐點</div>
-                        </div>
-
-                        <!-- 3. 語音 / 文字輸入 -->
-                        <div class="action-sheet-btn" @click="triggerVoiceRecord">
-                            <div class="action-sheet-btn-icon" style="background: #ECFDF5; color: #059669;">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                                </svg>
-                            </div>
-                            <div class="action-sheet-btn-title">語音 / 文字</div>
-                            <div class="action-sheet-btn-desc">說出餐點自動拆解</div>
-                        </div>
-
-                        <!-- 4. 今日時間軸手動調整 -->
-                        <div class="action-sheet-btn" @click="triggerManualRecord">
-                            <div class="action-sheet-btn-icon" style="background: #F3F4F6; color: #374151;">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </div>
-                            <div class="action-sheet-btn-title">今日時間軸</div>
-                            <div class="action-sheet-btn-desc">手動編輯與快捷品項</div>
-                        </div>
-                    </div>
-
-                    <button class="action-sheet-cancel" @click="closeActionSheet">取消</button>
-                </div>
-            </div>
-
-            <!-- 共用 AI 拍照視窗 -->
-            <CameraVisionModal />
         </div>
     `
 };

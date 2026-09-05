@@ -230,22 +230,15 @@ export default {
         const albumInput = ref(null);
 
         // --- Camera & Modal Flow (畫面 B / 畫面 C) ---
-        const currentFacingMode = ref('environment');
         const isStreamReady = ref(false);
-
-        const toggleFacingMode = async () => {
-            isStreamReady.value = false;
-            currentFacingMode.value = currentFacingMode.value === 'environment' ? 'user' : 'environment';
-            stopCameraStream();
-            await startCameraStream();
-        };
 
         const startCameraStream = async () => {
             isStreamReady.value = false;
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: { ideal: currentFacingMode.value } },
+                        // 固定優先使用後置鏡頭；若裝置沒有後置鏡頭，仍讓瀏覽器提供可用鏡頭。
+                        video: { facingMode: { ideal: 'environment' } },
                         audio: false
                     });
                     mediaStream = stream;
@@ -1045,8 +1038,6 @@ export default {
             closeAiModal,
             editVoiceInput,
             clearVoiceInput,
-            currentFacingMode,
-            toggleFacingMode,
             triggerShutter,
             triggerCameraSelect,
             triggerAlbumSelect,
@@ -1346,26 +1337,6 @@ export default {
             <input type="file" accept="image/*" capture="environment" ref="nativeCameraInput" @change="handleNativeCameraSnap" style="display: none;">
             <input type="file" accept="image/*" ref="albumInput" @change="handleAlbumUpload" style="display: none;">
 
-            <!-- Bottom Floating Action Bar -->
-            <div class="fab-container">
-                <button class="btn-primary" @click="openAiModal('camera')" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                        <circle cx="12" cy="13" r="4"></circle>
-                    </svg>
-                    <span>拍照記錄</span>
-                </button>
-                <button class="btn-primary accent" @click="openAiModal('voice')" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </svg>
-                    <span>語音/文字輸入</span>
-                </button>
-            </div>
-
             <!-- 全螢幕 / 抽屜 AI 辨識視窗 (100% 還原 畫面 B & 畫面 C) -->
             <div v-if="showAiModal" class="modal-overlay" @click.self="closeAiModal">
                 <div class="drawer-content" style="max-height: 92vh; padding: 20px 20px 32px 20px;">
@@ -1373,9 +1344,22 @@ export default {
                     <!-- 畫面 B：【開頁即拍自訂相機畫面】 -->
                     <div v-if="modalStep === 'camera'">
                         <!-- Header -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <button class="btn-icon" @click="closeAiModal" style="border: none; font-weight: 600; font-size: 0.95rem; color: var(--color-text-muted);">
-                                ✕ 關閉
+                        <div style="position: relative; min-height: 34px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                            <!-- API Key 狀態／設定：固定放在左側 -->
+                            <button class="btn-icon" @click="openApiKeySettings"
+                                    :style="{
+                                        background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
+                                        border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
+                                        color: getGeminiApiKey() ? '#15803D' : '#DC2626'
+                                    }"
+                                    style="position: absolute; left: 0; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);"
+                                    :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'"
+                                    aria-label="Gemini API Key 設定">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="7.5" cy="12" r="4.5"></circle>
+                                    <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
+                                    <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
+                                </svg>
                             </button>
                             <span style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main); display: inline-flex; align-items: center; gap: 6px;">
                                 <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1384,32 +1368,9 @@ export default {
                                 </svg>
                                 <span>拍照 AI 補記</span>
                             </span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <!-- 正圓形 Key 設定 SVG 按鈕 (使用者指定經典水平鑰匙樣式) -->
-                                <button class="btn-icon" @click="openApiKeySettings" 
-                                        :style="{ 
-                                            background: getGeminiApiKey() ? '#F0FDF4' : '#FEF2F2',
-                                            border: getGeminiApiKey() ? '1.5px solid #86EFAC' : '1.5px solid #FCA5A5',
-                                            color: getGeminiApiKey() ? '#15803D' : '#DC2626'
-                                        }"
-                                        style="width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05);" 
-                                        :title="getGeminiApiKey() ? 'Gemini API Key 已設定' : '尚未設定 Gemini API Key (點擊設定)'">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="7.5" cy="12" r="4.5"></circle>
-                                        <path d="M12 11h9a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2.5l-1.5 2-2-2H12"></path>
-                                        <circle cx="7" cy="12" r="1.2" fill="currentColor"></circle>
-                                    </svg>
-                                </button>
-                                <!-- 翻轉鏡頭按鈕 (第二張截圖：雙向對稱圓角環繞箭頭 SVG，標準系統 16px 粗細 2) -->
-                                <button class="btn-icon" @click="toggleFacingMode" style="width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--color-border); background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: var(--color-text-main); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 0;" title="翻轉鏡頭">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="18 2 22 6 18 10"></polyline>
-                                        <path d="M4 11V9a4 4 0 0 1 4-4h14"></path>
-                                        <polyline points="6 22 2 18 6 14"></polyline>
-                                        <path d="M20 13v2a4 4 0 0 1-4 4H2"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            <button class="btn-icon" @click="closeAiModal" style="position: absolute; right: 0; border: none; font-weight: 600; font-size: 0.95rem; color: var(--color-text-muted);" title="關閉拍照補記" aria-label="關閉拍照補記">
+                                ✕ 關閉
+                            </button>
                         </div>
 
                         <!-- Camera Live Viewfinder Area (點擊即拍) -->
@@ -1432,24 +1393,16 @@ export default {
                                    :style="{ opacity: isStreamReady ? 1 : 0 }"
                                    style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; transition: opacity 0.22s ease-in-out; will-change: opacity;"></video>
                             
-                            <!-- 韓式圓角對焦框 (Focus Bracket) -->
-                            <div style="width: 220px; height: 220px; border: 2px dashed rgba(245, 158, 11, 0.8); border-radius: 24px; position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-                                <div style="position: absolute; top: -2px; left: -2px; width: 24px; height: 24px; border-top: 4px solid var(--color-primary); border-left: 4px solid var(--color-primary); border-top-left-radius: 12px;"></div>
-                                <div style="position: absolute; top: -2px; right: -2px; width: 24px; height: 24px; border-top: 4px solid var(--color-primary); border-right: 4px solid var(--color-primary); border-top-right-radius: 12px;"></div>
-                                <div style="position: absolute; bottom: -2px; left: -2px; width: 24px; height: 24px; border-bottom: 4px solid var(--color-primary); border-left: 4px solid var(--color-primary); border-bottom-left-radius: 12px;"></div>
-                                <div style="position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-bottom: 4px solid var(--color-primary); border-right: 4px solid var(--color-primary); border-bottom-right-radius: 12px;"></div>
-                                
-                                <span style="color: #FFF; font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="9"></circle>
-                                        <line x1="12" y1="2" x2="12" y2="6"></line>
-                                        <line x1="12" y1="18" x2="12" y2="22"></line>
-                                        <line x1="2" y1="12" x2="6" y2="12"></line>
-                                        <line x1="18" y1="12" x2="22" y2="12"></line>
-                                    </svg>
-                                    <span>點擊此處或下方快門拍照</span>
-                                </span>
-                            </div>
+                            <span style="position: absolute; bottom: 16px; z-index: 10; color: #FFF; font-size: 0.85rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.55); padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); pointer-events: none;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                                </svg>
+                                <span>點擊此處或下方快門拍照</span>
+                            </span>
                         </div>
 
                         <!-- 經典相機底部三聯控制列 (左：相簿選取、中：快門拍攝、右：語音文字) -->

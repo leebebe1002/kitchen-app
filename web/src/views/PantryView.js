@@ -1386,9 +1386,13 @@ export default {
 
             <!-- 📱 右下角優雅浮動新增食材鈕 (FAB) -->
             <button class="pantry-fab-add" @click="openAddModalDirectly" title="新增食材" aria-label="新增食材">
-                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <!-- 上方加號：明確表示「加食材」 -->
+                    <line x1="12" y1="2.5" x2="12" y2="8.5"></line>
+                    <line x1="9" y1="5.5" x2="15" y2="5.5"></line>
+                    <!-- 下方碗：保留食材／料理語意 -->
+                    <path d="M4.5 13h15a7.5 7.5 0 0 1-15 0Z"></path>
+                    <path d="M3.5 13h17"></path>
                 </svg>
             </button>
 
