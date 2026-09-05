@@ -91,12 +91,11 @@ const App = {
             <!-- 頂部精緻 Header (已移除沉重 Tabs) -->
             <header class="header">
                 <h1>FAMILY KITCHEN 2.0</h1>
-                <button class="btn-icon" @click="refreshData" style="display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <button class="btn-icon header-refresh" @click="refreshData" title="刷新資料" aria-label="刷新資料">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                     </svg>
-                    <span>刷新</span>
                 </button>
             </header>
 

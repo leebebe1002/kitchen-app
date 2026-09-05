@@ -115,6 +115,14 @@ input, textarea, select, [contenteditable="true"] {
     transform: scale(0.96);
 }
 
+.header-refresh {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+}
+
 /* Tabs (已下移至底部 Dock，頂部導航隱藏以釋放視野) */
 .tabs {
     display: none !important;
