@@ -1384,24 +1384,13 @@ export default {
                 </div>
             </div>
 
-            <!-- 手機畫面最底部固定常駐雙控制鈕 -->
-            <div class="fab-container">
-                <button class="btn-primary" @click="showShoppingModal = true" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
-                    <span>採買清單</span>
-                </button>
-                <button class="btn-primary accent" @click="openAddModalDirectly" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    <span>新增食材</span>
-                </button>
-            </div>
+            <!-- 📱 右下角優雅浮動新增食材鈕 (FAB) -->
+            <button class="pantry-fab-add" @click="openAddModalDirectly" title="新增食材" aria-label="新增食材">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
 
             <!-- 📱 【全域共用食材卡片 (Unified Ingredient Modal)】支援新增 (create) 與長按編輯 (edit) 雙模式 -->
             <ingredient-detail-modal 

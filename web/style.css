@@ -111,36 +111,9 @@ input, textarea, select, [contenteditable="true"] {
     transform: scale(0.96);
 }
 
-/* Tabs */
+/* Tabs (已下移至底部 Dock，頂部導航隱藏以釋放視野) */
 .tabs {
-    display: flex;
-    padding: 0 16px;
-    gap: 8px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-}
-.tabs::-webkit-scrollbar {
-    display: none;
-}
-
-.tab-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: transparent;
-    border: none;
-    padding: 8px 12px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-    flex-shrink: 0;
+    display: none !important;
 }
 
 .tab-btn.active {
@@ -154,14 +127,14 @@ input, textarea, select, [contenteditable="true"] {
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
-    padding: 0 14px 120px 14px;
+    padding: 0 14px calc(110px + env(safe-area-inset-bottom, 12px)) 14px;
     display: flex;
     flex-direction: column;
     gap: 16px;
     overflow-x: hidden;
 }
 
-.view-calculator, .view-tracker, .view-pantry {
+.view-calculator, .view-tracker, .view-pantry, .view-shopping {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -357,10 +330,10 @@ input, textarea, select, [contenteditable="true"] {
     outline: none;
 }
 
-/* 浮動底欄 (Bottom Floating Action Bar - 統一毛玻璃防干擾背景) */
+/* 浮動底欄 (Bottom Floating Action Bar - 統一毛玻璃防干擾背景，浮動於底部 Dock 之上) */
 .fab-container {
     position: fixed;
-    bottom: 0;
+    bottom: calc(72px + env(safe-area-inset-bottom, 12px));
     left: 0;
     right: 0;
     width: 100%;
@@ -370,7 +343,6 @@ input, textarea, select, [contenteditable="true"] {
     -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid var(--color-border);
     padding: 10px 14px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 12px));
     display: flex;
     justify-content: center;
     align-items: center;
@@ -590,6 +562,258 @@ input[type=number].no-spin {
 .stepper-btn:active {
     background-color: #E5E7EB !important;
     transform: scale(0.95);
+}
+
+/* ========================================================
+   📱 FM 風格 5 鍵式毛玻璃底部導航列 (Bottom Navigation Dock)
+   ======================================================== */
+.bottom-dock-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(232, 229, 221, 0.9);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.05);
+    z-index: 900;
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+.bottom-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 64px;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 12px;
+    position: relative;
+}
+
+.dock-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+
+.dock-tab:active {
+    transform: scale(0.92);
+}
+
+.dock-tab svg {
+    width: 25px;
+    height: 25px;
+    stroke: #6B7280;
+    fill: none !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    transition: stroke 0.2s ease;
+}
+
+.dock-tab.active svg {
+    stroke: #1F2937;
+}
+
+/* 激活狀態下方微點 */
+.dock-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #1F2937;
+}
+
+/* 中央突出大圓鈕 (CTA) */
+.dock-center-wrap {
+    position: relative;
+    top: -14px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dock-center-btn {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 3.8px solid #EBB5A8; /* FM 柔粉外環 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(235, 181, 168, 0.45);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dock-center-btn:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 10px rgba(235, 181, 168, 0.35);
+}
+
+.dock-center-btn svg {
+    width: 26px;
+    height: 26px;
+    stroke: #1F2937;
+    fill: none !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+}
+
+/* 📱 記一餐滑出 Action Sheet */
+.action-sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.action-sheet {
+    background: #FFFFFF;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 14px));
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.action-sheet-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.action-sheet-subtitle {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-top: -8px;
+    margin-bottom: 6px;
+}
+
+.action-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.action-sheet-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 12px;
+    background: #FAF8F5;
+    border: 1.5px solid var(--color-border);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: var(--color-text-main);
+}
+
+.action-sheet-btn:active {
+    transform: scale(0.96);
+    background: #FFFFFF;
+    border-color: #1F2937;
+}
+
+.action-sheet-btn-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.action-sheet-btn-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.action-sheet-btn-desc {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.action-sheet-cancel {
+    margin-top: 4px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #F3F4F6;
+    border: none;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #4B5563;
+    cursor: pointer;
+    text-align: center;
+}
+
+/* 📱 智慧冰箱右下角浮動新增按鈕 (FAB) */
+.pantry-fab-add {
+    position: fixed;
+    right: 20px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 12px));
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-text-main);
+    color: #FFFFFF;
+    border: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 850;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+}
+
+.pantry-fab-add:active {
+    transform: scale(0.92);
+}
+
+.pantry-fab-add svg {
+    stroke: #FFFFFF;
 }
 
 
