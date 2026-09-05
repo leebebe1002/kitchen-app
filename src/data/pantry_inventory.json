@@ -137,6 +137,54 @@
             "sourceDish": "常備食材",
             "store": "全聯",
             "isPurchased": false
+        },
+        {
+            "id": "shop_1787455219450",
+            "type": "food",
+            "targetId": "cherry_tomatoes",
+            "name": "小番茄",
+            "sourceDish": "常備食材",
+            "store": "全聯",
+            "isPurchased": false,
+            "preferredStores": ["全聯"]
+        },
+        {
+            "id": "shop_1787468204180",
+            "type": "food",
+            "targetId": "steamed_noodle",
+            "name": "蒸煮麵",
+            "sourceDish": "常備食材",
+            "store": "EC 電商",
+            "isPurchased": false
+        },
+        {
+            "id": "shop_1787468209353",
+            "type": "food",
+            "targetId": "shin_ramen",
+            "name": "辛拉麵",
+            "sourceDish": "常備食材",
+            "store": "EC 電商",
+            "isPurchased": false
+        },
+        {
+            "id": "shop_1787563165373",
+            "type": "food",
+            "targetId": "ing_1787563079531",
+            "name": "義美烏醋",
+            "sourceDish": "常備食材",
+            "store": "義美",
+            "preferredStores": ["義美"],
+            "isPurchased": false
+        },
+        {
+            "id": "shop_1787651157059",
+            "type": "food",
+            "targetId": "spinach",
+            "name": "菠菜",
+            "sourceDish": "常備食材",
+            "store": "Costco",
+            "preferredStores": ["Costco"],
+            "isPurchased": false
         }
     ],
     "foodCart": []

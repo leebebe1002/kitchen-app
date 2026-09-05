@@ -152,9 +152,19 @@ export default class KitchenEngine {
                 ...(serverData?.supplyStockStatus || {}),
                 ...(localData?.supplyStockStatus || {})
             };
-            // 採買清單以本地為準
-            merged.shoppingList = Array.isArray(localData?.shoppingList) ? localData.shoppingList : (serverData?.shoppingList || []);
-            merged.foodCart = Array.isArray(localData?.foodCart) ? localData.foodCart : (serverData?.foodCart || []);
+            // 採買清單以本地為準，但空快取不得蓋掉非空的雲端／版本資料。
+            // 否則新裝置或舊快取會讓使用者看見整張清單瞬間消失。
+            const localShoppingList = Array.isArray(localData?.shoppingList) ? localData.shoppingList : [];
+            const serverShoppingList = Array.isArray(serverData?.shoppingList) ? serverData.shoppingList : [];
+            merged.shoppingList = localShoppingList.length === 0 && serverShoppingList.length > 0
+                ? serverShoppingList
+                : localShoppingList;
+
+            const localFoodCart = Array.isArray(localData?.foodCart) ? localData.foodCart : [];
+            const serverFoodCart = Array.isArray(serverData?.foodCart) ? serverData.foodCart : [];
+            merged.foodCart = localFoodCart.length === 0 && serverFoodCart.length > 0
+                ? serverFoodCart
+                : localFoodCart;
             return merged;
         } else if (filename === 'ingredients.json') {
             // 🛡️ 保留使用者在本地修改過的食材通路與自訂規格
