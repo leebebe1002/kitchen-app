@@ -246,17 +246,29 @@ graph LR
 
 ---
 
-### 9.2 FM 風格旗艦底部導航 5 大 Dock Icon 規範 (Final Confirmed)
+### 9.2 1:1 像素級復刻記帳 App 底部導航 5 大 Dock 規格 (Final Production Replica)
 
-參考 FM（FatSecret / 慢生活）極簡溫潤質感，底部常駐 5 個核心操作（4 個功能分頁 + 1 個中央突出 AI 記帳大圓鈕），全部嚴格遵守 **1.8px 純線條光學平衡**：
+對照記帳 App 目標截圖進行 100% 像素級還原，實現純白極致扁平、大幅浮空大圓鈕與溫潤珊瑚奶粉光暈：
 
-| 順序 | 功能 Tab | 定案圖示 (Icon) | 規格與視覺語意 | 標準 SVG 代碼 (統一 stroke-width: 1.8, fill: none) |
+* **容器 (Container)**：
+  - 背景：`#FFFFFF` 純白
+  - 頂線：`1px solid #ECECEC` 細緻極簡淺灰
+  - 高度：`54px`（另包含 iOS Home Bar 安全內距 `padding-bottom: env(safe-area-inset-bottom, 16px)`）
+  - 圖示線寬：`1.8px` 統一，色彩為深炭褐灰 `#2D2A26`
+* **中央突出大圓鈕 (The Big Floating Button)**：
+  - 直徑：`66px`
+  - 垂直位置：`top: -26px`（近 45% 懸空突出於白色底欄上方，形成半露半嵌飄浮感）
+  - 邊框：`3.5px solid #ECA498`（目標截圖溫潤珊瑚奶粉）
+  - 光暈陰影：`0 4px 18px rgba(236, 164, 152, 0.45)`
+  - 中央加號：**純淨端正圓角十字（無星芒，無多餘雜訊）**，端點圓潤，線寬 `2.3px`，長度完美居中
+
+| 順序 | 功能 Tab | 定案圖示 (Icon) | 規格與視覺語意 | 標準 SVG 代碼 |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **備料計算器** | **日系指針烘焙機械秤** | 頂部盛料托盤 + 梯形秤身 + 圓形指針刻度錶盤（比起辦公室計算機，更貼近廚房料理與精準克數計算情境）。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path><line x1="12" y1="8.5" x2="12" y2="10.5"></line><path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>` |
-| **2** | **今日紀錄** | **動態進度三圓環（缺口左下）** | 三重同心進度環，長度依達成度漸次展現，**缺口全部統一朝向「左下角」**（半徑 9/6/3 透氣間距，象徵熱量、蛋白質、水份三大活動達成環）。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(155 12 12)"><circle cx="12" cy="12" r="9" stroke-dasharray="47 11"></circle><circle cx="12" cy="12" r="6" stroke-dasharray="27 12"></circle><circle cx="12" cy="12" r="3" stroke-dasharray="11 8"></circle></g></svg>` |
-| **3** | **中央大圓鈕 (CTA)** | **正中 ＋ 伴右上純線條 AI 星芒** | 58px 純白大圓底座 + `#EBB5A8` 溫潤粉紅光圈；十字 `＋` **以 (12,12) 絕對居中**，右上角點綴**「純線條空心 4 角微光星芒」**（代表 Gemini AI 視覺與智能辨識，與十字維持 100% 相同線寬，洗練高級無實心突兀感）。點擊即滑出整合記一餐 UI。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line><path d="M 19,2 Q 19,5 22,5 Q 19,5 19,8 Q 19,5 16,5 Q 19,5 19,2 Z"></path></svg>` |
-| **4** | **智慧冰箱** | **雙門分層冰箱** | 圓角矩形雙門分界線，上下分層明確（冷藏/冷凍），線條洗練對稱。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="2.5" width="13" height="19" rx="3"></rect><line x1="5.5" y1="10" x2="18.5" y2="10"></line><line x1="8.5" y1="6" x2="8.5" y2="8"></line><line x1="8.5" y1="13" x2="8.5" y2="16"></line></svg>` |
-| **5** | **採買清單** | **超市手推車** | 雙輪經典購物車輪廓，雙輪為空心線條圓，買菜時一秒直達 Checklist。 | `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h3.5l2.4 11.5a1.8 1.8 0 0 0 1.8 1.5h9.5a1.8 1.8 0 0 0 1.8-1.5L22.5 7H6"></path><circle cx="9.5" cy="20" r="1.4"></circle><circle cx="18.5" cy="20" r="1.4"></circle></svg>` |
+| **1** | **備料計算器** | **日系指針烘焙秤** | 寬平托盤 + 大器梯形秤身 + 圓形指針刻度盤 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5h17c-.6 2-2.5 3-5.5 3h-6C6 8 4.1 7 3.5 5z"></path><line x1="12" y1="8" x2="12" y2="10"></line><path d="M5.5 10h13l1.5 10.5a1 1 0 0 1-1 1.5H5a1 1 0 0 1-1-1.5L5.5 10z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>` |
+| **2** | **今日紀錄** | **優雅同心三圓環** | 幾何同心三道進度弧線，俐落呼吸感 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 12,3.5 A 8.5,8.5 0 1,1 5.5,6.5"></path><path d="M 12,6.2 A 5.8,5.8 0 1,1 7.5,8.5"></path><path d="M 12,9 A 3,3 0 1,1 9.5,10.5"></path></svg>` |
+| **3** | **中央大圓鈕 (CTA)** | **純粹居中十字加號** | 100% 復刻目標截圖：直徑 66px，懸浮 -26px，3.5px 珊瑚奶粉外環 + 溫潤光暈，正中圓角加號（無星芒）。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>` |
+| **4** | **智慧冰箱** | **雙門飽滿冰箱** | 圓潤雙門分界線，比例勻稱穩重大器 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"></rect><line x1="4.5" y1="9.5" x2="19.5" y2="9.5"></line><line x1="7.5" y1="5.5" x2="7.5" y2="7.5"></line><line x1="7.5" y1="12.5" x2="7.5" y2="15.5"></line></svg>` |
+| **5** | **採買清單** | **超市手推車** | 勻稱車身與雙輪，間距舒展平衡 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5h3.2l2.3 11a1.8 1.8 0 0 0 1.8 1.5h9.4a1.8 1.8 0 0 0 1.8-1.5L22.5 7.5H6.2"></path><circle cx="9.5" cy="19.5" r="1.5"></circle><circle cx="17.5" cy="19.5" r="1.5"></circle></svg>` |
 
 ---
 
