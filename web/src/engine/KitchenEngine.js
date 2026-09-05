@@ -108,7 +108,10 @@ export default class KitchenEngine {
             }
             if (!response || !response.ok) {
                 try {
-                    response = await fetch(`/src/data/${filename}?t=${t}`);
+                    // GitHub Pages 以 /kitchen-app/ 子路徑部署，不能使用網域根目錄的 /src。
+                    // 從此模組位置建立相對網址，才能同時支援本機與公開網站。
+                    const staticDataUrl = new URL(`../../../src/data/${filename}?t=${t}`, import.meta.url);
+                    response = await fetch(staticDataUrl);
                 } catch (e) {}
             }
 
