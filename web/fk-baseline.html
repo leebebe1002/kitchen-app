@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FK Baseline v1｜Bebe UI Design System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        :root { --baseline-bg: #F8F6F0; --baseline-ink: #333333; --baseline-muted: #827B70; }
+        body { min-height: 100vh; max-width: none; overflow: auto; background: var(--baseline-bg); color: var(--baseline-ink); padding: 0; user-select: auto; }
+        .baseline-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 46px 0 90px; }
+        .eyebrow { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(51,51,51,.1); border-radius: 999px; background: rgba(255,255,255,.72); color: #756D61; font-size: .72rem; font-weight: 800; letter-spacing: .07em; }
+        h1 { margin: 14px 0 8px; font-size: clamp(2rem, 5vw, 3.45rem); line-height: 1.05; letter-spacing: -.055em; }
+        .intro { max-width: 630px; margin: 0; color: var(--baseline-muted); font-size: 1rem; line-height: 1.7; }
+        .notice { margin: 26px 0 34px; display: flex; gap: 12px; align-items: flex-start; padding: 15px 17px; border: 1px solid rgba(255,202,96,.62); border-radius: 16px; background: rgba(255, 250, 238, .9); font-size: .86rem; line-height: 1.55; }
+        .notice strong { color: #8E6200; }
+        .section { margin-top: 44px; }
+        .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 16px; }
+        .section-kicker { color: #9B9285; font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+        h2 { margin: 4px 0 0; font-size: 1.45rem; letter-spacing: -.035em; }
+        .review-hint { color: var(--baseline-muted); font-size: .78rem; white-space: nowrap; }
+        .foundation-grid, .component-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+        .panel { min-width: 0; padding: 20px; background: rgba(255,255,255,.88); border: 1px solid rgba(51,51,51,.08); border-radius: 20px; box-shadow: 0 8px 28px rgba(51,41,22,.035); }
+        .panel-title { margin: 0 0 4px; font-size: .95rem; font-weight: 800; }
+        .panel-note { margin: 0 0 16px; color: var(--baseline-muted); font-size: .75rem; line-height: 1.5; }
+        .color-panel { grid-column: span 7; }
+        .type-panel { grid-column: span 5; }
+        .color-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .swatch { overflow: hidden; border: 1px solid rgba(51,51,51,.08); border-radius: 14px; background: white; }
+        .swatch-color { height: 56px; }
+        .swatch-label { padding: 9px 10px 10px; font-size: .72rem; font-weight: 800; }
+        .swatch-label small { display: block; margin-top: 3px; color: var(--baseline-muted); font-family: monospace; font-weight: 500; }
+        .type-sample { padding: 13px 0; border-bottom: 1px solid var(--color-border); }
+        .type-sample:last-child { border: none; padding-bottom: 0; }
+        .type-label { display: block; margin-bottom: 5px; color: var(--baseline-muted); font-size: .7rem; font-weight: 700; }
+        .heading-xl { font-size: 1.55rem; font-weight: 800; letter-spacing: -.04em; }
+        .heading-md { font-size: 1.03rem; font-weight: 700; }
+        .body-sm { color: var(--baseline-muted); font-size: .82rem; line-height: 1.5; }
+        .spec-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+        .spec { padding: 6px 9px; border-radius: 8px; background: #F7F5F2; color: #756D61; font: 600 .68rem/1 monospace; }
+        .component-panel { grid-column: span 4; }
+        .component-panel.wide { grid-column: span 8; }
+        .demo-surface { min-height: 158px; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 14px; border: 1px dashed #E4DED5; border-radius: 16px; background: #FCFBF9; }
+        .demo-row { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+        .demo-button { border: 0; border-radius: 13px; padding: 11px 14px; font: 700 .82rem/1 'Inter','Noto Sans TC',sans-serif; cursor: default; }
+        .demo-button.primary { background: var(--color-primary); color: #5B4100; }
+        .demo-button.secondary { background: var(--color-text-main); color: white; }
+        .demo-button.quiet { border: 1px solid var(--color-border); background: white; color: var(--color-text-main); }
+        .round-icon { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 1px solid var(--color-border); border-radius: 50%; background: white; color: var(--color-text-main); box-shadow: 0 2px 5px rgba(0,0,0,.02); }
+        .round-icon.accent { border: none; background: var(--color-primary); color: #624300; }
+        .round-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .chip { display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: 999px; background: white; color: #6E6961; font-size: .73rem; font-weight: 700; }
+        .chip.selected { border-color: transparent; background: #FFF0C9; color: #8B6200; }
+        .chip.success { border-color: transparent; background: #DDF3F1; color: #31777A; }
+        .list-demo { overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px; background: white; }
+        .list-item { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-bottom: 1px solid var(--color-border); }
+        .list-item:last-child { border: 0; }
+        .list-marker { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: #FFF0C9; color: #9B6B00; font-size: .75rem; font-weight: 800; }
+        .list-copy { flex: 1; min-width: 0; }
+        .list-copy strong, .list-copy span { display: block; }
+        .list-copy strong { font-size: .8rem; }
+        .list-copy span { margin-top: 3px; color: var(--baseline-muted); font-size: .69rem; }
+        .list-value { font-size: .78rem; font-weight: 800; }
+        .screens { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+        .phone { overflow: hidden; border: 7px solid #302F2C; border-radius: 28px; background: var(--color-base); box-shadow: 0 18px 38px rgba(52,42,20,.13); }
+        .phone-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 13px 11px; background: var(--color-base); }
+        .phone-brand { font-size: .58rem; font-weight: 800; letter-spacing: .04em; }
+        .phone-body { min-height: 285px; padding: 0 11px 12px; }
+        .mini-card { margin-top: 10px; padding: 13px; border-radius: 15px; background: white; box-shadow: 0 4px 14px rgba(0,0,0,.035); }
+        .mini-label { color: var(--color-text-muted); font-size: .6rem; font-weight: 700; }
+        .mini-value { margin-top: 4px; font-size: 1.45rem; font-weight: 800; letter-spacing: -.05em; }
+        .progress { height: 7px; overflow: hidden; margin-top: 10px; border-radius: 999px; background: #F2F0EC; }
+        .progress b { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
+        .mini-row { display: flex; justify-content: space-between; align-items: center; margin-top: 11px; font-size: .68rem; }
+        .dock { display: grid; grid-template-columns: repeat(5,1fr); align-items: end; min-height: 55px; padding: 7px 8px max(8px, env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); box-shadow: 0 -10px 22px rgba(28,24,17,.07); }
+        .dock-item { display: grid; place-items: center; gap: 3px; color: var(--color-text-muted); font-size: .54rem; font-weight: 700; }
+        .dock-item.active { color: #9B6B00; }
+        .dock-fab { width: 39px; height: 39px; margin-top: -21px; border: 4px solid var(--color-base); border-radius: 50%; display: grid; place-items: center; background: var(--color-primary); color: #674900; font-size: 1.15rem; box-shadow: 0 5px 11px rgba(188,130,0,.18); }
+        .pattern-caption { margin: 11px 0 0; color: var(--baseline-muted); font-size: .75rem; line-height: 1.5; }
+        .decision-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .decision { min-height: 110px; padding: 14px; border-radius: 16px; border: 1px solid var(--color-border); background: white; }
+        .decision b { display: block; margin-bottom: 6px; font-size: .82rem; }
+        .decision span { color: var(--baseline-muted); font-size: .73rem; line-height: 1.45; }
+        .footer { margin-top: 48px; color: var(--baseline-muted); font-size: .75rem; text-align: center; }
+        @media (max-width: 760px) { .baseline-shell { width: min(100% - 28px, 560px); padding-top: 30px; } .section-head { align-items: start; flex-direction: column; gap: 5px; } .review-hint { white-space: normal; } .color-panel, .type-panel, .component-panel, .component-panel.wide { grid-column: 1 / -1; } .screens { grid-template-columns: 1fr; gap: 24px; } .phone { max-width: 330px; margin: 0 auto; } .decision-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <main class="baseline-shell">
+        <span class="eyebrow">FK BASELINE · REVIEW FIRST</span>
+        <h1>Family Kitchen<br>Design Baseline v1</h1>
+        <p class="intro">這不是新設計提案，而是把 FK 現在真正使用的視覺規則整理成一張可共同討論的地圖。你確認過的規則，才會進入未來 FM／FK 共用的 Bebe UI Design System。</p>
+        <div class="notice"><span>✦</span><div><strong>怎麼看這一頁：</strong>每個區塊只要告訴十一粒「保留」、「想調整」或「FM 不需要沿用」。不用一次決定所有細節。</div></div>
+
+        <section class="section">
+            <div class="section-head"><div><div class="section-kicker">01 · Foundation</div><h2>目前的視覺語言</h2></div><span class="review-hint">先看：它像不像你想要的 AI OS 家族感？</span></div>
+            <div class="foundation-grid">
+                <article class="panel color-panel"><h3 class="panel-title">色彩角色</h3><p class="panel-note">以溫暖奶灰、金黃、湖水綠、珊瑚紅建立低壓但有狀態辨識的介面。</p><div class="color-row">
+                    <div class="swatch"><div class="swatch-color" style="background:#F5F5F5"></div><div class="swatch-label">Base<small>#F5F5F5</small></div></div>
+                    <div class="swatch"><div class="swatch-color" style="background:#FFCA60"></div><div class="swatch-label">Bebe / Highlight<small>#FFCA60</small></div></div>
+                    <div class="swatch"><div class="swatch-color" style="background:#7DC7CC"></div><div class="swatch-label">Success / Jason<small>#7DC7CC</small></div></div>
+                    <div class="swatch"><div class="swatch-color" style="background:#E16262"></div><div class="swatch-label">Alert / 樂樂<small>#E16262</small></div></div>
+                    <div class="swatch"><div class="swatch-color" style="background:#333333"></div><div class="swatch-label">Main text<small>#333333</small></div></div>
+                    <div class="swatch"><div class="swatch-color" style="background:#ECECEC"></div><div class="swatch-label">Border<small>#ECECEC</small></div></div>
+                </div></article>
+                <article class="panel type-panel"><h3 class="panel-title">字體與節奏</h3><p class="panel-note">Inter + Noto Sans TC；大字用緊湊字距，內容保持安靜易讀。</p>
+                    <div class="type-sample"><span class="type-label">APP TITLE / 1.15rem · 700</span><span class="heading-xl">FAMILY KITCHEN 2.0</span></div>
+                    <div class="type-sample"><span class="type-label">SECTION TITLE / 1.03rem · 700</span><span class="heading-md">今天的飲食紀錄</span></div>
+                    <div class="type-sample"><span class="type-label">SUPPORTING COPY / .82rem</span><span class="body-sm">讓資訊有層次，但不讓介面一直對你大聲說話。</span></div>
+                    <div class="spec-row"><span class="spec">space: 8 / 16 / 24</span><span class="spec">radius: 8 / 16 / 20</span><span class="spec">soft shadow</span></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head"><div><div class="section-kicker">02 · Components</div><h2>高頻元件</h2></div><span class="review-hint">這些才是 FM 最可能共用的部分。</span></div>
+            <div class="component-grid">
+                <article class="panel component-panel"><h3 class="panel-title">按鈕與圓形 icon</h3><p class="panel-note">主行動有顏色；輔助行動保持邊界清楚。</p><div class="demo-surface"><div class="demo-row"><button class="demo-button primary">新增一餐</button><button class="demo-button secondary">儲存</button></div><div class="demo-row"><button class="demo-button quiet">取消</button><span class="round-icon" title="刷新資料"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></span><span class="round-icon accent">＋</span></div></div></article>
+                <article class="panel component-panel"><h3 class="panel-title">狀態膠囊</h3><p class="panel-note">用色彩傳遞狀態，但不依賴色彩單獨表意。</p><div class="demo-surface"><div class="demo-row"><span class="chip selected">● Bebe</span><span class="chip success">✓ 已達標</span></div><div class="demo-row"><span class="chip">尚待採買</span><span class="chip">冷藏 3 天</span></div></div></article>
+                <article class="panel component-panel"><h3 class="panel-title">資訊列</h3><p class="panel-note">圖示／名稱／次要資訊／數值，讓掃讀順序固定。</p><div class="list-demo"><div class="list-item"><span class="list-marker">蛋</span><span class="list-copy"><strong>雞蛋</strong><span>冰箱 · 剩餘 6 顆</span></span><span class="list-value">6</span></div><div class="list-item"><span class="list-marker">米</span><span class="list-copy"><strong>白米</strong><span>採買清單</span></span><span class="list-value">＋</span></div></div></article>
+                <article class="panel component-panel wide"><h3 class="panel-title">Card 與資訊層級</h3><p class="panel-note">白色卡片放在奶灰底上；圓角、留白與柔陰影是目前 FK 的主要舒適感來源。</p><div class="demo-surface" style="padding:18px"><div class="card" style="padding:16px"><div style="display:flex;justify-content:space-between;align-items:start"><div><span class="mini-label">今日蛋白質</span><div class="mini-value">82<span style="font-size:.75rem;letter-spacing:0"> g</span></div></div><span class="chip success">進度良好</span></div><div class="progress"><b style="width:72%"></b></div><div class="mini-row"><span style="color:var(--color-text-muted)">目標 114 g</span><strong>72%</strong></div></div></div></article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head"><div><div class="section-kicker">03 · Patterns</div><h2>元件組成後的手機感受</h2></div><span class="review-hint">這裡看的是層級、密度與操作感，不是資料內容。</span></div>
+            <div class="screens">
+                <article><div class="phone"><div class="phone-header"><span class="phone-brand">FAMILY KITCHEN 2.0</span><span class="round-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></span></div><div class="phone-body"><div class="mini-card"><span class="mini-label">今日總熱量</span><div class="mini-value">1,426 <span style="font-size:.65rem">kcal</span></div><div class="progress"><b style="width:68%"></b></div></div><div class="mini-card"><span class="mini-label">下一餐</span><div class="mini-row"><strong>晚餐 · 烤鮭魚</strong><span>18:30</span></div></div></div><div class="dock"><span class="dock-item active">⌂<small>首頁</small></span><span class="dock-item">◌<small>紀錄</small></span><span class="dock-item"><b class="dock-fab">＋</b><small>加一餐</small></span><span class="dock-item">□<small>冰箱</small></span><span class="dock-item">▱<small>採買</small></span></div></div><p class="pattern-caption"><strong>首頁：</strong>卡片優先、溫暖留白、底部中島 FAB。</p></article>
+                <article><div class="phone"><div class="phone-header"><span class="phone-brand">智慧冰箱</span><span class="round-icon accent">＋</span></div><div class="phone-body"><div class="demo-row" style="margin:5px 0 11px"><span class="chip selected">全部</span><span class="chip">冷藏</span><span class="chip">冷凍</span></div><div class="list-demo"><div class="list-item"><span class="list-marker">牛</span><span class="list-copy"><strong>牛奶</strong><span>有效期限 9/08</span></span><span class="chip selected">即將到期</span></div><div class="list-item"><span class="list-marker">菇</span><span class="list-copy"><strong>鴻喜菇</strong><span>有效期限 9/11</span></span><span class="list-value">›</span></div><div class="list-item"><span class="list-marker">蛋</span><span class="list-copy"><strong>雞蛋</strong><span>剩餘 6 顆</span></span><span class="list-value">›</span></div></div></div><div class="dock"><span class="dock-item">⌂<small>首頁</small></span><span class="dock-item">◌<small>紀錄</small></span><span class="dock-item"><b class="dock-fab">＋</b><small>加一餐</small></span><span class="dock-item active">□<small>冰箱</small></span><span class="dock-item">▱<small>採買</small></span></div></div><p class="pattern-caption"><strong>列表：</strong>固定掃讀順序，狀態以膠囊與文字共同表達。</p></article>
+                <article><div class="phone"><div class="phone-header"><span class="phone-brand">拍照 AI 補記</span><span style="font-size:.8rem;color:var(--color-text-muted)">關閉</span></div><div class="phone-body"><div class="mini-card" style="height:145px;display:grid;place-items:center;background:linear-gradient(135deg,#4B4741,#827B70);color:white"><span style="font-size:.76rem;font-weight:700">相機預覽區</span></div><div class="mini-card"><span class="mini-label">辨識結果</span><div class="mini-row"><strong>鮭魚、花椰菜、白飯</strong><span class="chip success">已辨識</span></div></div><button class="demo-button primary" style="width:100%;margin-top:11px">確認加入今日紀錄</button></div><div class="dock"><span class="dock-item">⌂<small>首頁</small></span><span class="dock-item active">◌<small>紀錄</small></span><span class="dock-item"><b class="dock-fab">＋</b><small>加一餐</small></span><span class="dock-item">□<small>冰箱</small></span><span class="dock-item">▱<small>採買</small></span></div></div><p class="pattern-caption"><strong>任務流程：</strong>先聚焦單一步驟，再提供明確主行動。</p></article>
+            </div>
+        </section>
+
+        <section class="section"><div class="section-head"><div><div class="section-kicker">04 · Review</div><h2>請你先做的三個決定</h2></div></div><div class="decision-grid"><div class="decision"><b>1. 家族感</b><span>奶灰底、暖黃亮點、圓角與柔陰影，要保留嗎？</span></div><div class="decision"><b>2. 元件感</b><span>卡片、圓形 icon 與膠囊標籤，哪些應成為 FM 也能用的共用元件？</span></div><div class="decision"><b>3. 資訊密度</b><span>FK 的呼吸感適合料理；FM 是否應維持骨架、但讓金額資訊更緊湊？</span></div></div></section>
+        <p class="footer">FK Baseline v1 · 只記錄目前狀態，不代表所有規則已定案。</p>
+    </main>
+</body>
+</html>

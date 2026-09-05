@@ -711,28 +711,28 @@ input[type=number].no-spin {
     outline-offset: 3px;
 }
 
-/* 📱 記一餐滑出 Action Sheet */
+/* 📱 新增記錄滑出 Action Sheet：柔灰底，只有選擇拍照時才開啟相機。 */
 .action-sheet-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.38);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 1000;
+    background: rgba(38, 35, 32, 0.20);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 1200;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
 }
 
 .action-sheet {
-    background: #FFFFFF;
+    background: #F2F1EF;
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
-    padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 14px));
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.12);
+    padding: 18px 16px calc(16px + env(safe-area-inset-bottom, 14px));
+    box-shadow: 0 -10px 30px rgba(38, 35, 32, 0.16);
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -745,80 +745,64 @@ input[type=number].no-spin {
 }
 
 .action-sheet-title {
-    font-size: 1.05rem;
+    font-size: 0.84rem;
     font-weight: 700;
-    color: var(--color-text-main);
-    text-align: center;
-    margin-bottom: 4px;
-}
-
-.action-sheet-subtitle {
-    font-size: 0.8rem;
     color: var(--color-text-muted);
     text-align: center;
-    margin-top: -8px;
-    margin-bottom: 6px;
+    margin: 2px 0 8px;
 }
 
-.action-sheet-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+.action-sheet-list {
+    overflow: hidden;
+    border: 1px solid rgba(38, 35, 32, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.58);
 }
 
-.action-sheet-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 18px 12px;
-    background: #FAF8F5;
-    border: 1.5px solid var(--color-border);
-    border-radius: 16px;
+.action-sheet-row {
+    display: block;
+    width: 100%;
+    min-height: 58px;
+    padding: 15px 20px;
+    border: none;
+    border-bottom: 1px solid rgba(38, 35, 32, 0.10);
+    background: transparent;
+    color: var(--color-text-main);
     cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    color: var(--color-text-main);
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 650;
+    text-align: center;
+    transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.action-sheet-btn:active {
-    transform: scale(0.96);
-    background: #FFFFFF;
-    border-color: #1F2937;
+.action-sheet-row:last-child {
+    border-bottom: none;
 }
 
-.action-sheet-btn-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-}
-
-.action-sheet-btn-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-    margin-bottom: 2px;
-}
-
-.action-sheet-btn-desc {
-    font-size: 0.72rem;
-    color: var(--color-text-muted);
+.action-sheet-row:active {
+    background: rgba(255, 255, 255, 0.92);
+    transform: scale(0.985);
 }
 
 .action-sheet-cancel {
-    margin-top: 4px;
+    min-height: 56px;
+    margin-top: 2px;
     padding: 14px;
-    border-radius: 14px;
-    background: #F3F4F6;
-    border: none;
-    font-size: 0.92rem;
+    border: 1px solid rgba(38, 35, 32, 0.08);
+    border-radius: 18px;
+    background: #FFFFFF;
+    font: inherit;
+    font-size: 1rem;
     font-weight: 700;
     color: #4B5563;
     cursor: pointer;
     text-align: center;
+}
+
+.action-sheet-cancel:active {
+    background: #FAFAF9;
+    transform: scale(0.985);
 }
 
 /* 📱 智慧冰箱右下角浮動新增按鈕 (FAB) */

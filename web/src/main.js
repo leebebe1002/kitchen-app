@@ -20,6 +20,7 @@ const App = {
         const error = ref(null);
         const isKeyboardOpen = ref(false);
         const trackerView = ref(null);
+        const showRecordActions = ref(false);
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -58,11 +59,29 @@ const App = {
             currentTab.value = tab;
         };
 
-        // Camera-first：全域 FAB 直接開啟今日紀錄既有的即時相機，不重複實作串流與辨識流程。
-        const openCameraFirst = async () => {
+        const openRecordActions = () => {
+            showRecordActions.value = true;
+            document.body.classList.add('modal-open');
+        };
+
+        const closeRecordActions = () => {
+            showRecordActions.value = false;
+            document.body.classList.remove('modal-open');
+        };
+
+        // 中央加號只負責選擇輸入方式；只有使用者選「拍照」才啟用相機。
+        const selectRecordAction = async (action) => {
+            closeRecordActions();
             currentTab.value = 'tracker';
             await nextTick();
-            trackerView.value?.openAiModal('camera');
+
+            if (action === 'album') {
+                trackerView.value?.triggerAlbumSelect();
+            } else if (action === 'camera') {
+                trackerView.value?.openAiModal('camera');
+            } else if (action === 'voice') {
+                trackerView.value?.openAiModal('voice');
+            }
         };
 
         const refreshData = async () => {
@@ -82,7 +101,10 @@ const App = {
             error,
             isKeyboardOpen,
             trackerView,
-            openCameraFirst,
+            showRecordActions,
+            openRecordActions,
+            closeRecordActions,
+            selectRecordAction,
             refreshData
         };
     },
@@ -148,7 +170,7 @@ const App = {
 
                     <!-- Tab 3 (CTA): 中央突出純白大圓鈕 (正中十字 ＋ 右上晶耀單星芒) -->
                     <div class="dock-center-wrap">
-                        <button class="dock-center-btn" @click="openCameraFirst" title="拍照 AI 補記" aria-label="拍照 AI 補記">
+                        <button class="dock-center-btn" @click="openRecordActions" title="新增記錄" aria-label="新增記錄">
                             <svg viewBox="0 0 24 24">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -180,6 +202,19 @@ const App = {
                     </div>
                 </div>
             </nav>
+
+            <!-- 新增記錄：先選輸入方式，避免中央加號直接請求相機權限。 -->
+            <div v-if="showRecordActions" class="action-sheet-overlay" @click.self="closeRecordActions" role="presentation">
+                <section class="action-sheet" role="dialog" aria-modal="true" aria-labelledby="record-action-title">
+                    <h2 id="record-action-title" class="action-sheet-title">新增記錄</h2>
+                    <div class="action-sheet-list" aria-label="選擇記錄方式">
+                        <button class="action-sheet-row" @click="selectRecordAction('album')">從相簿選取</button>
+                        <button class="action-sheet-row" @click="selectRecordAction('camera')">拍照</button>
+                        <button class="action-sheet-row" @click="selectRecordAction('voice')">語音／文字輸入</button>
+                    </div>
+                    <button class="action-sheet-cancel" @click="closeRecordActions">取消</button>
+                </section>
+            </div>
 
         </div>
     `
