@@ -6,7 +6,7 @@
  * 3. 既有歷史紀錄無痛一鍵搬家
  */
 
-const SUPABASE_CONFIG = {
+export const SUPABASE_CONFIG = {
     url: 'https://zfgdneacuzwyfibpuupq.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZ2RuZWFjdXp3eWZpYnB1dXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MTg5NDMsImV4cCI6MjEwMzk5NDk0M30.nvyfMF27gSEgrZSWzF7fx_KyUScVJsTArAsAZ_pSIsM',
     bucket: 'meal-photos'

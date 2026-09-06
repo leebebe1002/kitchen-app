@@ -1,11 +1,23 @@
 import CloudSyncEngine from './CloudSyncEngine.js';
 import supabaseService from '../services/SupabaseService.js';
+import {
+    PERSONAL_SCOPES,
+    emptyPersonalKitchenState,
+    getActivePersonalScope,
+    hasPersonalKitchenData,
+    readPersonalKitchenState,
+    setActivePersonalScope,
+    writePersonalKitchenState
+} from '../services/PersonalKitchenState.js';
+import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 
 export default class KitchenEngine {
     constructor() {
         const { reactive } = Vue;
         this.cloudSync = new CloudSyncEngine();
         this.supabase = supabaseService;
+        this.personalKitchenSync = personalKitchenSyncService;
+        this.personalScope = getActivePersonalScope();
         this.data = reactive({
             ingredients: [],
             householdSupplies: [],
@@ -65,10 +77,89 @@ export default class KitchenEngine {
         if (!this.data.pantryInventory.shoppingList) this.data.pantryInventory.shoppingList = [];
         if (!this.data.pantryInventory.foodCart) this.data.pantryInventory.foodCart = [];
 
+        // 庫存、採買與家用品不是全家共用資料：Bebe + Jason 共用 household，
+        // 樂樂使用 ariel。既有未分組資料只會作為 household 的首次種子。
+        this.initializePersonalKitchenState();
+        this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
+
         // 6. ☁️ 全家雲端同步中樞在背景非同步執行 (不阻塞 App 啟動，實現 0 秒秒開)
         this.syncWithCloud().catch(err => console.warn("Background sync error:", err));
         
         console.log("KitchenEngine Initialized with State Protection & Instant Startup", this.data);
+    }
+
+    getPersonalScopeOptions() {
+        return Object.values(PERSONAL_SCOPES);
+    }
+
+    getPersonalKitchenSnapshot() {
+        const localState = readPersonalKitchenState(this.personalScope);
+        return {
+            pantryInventory: this.data.pantryInventory || emptyPersonalKitchenState().pantryInventory,
+            householdSupplies: this.data.householdSupplies || { supplies: [] },
+            version: localState?.version || 1,
+            updatedAt: localState?.updatedAt || null
+        };
+    }
+
+    initializePersonalKitchenState() {
+        const savedState = readPersonalKitchenState(this.personalScope);
+        if (savedState) {
+            this.applyPersonalKitchenState(savedState);
+            return;
+        }
+
+        // 只把現有版本的資料歸入 household；樂樂永遠從空白狀態開始。
+        const initialState = this.personalScope === 'household'
+            ? this.getPersonalKitchenSnapshot()
+            : emptyPersonalKitchenState();
+        writePersonalKitchenState(this.personalScope, initialState);
+        this.applyPersonalKitchenState(initialState);
+    }
+
+    applyPersonalKitchenState(state) {
+        const blank = emptyPersonalKitchenState();
+        this.data.pantryInventory = state?.pantryInventory || blank.pantryInventory;
+        this.data.householdSupplies = state?.householdSupplies || blank.householdSupplies;
+    }
+
+    persistPersonalKitchenState() {
+        writePersonalKitchenState(this.personalScope, this.getPersonalKitchenSnapshot());
+    }
+
+    async syncPersonalKitchenState() {
+        if (!this.personalKitchenSync?.enabled) return false;
+        const localState = this.getPersonalKitchenSnapshot();
+        const cloudState = await this.personalKitchenSync.getState(this.personalScope);
+        const localTime = Date.parse(localState.updatedAt || 0);
+        const cloudTime = Date.parse(cloudState?.updatedAt || 0);
+
+        // 第一次建立 Supabase 空間時，遠端只有空白預設列。不可用它覆蓋
+        // 目前 Bebe + Jason 已在使用的資料；應由本機資料安全地完成首次遷移。
+        if (cloudState && cloudTime > localTime && !(hasPersonalKitchenData(localState) && !hasPersonalKitchenData(cloudState))) {
+            this.applyPersonalKitchenState(cloudState);
+            writePersonalKitchenState(this.personalScope, cloudState, { preserveUpdatedAt: true });
+            return true;
+        }
+
+        const saved = await this.personalKitchenSync.saveState(this.personalScope, localState);
+        if (saved && typeof saved === 'object') {
+            writePersonalKitchenState(this.personalScope, saved, { preserveUpdatedAt: true });
+        }
+        return true;
+    }
+
+    setPersonalScope(scopeId) {
+        if (!PERSONAL_SCOPES[scopeId] || scopeId === this.personalScope) return;
+        this.persistPersonalKitchenState();
+        this.personalScope = scopeId;
+        setActivePersonalScope(scopeId);
+
+        const savedState = readPersonalKitchenState(scopeId);
+        const nextState = savedState || emptyPersonalKitchenState();
+        if (!savedState) writePersonalKitchenState(scopeId, nextState);
+        this.applyPersonalKitchenState(nextState);
+        this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
     }
 
     // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
@@ -324,6 +415,13 @@ export default class KitchenEngine {
 
     async saveJson(filename, dataObj) {
         const localKey = 'kitchen_v2_' + filename;
+        // 個人資料只寫入目前資料空間；不可再覆寫舊版共用本機快取或靜態 JSON 檔。
+        if (filename === 'pantry_inventory.json' || filename === 'household_supplies.json') {
+            this.persistPersonalKitchenState();
+            this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
+            return true;
+        }
+
         // 1. 本地即時存檔 (0 秒離線優先)
         this.safeSetLocalStorage(localKey, dataObj);
 

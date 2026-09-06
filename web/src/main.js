@@ -5,6 +5,8 @@ import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
 import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
 import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
 import ShoppingView from './views/ShoppingView.js?v=20260905_SHOPPING_RECOVERY_V1';
+import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
+import authService from './services/FamilyAuthService.js?v=20260906_FAMILY_AUTH_V1';
 
 const App = {
     components: {
@@ -21,6 +23,13 @@ const App = {
         const isKeyboardOpen = ref(false);
         const trackerView = ref(null);
         const showRecordActions = ref(false);
+        const personalScope = ref(localStorage.getItem('kitchen_v2_active_storage_scope') || 'household');
+        const personalScopes = Object.values(PERSONAL_SCOPES);
+        const showAccount = ref(false);
+        const loginEmail = ref('');
+        const loginMessage = ref('');
+        const loginSending = ref(false);
+        const currentUser = ref(null);
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -40,6 +49,7 @@ const App = {
             }
 
             try {
+                currentUser.value = await authService.initialize();
                 engine.value = new KitchenEngine();
                 await engine.value.initialize();
                 isLoading.value = false;
@@ -93,6 +103,31 @@ const App = {
             window.location.reload();
         };
 
+        const selectPersonalScope = (scopeId) => {
+            if (!engine.value) return;
+            engine.value.setPersonalScope(scopeId);
+            personalScope.value = scopeId;
+        };
+
+        const requestLoginLink = async () => {
+            loginMessage.value = '';
+            loginSending.value = true;
+            try {
+                await authService.requestMagicLink(loginEmail.value);
+                loginMessage.value = '登入連結已寄出，請到信箱點開後回到 FK。';
+            } catch (error) {
+                loginMessage.value = error.message || '無法寄送登入連結。';
+            } finally {
+                loginSending.value = false;
+            }
+        };
+
+        const signOut = () => {
+            authService.signOut();
+            currentUser.value = null;
+            loginMessage.value = '';
+        };
+
         return {
             currentTab,
             setTab,
@@ -105,7 +140,17 @@ const App = {
             openRecordActions,
             closeRecordActions,
             selectRecordAction,
-            refreshData
+            refreshData,
+            personalScope,
+            personalScopes,
+            selectPersonalScope,
+            showAccount,
+            loginEmail,
+            loginMessage,
+            loginSending,
+            currentUser,
+            requestLoginLink,
+            signOut
         };
     },
     template: `
@@ -113,12 +158,20 @@ const App = {
             <!-- 頂部精緻 Header (已移除沉重 Tabs) -->
             <header class="header">
                 <h1>FAMILY KITCHEN 2.0</h1>
-                <button class="btn-icon header-refresh" @click="refreshData" title="刷新資料" aria-label="刷新資料">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                </button>
+                <div class="header-actions">
+                    <button class="btn-icon header-refresh" @click="refreshData" title="刷新資料" aria-label="刷新資料">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon header-account" @click="showAccount = true" title="家庭同步帳號" aria-label="家庭同步帳號">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3.2"></circle>
+                            <path d="M4.8 20c.8-3.5 3.2-5.3 7.2-5.3s6.4 1.8 7.2 5.3"></path>
+                        </svg>
+                    </button>
+                </div>
             </header>
 
             <div v-if="isLoading" class="view-content" style="align-items: center; justify-content: center;">
@@ -131,6 +184,14 @@ const App = {
 
             <!-- 主內容分頁區域 (Padding-bottom 自動適配 5 鍵 Dock) -->
             <main v-else class="view-content">
+                <section v-if="currentTab === 'pantry' || currentTab === 'shopping'" class="personal-scope-switcher" aria-label="目前的庫存與採買資料空間">
+                    <span class="personal-scope-label">目前查看</span>
+                    <div class="personal-scope-options" role="group" aria-label="切換資料空間">
+                        <button v-for="scope in personalScopes" :key="scope.id" class="personal-scope-option" :class="{ active: personalScope === scope.id }" @click="selectPersonalScope(scope.id)">
+                            {{ scope.label }}
+                        </button>
+                    </div>
+                </section>
                 <!-- 1. 備料計算器 -->
                 <CalculatorView v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
                 <!-- 2. 今日紀錄 -->
@@ -213,6 +274,24 @@ const App = {
                         <button class="action-sheet-row" @click="selectRecordAction('voice')">語音／文字輸入</button>
                     </div>
                     <button class="action-sheet-cancel" @click="closeRecordActions">取消</button>
+                </section>
+            </div>
+
+            <div v-if="showAccount" class="action-sheet-overlay" @click.self="showAccount = false" role="presentation">
+                <section class="action-sheet account-sheet" role="dialog" aria-modal="true" aria-labelledby="family-account-title">
+                    <h2 id="family-account-title" class="action-sheet-title">家庭同步</h2>
+                    <template v-if="currentUser">
+                        <p class="account-copy">已登入 {{ currentUser.email }}。庫存與採買會在你有權限的資料空間內同步。</p>
+                        <button class="action-sheet-row" @click="signOut">登出此裝置</button>
+                    </template>
+                    <template v-else>
+                        <p class="account-copy">第一次只要輸入 Email，我們會寄一封登入連結給你；不需要設定密碼。</p>
+                        <label class="account-email-label" for="family-login-email">Email</label>
+                        <input id="family-login-email" v-model="loginEmail" class="account-email-input" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
+                        <button class="action-sheet-row account-login-button" :disabled="loginSending" @click="requestLoginLink">{{ loginSending ? '寄送中…' : '寄送登入連結' }}</button>
+                    </template>
+                    <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
+                    <button class="action-sheet-cancel" @click="showAccount = false">關閉</button>
                 </section>
             </div>
 

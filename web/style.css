@@ -95,6 +95,12 @@ input, textarea, select, [contenteditable="true"] {
     letter-spacing: -0.02em;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .btn-icon {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -831,4 +837,95 @@ input[type=number].no-spin {
 
 .pantry-fab-add svg {
     stroke: #FFFFFF;
+}
+/* 個人庫存／採買資料空間切換：Bebe + Jason 共用，樂樂獨立。 */
+.personal-scope-switcher {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 9px 10px 9px 14px;
+    border: 1px solid rgba(45, 45, 45, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 5px 16px rgba(41, 43, 46, 0.05);
+}
+
+.personal-scope-label {
+    color: #73777d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.personal-scope-options {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 12px;
+    background: #ececef;
+}
+
+.personal-scope-option {
+    min-height: 32px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #767980;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.personal-scope-option.active {
+    background: #ffffff;
+    color: #2b2d31;
+    box-shadow: 0 2px 5px rgba(41, 43, 46, 0.12);
+}
+
+.header-account {
+    margin-left: 6px;
+}
+
+.account-sheet {
+    text-align: left;
+}
+
+.account-copy,
+.account-message {
+    margin: 0 0 14px;
+    color: #666b72;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.account-message {
+    margin: 12px 2px 0;
+}
+
+.account-email-label {
+    display: block;
+    margin: 0 0 6px;
+    color: #3b3e44;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.account-email-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 46px;
+    margin-bottom: 10px;
+    padding: 0 13px;
+    border: 1px solid #dfe1e4;
+    border-radius: 12px;
+    background: #f8f8f9;
+    color: #292b30;
+    font: inherit;
+}
+
+.account-login-button:disabled {
+    opacity: 0.55;
 }
