@@ -35,22 +35,31 @@ export default {
             return stores.length > 0 ? stores.join(' / ') : '未指定';
         };
 
+        // 採買時未購入項目必須固定在前，已勾選的才往下移。
+        // 回傳新陣列，僅影響畫面排序，不改寫使用者原本的清單資料。
+        const orderUnpurchasedFirst = (items) => [...items].sort((a, b) => {
+            const aPurchased = Boolean(a.isPurchased);
+            const bPurchased = Boolean(b.isPurchased);
+            if (aPurchased === bPurchased) return 0;
+            return aPurchased ? 1 : -1;
+        });
+
         const filteredFoodShopping = computed(() => {
             const list = foodShoppingItems.value;
-            if (shoppingStoreFilter.value === 'all') return list;
-            return list.filter(item => {
+            const filtered = shoppingStoreFilter.value === 'all' ? list : list.filter(item => {
                 const stores = getItemStores(item);
                 return stores.includes(shoppingStoreFilter.value);
             });
+            return orderUnpurchasedFirst(filtered);
         });
 
         const filteredSupplyShopping = computed(() => {
             const list = supplyShoppingItems.value;
-            if (shoppingStoreFilter.value === 'all') return list;
-            return list.filter(item => {
+            const filtered = shoppingStoreFilter.value === 'all' ? list : list.filter(item => {
                 const stores = getItemStores(item);
                 return stores.includes(shoppingStoreFilter.value);
             });
+            return orderUnpurchasedFirst(filtered);
         });
 
         const getStoreShoppingCount = (store) => {
