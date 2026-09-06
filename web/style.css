@@ -929,3 +929,33 @@ input[type=number].no-spin {
 .account-login-button:disabled {
     opacity: 0.55;
 }
+
+/* FK Theme Token v1：對應 Bebe AI OS Design System */
+:root {
+    --color-primary-soft: #FFF4DB;
+    --color-primary-pressed: #E7B44E;
+    --color-on-primary: #30250C;
+    --color-primary-ink: #725210;
+    --fk-fab-border: var(--color-primary);
+}
+
+.dock-tab.active svg {
+    stroke: var(--color-primary);
+}
+
+.dock-center-btn {
+    box-shadow: 0 4px 12px rgba(38, 35, 32, 0.08), 0 8px 20px rgba(255, 202, 96, 0.24);
+}
+
+.dock-center-btn:active {
+    border-color: var(--color-primary-pressed);
+    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 5px 12px rgba(231, 180, 78, 0.22);
+}
+
+.dock-center-btn svg {
+    stroke: var(--color-primary-ink);
+}
+
+.dock-center-btn svg path.starburst {
+    fill: var(--color-primary-ink) !important;
+}
