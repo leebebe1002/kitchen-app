@@ -1,6 +1,7 @@
 import { SUPABASE_CONFIG } from './SupabaseService.js';
 
 const SESSION_KEY = 'family_kitchen_auth_session';
+const FK_PUBLIC_URL = 'https://leebebe1002.github.io/kitchen-app/web/index.html';
 
 class FamilyAuthService {
     constructor() {
@@ -30,10 +31,9 @@ class FamilyAuthService {
     }
 
     getRedirectUrl() {
-        // 實際使用是 GitHub Pages PWA；本機 file 預覽沒有可供 Supabase 回跳的網址。
-        if (window.location.protocol === 'file:') {
-            return 'https://leebebe1002.github.io/kitchen-app/web/index.html';
-        }
+        // Magic Link 必須固定回到 FK 的正式入口，避免 PWA 或 GitHub Pages 根目錄
+        // 造成登入後落在沒有網站內容的網址。
+        if (window.location.hostname !== 'localhost') return FK_PUBLIC_URL;
         return window.location.origin + window.location.pathname;
     }
 
