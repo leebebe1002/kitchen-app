@@ -1,4 +1,5 @@
-import CloudSyncEngine from './CloudSyncEngine.js';
+iif (!this.personalKitchenSync?.enabled) return false;mport CloudSyncEngine from './CloudSyncEngine.js';
+        if (!this.personalKitchenSync?.enabled) { throw new Error('尚未取得同步登入狀態。'); }
 import supabaseService from '../services/SupabaseService.js';
 import {
     PERSONAL_SCOPES,
