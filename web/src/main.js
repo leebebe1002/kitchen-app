@@ -5,8 +5,8 @@ import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
 import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
 import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
 import ShoppingView from './views/ShoppingView.js?v=20260906_PURCHASE_SORT_V1';
-import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
-import authService from './services/FamilyAuthService.js?v=20260906_FAMILY_AUTH_V1';
+import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';// 強制 iPhone PWA 取得新版登入回跳規則。
+import authService from './services/FamilyAuthService.js?v=20260907_FAMILY_AUTH_REDIRECT_V2';
 
 const App = {
     components: {
