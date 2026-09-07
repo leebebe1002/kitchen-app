@@ -1,11 +1,23 @@
 import { SUPABASE_CONFIG } from './services/SupabaseService.js';
 
+const GOOGLE_RETURN_RELOAD_KEY = 'family_kitchen_google_return_reload';
+
 function login() {
   const redirectTo = window.location.origin + window.location.pathname;
   const url = new URL(SUPABASE_CONFIG.url + '/auth/v1/authorize');
   url.searchParams.set('provider', 'google');
   url.searchParams.set('redirect_to', redirectTo);
   window.location.assign(url);
+}
+
+function reloadOnceAfterGoogleReturn() {
+  if (!window.location.hash.includes('access_token=')) return;
+  if (sessionStorage.getItem(GOOGLE_RETURN_RELOAD_KEY)) {
+    sessionStorage.removeItem(GOOGLE_RETURN_RELOAD_KEY);
+    return;
+  }
+  sessionStorage.setItem(GOOGLE_RETURN_RELOAD_KEY, '1');
+  window.setTimeout(() => window.location.reload(), 0);
 }
 
 function updateSheet() {
@@ -23,6 +35,7 @@ function updateSheet() {
   button.textContent = '使用 Google 登入';
 }
 
+reloadOnceAfterGoogleReturn();
 document.addEventListener('click', (event) => {
   if (!event.target.closest('.account-google-button')) return;
   event.preventDefault();
