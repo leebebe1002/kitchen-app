@@ -1,7 +1,6 @@
 import { SUPABASE_CONFIG } from './SupabaseService.js';
 
 const SESSION_KEY = 'family_kitchen_auth_session';
-const FK_PUBLIC_URL = 'https://leebebe1002.github.io/kitchen-app/web/index.html';
 
 class FamilyAuthService {
     constructor() {
@@ -30,13 +29,6 @@ class FamilyAuthService {
         return this.session?.access_token || null;
     }
 
-    getRedirectUrl() {
-        // Magic Link 必須固定回到 FK 的正式入口，避免 PWA 或 GitHub Pages 根目錄
-        // 造成登入後落在沒有網站內容的網址。
-        if (window.location.hostname !== 'localhost') return FK_PUBLIC_URL;
-        return window.location.origin + window.location.pathname;
-    }
-
     async initialize() {
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const accessToken = hash.get('access_token');
@@ -61,7 +53,7 @@ class FamilyAuthService {
         }
     }
 
-    async requestMagicLink(email) {
+    async requestEmailCode(email) {
         const normalizedEmail = String(email || '').trim().toLowerCase();
         if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
             throw new Error('請輸入正確的 Email。');
@@ -72,14 +64,46 @@ class FamilyAuthService {
             headers: this.headers(),
             body: JSON.stringify({
                 email: normalizedEmail,
-                create_user: true,
-                email_redirect_to: this.getRedirectUrl()
+                create_user: true
             })
         });
         if (!response.ok) {
             const body = await response.json().catch(() => ({}));
             throw new Error(body.msg || body.message || '暫時無法寄送登入連結。');
         }
+    }
+
+    async verifyEmailCode(email, code) {
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const normalizedCode = String(code || '').replace(/\s/g, '');
+        if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+            throw new Error('請輸入正確的 Email。');
+        }
+        if (!/^\d{6,8}$/.test(normalizedCode)) {
+            throw new Error('請輸入信中的 8 位數驗證碼。');
+        }
+
+        const response = await fetch(`${this.url}/auth/v1/verify`, {
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({
+                email: normalizedEmail,
+                token: normalizedCode,
+                type: 'email'
+            })
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.access_token) {
+            throw new Error(body.msg || body.message || '驗證碼無效或已過期，請重新取得。');
+        }
+
+        this.session = {
+            access_token: body.access_token,
+            refresh_token: body.refresh_token || null
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(this.session));
+        this.user = body.user || null;
+        return this.user;
     }
 
     signOut() {
