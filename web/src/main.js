@@ -1,12 +1,15 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260908_ENGINE_RECOVERY_V2';
-import CalculatorView from './views/CalculatorView.js?v=20260908_CALCULATOR_INIT_V2';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260907_PERSONAL_STATE_RECOVERY_V1';
+import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
 import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
 import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
 import ShoppingView from './views/ShoppingView.js?v=20260906_PURCHASE_SORT_V1';
 import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
-import authService from './services/FamilyAuthService.js?v=20260906_FAMILY_AUTH_V1';
+// 每次修正登入回跳邏輯時都更新版本字串，避免 iPhone PWA 沿用舊模組快取。
+// 與 PersonalKitchenSyncService 使用相同的模組網址，確保 Google 登入後
+// 同一份 session 會被同步服務讀到；網址加上不同版本參數會建立另一個實例。
+import authService from './services/FamilyAuthService.js';
 
 const App = {
     components: {
@@ -27,6 +30,8 @@ const App = {
         const personalScopes = Object.values(PERSONAL_SCOPES);
         const showAccount = ref(false);
         const loginEmail = ref('');
+        const loginCode = ref('');
+        const loginStep = ref('email');
         const loginMessage = ref('');
         const loginSending = ref(false);
         const currentUser = ref(null);
@@ -109,14 +114,36 @@ const App = {
             personalScope.value = scopeId;
         };
 
-        const requestLoginLink = async () => {
+        const requestLoginCode = async () => {
             loginMessage.value = '';
             loginSending.value = true;
             try {
-                await authService.requestMagicLink(loginEmail.value);
-                loginMessage.value = '登入連結已寄出，請到信箱點開後回到 FK。';
+                await authService.requestEmailCode(loginEmail.value);
+                loginCode.value = '';
+                loginStep.value = 'code';
+                loginMessage.value = '驗證碼已寄出。請回到 FK 輸入信中的 8 位數字。';
             } catch (error) {
-                loginMessage.value = error.message || '無法寄送登入連結。';
+                loginMessage.value = error.message || '無法寄送驗證碼。';
+            } finally {
+                loginSending.value = false;
+            }
+        };
+
+        const signInWithGoogle = () => {
+            loginMessage.value = '';
+            authService.signInWithGoogle();
+        };
+
+        const verifyLoginCode = async () => {
+            loginMessage.value = '';
+            loginSending.value = true;
+            try {
+                currentUser.value = await authService.verifyEmailCode(loginEmail.value, loginCode.value);
+                loginMessage.value = '此裝置已完成同步登入。正在同步你的資料…';
+                await engine.value?.syncPersonalKitchenState();
+                loginMessage.value = '同步登入完成。';
+            } catch (error) {
+                loginMessage.value = error.message || '無法驗證登入碼。';
             } finally {
                 loginSending.value = false;
             }
@@ -146,10 +173,14 @@ const App = {
             selectPersonalScope,
             showAccount,
             loginEmail,
+            loginCode,
+            loginStep,
             loginMessage,
             loginSending,
             currentUser,
-            requestLoginLink,
+            requestLoginCode,
+            verifyLoginCode,
+            signInWithGoogle,
             signOut
         };
     },
@@ -285,10 +316,8 @@ const App = {
                         <button class="action-sheet-row" @click="signOut">登出此裝置</button>
                     </template>
                     <template v-else>
-                        <p class="account-copy">第一次只要輸入 Email，我們會寄一封登入連結給你；不需要設定密碼。</p>
-                        <label class="account-email-label" for="family-login-email">Email</label>
-                        <input id="family-login-email" v-model="loginEmail" class="account-email-input" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
-                        <button class="action-sheet-row account-login-button" :disabled="loginSending" @click="requestLoginLink">{{ loginSending ? '寄送中…' : '寄送登入連結' }}</button>
+                        <p class="account-copy">第一次請使用自己的 Google 帳戶登入；完成後，這台裝置會保持登入並自動同步。</p>
+                        <button class="action-sheet-row account-google-button" @click="signInWithGoogle">使用 Google 登入</button>
                     </template>
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
                     <button class="action-sheet-cancel" @click="showAccount = false">關閉</button>

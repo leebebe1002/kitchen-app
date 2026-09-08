@@ -2,7 +2,12 @@
     /* 色彩權威矩陣 (Color System & Tokens) - 最新指定配色 */
     --color-base: #F5F5F5; /* 輕盈奶灰背景 (#F5F5F5) */
     --color-surface: #FFFFFF; /* 卡片純白 (#FFFFFF) */
-    --color-primary: #FFCA60; /* 暖陽金黃 (Bebe / Highlight #FFCA60) */
+    /* FK Theme Token v1：對應 projects/design-system/bebe-ai-os-theme-tokens.css */
+    --color-primary: #FFCA60; /* 主色：暖陽金黃 */
+    --color-primary-soft: #FFF4DB; /* 淡底：選取卡與溫和提示 */
+    --color-primary-pressed: #E7B44E; /* 按壓態 */
+    --color-on-primary: #30250C; /* 黃色主色上的深色文字／圖示 */
+    --color-primary-ink: #725210; /* 白底上的主色文字／圖示 */
     --color-secondary: #E16262; /* 珊瑚朱紅 (Ariel / Alert / 刪除 #E16262) */
     --color-accent: #7DC7CC; /* 柔綠湖藍 (Jason / 達標 #7DC7CC) */
     --color-mint-active: #7DC7CC; /* 主選取態：湖水薄荷綠 (#7DC7CC) */
@@ -15,7 +20,7 @@
     --fk-dock-height: 58px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
     --fk-fab-popout: 26px;
-    --fk-fab-border: #D89B96;
+    --fk-fab-border: var(--color-primary);
     
     /* 圓角 */
     --radius-sm: 8px;
@@ -656,7 +661,7 @@ input[type=number].no-spin {
 }
 
 .dock-tab.active svg {
-    stroke: #262320;
+    stroke: var(--color-primary);
     stroke-width: 2 !important;
     opacity: 1;
     transform: translateY(-1.5px);
@@ -683,7 +688,7 @@ input[type=number].no-spin {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(38, 35, 32, 0.08), 0 8px 20px rgba(216, 155, 150, 0.22);
+    box-shadow: 0 4px 12px rgba(38, 35, 32, 0.08), 0 8px 20px rgba(255, 202, 96, 0.24);
     cursor: pointer;
     transform: translateX(-50%);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -693,13 +698,14 @@ input[type=number].no-spin {
 
 .dock-center-btn:active {
     transform: translateX(-50%) scale(0.92);
-    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 5px 12px rgba(216, 155, 150, 0.18);
+    border-color: var(--color-primary-pressed);
+    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 5px 12px rgba(231, 180, 78, 0.22);
 }
 
 .dock-center-btn svg {
     width: 26px;
     height: 26px;
-    stroke: #262320;
+    stroke: var(--color-primary-ink);
     fill: none;
     stroke-width: 2.5 !important;
     stroke-linecap: round !important;
@@ -707,7 +713,7 @@ input[type=number].no-spin {
 }
 
 .dock-center-btn svg path.starburst {
-    fill: #2D2A26 !important;
+    fill: var(--color-primary-ink) !important;
     stroke: none !important;
 }
 
@@ -930,32 +936,18 @@ input[type=number].no-spin {
     opacity: 0.55;
 }
 
-/* FK Theme Token v1：對應 Bebe AI OS Design System */
-:root {
-    --color-primary-soft: #FFF4DB;
-    --color-primary-pressed: #E7B44E;
-    --color-on-primary: #30250C;
-    --color-primary-ink: #725210;
-    --fk-fab-border: var(--color-primary);
+.account-secondary-button {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    color: #666b72;
+    font: inherit;
+    font-size: 0.86rem;
+    cursor: pointer;
 }
 
-.dock-tab.active svg {
-    stroke: var(--color-primary);
-}
-
-.dock-center-btn {
-    box-shadow: 0 4px 12px rgba(38, 35, 32, 0.08), 0 8px 20px rgba(255, 202, 96, 0.24);
-}
-
-.dock-center-btn:active {
-    border-color: var(--color-primary-pressed);
-    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 5px 12px rgba(231, 180, 78, 0.22);
-}
-
-.dock-center-btn svg {
-    stroke: var(--color-primary-ink);
-}
-
-.dock-center-btn svg path.starburst {
-    fill: var(--color-primary-ink) !important;
+.account-secondary-button:disabled {
+    opacity: 0.55;
 }
