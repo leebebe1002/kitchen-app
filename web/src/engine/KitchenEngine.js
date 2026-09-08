@@ -18,10 +18,6 @@ export default class KitchenEngine {
         this.supabase = supabaseService;
         this.personalKitchenSync = personalKitchenSyncService;
         this.personalScope = getActivePersonalScope();
-        // 舊版 FK 的庫存／採買資料存在 kitchen_v2_* 快取。當新版曾先
-        // 建立空白 personal state 時，不能讓那份空白狀態遮住舊資料。
-        // 此欄位只在本次啟動期間保留，待確認雲端狀態後才決定是否首次遷移。
-        this.pendingLegacyPersonalState = null;
         this.data = reactive({
             ingredients: [],
             householdSupplies: [],
@@ -108,19 +104,6 @@ export default class KitchenEngine {
 
     initializePersonalKitchenState() {
         const savedState = readPersonalKitchenState(this.personalScope);
-
-        const legacySnapshot = this.getPersonalKitchenSnapshot();
-
-        // household 的舊版快取有資料、personal state 卻是空白時，
-        // 先保留原資料；同步時確認雲端也空白，才做首次遷移。
-        const needsLegacyRecovery = this.personalScope === 'household'
-            && hasPersonalKitchenData(legacySnapshot)
-            && (!savedState || !hasPersonalKitchenData(savedState));
-        if (needsLegacyRecovery) {
-            this.pendingLegacyPersonalState = legacySnapshot;
-            this.applyPersonalKitchenState(legacySnapshot);
-            return;
-        }
         if (savedState) {
             this.applyPersonalKitchenState(savedState);
             return;
@@ -150,23 +133,6 @@ export default class KitchenEngine {
         const cloudState = await this.personalKitchenSync.getState(this.personalScope);
         const localTime = Date.parse(localState.updatedAt || 0);
         const cloudTime = Date.parse(cloudState?.updatedAt || 0);
-
-        // 恢復舊資料時：雲端有內容就採用雲端；雲端也空白才首次上傳。
-        if (this.pendingLegacyPersonalState) {
-            this.pendingLegacyPersonalState = null;
-            if (hasPersonalKitchenData(cloudState)) {
-                this.applyPersonalKitchenState(cloudState);
-                writePersonalKitchenState(this.personalScope, cloudState, { preserveUpdatedAt: true });
-                return true;
-            }
-
-            const seeded = await this.personalKitchenSync.saveState(this.personalScope, localState);
-            if (seeded && typeof seeded === 'object') {
-                this.applyPersonalKitchenState(seeded);
-                writePersonalKitchenState(this.personalScope, seeded, { preserveUpdatedAt: true });
-            }
-            return Boolean(seeded);
-        }
 
         // 第一次建立 Supabase 空間時，遠端只有空白預設列。不可用它覆蓋
         // 目前 Bebe + Jason 已在使用的資料；應由本機資料安全地完成首次遷移。
