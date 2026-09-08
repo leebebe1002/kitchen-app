@@ -627,7 +627,7 @@ export default {
         };
 
         // 🧠 智慧總預算動態求解器 (Macro Budget Constraint Solver)
-        const autoBalanceMemberPortions = (member) => {
+        function autoBalanceMemberPortions(member) {
             if (!memberIngredients.value[member]) memberIngredients.value[member] = [];
             const list = memberIngredients.value[member];
 
@@ -771,7 +771,7 @@ export default {
                     item.unit = 'g';
                 }
             });
-        };
+        }
 
         // Check if master ingredient is selected in Section 02
         const isIngredientSelected = (id) => {
