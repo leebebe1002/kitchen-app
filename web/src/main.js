@@ -1,14 +1,12 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-
 import KitchenEngine from './engine/KitchenEngine.js?v=20260908_ENGINE_RECOVERY_V2';
 import CalculatorView from './views/CalculatorView.js?v=20260908_CALCULATOR_INIT_V2';
 import TrackerView from './views/TrackerView.js?v=20260905_CAMERA_V3';
 import PantryView from './views/PantryView.js?v=20260905_PANTRY_FAB_V2';
 import ShoppingView from './views/ShoppingView.js?v=20260906_PURCHASE_SORT_V1';
-import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';// 強制 iPhone PWA 取得新版登入回跳規則。
-import authService from './services/FamilyAuthService.js?v=20260907_FAMILY_AUTH_REDIRECT_V2';
-
+import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
+import authService from './services/FamilyAuthService.js?v=20260906_FAMILY_AUTH_V1';
 
 const App = {
     components: {
@@ -35,5 +33,270 @@ const App = {
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
-
         onMounted(async () => {
+            // iOS 鍵盤開啟時收起固定 Dock，避免 FAB 被推到鍵盤上方。
+            viewport = window.visualViewport;
+            if (viewport) {
+                const updateKeyboardState = () => {
+                    isKeyboardOpen.value = window.innerHeight - viewport.height > 150;
+                };
+                viewport.addEventListener('resize', updateKeyboardState);
+                viewport.addEventListener('scroll', updateKeyboardState);
+                removeKeyboardListeners = () => {
+                    viewport.removeEventListener('resize', updateKeyboardState);
+                    viewport.removeEventListener('scroll', updateKeyboardState);
+                };
+            }
+
+            try {
+                currentUser.value = await authService.initialize();
+                engine.value = new KitchenEngine();
+                await engine.value.initialize();
+                isLoading.value = false;
+            } catch (e) {
+                console.error("Failed to load KitchenEngine:", e);
+                error.value = "無法載入資料，請確認 server.py 是否正在運行。";
+                isLoading.value = false;
+            }
+        });
+
+        onBeforeUnmount(() => {
+            removeKeyboardListeners();
+        });
+
+        const setTab = (tab) => {
+            document.body.classList.remove('modal-open');
+            currentTab.value = tab;
+        };
+
+        const openRecordActions = () => {
+            showRecordActions.value = true;
+            document.body.classList.add('modal-open');
+        };
+
+        const closeRecordActions = () => {
+            showRecordActions.value = false;
+            document.body.classList.remove('modal-open');
+        };
+
+        // 中央加號只負責選擇輸入方式；只有使用者選「拍照」才啟用相機。
+        const selectRecordAction = async (action) => {
+            closeRecordActions();
+            currentTab.value = 'tracker';
+            await nextTick();
+
+            if (action === 'album') {
+                trackerView.value?.triggerAlbumSelect();
+            } else if (action === 'camera') {
+                trackerView.value?.openAiModal('camera');
+            } else if (action === 'voice') {
+                trackerView.value?.openAiModal('voice');
+            }
+        };
+
+        const refreshData = async () => {
+            isLoading.value = true;
+            try {
+                sessionStorage.removeItem('family_kitchen_calc_session_state');
+                sessionStorage.removeItem('family_kitchen_calc_state_v2');
+            } catch (e) {}
+            window.location.reload();
+        };
+
+        const selectPersonalScope = (scopeId) => {
+            if (!engine.value) return;
+            engine.value.setPersonalScope(scopeId);
+            personalScope.value = scopeId;
+        };
+
+        const requestLoginLink = async () => {
+            loginMessage.value = '';
+            loginSending.value = true;
+            try {
+                await authService.requestMagicLink(loginEmail.value);
+                loginMessage.value = '登入連結已寄出，請到信箱點開後回到 FK。';
+            } catch (error) {
+                loginMessage.value = error.message || '無法寄送登入連結。';
+            } finally {
+                loginSending.value = false;
+            }
+        };
+
+        const signOut = () => {
+            authService.signOut();
+            currentUser.value = null;
+            loginMessage.value = '';
+        };
+
+        return {
+            currentTab,
+            setTab,
+            engine,
+            isLoading,
+            error,
+            isKeyboardOpen,
+            trackerView,
+            showRecordActions,
+            openRecordActions,
+            closeRecordActions,
+            selectRecordAction,
+            refreshData,
+            personalScope,
+            personalScopes,
+            selectPersonalScope,
+            showAccount,
+            loginEmail,
+            loginMessage,
+            loginSending,
+            currentUser,
+            requestLoginLink,
+            signOut
+        };
+    },
+    template: `
+        <div class="app-container">
+            <!-- 頂部精緻 Header (已移除沉重 Tabs) -->
+            <header class="header">
+                <h1>FAMILY KITCHEN 2.0</h1>
+                <div class="header-actions">
+                    <button class="btn-icon header-refresh" @click="refreshData" title="刷新資料" aria-label="刷新資料">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon header-account" @click="showAccount = true" title="家庭同步帳號" aria-label="家庭同步帳號">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3.2"></circle>
+                            <path d="M4.8 20c.8-3.5 3.2-5.3 7.2-5.3s6.4 1.8 7.2 5.3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <div v-if="isLoading" class="view-content" style="align-items: center; justify-content: center;">
+                <p>載入中...</p>
+            </div>
+            
+            <div v-else-if="error" class="view-content" style="align-items: center; justify-content: center;">
+                <p style="color: var(--color-secondary);">{{ error }}</p>
+            </div>
+
+            <!-- 主內容分頁區域 (Padding-bottom 自動適配 5 鍵 Dock) -->
+            <main v-else class="view-content">
+                <section v-if="currentTab === 'pantry' || currentTab === 'shopping'" class="personal-scope-switcher" aria-label="目前的庫存與採買資料空間">
+                    <span class="personal-scope-label">目前查看</span>
+                    <div class="personal-scope-options" role="group" aria-label="切換資料空間">
+                        <button v-for="scope in personalScopes" :key="scope.id" class="personal-scope-option" :class="{ active: personalScope === scope.id }" @click="selectPersonalScope(scope.id)">
+                            {{ scope.label }}
+                        </button>
+                    </div>
+                </section>
+                <!-- 1. 備料計算器 -->
+                <CalculatorView v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
+                <!-- 2. 今日紀錄 -->
+                <TrackerView v-if="currentTab === 'tracker'" ref="trackerView" :engine="engine" />
+                <!-- 4. 智慧冰箱 -->
+                <PantryView v-if="currentTab === 'pantry'" :engine="engine" />
+                <!-- 5. 獨立採買清單 -->
+                <ShoppingView v-if="currentTab === 'shopping'" :engine="engine" />
+            </main>
+
+            <!-- 📱 1:1 復刻記帳 App 5 鍵式純白浮空底部導航列 -->
+            <nav class="bottom-dock-container" :class="{ 'is-keyboard-open': isKeyboardOpen }" aria-label="主要功能導覽">
+                <div class="bottom-dock">
+                    <div class="dock-side-group" aria-label="主要功能">
+                        <!-- Tab 1: 備料計算器 (日系指針烘焙機械秤) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'calculator' }" :aria-pressed="currentTab === 'calculator'" @click="setTab('calculator')" title="備料計算器" aria-label="備料計算器">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 5h16c-.5 2.2-2.8 3.5-5 3.5H9C6.8 8.5 4.5 7.2 4 5z"></path>
+                                <line x1="12" y1="8.5" x2="12" y2="10.5"></line>
+                                <path d="M6 10.5h12l1.5 10H4.5L6 10.5z"></path>
+                                <circle cx="12" cy="15.5" r="3"></circle>
+                                <line x1="12" y1="15.5" x2="13.8" y2="13.8"></line>
+                            </svg>
+                        </button>
+
+                        <!-- Tab 2: 今日紀錄 (優雅同心三圓環進度) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'tracker' }" :aria-pressed="currentTab === 'tracker'" @click="setTab('tracker')" title="今日紀錄" aria-label="今日紀錄">
+                            <svg viewBox="0 0 24 24">
+                                <g transform="rotate(155 12 12)">
+                                    <circle cx="12" cy="12" r="8.5" stroke-dasharray="45 10"></circle>
+                                    <circle cx="12" cy="12" r="5.8" stroke-dasharray="26 10"></circle>
+                                    <circle cx="12" cy="12" r="3.1" stroke-dasharray="11 7"></circle>
+                                </g>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Tab 3 (CTA): 中央突出純白大圓鈕 (正中十字 ＋ 右上晶耀單星芒) -->
+                    <div class="dock-center-wrap">
+                        <button class="dock-center-btn" @click="openRecordActions" title="新增記錄" aria-label="新增記錄">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <!-- 單顆晶耀星芒 (右上角) -->
+                                <path class="starburst" d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="dock-side-group" aria-label="庫存與採買功能">
+                        <!-- Tab 4: 智慧冰箱 (飽滿雙門分層冰箱) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'pantry' }" :aria-pressed="currentTab === 'pantry'" @click="setTab('pantry')" title="智慧冰箱" aria-label="智慧冰箱">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="5" y="2.5" width="14" height="19" rx="3"></rect>
+                                <line x1="5" y1="10" x2="19" y2="10"></line>
+                                <line x1="8" y1="6" x2="8" y2="8"></line>
+                                <line x1="8" y1="13" x2="8" y2="16"></line>
+                            </svg>
+                        </button>
+
+                        <!-- Tab 5: 採買清單 (超市手推車) -->
+                        <button class="dock-tab" :class="{ active: currentTab === 'shopping' }" :aria-pressed="currentTab === 'shopping'" @click="setTab('shopping')" title="採買清單" aria-label="採買清單">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M2 3.5h3.2l2.3 11a1.6 1.6 0 0 0 1.6 1.4h9.6a1.6 1.6 0 0 0 1.6-1.4L22 7.5H5.8"></path>
+                                <circle cx="9.5" cy="19.5" r="1.3"></circle>
+                                <circle cx="17.5" cy="19.5" r="1.3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- 新增記錄：先選輸入方式，避免中央加號直接請求相機權限。 -->
+            <div v-if="showRecordActions" class="action-sheet-overlay" @click.self="closeRecordActions" role="presentation">
+                <section class="action-sheet" role="dialog" aria-modal="true" aria-labelledby="record-action-title">
+                    <h2 id="record-action-title" class="action-sheet-title">新增記錄</h2>
+                    <div class="action-sheet-list" aria-label="選擇記錄方式">
+                        <button class="action-sheet-row" @click="selectRecordAction('album')">從相簿選取</button>
+                        <button class="action-sheet-row" @click="selectRecordAction('camera')">拍照</button>
+                        <button class="action-sheet-row" @click="selectRecordAction('voice')">語音／文字輸入</button>
+                    </div>
+                    <button class="action-sheet-cancel" @click="closeRecordActions">取消</button>
+                </section>
+            </div>
+
+            <div v-if="showAccount" class="action-sheet-overlay" @click.self="showAccount = false" role="presentation">
+                <section class="action-sheet account-sheet" role="dialog" aria-modal="true" aria-labelledby="family-account-title">
+                    <h2 id="family-account-title" class="action-sheet-title">家庭同步</h2>
+                    <template v-if="currentUser">
+                        <p class="account-copy">已登入 {{ currentUser.email }}。庫存與採買會在你有權限的資料空間內同步。</p>
+                        <button class="action-sheet-row" @click="signOut">登出此裝置</button>
+                    </template>
+                    <template v-else>
+                        <p class="account-copy">第一次只要輸入 Email，我們會寄一封登入連結給你；不需要設定密碼。</p>
+                        <label class="account-email-label" for="family-login-email">Email</label>
+                        <input id="family-login-email" v-model="loginEmail" class="account-email-input" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
+                        <button class="action-sheet-row account-login-button" :disabled="loginSending" @click="requestLoginLink">{{ loginSending ? '寄送中…' : '寄送登入連結' }}</button>
+                    </template>
+                    <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
+                    <button class="action-sheet-cancel" @click="showAccount = false">關閉</button>
+                </section>
+            </div>
+
+        </div>
+    `
+};
+
+createApp(App).mount('#app');
