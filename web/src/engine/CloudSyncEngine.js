@@ -13,6 +13,9 @@ class CloudSyncEngine {
         const _p2 = 'IZgsS7hK' + 'PbFwbeRK';
         const _p3 = 'VhDTCQjl' + 'Z2n8652TxOkr';
         this.token = _p1 + _p2 + _p3;
+        // 🔐 既有 GitHub PAT 已過期失效，全面由 Supabase 雲端資料庫接管同步中樞
+        // 關閉 GitHub API 輪詢以避免背景 401 錯誤與重複網路開銷
+        this.enabled = false;
         this.apiBase = `https://api.github.com/repos/${this.repoOwner}/${this.repoName}/contents/src/data/`;
         this.rawBase = `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/main/src/data/`;
         
@@ -60,6 +63,7 @@ class CloudSyncEngine {
      * 📥 從雲端中樞拉取指定檔案最新資料 (GitHub API)
      */
     async fetchFromCloud(filename) {
+        if (!this.enabled) return null;
         const targetUrl = `${this.apiBase}${filename}`;
         
         try {
@@ -102,7 +106,7 @@ class CloudSyncEngine {
      * 📤 將本地最新資料推播至 GitHub 雲端中樞 (防抖動 500ms)
      */
     async pushToCloud(filename, data) {
-        if (!data || typeof data !== 'object') return;
+        if (!this.enabled || !data || typeof data !== 'object') return;
         
         // 防抖動機制：短時間內連續修改合併為一次推播
         if (this.debounceTimers[filename]) {

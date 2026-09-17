@@ -50,26 +50,30 @@ class SupabaseService {
             const ext = mimeType.includes('png') ? 'png' : 'jpg';
             const filename = `meals/${member}_${dateStr}_${timeStr}.${ext}`;
 
-            // 1. 優先嘗試透過本地後端 API 代理上傳 (若在本地環境可免除 RLS 限制)
-            try {
-                const proxyResp = await fetch('/api/upload-supabase-photo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        filename: filename,
-                        mimeType: mimeType,
-                        base64: pureB64
-                    })
-                });
-                if (proxyResp.ok) {
-                    const proxyData = await proxyResp.json();
-                    if (proxyData.status === 'success' && proxyData.publicUrl) {
-                        console.log('✅ [Supabase] 透過本地代理上傳成功！公開網址:', proxyData.publicUrl);
-                        return proxyData.publicUrl;
+            // 1. 優先嘗試透過本地後端 API 代理上傳 (僅在本地環境執行，線上跳過避免 404)
+            const isLocalServer = typeof window !== 'undefined' && 
+                (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+            if (isLocalServer) {
+                try {
+                    const proxyResp = await fetch('/api/upload-supabase-photo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: filename,
+                            mimeType: mimeType,
+                            base64: pureB64
+                        })
+                    });
+                    if (proxyResp.ok) {
+                        const proxyData = await proxyResp.json();
+                        if (proxyData.status === 'success' && proxyData.publicUrl) {
+                            console.log('✅ [Supabase] 透過本地代理上傳成功！公開網址:', proxyData.publicUrl);
+                            return proxyData.publicUrl;
+                        }
                     }
+                } catch (e) {
+                    // 本地代理不可用時轉直傳
                 }
-            } catch (e) {
-                // 本地代理不可用時轉直傳
             }
 
             // 2. Client-side 直傳模式

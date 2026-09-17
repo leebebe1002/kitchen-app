@@ -183,18 +183,20 @@ export default class KitchenEngine {
         try {
             // 嘗試從 API 或靜態檔案下載
             let response = null;
-            try {
-                response = await fetch(`/api/data/${filename}?t=${t}`);
-            } catch (e) {}
+            const isLocalServer = typeof window !== 'undefined' && 
+                (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
+            // 1. 本地開發伺服器模式 (只有在 localhost 時才嘗試 server.py API)
+            if (isLocalServer) {
+                try {
+                    response = await fetch(`/api/data/${filename}?t=${t}`);
+                } catch (e) {}
+            }
+
+            // 2. 線上 GitHub Pages 或靜態檔案模式：直接讀取靜態 JSON，不再枯等 404！
             if (!response || !response.ok) {
                 try {
                     response = await fetch(`../src/data/${filename}?t=${t}`);
-                } catch (e) {}
-            }
-            if (!response || !response.ok) {
-                try {
-                    response = await fetch(`./src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
             if (!response || !response.ok) {
@@ -203,6 +205,11 @@ export default class KitchenEngine {
                     // 從此模組位置建立相對網址，才能同時支援本機與公開網站。
                     const staticDataUrl = new URL(`../../../src/data/${filename}?t=${t}`, import.meta.url);
                     response = await fetch(staticDataUrl);
+                } catch (e) {}
+            }
+            if ((!response || !response.ok) && isLocalServer) {
+                try {
+                    response = await fetch(`./src/data/${filename}?t=${t}`);
                 } catch (e) {}
             }
 
@@ -456,18 +463,22 @@ export default class KitchenEngine {
             this.cloudSync.pushToCloud(filename, dataObj);
         }
 
-        // 3. 後端伺服器 (若在本地 dev server 模式)
-        try {
-            const response = await fetch(`/api/data/${filename}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataObj)
-            });
-            if (!response.ok) {
+        // 3. 後端伺服器 (僅在本地 dev server 模式，線上跳過避免 404)
+        const isLocalServer = typeof window !== 'undefined' && 
+            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        if (isLocalServer) {
+            try {
+                const response = await fetch(`/api/data/${filename}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataObj)
+                });
+                if (!response.ok) {
+                    console.log(`Cloud mode: persisted ${filename} to localStorage.`);
+                }
+            } catch (e) {
                 console.log(`Cloud mode: persisted ${filename} to localStorage.`);
             }
-        } catch (e) {
-            console.log(`Cloud mode: persisted ${filename} to localStorage.`);
         }
     }
 
