@@ -81,12 +81,23 @@ class SupabaseService {
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: mimeType });
 
+            let authToken = this.anonKey;
+            try {
+                const sessionStr = localStorage.getItem('family_kitchen_auth_session');
+                if (sessionStr) {
+                    const session = JSON.parse(sessionStr);
+                    if (session && session.access_token) {
+                        authToken = session.access_token;
+                    }
+                }
+            } catch (e) {}
+
             const uploadUrl = `${this.url}/storage/v1/object/${this.bucket}/${filename}`;
             const resp = await fetch(uploadUrl, {
                 method: 'POST',
                 headers: {
                     'apikey': this.anonKey,
-                    'Authorization': `Bearer ${this.anonKey}`,
+                    'Authorization': `Bearer ${authToken}`,
                     'Content-Type': mimeType
                 },
                 body: blob

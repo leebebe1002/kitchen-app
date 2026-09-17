@@ -933,17 +933,21 @@ export default {
             }
 
             // ☁️ 優先將實拍照片上傳至 Supabase 雲端圖床 (避免 Base64 塞爆 JSON 與 iCloud 同步)
-            let finalPhotoUrl = capturedPhotoUrl.value;
+            let finalPhotoUrl = null;
             if (isFromPhoto && capturedPhotoUrl.value && capturedPhotoUrl.value.startsWith('data:')) {
                 try {
                     const cloudUrl = await SupabaseService.uploadMealPhoto(capturedPhotoUrl.value, currentMember.value);
                     if (cloudUrl) {
                         finalPhotoUrl = cloudUrl;
                         console.log('🎉 [Tracker] 食物照片已成功儲存至 Supabase 雲端圖床:', cloudUrl);
+                    } else {
+                        console.warn('⚠️ [Tracker] 雲端圖床上傳未成功，餐點數值已正常記錄，略過 Base64 圖檔以保護系統秒開速度');
                     }
                 } catch (e) {
-                    console.warn('⚠️ [Tracker] 雲端圖床上傳異常，使用本地照片快照:', e);
+                    console.warn('⚠️ [Tracker] 雲端圖床上傳異常:', e);
                 }
+            } else if (capturedPhotoUrl.value && !capturedPhotoUrl.value.startsWith('data:')) {
+                finalPhotoUrl = capturedPhotoUrl.value;
             }
 
             const meal = {

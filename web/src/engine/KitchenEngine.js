@@ -384,8 +384,34 @@ export default class KitchenEngine {
 
     safeSetLocalStorage(key, dataObj) {
         try {
-            const jsonStr = JSON.stringify(dataObj);
-            // 若單一物件超過 1MB，則進行安全精簡保護 (防止 iOS Safari WebKit Crash)
+            let targetObj = dataObj;
+            let jsonStr = JSON.stringify(targetObj);
+            // 🛡️ 雙重安全閥：若飲食紀錄物件異常膨脹（> 500KB），主動過濾殘存的 Base64 照片字串
+            if (key === 'kitchen_v2_daily_logs.json' && jsonStr.length > 500 * 1024) {
+                console.warn(`[SafeStorage] daily_logs 物件過大 (${jsonStr.length} bytes)，啟動自動清洗...`);
+                try {
+                    const cleaned = JSON.parse(jsonStr);
+                    if (cleaned && cleaned.logs) {
+                        cleaned.logs.forEach(log => {
+                            if (log.diners) {
+                                Object.values(log.diners).forEach(diner => {
+                                    if (diner.meals) {
+                                        diner.meals.forEach(m => {
+                                            if (m.photoUrl && typeof m.photoUrl === 'string' && m.photoUrl.startsWith('data:')) {
+                                                m.photoUrl = null;
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                        targetObj = cleaned;
+                        jsonStr = JSON.stringify(targetObj);
+                    }
+                } catch (cErr) {
+                    console.warn('[SafeStorage] 自動清洗失敗:', cErr);
+                }
+            }
             if (jsonStr.length > 1024 * 1024) {
                 console.warn(`Object for ${key} is large (${jsonStr.length} bytes), applying safe storage.`);
             }
@@ -502,6 +528,17 @@ export default class KitchenEngine {
     async saveIngredient(ingData) {
         if (!ingData || !ingData.id) return;
         const category = ingData.category || 'proteins';
+
+        // 🛡️ 鐵律守門：若食材包含 Base64 照片，上傳圖床；失敗則清空 photoUrl，絕不存入資料庫
+        if (ingData.photoUrl && ingData.photoUrl.startsWith('data:')) {
+            let uploadedUrl = null;
+            if (this.supabase) {
+                try {
+                    uploadedUrl = await this.supabase.uploadMealPhoto(ingData.photoUrl, 'ingredient');
+                } catch (e) {}
+            }
+            ingData.photoUrl = uploadedUrl || null;
+        }
 
         // 1. Ensure rawIngredients has the category array
         if (!this.data.rawIngredients) {
@@ -818,15 +855,22 @@ export default class KitchenEngine {
             meal.id = 'meal_' + Date.now() + '_' + member;
         }
 
-        // 1. 若附帶 Base64 實拍照片，上傳至 Supabase Storage 圖床並替換為公開 URL (徹底避免本機儲存空間膨脹)
-        if (meal.photoUrl && meal.photoUrl.startsWith('data:') && this.supabase) {
-            try {
-                const uploadedUrl = await this.supabase.uploadMealPhoto(meal.photoUrl, member);
-                if (uploadedUrl) {
-                    meal.photoUrl = uploadedUrl;
+        // 1. 🛡️ 鐵律守門：若附帶 Base64 實拍照片，上傳至 Supabase Storage 圖床並替換為公開 URL；若失敗，絕對禁止保留 Base64 字串！
+        if (meal.photoUrl && meal.photoUrl.startsWith('data:')) {
+            let uploadedUrl = null;
+            if (this.supabase) {
+                try {
+                    uploadedUrl = await this.supabase.uploadMealPhoto(meal.photoUrl, member);
+                    if (uploadedUrl) {
+                        meal.photoUrl = uploadedUrl;
+                    }
+                } catch (pErr) {
+                    console.warn('⚠️ [Supabase] 照片上傳失敗:', pErr);
                 }
-            } catch (pErr) {
-                console.warn('⚠️ [Supabase] 照片上傳失敗，保留本地暫存:', pErr);
+            }
+            if (!uploadedUrl) {
+                console.warn('⚠️ [KitchenEngine] 未能取得公開圖床 URL，清除 Base64 照片字串以維護系統極速開啟');
+                meal.photoUrl = null;
             }
         }
 
