@@ -100,7 +100,9 @@ const IngredientDetailModal = {
                 form.servingUnit = ing.servingUnit || 'g';
                 form.stock = props.engine.checkStock(ing.id);
                 form.storageZones = Array.isArray(ing.storageZones) ? [...ing.storageZones] : ['fridge'];
-                form.preferredStores = Array.isArray(ing.preferredStores) ? [...ing.preferredStores] : ['全聯'];
+                form.preferredStores = Array.isArray(ing.preferredStores) 
+                    ? ing.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s) 
+                    : (ing.preferredStore ? [ing.preferredStore === 'EC 電商' ? 'EC' : ing.preferredStore] : ['全聯']);
                 form.price = ing.price || 0;
                 form.priceUnit = ing.priceUnit || '包';
 
@@ -490,6 +492,7 @@ const IngredientDetailModal = {
                 servingUnit: form.servingUnit || 'g',
                 storageZones: [...form.storageZones],
                 preferredStores: [...form.preferredStores],
+                preferredStore: form.preferredStores?.[0] || '全聯',
                 price: Number(form.price) || 0,
                 priceUnit: form.priceUnit || '包',
                 priorityTier: Number(form.priorityTier) || 1,
@@ -513,6 +516,21 @@ const IngredientDetailModal = {
             // 儲存至總庫
             if (props.engine?.saveIngredient) {
                 await props.engine.saveIngredient(ingData);
+            }
+
+            // 同步更新採買清單中已存在的該品項通路
+            if (props.engine?.data?.pantryInventory?.shoppingList) {
+                let shoppingUpdated = false;
+                props.engine.data.pantryInventory.shoppingList.forEach(item => {
+                    if (item.targetId === targetId || item.name === cleanName) {
+                        item.preferredStores = [...form.preferredStores];
+                        item.store = form.preferredStores?.[0] || '全聯';
+                        shoppingUpdated = true;
+                    }
+                });
+                if (shoppingUpdated && props.engine.saveJson) {
+                    await props.engine.saveJson('pantry_inventory.json', props.engine.data.pantryInventory);
+                }
             }
 
             // 更新庫存狀態

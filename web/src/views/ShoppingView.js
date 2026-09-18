@@ -9,7 +9,7 @@ export default {
         const activeStorePickerItemId = ref(null);
         const lastStoreAction = ref(null);
 
-        const availableStores = ['全聯', 'Costco', '義美', 'EC 電商', '傳統市場', '其他'];
+        const availableStores = ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他'];
 
         const shoppingList = computed(() => {
             return engine?.data?.pantryInventory?.shoppingList || [];
@@ -24,15 +24,25 @@ export default {
         });
 
         const getItemStores = (item) => {
-            if (item.store) return [item.store];
+            if (item.type === 'supply') {
+                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) return item.preferredStores;
+                const sup = engine?.data?.householdSupplies?.supplies?.find(s => s.id === item.targetId);
+                if (sup?.preferredStores && sup.preferredStores.length > 0) return sup.preferredStores;
+                if (sup?.store) return [sup.store];
+                if (item.store) return [item.store];
+                return ['Costco'];
+            }
             if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) return item.preferredStores;
-            if (item.preferredStore) return item.preferredStore.split('/').map(s => s.trim()).filter(Boolean);
+            const ing = engine?.getIngredientById ? engine.getIngredientById(item.targetId) : null;
+            if (ing?.preferredStores && ing.preferredStores.length > 0) return ing.preferredStores;
+            if (ing?.preferredStore) return [ing.preferredStore];
+            if (item.store) return [item.store];
             return ['全聯'];
         };
 
         const getItemStoreLabel = (item) => {
             const stores = getItemStores(item);
-            return stores.length > 0 ? stores.join(' / ') : '未指定';
+            return stores.length > 0 ? stores.join('、') : '未指定';
         };
 
         // 採買時未購入項目必須固定在前，已勾選的才往下移。
@@ -93,11 +103,11 @@ export default {
         };
 
         const toggleStoreForItem = async (item, store) => {
-            const currentStores = getItemStores(item);
+            const currentStores = [...getItemStores(item)];
             let updatedStores = [];
             if (currentStores.includes(store)) {
                 if (currentStores.length === 1) {
-                    alert(`【${item.name}】至少需保留一個採買通路！`);
+                    alert(`【${item.name}】至少需保留一個採買通路！若想更換通路，請先點選新的通路。`);
                     return;
                 }
                 updatedStores = currentStores.filter(s => s !== store);
@@ -106,17 +116,36 @@ export default {
             }
 
             const previousStores = [...currentStores];
-            const updatedLabel = updatedStores.join(' / ');
+            const updatedLabel = updatedStores.join('、');
+
+            item.preferredStores = updatedStores;
+            item.store = updatedStores[0];
+            item.preferredStore = updatedStores[0];
 
             if (item.type === 'supply') {
-                item.store = updatedStores[0];
+                if (engine?.data?.householdSupplies?.supplies) {
+                    const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
+                    if (sup) {
+                        sup.preferredStores = updatedStores;
+                        sup.store = updatedStores[0];
+                        await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
+                    }
+                }
             } else {
-                item.preferredStores = updatedStores;
-                item.preferredStore = updatedLabel;
-                const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.targetId);
-                if (ingInMaster) {
-                    ingInMaster.preferredStores = updatedStores;
-                    ingInMaster.preferredStore = updatedLabel;
+                const ing = engine?.getIngredientById ? engine.getIngredientById(item.targetId) : null;
+                if (ing) {
+                    ing.preferredStores = updatedStores;
+                    ing.preferredStore = updatedStores[0];
+                    if (engine.data.rawIngredients) {
+                        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                            const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
+                            if (rawIng) {
+                                rawIng.preferredStores = updatedStores;
+                                rawIng.preferredStore = updatedStores[0];
+                            }
+                        });
+                        await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+                    }
                 }
             }
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
@@ -133,19 +162,37 @@ export default {
         const undoLastStoreAction = async () => {
             if (!lastStoreAction.value) return;
             const action = lastStoreAction.value;
-            const item = (engine.data.pantryInventory?.shoppingList || []).find(it => it.id === action.itemId);
+            const item = (engine?.data?.pantryInventory?.shoppingList || []).find(it => it.id === action.itemId);
             if (item) {
                 const revertedStores = action.previousStores;
-                const revertedLabel = revertedStores.join(' / ');
+                const revertedLabel = revertedStores.join('、');
+                item.preferredStores = revertedStores;
+                item.store = revertedStores[0] || '全聯';
+                item.preferredStore = revertedStores[0] || '全聯';
                 if (item.type === 'supply') {
-                    item.store = revertedStores[0];
+                    if (engine?.data?.householdSupplies?.supplies) {
+                        const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
+                        if (sup) {
+                            sup.preferredStores = revertedStores;
+                            sup.store = revertedStores[0];
+                            await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
+                        }
+                    }
                 } else {
-                    item.preferredStores = revertedStores;
-                    item.preferredStore = revertedLabel;
-                    const ingInMaster = (engine.data.ingredients || []).find(i => i.id === item.targetId);
-                    if (ingInMaster) {
-                        ingInMaster.preferredStores = revertedStores;
-                        ingInMaster.preferredStore = revertedLabel;
+                    const ing = engine?.getIngredientById ? engine.getIngredientById(item.targetId) : null;
+                    if (ing) {
+                        ing.preferredStores = revertedStores;
+                        ing.preferredStore = revertedStores[0];
+                        if (engine.data.rawIngredients) {
+                            ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+                                const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
+                                if (rawIng) {
+                                    rawIng.preferredStores = revertedStores;
+                                    rawIng.preferredStore = revertedStores[0];
+                                }
+                            });
+                            await engine.saveJson('ingredients.json', engine.data.rawIngredients);
+                        }
                     }
                 }
                 await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
@@ -267,8 +314,8 @@ export default {
                 <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '義美' }" @click="shoppingStoreFilter = '義美'">
                     義美 ({{ getStoreShoppingCount('義美') }})
                 </button>
-                <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC 電商' }" @click="shoppingStoreFilter = 'EC 電商'">
-                    EC 電商 ({{ getStoreShoppingCount('EC 電商') }})
+                <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC' }" @click="shoppingStoreFilter = 'EC'">
+                    EC ({{ getStoreShoppingCount('EC') }})
                 </button>
                 <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '傳統市場' }" @click="shoppingStoreFilter = '傳統市場'">
                     傳統市場 ({{ getStoreShoppingCount('傳統市場') }})

@@ -1,5 +1,5 @@
 const { ref, reactive, computed, watch, onMounted } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260827_V115_FLEX_SHRINK_FIX';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_STORE_FIX_V2';
 
 export default {
     components: {

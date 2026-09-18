@@ -55,11 +55,17 @@ export default class KitchenEngine {
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
 
-        // 2. 攤平食材列表
+        // 2. 攤平食材列表並正規化舊版通路名稱
         this.data.ingredients = [];
         if (this.data.rawIngredients) {
             ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
+                    this.data.rawIngredients[cat].forEach(ing => {
+                        if (ing.preferredStore === 'EC 電商') ing.preferredStore = 'EC';
+                        if (Array.isArray(ing.preferredStores)) {
+                            ing.preferredStores = ing.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                        }
+                    });
                     this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
                 }
             });
@@ -76,6 +82,14 @@ export default class KitchenEngine {
         if (!this.data.pantryInventory.supplyStockStatus) this.data.pantryInventory.supplyStockStatus = {};
         if (!this.data.pantryInventory.shoppingList) this.data.pantryInventory.shoppingList = [];
         if (!this.data.pantryInventory.foodCart) this.data.pantryInventory.foodCart = [];
+
+        // 正規化採買清單中的舊版通路名稱
+        this.data.pantryInventory.shoppingList.forEach(item => {
+            if (item.store === 'EC 電商') item.store = 'EC';
+            if (Array.isArray(item.preferredStores)) {
+                item.preferredStores = item.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+            }
+        });
 
         // 庫存、採買與家用品不是全家共用資料：Bebe + Jason 共用 household，
         // 樂樂使用 ariel。既有未分組資料只會作為 household 的首次種子。
@@ -121,6 +135,22 @@ export default class KitchenEngine {
         const blank = emptyPersonalKitchenState();
         this.data.pantryInventory = state?.pantryInventory || blank.pantryInventory;
         this.data.householdSupplies = state?.householdSupplies || blank.householdSupplies;
+        if (this.data.pantryInventory?.shoppingList) {
+            this.data.pantryInventory.shoppingList.forEach(item => {
+                if (item.store === 'EC 電商') item.store = 'EC';
+                if (Array.isArray(item.preferredStores)) {
+                    item.preferredStores = item.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                }
+            });
+        }
+        if (this.data.householdSupplies?.supplies) {
+            this.data.householdSupplies.supplies.forEach(sup => {
+                if (sup.store === 'EC 電商') sup.store = 'EC';
+                if (Array.isArray(sup.preferredStores)) {
+                    sup.preferredStores = sup.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                }
+            });
+        }
     }
 
     persistPersonalKitchenState() {
@@ -576,7 +606,22 @@ export default class KitchenEngine {
         // 5. Persist to ingredients.json
         await this.saveJson('ingredients.json', this.data.rawIngredients);
 
-        // 6. Also sync custom ingredients to LocalStorage
+        // 6. 同步更新採買清單中已存在的該品項通路
+        if (this.data.pantryInventory?.shoppingList) {
+            let shoppingUpdated = false;
+            this.data.pantryInventory.shoppingList.forEach(s => {
+                if (s.targetId === ingData.id || s.name === ingData.name) {
+                    s.preferredStores = [...(ingData.preferredStores || [ingData.preferredStore || '全聯'])];
+                    s.store = ingData.preferredStore || s.preferredStores[0] || '全聯';
+                    shoppingUpdated = true;
+                }
+            });
+            if (shoppingUpdated) {
+                await this.saveJson('pantry_inventory.json', this.data.pantryInventory);
+            }
+        }
+
+        // 7. Also sync custom ingredients to LocalStorage
         try {
             const customKey = 'kitchen_v2_custom_ingredients';
             let customList = [];
@@ -658,7 +703,9 @@ export default class KitchenEngine {
                     defaultStore = '全聯';
                 }
             }
-            const stores = item.preferredStores || (defaultStore ? [defaultStore] : ['全聯']);
+            if (defaultStore === 'EC 電商') defaultStore = 'EC';
+            const rawStores = item.preferredStores || (defaultStore ? [defaultStore] : ['全聯']);
+            const stores = rawStores.map(s => s === 'EC 電商' ? 'EC' : s);
             this.data.pantryInventory.shoppingList.push({
                 id: 'shop_' + Date.now(),
                 type: item.type || 'food',

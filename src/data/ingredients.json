@@ -1247,9 +1247,9 @@
                 "sodium": 1070.1
             },
             "storageZone": "pantry",
-            "preferredStore": "EC 電商",
+            "preferredStore": "EC",
             "preferredStores": [
-                "EC 電商",
+                "EC",
                 "全聯"
             ],
             "storageZones": [
@@ -1298,7 +1298,7 @@
             "preferredStores": [
                 "Costco",
                 "全聯",
-                "EC 電商",
+                "EC",
                 "其他"
             ],
             "storageZones": [
@@ -1508,7 +1508,7 @@
             "preferredStore": "全聯",
             "preferredStores": [
                 "全聯",
-                "EC 電商"
+                "EC"
             ],
             "priorityTier": 2
         }
@@ -1598,7 +1598,7 @@
             "preferredStore": "全聯",
             "preferredStores": [
                 "全聯",
-                "EC 電商"
+                "EC"
             ],
             "storageZones": [
                 "pantry"
@@ -1895,9 +1895,9 @@
                 "fridge"
             ],
             "storageZone": "fridge",
-            "preferredStore": "EC 電商",
+            "preferredStore": "EC",
             "preferredStores": [
-                "EC 電商",
+                "EC",
                 "全聯"
             ],
             "priorityTier": 4

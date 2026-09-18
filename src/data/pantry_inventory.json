@@ -154,7 +154,10 @@
             "targetId": "steamed_noodle",
             "name": "蒸煮麵",
             "sourceDish": "常備食材",
-            "store": "EC 電商",
+            "store": "EC",
+            "preferredStores": [
+                "EC"
+            ],
             "isPurchased": false
         },
         {
@@ -163,7 +166,10 @@
             "targetId": "shin_ramen",
             "name": "辛拉麵",
             "sourceDish": "常備食材",
-            "store": "EC 電商",
+            "store": "EC",
+            "preferredStores": [
+                "EC"
+            ],
             "isPurchased": false
         },
         {

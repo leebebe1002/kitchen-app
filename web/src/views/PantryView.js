@@ -1,5 +1,5 @@
 const { ref, computed, watch } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260827_V115_FLEX_SHRINK_FIX';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_STORE_FIX_V2';
 
 export default {
     components: {
@@ -243,7 +243,7 @@ export default {
         };
 
         const activeStorePickerItemId = ref(null);
-        const availableStores = ['全聯', 'Costco', '義美', '傳統市場', 'EC 電商', '其他'];
+        const availableStores = ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他'];
 
         const toggleStorePicker = (itemId) => {
             activeStorePickerItemId.value = activeStorePickerItemId.value === itemId ? null : itemId;
@@ -258,6 +258,9 @@ export default {
             if (idx !== -1) {
                 if (currentStores.length > 1) {
                     currentStores.splice(idx, 1);
+                } else {
+                    alert(`【${item.name}】至少需保留一個採買通路！若想更換通路，請先點選新的通路。`);
+                    return;
                 }
             } else {
                 currentStores.push(targetStore);
@@ -345,6 +348,7 @@ export default {
                     }
                 }
             }
+            item.preferredStores = oldStores;
             item.store = oldStores[0];
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
         };
@@ -1438,8 +1442,8 @@ export default {
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '義美' }" @click="shoppingStoreFilter = '義美'">
                             義美 ({{ getStoreShoppingCount('義美') }})
                         </button>
-                        <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC 電商' }" @click="shoppingStoreFilter = 'EC 電商'">
-                            EC 電商 ({{ getStoreShoppingCount('EC 電商') }})
+                        <button class="capsule" :class="{ 'selected': shoppingStoreFilter === 'EC' }" @click="shoppingStoreFilter = 'EC'">
+                            EC ({{ getStoreShoppingCount('EC') }})
                         </button>
                         <button class="capsule" :class="{ 'selected': shoppingStoreFilter === '傳統市場' }" @click="shoppingStoreFilter = '傳統市場'">
                             傳統市場 ({{ getStoreShoppingCount('傳統市場') }})
