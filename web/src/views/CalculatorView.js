@@ -1,5 +1,5 @@
 const { ref, reactive, computed, watch, onMounted } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_DEDUP_V1';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_FIX_STATE_V2';
 
 export default {
     components: {

@@ -64,8 +64,27 @@ export function readPersonalKitchenState(scopeId) {
     }
 }
 
+export function restorePersonalKitchenStateBackup(scopeId) {
+    try {
+        const backup = localStorage.getItem(STORAGE_PREFIX + scopeId + '_backup');
+        if (backup) {
+            localStorage.setItem(STORAGE_PREFIX + scopeId, backup);
+            return JSON.parse(backup);
+        }
+    } catch (e) {
+        console.warn('Unable to restore backup:', e);
+    }
+    return null;
+}
+
 export function writePersonalKitchenState(scopeId, state, { preserveUpdatedAt = false } = {}) {
     if (!PERSONAL_SCOPES[scopeId]) return;
+    try {
+        const current = localStorage.getItem(STORAGE_PREFIX + scopeId);
+        if (current) {
+            localStorage.setItem(STORAGE_PREFIX + scopeId + '_backup', current);
+        }
+    } catch (e) {}
     localStorage.setItem(STORAGE_PREFIX + scopeId, JSON.stringify({
         ...state,
         updatedAt: preserveUpdatedAt && state?.updatedAt ? state.updatedAt : new Date().toISOString()

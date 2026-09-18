@@ -10,7 +10,7 @@ import {
     writePersonalKitchenState
 } from '../services/PersonalKitchenState.js';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
-import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_DEDUP_V1';
+import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 
 export default class KitchenEngine {
     constructor() {
@@ -53,6 +53,13 @@ export default class KitchenEngine {
             this.fetchJson('config.json', 'config', {})
         ]);
         
+        // 🛡️【第 1 優先守門】：立即載入個人專屬廚房狀態 (household / ariel)
+        // 必須在任何食材清洗或業務邏輯執行前完成，確保 this.data.pantryInventory 100% 是使用者真實最新的庫存資料！
+        this.initializePersonalKitchenState();
+
+        // 🛡️【第 2 優先守門】：食材名稱去重與清洗 (徹底消除歷史雙胞胎如重複洋蔥)
+        this.cleanDuplicateIngredients();
+
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
 
@@ -92,9 +99,6 @@ export default class KitchenEngine {
             }
         });
 
-        // 庫存、採買與家用品不是全家共用資料：Bebe + Jason 共用 household，
-        // 樂樂使用 ariel。既有未分組資料只會作為 household 的首次種子。
-        this.initializePersonalKitchenState();
         this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
 
         // 6. ☁️ 全家雲端同步中樞在背景非同步執行 (不阻塞 App 啟動，實現 0 秒秒開)
@@ -313,9 +317,12 @@ export default class KitchenEngine {
                     }
                     return sIng;
                 });
-                // 加入使用者自訂的新食材
+                // 加入使用者自訂的新食材 (🛡️ 嚴格防呆：若母庫中已存在同名食材，絕不把本地舊雙胞胎重複加進去)
                 localList.forEach(lIng => {
-                    if (!merged[cat].some(i => i.id === lIng.id)) {
+                    const normLocalName = normalizeIngredientName(lIng.name || '');
+                    const isIdExist = merged[cat].some(i => i.id === lIng.id);
+                    const isNameExist = merged[cat].some(i => normalizeIngredientName(i.name || '') === normLocalName);
+                    if (!isIdExist && !isNameExist) {
                         merged[cat].push(lIng);
                     }
                 });
@@ -398,7 +405,98 @@ export default class KitchenEngine {
         return localData || serverData;
     }
 
-    // 保留使用者手動新增的自訂食材 (加入第二道防線：自動清洗與內建食材完全同名的歷史雙胞胎)
+    // 🛡️ 徹底清洗 rawIngredients 中與官方底層完全同名的歷史雙胞胎 (例如重複洋蔥)
+    cleanDuplicateIngredients() {
+        if (!this.data.rawIngredients) return;
+
+        let hasCleanedRaw = false;
+        const removedCustomIds = new Map(); // customId -> canonicalIng
+
+        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+            const list = this.data.rawIngredients[cat] || [];
+            const seenCanonical = new Map(); // normName -> canonicalIng
+            const cleanList = [];
+
+            // 第一輪：先記錄官方標準底層食材 (非 'ing_' 開頭的標準 ID 優先)
+            list.forEach(ing => {
+                const normName = normalizeIngredientName(ing.name || '');
+                const isBase = !ing.id.startsWith('ing_') && !ing.id.startsWith('custom_');
+                if (isBase && !seenCanonical.has(normName)) {
+                    seenCanonical.set(normName, ing);
+                }
+            });
+
+            // 第二輪：徹底剔除重複同名的自訂食材 (例如重名的洋蔥)
+            list.forEach(ing => {
+                const normName = normalizeIngredientName(ing.name || '');
+                const canonical = seenCanonical.get(normName);
+
+                if (canonical && canonical.id !== ing.id) {
+                    console.log(`[cleanDuplicateIngredients] 剔除重複食材【${ing.name}】(${ing.id})，保留官方底層【${canonical.name}】(${canonical.id})`);
+                    removedCustomIds.set(ing.id, canonical);
+                    hasCleanedRaw = true;
+                } else {
+                    if (!seenCanonical.has(normName)) {
+                        seenCanonical.set(normName, ing);
+                    }
+                    cleanList.push(ing);
+                }
+            });
+
+            this.data.rawIngredients[cat] = cleanList;
+        });
+
+        if (hasCleanedRaw) {
+            // 1. 將清洗後的 rawIngredients 寫入本機快取
+            this.safeSetLocalStorage('kitchen_v2_ingredients.json', this.data.rawIngredients);
+
+            // 2. 清洗 custom_ingredients 快取
+            try {
+                const customKey = 'kitchen_v2_custom_ingredients';
+                const customStr = localStorage.getItem(customKey);
+                if (customStr) {
+                    const customList = JSON.parse(customStr);
+                    if (Array.isArray(customList)) {
+                        const filtered = customList.filter(c => !removedCustomIds.has(c.id));
+                        localStorage.setItem(customKey, JSON.stringify(filtered));
+                    }
+                }
+            } catch (e) {}
+
+            // 3. 安全轉移庫存狀態與採買清單 (此時 this.data.pantryInventory 已由 initializePersonalKitchenState 載入真實資料)
+            let inventoryChanged = false;
+            if (this.data.pantryInventory) {
+                // 轉移採買清單中的 targetId
+                if (Array.isArray(this.data.pantryInventory.shoppingList)) {
+                    this.data.pantryInventory.shoppingList.forEach(s => {
+                        if (removedCustomIds.has(s.targetId)) {
+                            const canonical = removedCustomIds.get(s.targetId);
+                            s.targetId = canonical.id;
+                            s.name = canonical.name;
+                            inventoryChanged = true;
+                        }
+                    });
+                }
+                // 轉移庫存勾選
+                if (this.data.pantryInventory.foodStockStatus) {
+                    removedCustomIds.forEach((canonical, customId) => {
+                        if (this.data.pantryInventory.foodStockStatus[customId] !== undefined) {
+                            if (this.data.pantryInventory.foodStockStatus[customId]) {
+                                this.data.pantryInventory.foodStockStatus[canonical.id] = true;
+                            }
+                            delete this.data.pantryInventory.foodStockStatus[customId];
+                            inventoryChanged = true;
+                        }
+                    });
+                }
+                if (inventoryChanged) {
+                    this.persistPersonalKitchenState();
+                }
+            }
+        }
+    }
+
+    // 保留使用者手動新增的真正私房自訂食材
     mergeCustomUserIngredients() {
         const customKey = 'kitchen_v2_custom_ingredients';
         const customStr = localStorage.getItem(customKey);
@@ -406,14 +504,12 @@ export default class KitchenEngine {
         try {
             const customList = JSON.parse(customStr);
             if (Array.isArray(customList) && this.data.rawIngredients) {
-                let hasCleaned = false;
                 const filteredCustomList = [];
 
                 customList.forEach(customIng => {
                     const cat = customIng.category || 'veggies';
                     if (!this.data.rawIngredients[cat]) this.data.rawIngredients[cat] = [];
 
-                    // 1. 檢查是否與大總庫的既有食材「標準化完全同名」且 ID 不同
                     const normCustomName = normalizeIngredientName(customIng.name || '');
                     let matchingBaseIng = null;
 
@@ -425,31 +521,12 @@ export default class KitchenEngine {
                         if (found) matchingBaseIng = found;
                     });
 
-                    // 🚨 若發現既有底層總庫已存在完全同名食材，自動自癒清洗自訂項（消除歷史雙胞胎）
+                    // 雙胞胎已被 cleanDuplicateIngredients 剔除，不再混入
                     if (matchingBaseIng) {
-                        console.log(`[AutoDeduplicate] 發現歷史自訂食材【${customIng.name}】(${customIng.id}) 與底層食材(${matchingBaseIng.id})完全同名，自動自癒清洗！`);
-                        hasCleaned = true;
-
-                        // 若採買清單剛好指到這個自訂 ID，自動重導向至底層食材 ID
-                        if (this.data.pantryInventory?.shoppingList) {
-                            this.data.pantryInventory.shoppingList.forEach(s => {
-                                if (s.targetId === customIng.id) {
-                                    s.targetId = matchingBaseIng.id;
-                                    s.name = matchingBaseIng.name;
-                                }
-                            });
-                        }
-                        if (this.data.pantryInventory?.foodStockStatus && this.data.pantryInventory.foodStockStatus[customIng.id] !== undefined) {
-                            // 若自訂項有打勾庫存，轉移給底層食材
-                            if (this.data.pantryInventory.foodStockStatus[customIng.id]) {
-                                this.data.pantryInventory.foodStockStatus[matchingBaseIng.id] = true;
-                            }
-                            delete this.data.pantryInventory.foodStockStatus[customIng.id];
-                        }
-                        return; // 不加入 filteredCustomList，也不加入 rawIngredients
+                        return;
                     }
 
-                    // 2. 正常自訂食材：檢查自身 ID 是否已在 rawIngredients
+                    // 正常自訂食材：檢查自身 ID 是否已在 rawIngredients
                     const exists = this.data.rawIngredients[cat].some(i => i.id === customIng.id);
                     if (!exists) {
                         this.data.rawIngredients[cat].push(customIng);
@@ -457,14 +534,7 @@ export default class KitchenEngine {
                     filteredCustomList.push(customIng);
                 });
 
-                // 若有清洗，將清洗後的乾淨自訂清單寫回 LocalStorage，永久解決雙胞胎
-                if (hasCleaned) {
-                    localStorage.setItem(customKey, JSON.stringify(filteredCustomList));
-                    this.safeSetLocalStorage('kitchen_v2_ingredients.json', this.data.rawIngredients);
-                    if (this.data.pantryInventory) {
-                        this.saveJson('pantry_inventory.json', this.data.pantryInventory);
-                    }
-                }
+                localStorage.setItem(customKey, JSON.stringify(filteredCustomList));
             }
         } catch (e) {
             console.warn("Error merging custom user ingredients", e);

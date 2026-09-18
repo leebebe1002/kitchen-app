@@ -1,11 +1,11 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260918_DEDUP_V1';
-import CalculatorView from './views/CalculatorView.js?v=20260918_DEDUP_V1';
-import TrackerView from './views/TrackerView.js?v=20260917_PERF_V2';
-import PantryView from './views/PantryView.js?v=20260918_DEDUP_V1';
-import ShoppingView from './views/ShoppingView.js?v=20260918_STORE_FIX_V2';
-import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260918_FIX_STATE_V2';
+import CalculatorView from './views/CalculatorView.js?v=20260918_FIX_STATE_V2';
+import TrackerView from './views/TrackerView.js?v=20260917_GATEKEEPER';
+import PantryView from './views/PantryView.js?v=20260918_FIX_STATE_V2';
+import ShoppingView from './views/ShoppingView.js?v=20260918_EC_SYNC_V3';
+import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260918_FIX_STATE_V2';
 // 每次修正登入回跳邏輯時都更新版本字串，避免 iPhone PWA 沿用舊模組快取。
 // 與 PersonalKitchenSyncService 使用相同的模組網址，確保 Google 登入後
 // 同一份 session 會被同步服務讀到；網址加上不同版本參數會建立另一個實例。
