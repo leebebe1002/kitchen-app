@@ -1,4 +1,5 @@
 const { ref, reactive, computed, watch, onMounted } = Vue;
+import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_DEDUP_V1';
 
 const IngredientDetailModal = {
     name: 'IngredientDetailModal',
@@ -243,6 +244,62 @@ const IngredientDetailModal = {
             return saved;
         };
 
+        const modalMode = ref(props.mode);
+        watch(() => props.mode, (newVal) => {
+            modalMode.value = newVal;
+        });
+
+        // 🔍 即時名稱去重與模糊比對
+        const matchingResults = computed(() => {
+            if (modalMode.value !== 'create') return { exactMatch: null, similarMatches: [] };
+            const clean = (form.name || '').trim();
+            if (!clean || clean.length < 1) return { exactMatch: null, similarMatches: [] };
+            const allIngs = props.engine?.data?.ingredients || [];
+            return findSimilarIngredients(clean, allIngs, form.id || null);
+        });
+
+        const duplicateMatch = computed(() => matchingResults.value.exactMatch);
+        const similarMatches = computed(() => matchingResults.value.similarMatches);
+
+        const switchToExisting = (existingIng) => {
+            if (!existingIng) return;
+            form.id = existingIng.id;
+            form.name = existingIng.name;
+            form.brand = existingIng.brand || '';
+            form.category = existingIng.category || 'proteins';
+            form.priorityTier = existingIng.priorityTier || 1;
+            const isSauceOrOil = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category);
+            form.servingSize = Number(existingIng.servingSize) || (isSauceOrOil ? 10 : 100);
+            form.servingUnit = existingIng.servingUnit || 'g';
+            form.stock = props.engine?.checkStock ? props.engine.checkStock(existingIng.id) : true;
+            form.storageZones = Array.isArray(existingIng.storageZones) ? [...existingIng.storageZones] : ['fridge'];
+            form.preferredStores = Array.isArray(existingIng.preferredStores) 
+                ? existingIng.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s) 
+                : (existingIng.preferredStore ? [existingIng.preferredStore === 'EC 電商' ? 'EC' : existingIng.preferredStore] : ['全聯']);
+            form.price = existingIng.price || 0;
+            form.priceUnit = existingIng.priceUnit || '包';
+            if (existingIng.per100g) {
+                form.per100g = {
+                    kcal: Number(existingIng.per100g.kcal) || 0,
+                    protein: Number(existingIng.per100g.protein) || 0,
+                    carbs: Number(existingIng.per100g.carbs) || 0,
+                    fat: Number(existingIng.per100g.fat) || 0,
+                    sodium: Number(existingIng.per100g.sodium) || 0
+                };
+            }
+            if (existingIng.perServing) {
+                form.perServing = {
+                    kcal: Number(existingIng.perServing.kcal) || 0,
+                    protein: Number(existingIng.perServing.protein) || 0,
+                    carbs: Number(existingIng.perServing.carbs) || 0,
+                    fat: Number(existingIng.perServing.fat) || 0,
+                    sodium: Number(existingIng.perServing.sodium) || 0
+                };
+            }
+            photo.url = existingIng.photoUrl || null;
+            modalMode.value = 'edit';
+        };
+
         const saveCustomApiKey = () => {
             const k = (apiKeyInput.value || '').trim();
             if (!k) {
@@ -482,6 +539,27 @@ const IngredientDetailModal = {
                 return;
             }
 
+            // 🚨 守門員 1：防呆重複與模糊比對檢查 (僅在建立模式守門)
+            if (modalMode.value === 'create') {
+                const allIngs = props.engine?.data?.ingredients || [];
+                const { exactMatch, similarMatches: topSimilar } = findSimilarIngredients(cleanName, allIngs, form.id || null);
+
+                if (exactMatch) {
+                    alert(`🚫 總庫中已有完全同名的食材【${exactMatch.name}】！\n已為您切換至該食材進行檢視/編輯，避免重複建立雙胞胎。`);
+                    switchToExisting(exactMatch);
+                    return;
+                }
+
+                if (topSimilar.length > 0) {
+                    const sim = topSimilar[0];
+                    const simStore = sim.ingredient.preferredStore || sim.ingredient.preferredStores?.[0] || '全聯';
+                    const confirmMsg = `💡 總庫中已有相似食材【${sim.ingredient.name}】（常用通路：${simStore}，${sim.reason}）。\n\n您確定這是不同規格的私房食材，仍要獨立建立【${cleanName}】嗎？`;
+                    if (!confirm(confirmMsg)) {
+                        return;
+                    }
+                }
+            }
+
             const targetId = form.id || 'ing_' + Date.now();
             const ingData = {
                 id: targetId,
@@ -559,6 +637,10 @@ const IngredientDetailModal = {
         };
 
         return {
+            modalMode,
+            duplicateMatch,
+            similarMatches,
+            switchToExisting,
             form,
             photo,
             showApiKeyInput,
@@ -600,12 +682,12 @@ const IngredientDetailModal = {
                 </div>
 
                 <!-- 1. 頂部標題列：品名輸入 + 庫存切換開關 + ✕ 關閉按鈕 -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 12px; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 12px; gap: 8px;">
                     <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2rem;">🥗</span>
                         <input type="text" 
                                v-model="form.name" 
-                               :placeholder="mode === 'create' ? '輸入食材名稱 (如：鮮乳、番茄)' : '食材名稱'" 
+                               :placeholder="modalMode === 'create' ? '輸入食材名稱 (如：鮮乳、番茄)' : '食材名稱'" 
                                style="font-size: 1.1rem; font-weight: 700; border: none; border-bottom: 1.5px solid var(--color-border); outline: none; background: transparent; padding: 2px 4px; width: 100%; color: var(--color-text-main);">
                     </div>
                     
@@ -617,6 +699,35 @@ const IngredientDetailModal = {
                     </button>
                     
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
+                </div>
+
+                <!-- 🚨 名稱去重防呆與相似食材即時提示 -->
+                <div v-if="modalMode === 'create' && duplicateMatch" 
+                     style="margin-top: -4px; margin-bottom: 14px; padding: 8px 12px; background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #991B1B;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>🚫</span>
+                        <span>已有同名食材：<b>{{ duplicateMatch.name }}</b> ({{ duplicateMatch.preferredStore || '全聯' }})</span>
+                    </div>
+                    <button class="capsule" style="background: #EF4444; color: #FFFFFF; font-size: 0.75rem; padding: 3px 8px; border: none; cursor: pointer; font-weight: 600;" @click="switchToExisting(duplicateMatch)">
+                        切換查看
+                    </button>
+                </div>
+                <div v-else-if="modalMode === 'create' && similarMatches.length > 0" 
+                     style="margin-top: -4px; margin-bottom: 14px; padding: 8px 12px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 0.8rem; color: #92400E;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-weight: 700;">💡 發現相似食材：</span>
+                        <span style="font-size: 0.72rem; color: #B45309;">若為同品項點擊可直接切換</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <span v-for="sim in similarMatches" :key="sim.ingredient.id" 
+                              class="capsule" 
+                              style="background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; font-size: 0.75rem; padding: 3px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600;"
+                              @click="switchToExisting(sim.ingredient)"
+                              :title="'點擊切換至既有食材：' + sim.ingredient.name">
+                            <span>{{ sim.ingredient.name }}</span>
+                            <span style="font-size: 0.68rem; opacity: 0.85; font-weight: 400;">({{ sim.reason }})</span>
+                        </span>
+                    </div>
                 </div>
 
                 <!-- 2. 食材實拍照片滿版卡片 (加入 flex-shrink: 0 嚴禁 flex 壓縮，保持 240px 壯觀高視野) -->

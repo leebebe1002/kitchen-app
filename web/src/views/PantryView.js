@@ -1,5 +1,5 @@
 const { ref, computed, watch } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_STORE_FIX_V2';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_DEDUP_V1';
 
 export default {
     components: {

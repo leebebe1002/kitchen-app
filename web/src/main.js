@@ -1,9 +1,9 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260918_STORE_FIX_V2';
-import CalculatorView from './views/CalculatorView.js?v=20260905_DOCK_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260918_DEDUP_V1';
+import CalculatorView from './views/CalculatorView.js?v=20260918_DEDUP_V1';
 import TrackerView from './views/TrackerView.js?v=20260917_PERF_V2';
-import PantryView from './views/PantryView.js?v=20260918_STORE_FIX_V2';
+import PantryView from './views/PantryView.js?v=20260918_DEDUP_V1';
 import ShoppingView from './views/ShoppingView.js?v=20260918_STORE_FIX_V2';
 import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260906_PERSONAL_SCOPE_V1';
 // 每次修正登入回跳邏輯時都更新版本字串，避免 iPhone PWA 沿用舊模組快取。

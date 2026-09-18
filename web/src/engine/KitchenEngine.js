@@ -10,6 +10,7 @@ import {
     writePersonalKitchenState
 } from '../services/PersonalKitchenState.js';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
+import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_DEDUP_V1';
 
 export default class KitchenEngine {
     constructor() {
@@ -397,7 +398,7 @@ export default class KitchenEngine {
         return localData || serverData;
     }
 
-    // 保留使用者手動新增的自訂食材
+    // 保留使用者手動新增的自訂食材 (加入第二道防線：自動清洗與內建食材完全同名的歷史雙胞胎)
     mergeCustomUserIngredients() {
         const customKey = 'kitchen_v2_custom_ingredients';
         const customStr = localStorage.getItem(customKey);
@@ -405,14 +406,65 @@ export default class KitchenEngine {
         try {
             const customList = JSON.parse(customStr);
             if (Array.isArray(customList) && this.data.rawIngredients) {
+                let hasCleaned = false;
+                const filteredCustomList = [];
+
                 customList.forEach(customIng => {
                     const cat = customIng.category || 'veggies';
                     if (!this.data.rawIngredients[cat]) this.data.rawIngredients[cat] = [];
+
+                    // 1. 檢查是否與大總庫的既有食材「標準化完全同名」且 ID 不同
+                    const normCustomName = normalizeIngredientName(customIng.name || '');
+                    let matchingBaseIng = null;
+
+                    ['proteins', 'veggies', 'carbs', 'sauces'].forEach(c => {
+                        const found = (this.data.rawIngredients[c] || []).find(base => {
+                            if (base.id === customIng.id) return false;
+                            return normalizeIngredientName(base.name || '') === normCustomName;
+                        });
+                        if (found) matchingBaseIng = found;
+                    });
+
+                    // 🚨 若發現既有底層總庫已存在完全同名食材，自動自癒清洗自訂項（消除歷史雙胞胎）
+                    if (matchingBaseIng) {
+                        console.log(`[AutoDeduplicate] 發現歷史自訂食材【${customIng.name}】(${customIng.id}) 與底層食材(${matchingBaseIng.id})完全同名，自動自癒清洗！`);
+                        hasCleaned = true;
+
+                        // 若採買清單剛好指到這個自訂 ID，自動重導向至底層食材 ID
+                        if (this.data.pantryInventory?.shoppingList) {
+                            this.data.pantryInventory.shoppingList.forEach(s => {
+                                if (s.targetId === customIng.id) {
+                                    s.targetId = matchingBaseIng.id;
+                                    s.name = matchingBaseIng.name;
+                                }
+                            });
+                        }
+                        if (this.data.pantryInventory?.foodStockStatus && this.data.pantryInventory.foodStockStatus[customIng.id] !== undefined) {
+                            // 若自訂項有打勾庫存，轉移給底層食材
+                            if (this.data.pantryInventory.foodStockStatus[customIng.id]) {
+                                this.data.pantryInventory.foodStockStatus[matchingBaseIng.id] = true;
+                            }
+                            delete this.data.pantryInventory.foodStockStatus[customIng.id];
+                        }
+                        return; // 不加入 filteredCustomList，也不加入 rawIngredients
+                    }
+
+                    // 2. 正常自訂食材：檢查自身 ID 是否已在 rawIngredients
                     const exists = this.data.rawIngredients[cat].some(i => i.id === customIng.id);
                     if (!exists) {
                         this.data.rawIngredients[cat].push(customIng);
                     }
+                    filteredCustomList.push(customIng);
                 });
+
+                // 若有清洗，將清洗後的乾淨自訂清單寫回 LocalStorage，永久解決雙胞胎
+                if (hasCleaned) {
+                    localStorage.setItem(customKey, JSON.stringify(filteredCustomList));
+                    this.safeSetLocalStorage('kitchen_v2_ingredients.json', this.data.rawIngredients);
+                    if (this.data.pantryInventory) {
+                        this.saveJson('pantry_inventory.json', this.data.pantryInventory);
+                    }
+                }
             }
         } catch (e) {
             console.warn("Error merging custom user ingredients", e);
@@ -569,6 +621,22 @@ export default class KitchenEngine {
     async saveIngredient(ingData) {
         if (!ingData || !ingData.id) return;
         const category = ingData.category || 'proteins';
+
+        // 🛡️ 防呆：檢查是否已有完全同名之食材 (防止重複建立雙胞胎 ID)
+        const normNewName = normalizeIngredientName(ingData.name || '');
+        let existingSameName = null;
+        ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
+            const found = (this.data.rawIngredients?.[cat] || []).find(i => {
+                if (i.id === ingData.id) return false;
+                return normalizeIngredientName(i.name || '') === normNewName;
+            });
+            if (found) existingSameName = found;
+        });
+
+        if (existingSameName) {
+            console.log(`[saveIngredient] 發現已有完全同名食材【${existingSameName.name}】(${existingSameName.id})，更新既有食材而非建立雙胞胎。`);
+            ingData.id = existingSameName.id;
+        }
 
         // 🛡️ 鐵律守門：若食材包含 Base64 照片，上傳圖床；失敗則清空 photoUrl，絕不存入資料庫
         if (ingData.photoUrl && ingData.photoUrl.startsWith('data:')) {
