@@ -649,8 +649,8 @@ input[type=number].no-spin {
 }
 
 .dock-tab svg {
-    width: 24px;
-    height: 24px;
+    width: 28.8px;
+    height: 28.8px;
     stroke: #8E8A85;
     fill: none !important;
     stroke-width: 1.8 !important;
