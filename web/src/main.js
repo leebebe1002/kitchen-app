@@ -266,8 +266,8 @@ const App = {
                             <svg viewBox="0 0 24 24">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <!-- 單顆晶耀星芒 (右上角，旋轉 15 度) -->
-                                <path class="starburst" transform="rotate(15 19 5)" d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z"></path>
+                                <!-- 單顆晶耀星芒 (右上角，旋轉 45 度) -->
+                                <path class="starburst" transform="rotate(45 19 5)" d="M 19,1.5 Q 19,5 22.5,5 Q 19,5 19,8.5 Q 19,5 15.5,5 Q 19,5 19,1.5 Z"></path>
                             </svg>
                         </button>
                     </div>

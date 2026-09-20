@@ -17,7 +17,7 @@
     --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
     --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
     --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
-    --fk-dock-height: 51px;
+    --fk-dock-height: 50px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
     --fk-fab-popout: 16px;
     --fk-fab-border: var(--color-primary);
@@ -655,7 +655,7 @@ input[type=number].no-spin {
     height: 34.56px;
     stroke: #8E8A85;
     fill: none !important;
-    stroke-width: 1.042 !important; /* 34.56px (1.44x) 放大下，精確維持 1.5px 的細緻線條 (1.042 * 1.44 = 1.5px) */
+    stroke-width: 1.111 !important; /* 34.56px (1.44x) 放大下，精確維持 1.6px 的線條 (1.111 * 1.44 = 1.6px) */
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
     opacity: 0.85;
@@ -664,7 +664,7 @@ input[type=number].no-spin {
 
 .dock-tab.active svg {
     stroke: var(--color-primary);
-    stroke-width: 1.042 !important; /* 選中不要變粗，維持 1.5px 線條，僅變色 */
+    stroke-width: 1.111 !important; /* 選中不要變粗，維持 1.6px 線條，僅變色 */
     opacity: 1;
     transform: none;
 }
