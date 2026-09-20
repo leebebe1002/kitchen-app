@@ -17,9 +17,9 @@
     --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
     --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
     --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
-    --fk-dock-height: 53px;
+    --fk-dock-height: 51px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
-    --fk-fab-popout: 15px;
+    --fk-fab-popout: 16px;
     --fk-fab-border: var(--color-primary);
     
     /* 圓角 */
@@ -627,6 +627,7 @@ input[type=number].no-spin {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    transform: translateY(2px);
 }
 
 .dock-tab {
