@@ -17,9 +17,9 @@
     --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
     --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
     --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
-    --fk-dock-height: 60px;
+    --fk-dock-height: 57px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
-    --fk-fab-popout: 0px;
+    --fk-fab-popout: 12px;
     --fk-fab-border: var(--color-primary);
     
     /* 圓角 */
@@ -599,7 +599,7 @@ input[type=number].no-spin {
     z-index: 900;
     padding-bottom: var(--fk-dock-safe-area);
     overflow: visible;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08), 0 -1px 3px rgba(0, 0, 0, 0.04);
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -667,10 +667,10 @@ input[type=number].no-spin {
     transform: none;
 }
 
-/* 中央按鈕 (CTA)：置中對齊其他按鈕，水平與垂直在同一直線上齊平 */
+/* 中央按鈕 (CTA)：1:1 MOZE 比例，75px 圓形，中心水平對齊其他按鈕，浮出頂線 */
 .dock-center-wrap {
     position: relative;
-    flex: 0 0 112px;
+    flex: 0 0 108px;
     height: 100%;
     display: flex;
     align-items: center;
@@ -680,15 +680,15 @@ input[type=number].no-spin {
 
 .dock-center-btn {
     position: relative;
-    width: 50px;
-    height: 50px;
+    width: 75px;
+    height: 75px;
     border-radius: 50%;
     background: #FFFFFF;
-    border: 3px solid var(--fk-fab-border);
+    border: 3.5px solid var(--fk-fab-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.06), 0 4px 12px rgba(255, 202, 96, 0.20);
+    box-shadow: 0 4px 14px rgba(38, 35, 32, 0.08), 0 8px 22px rgba(255, 202, 96, 0.26);
     cursor: pointer;
     transform: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -699,15 +699,15 @@ input[type=number].no-spin {
 .dock-center-btn:active {
     transform: scale(0.92);
     border-color: var(--color-primary-pressed);
-    box-shadow: 0 2px 6px rgba(38, 35, 32, 0.10), 0 3px 8px rgba(231, 180, 78, 0.18);
+    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 4px 12px rgba(231, 180, 78, 0.22);
 }
 
 .dock-center-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 36px;
+    height: 36px;
     stroke: var(--color-primary-ink);
     fill: none;
-    stroke-width: 2.2 !important;
+    stroke-width: 2.6 !important;
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
 }
