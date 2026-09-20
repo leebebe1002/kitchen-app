@@ -2,12 +2,12 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。目前在 `chore/fk-collab-foundation` 建立最小多 AI 協作層，未進行產品功能開發。
+FK 是已上線使用的 production system。FK-001 修正與驗證已完成，目前等待實機驗收；有本機快捷 cache 時不再被靜態 `favorite_foods.json` 覆蓋，首次無 cache 仍載入官方預設。
 
 ## Current / Active Batch
 
-- Current：協作基礎文件已建立。
-- Active Batch：None。
+- Current：FK-001 修正與驗證已完成，目前等待實機驗收。
+- Active Batch：FK-001 — Ariel 常用餐點快捷選項隔日消失。
 
 ## Recent Completed Work
 
@@ -16,20 +16,22 @@ FK 是已上線使用的 production system。目前在 `chore/fk-collab-foundati
 - 餐點與食材相片的 no-Base64 gatekeeper；相片改存 Supabase Storage URL。
 - 採買通路統一為 `EC`，並完成多通路與採買狀態同步。
 - GitHub Pages 載入效能與 iOS PWA Version Tag 更新。
+- FK-001 已將 `favorite_foods.json` 納入 user state 判斷，並完成必要入口 Version Tag 更新與六項隔離驗證。
 
 ## Pending
 
-- 目前沒有排定的功能 Batch。
+- FK-001 驗收完成後再結束本 Batch；目前沒有其他排定的功能 Batch。
 - `PRD.md`、`DATA_SCHEMA.md`、`ROADMAP.md` 仍含舊名稱與舊架構／階段描述，尚未另案校準。
 
 ## Security / Technical Debt
 
 - `meal-photos` migration 目前允許 public insert／update／delete；需另開安全性 Batch 評估是否收斂 Supabase Storage／RLS 權限。
 - 已停用的 `CloudSyncEngine` 仍含舊 GitHub PAT 字串：需優先確認 token 是否已撤銷／失效；若 token 曾進入 Git history，之後應另開安全性 Batch 處理。本次只記錄，不修改 token、Git history 或程式碼。
+- `server.py` 仍含 Supabase service-role credential；需優先撤銷／輪替並另開安全性 Batch 清理程式碼與 Git history。本次只記錄，不揭露或修改 credential、Git history 或程式碼。
 
 ## Next Action
 
-下一個功能需求開始時，先依 `batches/README.md` 建立一個實際 Batch，確認資料邊界與 Must Not Break，再進入實作。
+等待 Bebe 在實際 iOS PWA 驗收 FK-001。
 
 ## Recommended Model
 
@@ -39,9 +41,18 @@ FK 是已上線使用的 production system。目前在 `chore/fk-collab-foundati
 
 - `AGENTS.md`
 - `batches/README.md`
-- 下一個 Batch 指定的產品文件與程式檔
+- `batches/FK-001-ariel-quick-meal-persistence.md`
+- `web/src/views/TrackerView.js`
+- `web/src/engine/KitchenEngine.js`
+- `src/data/favorite_foods.json`
+- `web/src/services/PersonalKitchenState.js`
+- `web/src/services/PersonalKitchenSyncService.js`
+- `web/src/main.js`
+- `web/index.html`
 
 ## Do Not Redo
 
 - 不需重新設計協作狀態機或預建空 Batch。
 - 不需重寫現有 FK 規格文件；先把落差當成待確認事項。
+- FK-001 root cause 已確認，不需重查餐點紀錄資料流：它與快捷選項分離且未被刪除。
+- FK-001 已按確認方案完成，不需擴張到 scope 隔離、跨裝置同步、Supabase schema 或官方預設 merge。

@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260918_FIX_STATE_V2';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260920_FK001_FAVORITES_V1';
 import CalculatorView from './views/CalculatorView.js?v=20260918_FIX_STATE_V2';
 import TrackerView from './views/TrackerView.js?v=20260917_GATEKEEPER';
 import PantryView from './views/PantryView.js?v=20260918_FIX_STATE_V2';

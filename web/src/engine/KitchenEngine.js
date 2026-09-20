@@ -199,7 +199,7 @@ export default class KitchenEngine {
 
     // 使用者動態狀態檔案清單 (最高優先級：手機本地打勾狀態與自訂通路永遠不被沖掉)
     isUserStateFile(filename) {
-        return ['pantry_inventory.json', 'daily_logs.json', 'config.json', 'ingredients.json', 'household_supplies.json', 'dishes.json'].includes(filename);
+        return ['pantry_inventory.json', 'daily_logs.json', 'config.json', 'ingredients.json', 'household_supplies.json', 'dishes.json', 'favorite_foods.json'].includes(filename);
     }
 
     async fetchJson(filename, key, defaultValue) {
