@@ -17,9 +17,9 @@
     --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
     --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
     --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
-    --fk-dock-height: 57px;
+    --fk-dock-height: 55px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
-    --fk-fab-popout: 12px;
+    --fk-fab-popout: 14px;
     --fk-fab-border: var(--color-primary);
     
     /* 圓角 */
@@ -688,7 +688,7 @@ input[type=number].no-spin {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(38, 35, 32, 0.08), 0 8px 22px rgba(255, 202, 96, 0.26);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.12);
     cursor: pointer;
     transform: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -699,7 +699,7 @@ input[type=number].no-spin {
 .dock-center-btn:active {
     transform: scale(0.92);
     border-color: var(--color-primary-pressed);
-    box-shadow: 0 2px 8px rgba(38, 35, 32, 0.12), 0 4px 12px rgba(231, 180, 78, 0.22);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .dock-center-btn svg {
@@ -707,13 +707,17 @@ input[type=number].no-spin {
     height: 36px;
     stroke: var(--color-primary-ink);
     fill: none;
-    stroke-width: 2.6 !important;
+    stroke-width: 1.3 !important; /* 加號線條細一半 (2.6 -> 1.3) */
     stroke-linecap: round !important;
     stroke-linejoin: round !important;
 }
 
+.dock-center-btn svg line {
+    stroke-width: 1.3 !important; /* 確保僅加號線條細一半 */
+}
+
 .dock-center-btn svg path.starburst {
-    fill: var(--color-primary-ink) !important;
+    fill: var(--color-primary-ink) !important; /* 星芒維持原樣填充不變 */
     stroke: none !important;
 }
 
