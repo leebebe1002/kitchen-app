@@ -2,12 +2,12 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。FK-001 修正、隔離驗證與 Ariel 的 iOS PWA 實機驗收皆已完成；常用餐點快捷資料正常保留，問題未再發生。
+FK 是已上線使用的 production system。FK-001 與 FK-002 皆已完成實機驗收並關閉；常用餐點快捷與成員個別份量模式運作正常。
 
 ## Current / Active Batch
 
-- Current：FK-002 成員個別份量模式 UI（已完成實作與本機 UI 驗收，準備進入 Git Review）。
-- Active Batch：FK-002（Branch: `feature/fk-002-member-portion-mode-ui`）。
+- Current：FK-002 已完成並關閉。
+- Active Batch：None。
 
 ## Recent Completed Work
 
@@ -17,6 +17,7 @@ FK 是已上線使用的 production system。FK-001 修正、隔離驗證與 Ari
 - 採買通路統一為 `EC`，並完成多通路與採買狀態同步。
 - GitHub Pages 載入效能與 iOS PWA Version Tag 更新。
 - FK-001 已將 `favorite_foods.json` 納入 user state 判斷，完成必要入口 Version Tag、六項隔離驗證與 Ariel 的 iOS PWA 實機驗收；Batch 已關閉。
+- FK-002 完成料理計算機「就餐成員個別份量模式 UI」：每位成員獨立支援標準／剩餘模式，結合餐別與當日飲食紀錄預判，膠囊長按防誤觸展開，AI Prompt 動態配平，完成 Version Tag 更新、8 項煙霧測試與 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
 
 ## Pending
 
