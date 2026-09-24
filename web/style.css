@@ -248,6 +248,135 @@ input, textarea, select, [contenteditable="true"] {
 }
 
 /* ----------------------------------------------------
+   FK-002 就餐成員膠囊與個別份量模式展開樣式
+   ---------------------------------------------------- */
+.member-capsules-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.member-capsule-wrapper {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    gap: 6px;
+    vertical-align: middle;
+}
+
+.member-capsule {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: pan-y;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #FFFFFF;
+    border: 1.5px solid var(--color-border);
+}
+
+.member-capsule.expanded {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.25);
+}
+
+/* 展開狀態下的左右翼選項按鈕 */
+.mode-wing-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-border);
+    background: #FFFFFF;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    animation: wingPopIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: inherit;
+    -webkit-appearance: none;
+}
+
+.mode-wing-btn:active {
+    transform: scale(0.95);
+}
+
+.mode-wing-btn.wing-left.active {
+    background: #19585C;
+    color: #FFFFFF;
+    border-color: #19585C;
+}
+
+.mode-wing-btn.wing-right.active {
+    background: #D97706;
+    color: #FFFFFF;
+    border-color: #D97706;
+}
+
+@keyframes wingPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 收合後的成員膠囊旁純文字狀態註記（非小膠囊、非可點擊元件） */
+.member-mode-note {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6B7280;
+    margin-left: 2px;
+    user-select: none;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.member-mode-note.remaining {
+    color: #D97706;
+    font-weight: 600;
+}
+
+.member-mode-note.standard {
+    color: #4B5563;
+    font-weight: 500;
+}
+
+/* 初次使用淡提示 */
+.portion-mode-hint-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F9FAFB;
+    border: 1px dashed #D1D5DB;
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    color: #6B7280;
+    margin-bottom: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.portion-mode-hint-banner .hint-close-btn {
+    background: none;
+    border: none;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.portion-mode-hint-banner .hint-close-btn:hover {
+    color: #4B5563;
+}
+
+/* ----------------------------------------------------
    第三頁【智慧冰箱】分割式膠囊 (Split Capsule Button)
    ---------------------------------------------------- */
 .split-capsule {

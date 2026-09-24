@@ -1,4 +1,4 @@
-const { ref, reactive, computed, watch, onMounted } = Vue;
+const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_FIX_STATE_V2';
 
 export default {
@@ -157,13 +157,180 @@ export default {
             jason: false
         });
 
-        // 🌟 配比模式：'standard' (標準份量) vs 'remaining' (吃剩餘額度)
-        const portionMode = ref('standard');
+        // ----------------------------------------------------
+        // FK-002 成員個別份量模式與長按展開狀態
+        // ----------------------------------------------------
+        const getTodayStr = () => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // 🌟 成員個別配比模式：'standard' (標準份量) vs 'remaining' (吃剩餘額度)
+        const memberPortionModes = ref({
+            bebe: 'standard',
+            ariel: 'standard',
+            jason: 'standard'
+        });
+
+        // 手動選擇優先於自動預判：標記該成員是否已被使用者手動變更過
+        const manualOverrides = ref({
+            bebe: false,
+            ariel: false,
+            jason: false
+        });
+
+        // 目前展開模式選項的成員（一次只允許一位成員展開，null 為全數收合）
+        const expandedMember = ref(null);
+
+        // 初次使用淡提示（長按可調整份量模式）
+        const showPortionHint = ref(localStorage.getItem('fk_seen_portion_hint') !== 'true');
+
+        const dismissPortionHint = () => {
+            showPortionHint.value = false;
+            try {
+                localStorage.setItem('fk_seen_portion_hint', 'true');
+            } catch (e) {}
+        };
+
+        // 自動預判規則：
+        // - 早餐：標準
+        // - 午餐：標準（即使有前餐紀錄仍為標準）
+        // - 晚餐：若該成員今日已有前餐紀錄則剩餘，無紀錄則標準
+        // 手動選擇優先於自動預判
+        const predictPortionMode = (member, slotId = currentSlot.value?.id) => {
+            if (slotId === 'breakfast' || slotId === 'lunch') {
+                return 'standard';
+            }
+            if (slotId === 'dinner') {
+                const todayStr = getTodayStr();
+                const memberLog = engine.getDailyLog(todayStr, member);
+                const hasMealsToday = memberLog && Array.isArray(memberLog.meals) && memberLog.meals.length > 0;
+                return hasMealsToday ? 'remaining' : 'standard';
+            }
+            return 'standard';
+        };
+
+        const applyPortionModePredictions = () => {
+            ['bebe', 'ariel', 'jason'].forEach(m => {
+                if (!manualOverrides.value[m]) {
+                    memberPortionModes.value[m] = predictPortionMode(m);
+                }
+            });
+        };
+
+        // 就餐成員切換（未選＝加入、已選＝取消）
+        const toggleDiner = (member) => {
+            if (!diners.value[member]) {
+                diners.value[member] = true;
+                // 若該成員尚未手動覆寫過，加入時套用自動預判
+                if (!manualOverrides.value[member]) {
+                    memberPortionModes.value[member] = predictPortionMode(member);
+                }
+            } else {
+                diners.value[member] = false;
+                if (expandedMember.value === member) {
+                    expandedMember.value = null;
+                }
+            }
+        };
+
+        // 選擇成員份量模式（收合選項並更新文字狀態註記）
+        const selectMemberPortionMode = (member, mode) => {
+            memberPortionModes.value[member] = mode;
+            manualOverrides.value[member] = true; // 標記為手動選擇，優先於自動預判
+            expandedMember.value = null; // 收合展開翼
+            dismissPortionHint();
+        };
+
+        // 🛡️ 長按手勢與防誤觸點擊邏輯 (Pointer Events + 位移門檻 + 抑制旗標)
+        let memberLongPressTimer = null;
+        let isMemberLongPressTriggered = false;
+        let memberPointerStartX = 0;
+        let memberPointerStartY = 0;
+        const MEMBER_LONG_PRESS_DURATION = 450;
+        const MEMBER_MOVE_THRESHOLD = 8;
+
+        const onMemberPointerDown = (member, e) => {
+            // 只有已選取成員才能長按調整模式
+            if (!diners.value[member]) {
+                isMemberLongPressTriggered = false;
+                return;
+            }
+
+            isMemberLongPressTriggered = false;
+            memberPointerStartX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+            memberPointerStartY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+
+            if (memberLongPressTimer) clearTimeout(memberLongPressTimer);
+            memberLongPressTimer = setTimeout(() => {
+                isMemberLongPressTriggered = true;
+                expandedMember.value = member;
+                try {
+                    if (navigator && navigator.vibrate) {
+                        navigator.vibrate(40);
+                    }
+                } catch (_) {}
+            }, MEMBER_LONG_PRESS_DURATION);
+        };
+
+        const onMemberPointerMove = (member, e) => {
+            if (!memberLongPressTimer) return;
+            const currentX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+            const currentY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+            const dist = Math.hypot(currentX - memberPointerStartX, currentY - memberPointerStartY);
+            if (dist > MEMBER_MOVE_THRESHOLD) {
+                clearTimeout(memberLongPressTimer);
+                memberLongPressTimer = null;
+            }
+        };
+
+        const onMemberPointerUp = (member, e) => {
+            if (memberLongPressTimer) {
+                clearTimeout(memberLongPressTimer);
+                memberLongPressTimer = null;
+            }
+        };
+
+        const onMemberPointerCancel = (member, e) => {
+            if (memberLongPressTimer) {
+                clearTimeout(memberLongPressTimer);
+                memberLongPressTimer = null;
+            }
+        };
+
+        const onMemberClick = (member) => {
+            // 若剛剛觸發過長按，阻斷合成點擊，不執行選取/取消切換
+            if (isMemberLongPressTriggered) {
+                isMemberLongPressTriggered = false;
+                return;
+            }
+            // 若該成員目前處於展開狀態，點擊膠囊本體則收合展開選項
+            if (expandedMember.value === member) {
+                expandedMember.value = null;
+                return;
+            }
+            // 若其他成員處於展開狀態，先收合它
+            if (expandedMember.value !== null) {
+                expandedMember.value = null;
+            }
+            // 短按：未選＝加入、已選＝取消
+            toggleDiner(member);
+        };
+
+        // 點擊膠囊外部時自動收合展開選項
+        const handleGlobalClick = (e) => {
+            if (expandedMember.value && !e.target.closest('.member-capsule-wrapper')) {
+                expandedMember.value = null;
+            }
+        };
 
         let isSwitchingDish = false;
 
-        // 偵測食材或成員異動：只有在真正初始化完成後的使用者手動異動，才標記為「待重新計算 (Stale)」
-        watch([selectedMasterIngredients, diners, portionMode], () => {
+        // 偵測食材、成員或個別份量模式異動：只有在真正初始化完成後的使用者手動異動，才標記為「待重新計算 (Stale)」
+        watch([selectedMasterIngredients, diners, memberPortionModes], () => {
             if (isCalculated.value && !isRestoringState && !isSwitchingDish && hasInitialized) {
                 isResultStale.value = true;
             }
@@ -397,6 +564,8 @@ export default {
                     selectedDish: selectedDish.value,
                     userHasManuallySelected: userHasManuallySelected.value,
                     diners: diners.value,
+                    memberPortionModes: memberPortionModes.value,
+                    manualOverrides: manualOverrides.value,
                     selectedMasterIngredients: selectedMasterIngredients.value,
                     memberIngredients: memberIngredients.value,
                     isCalculated: isCalculated.value,
@@ -429,6 +598,12 @@ export default {
                 if (state.diners && typeof state.diners === 'object') {
                     diners.value = state.diners;
                 }
+                if (state.memberPortionModes && typeof state.memberPortionModes === 'object') {
+                    memberPortionModes.value = { ...memberPortionModes.value, ...state.memberPortionModes };
+                }
+                if (state.manualOverrides && typeof state.manualOverrides === 'object') {
+                    manualOverrides.value = { ...manualOverrides.value, ...state.manualOverrides };
+                }
                 if (state.selectedMasterIngredients && Array.isArray(state.selectedMasterIngredients) && state.selectedMasterIngredients.length > 0) {
                     selectedMasterIngredients.value = state.selectedMasterIngredients;
                 }
@@ -451,7 +626,7 @@ export default {
         };
 
         // 自動監聽所有計算與勾選狀態，即時存入 sessionStorage (翻頁不遺失，滑掉 App 自動清空)
-        watch([selectedMasterIngredients, memberIngredients, diners, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
+        watch([selectedMasterIngredients, memberIngredients, diners, memberPortionModes, manualOverrides, isCalculated, isResultStale, aiChefAdvice, showChefNote], () => {
             saveStateToStorage();
         }, { deep: true });
 
@@ -463,6 +638,7 @@ export default {
             if (dishesList.value && dishesList.value.length > 0) {
                 const restored = restoreStateFromStorage();
                 if (!restored) {
+                    applyPortionModePredictions();
                     if (!selectedDish.value || !userHasManuallySelected.value) {
                         selectedDish.value = getBestDefaultDishId();
                     }
@@ -484,8 +660,17 @@ export default {
             }
         });
 
+        watch(currentSlot, () => {
+            applyPortionModePredictions();
+        });
+
         onMounted(() => {
             initCalculatorState();
+            window.addEventListener('pointerdown', handleGlobalClick);
+        });
+
+        onUnmounted(() => {
+            window.removeEventListener('pointerdown', handleGlobalClick);
         });
 
         // Get only the active ingredients for a member (STRICTLY only selected in-stock ingredients)
@@ -1154,28 +1339,33 @@ export default {
                     }
                 });
 
-                // 計算吃剩餘額度模式下的目標上限
-                const isRemainingMode = portionMode.value === 'remaining';
+                // 計算各就餐成員的個別份量需求與吃剩餘額度目標上限 (FK-002)
+                const remainingMembers = activeMembers.value.filter(m => memberPortionModes.value[m] === 'remaining');
+                const standardMembers = activeMembers.value.filter(m => memberPortionModes.value[m] === 'standard');
+
                 let remainingBudgetText = '';
-                if (isRemainingMode) {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    const todayLogs = engine.data.dailyLogs?.[todayStr]?.meals || [];
-                    const remainingInfo = activeMembers.value.map(m => {
+                if (remainingMembers.length > 0) {
+                    const todayStr = getTodayStr();
+                    const remainingDetails = remainingMembers.map(m => {
+                        const memberDisplayName = m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason');
                         const targetKcal = m === 'jason' ? 2200 : (m === 'ariel' ? 1600 : 1400);
                         const targetP = m === 'jason' ? 120 : (m === 'ariel' ? 80 : 75);
-                        let consumedKcal = 0;
-                        let consumedP = 0;
-                        todayLogs.forEach(meal => {
-                            if (meal.members?.[m]) {
-                                consumedKcal += (meal.members[m].kcal || 0);
-                                consumedP += (meal.members[m].protein || 0);
-                            }
-                        });
+                        
+                        const log = engine.getDailyLog(todayStr, m);
+                        const consumedKcal = Math.round(log?.totals?.kcal || 0);
+                        const consumedP = Math.round(log?.totals?.protein || 0);
+                        
                         const remKcal = Math.max(150, Math.round(targetKcal - consumedKcal));
                         const remP = Math.max(5, Math.round(targetP - consumedP));
-                        return `${m}（今日已吃 ${consumedKcal}k/${consumedP}gP，今餐剩餘配平上限：約 ${remKcal} kcal、約 ${remP} g 蛋白質）`;
+                        return `${memberDisplayName}（今日已攝取 ${consumedKcal} kcal / ${consumedP}g 蛋白質，今餐剩餘配平上限：約 ${remKcal} kcal、約 ${remP}g 蛋白質）`;
                     }).join('；');
-                    remainingBudgetText = `\n【🌟 最高優先級指令：吃剩餘額度動態配平模式】\n使用者選擇了「吃剩餘額度」，請嚴格依據各成員今日剩餘額度進行動態配平調配：${remainingInfo}。\n`;
+
+                    const standardNames = standardMembers.map(m => m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason')).join('、');
+                    const standardNote = standardMembers.length > 0 
+                        ? `其餘成員（${standardNames}）採用【標準份量模式】，請依其個人食量畫像給予標準黃金份量，無需刻意壓低熱量；` 
+                        : '';
+
+                    remainingBudgetText = `\n【🌟 最高優先級指令：個別成員吃剩餘額度動態配平】\n以下成員目前選擇了「吃剩餘額度」，請嚴格依據其今日剩餘額度進行動態配平調配壓控：${remainingDetails}。${standardNote}\n`;
                 }
 
                 const prompt = `你是 Bebe 家專屬的 AI 靈魂夥伴與五星家庭私廚「十一粒」。
@@ -1603,7 +1793,16 @@ ${JSON.stringify(membersData, null, 2)}
             selectedDish,
             memberIngredients,
             diners,
-            portionMode,
+            memberPortionModes,
+            expandedMember,
+            showPortionHint,
+            dismissPortionHint,
+            selectMemberPortionMode,
+            onMemberPointerDown,
+            onMemberPointerMove,
+            onMemberPointerUp,
+            onMemberPointerCancel,
+            onMemberClick,
             hideOutOfStock,
             isCalculated,
             isResultStale,
@@ -1763,81 +1962,140 @@ ${JSON.stringify(membersData, null, 2)}
 
                 <!-- DINERS 就餐成員 (獨立橫列) -->
                 <div class="section-title">03 就餐成員</div>
-                <div class="capsule-group" style="margin-bottom: 18px;">
-                    <label class="capsule" :class="{ 'selected': diners.bebe }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" v-model="diners.bebe" style="display:none;">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
-                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
-                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
-                        </svg>
-                        <span>Bebe</span>
-                    </label>
-                    <label class="capsule" :class="{ 'selected': diners.ariel }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" v-model="diners.ariel" style="display:none;">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                        <span>樂樂</span>
-                    </label>
-                    <label class="capsule" :class="{ 'selected': diners.jason }" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" v-model="diners.jason" style="display:none;">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
-                            <line x1="9" y1="4" x2="11" y2="12"></line>
-                            <line x1="11" y1="12" x2="19" y2="19"></line>
-                            <line x1="11" y1="12" x2="3" y2="11"></line>
-                        </svg>
-                        <span>Jason</span>
-                    </label>
+
+                <!-- 初次使用淡提示 -->
+                <div v-if="showPortionHint" class="portion-mode-hint-banner">
+                    <span>💡 長按已選成員可切換「標準份量」或「剩餘額度」</span>
+                    <button type="button" class="hint-close-btn" @click.stop="dismissPortionHint" aria-label="關閉提示">✕</button>
                 </div>
 
-                <!-- 模式切換與計算操作橫列 (極簡雙切滑塊 ＋ 純 SVG 正圓計算按鈕) -->
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px;">
-                    <!-- 極簡純文字雙切膠囊 (Segmented Control) -->
-                    <div style="display: inline-flex; background: #F3F4F6; padding: 3px; border-radius: 20px; border: 1px solid #E5E7EB; flex: 1; max-width: 220px;">
+                <div class="capsule-group member-capsules-container" style="margin-bottom: 18px;">
+                    <!-- Bebe -->
+                    <div class="member-capsule-wrapper" :class="{ 'is-expanded': expandedMember === 'bebe' }">
                         <button 
-                            type="button"
-                            @click="portionMode = 'standard'"
-                            :style="{
-                                flex: '1',
-                                padding: '6px 0',
-                                fontSize: '0.85rem',
-                                fontWeight: portionMode === 'standard' ? '700' : '500',
-                                color: portionMode === 'standard' ? '#1F2937' : '#6B7280',
-                                background: portionMode === 'standard' ? '#FFFFFF' : 'transparent',
-                                borderRadius: '16px',
-                                border: 'none',
-                                boxShadow: portionMode === 'standard' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                textAlign: 'center'
-                            }">
-                            標準份量
+                            v-if="expandedMember === 'bebe'" 
+                            type="button" 
+                            class="mode-wing-btn wing-left"
+                            :class="{ 'active': memberPortionModes.bebe === 'standard' }"
+                            @click.stop="selectMemberPortionMode('bebe', 'standard')">
+                            標準
                         </button>
+                        <div 
+                            class="capsule member-capsule" 
+                            :class="{ 'selected': diners.bebe, 'expanded': expandedMember === 'bebe' }"
+                            @pointerdown="onMemberPointerDown('bebe', $event)"
+                            @pointermove="onMemberPointerMove('bebe', $event)"
+                            @pointerup="onMemberPointerUp('bebe', $event)"
+                            @pointercancel="onMemberPointerCancel('bebe', $event)"
+                            @click.prevent.stop="onMemberClick('bebe')">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            </svg>
+                            <span>Bebe</span>
+                        </div>
+                        <span 
+                            v-if="diners.bebe && expandedMember !== 'bebe'" 
+                            class="member-mode-note"
+                            :class="memberPortionModes.bebe">
+                            {{ memberPortionModes.bebe === 'remaining' ? '剩餘' : '標準' }}
+                        </span>
                         <button 
-                            type="button"
-                            @click="portionMode = 'remaining'"
-                            :style="{
-                                flex: '1',
-                                padding: '6px 0',
-                                fontSize: '0.85rem',
-                                fontWeight: portionMode === 'remaining' ? '700' : '500',
-                                color: portionMode === 'remaining' ? '#1F2937' : '#6B7280',
-                                background: portionMode === 'remaining' ? '#FFFFFF' : 'transparent',
-                                borderRadius: '16px',
-                                border: 'none',
-                                boxShadow: portionMode === 'remaining' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                textAlign: 'center'
-                            }">
-                            吃剩餘額度
+                            v-if="expandedMember === 'bebe'" 
+                            type="button" 
+                            class="mode-wing-btn wing-right"
+                            :class="{ 'active': memberPortionModes.bebe === 'remaining' }"
+                            @click.stop="selectMemberPortionMode('bebe', 'remaining')">
+                            剩餘
                         </button>
                     </div>
 
-                    <!-- 純 SVG 正圓計算按鈕 -->
+                    <!-- 樂樂 (Ariel) -->
+                    <div class="member-capsule-wrapper" :class="{ 'is-expanded': expandedMember === 'ariel' }">
+                        <button 
+                            v-if="expandedMember === 'ariel'" 
+                            type="button" 
+                            class="mode-wing-btn wing-left"
+                            :class="{ 'active': memberPortionModes.ariel === 'standard' }"
+                            @click.stop="selectMemberPortionMode('ariel', 'standard')">
+                            標準
+                        </button>
+                        <div 
+                            class="capsule member-capsule" 
+                            :class="{ 'selected': diners.ariel, 'expanded': expandedMember === 'ariel' }"
+                            @pointerdown="onMemberPointerDown('ariel', $event)"
+                            @pointermove="onMemberPointerMove('ariel', $event)"
+                            @pointerup="onMemberPointerUp('ariel', $event)"
+                            @pointercancel="onMemberPointerCancel('ariel', $event)"
+                            @click.prevent.stop="onMemberClick('ariel')">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                            <span>樂樂</span>
+                        </div>
+                        <span 
+                            v-if="diners.ariel && expandedMember !== 'ariel'" 
+                            class="member-mode-note"
+                            :class="memberPortionModes.ariel">
+                            {{ memberPortionModes.ariel === 'remaining' ? '剩餘' : '標準' }}
+                        </span>
+                        <button 
+                            v-if="expandedMember === 'ariel'" 
+                            type="button" 
+                            class="mode-wing-btn wing-right"
+                            :class="{ 'active': memberPortionModes.ariel === 'remaining' }"
+                            @click.stop="selectMemberPortionMode('ariel', 'remaining')">
+                            剩餘
+                        </button>
+                    </div>
+
+                    <!-- Jason -->
+                    <div class="member-capsule-wrapper" :class="{ 'is-expanded': expandedMember === 'jason' }">
+                        <button 
+                            v-if="expandedMember === 'jason'" 
+                            type="button" 
+                            class="mode-wing-btn wing-left"
+                            :class="{ 'active': memberPortionModes.jason === 'standard' }"
+                            @click.stop="selectMemberPortionMode('jason', 'standard')">
+                            標準
+                        </button>
+                        <div 
+                            class="capsule member-capsule" 
+                            :class="{ 'selected': diners.jason, 'expanded': expandedMember === 'jason' }"
+                            @pointerdown="onMemberPointerDown('jason', $event)"
+                            @pointermove="onMemberPointerMove('jason', $event)"
+                            @pointerup="onMemberPointerUp('jason', $event)"
+                            @pointercancel="onMemberPointerCancel('jason', $event)"
+                            @click.prevent.stop="onMemberClick('jason')">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 18L3 11L9 4L17 5L21 11L19 19L11 21L5 18Z"></path>
+                                <line x1="9" y1="4" x2="11" y2="12"></line>
+                                <line x1="11" y1="12" x2="19" y2="19"></line>
+                                <line x1="11" y1="12" x2="3" y2="11"></line>
+                            </svg>
+                            <span>Jason</span>
+                        </div>
+                        <span 
+                            v-if="diners.jason && expandedMember !== 'jason'" 
+                            class="member-mode-note"
+                            :class="memberPortionModes.jason">
+                            {{ memberPortionModes.jason === 'remaining' ? '剩餘' : '標準' }}
+                        </span>
+                        <button 
+                            v-if="expandedMember === 'jason'" 
+                            type="button" 
+                            class="mode-wing-btn wing-right"
+                            :class="{ 'active': memberPortionModes.jason === 'remaining' }"
+                            @click.stop="selectMemberPortionMode('jason', 'remaining')">
+                            剩餘
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 計算操作橫列 (右側正圓計算按鈕，原全域雙切已融入成員膠囊) -->
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 24px;">
                     <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="4" y="2" width="16" height="20" rx="2"></rect>

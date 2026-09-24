@@ -6,8 +6,8 @@ FK 是已上線使用的 production system。FK-001 修正、隔離驗證與 Ari
 
 ## Current / Active Batch
 
-- Current：FK-001 已完成並關閉。
-- Active Batch：None。
+- Current：FK-002 成員個別份量模式 UI（已完成實作與本機 UI 驗收，準備進入 Git Review）。
+- Active Batch：FK-002（Branch: `feature/fk-002-member-portion-mode-ui`）。
 
 ## Recent Completed Work
 
