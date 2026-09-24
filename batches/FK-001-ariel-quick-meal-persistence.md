@@ -38,7 +38,7 @@
 
 ## Result / Handoff
 
-- 狀態：第二階段最小修正與隔離驗證完成；尚未 commit、push 或 merge，等待 Bebe 驗收。
+- 狀態：Closed（完成）。2026-09-24 Ariel 已完成 iOS PWA 實機驗收，常用餐點快捷資料正常保留，問題未再發生。
 
 ### Root Cause
 
@@ -70,6 +70,7 @@
 - 不應受影響：餐點紀錄、Supabase meal logs、庫存、採買、家用品、custom ingredients 與 Personal Kitchen sync。
 - 取捨：裝置已有快捷 cache 後，日後新增到靜態 `favorite_foods.json` 的官方預設不會自動合併；這能同時保護使用者的新增與刪除。若官方預設仍需持續下發，需另設 merge／刪除墓碑規則，不屬於本次最小修正。
 - 隔離式 smoke test 已通過六項驗收：首次無 cache 載入官方預設、新增後立即 reload 保留、模擬完整 cold start 保留、刪除後 cold start 不復活、官方預設保留、相鄰資料 key 未變。
+- Ariel 的 iOS PWA 實機驗收已通過；常用餐點快捷資料正常保留，問題未再發生。
 - 靜態 diff 確認 production logic 只新增一個 user state 檔名；daily meal logs、pantry／shopping、household supplies、custom ingredients 與 Personal Kitchen Sync 路徑均未修改。
 - 已經被覆寫消失的「綜合莓果麥片」快捷沒有專用備份可自動還原；餐點紀錄仍可作為手動重建來源。
 
@@ -85,4 +86,4 @@
 
 ### Next Step
 
-等待 Bebe 在實際 iOS PWA 驗收；確認前不 commit、push 或 merge。
+無；FK-001 已完成並關閉。
