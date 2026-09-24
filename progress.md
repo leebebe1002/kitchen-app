@@ -2,12 +2,12 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。FK-001 修正與驗證已完成，目前等待實機驗收；有本機快捷 cache 時不再被靜態 `favorite_foods.json` 覆蓋，首次無 cache 仍載入官方預設。
+FK 是已上線使用的 production system。FK-001 修正、隔離驗證與 Ariel 的 iOS PWA 實機驗收皆已完成；常用餐點快捷資料正常保留，問題未再發生。
 
 ## Current / Active Batch
 
-- Current：FK-001 修正與驗證已完成，目前等待實機驗收。
-- Active Batch：FK-001 — Ariel 常用餐點快捷選項隔日消失。
+- Current：FK-001 已完成並關閉。
+- Active Batch：None。
 
 ## Recent Completed Work
 
@@ -16,11 +16,11 @@ FK 是已上線使用的 production system。FK-001 修正與驗證已完成，�
 - 餐點與食材相片的 no-Base64 gatekeeper；相片改存 Supabase Storage URL。
 - 採買通路統一為 `EC`，並完成多通路與採買狀態同步。
 - GitHub Pages 載入效能與 iOS PWA Version Tag 更新。
-- FK-001 已將 `favorite_foods.json` 納入 user state 判斷，並完成必要入口 Version Tag 更新與六項隔離驗證。
+- FK-001 已將 `favorite_foods.json` 納入 user state 判斷，完成必要入口 Version Tag、六項隔離驗證與 Ariel 的 iOS PWA 實機驗收；Batch 已關閉。
 
 ## Pending
 
-- FK-001 驗收完成後再結束本 Batch；目前沒有其他排定的功能 Batch。
+- 目前沒有排定的功能 Batch。
 - `PRD.md`、`DATA_SCHEMA.md`、`ROADMAP.md` 仍含舊名稱與舊架構／階段描述，尚未另案校準。
 
 ## Security / Technical Debt
@@ -31,7 +31,7 @@ FK 是已上線使用的 production system。FK-001 修正與驗證已完成，�
 
 ## Next Action
 
-等待 Bebe 在實際 iOS PWA 驗收 FK-001。
+下一個功能需求開始時，再依 `batches/README.md` 建立 Batch 並確認資料邊界。
 
 ## Recommended Model
 
