@@ -1,5 +1,6 @@
 const { ref, reactive, computed, watch, onMounted } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
+import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 
 const IngredientDetailModal = {
     name: 'IngredientDetailModal',
@@ -101,9 +102,11 @@ const IngredientDetailModal = {
                 form.servingUnit = ing.servingUnit || 'g';
                 form.stock = props.engine.checkStock(ing.id);
                 form.storageZones = Array.isArray(ing.storageZones) ? [...ing.storageZones] : ['fridge'];
-                form.preferredStores = Array.isArray(ing.preferredStores) 
-                    ? ing.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s) 
-                    : (ing.preferredStore ? [ing.preferredStore === 'EC 電商' ? 'EC' : ing.preferredStore] : ['全聯']);
+                const rawStores = Array.isArray(ing.preferredStores) 
+                    ? ing.preferredStores 
+                    : (ing.preferredStore ? [ing.preferredStore] : ['全聯']);
+                form.preferredStores = normalizeStoreList(rawStores);
+                if (form.preferredStores.length === 0) form.preferredStores = ['全聯'];
                 form.price = ing.price || 0;
                 form.priceUnit = ing.priceUnit || '包';
 
@@ -211,15 +214,21 @@ const IngredientDetailModal = {
         const isStorageZoneSelected = (zoneKey) => form.storageZones.includes(zoneKey);
 
         const togglePreferredStore = (store) => {
-            const idx = form.preferredStores.indexOf(store);
+            const canonicalStore = normalizeStoreName(store);
+            form.preferredStores = normalizeStoreList(form.preferredStores);
+            const idx = form.preferredStores.indexOf(canonicalStore);
             if (idx > -1) {
                 if (form.preferredStores.length > 1) form.preferredStores.splice(idx, 1);
             } else {
-                form.preferredStores.push(store);
+                form.preferredStores.push(canonicalStore);
             }
+            form.preferredStores = normalizeStoreList(form.preferredStores);
         };
 
-        const isStoreSelected = (store) => form.preferredStores.includes(store);
+        const isStoreSelected = (store) => {
+            const canonicalStore = normalizeStoreName(store);
+            return form.preferredStores.includes(canonicalStore);
+        };
 
         const isInCart = computed(() => {
             if (!form.id || !props.engine) return false;
@@ -273,9 +282,11 @@ const IngredientDetailModal = {
             form.servingUnit = existingIng.servingUnit || 'g';
             form.stock = props.engine?.checkStock ? props.engine.checkStock(existingIng.id) : true;
             form.storageZones = Array.isArray(existingIng.storageZones) ? [...existingIng.storageZones] : ['fridge'];
-            form.preferredStores = Array.isArray(existingIng.preferredStores) 
-                ? existingIng.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s) 
-                : (existingIng.preferredStore ? [existingIng.preferredStore === 'EC 電商' ? 'EC' : existingIng.preferredStore] : ['全聯']);
+            const rawExistingStores = Array.isArray(existingIng.preferredStores) 
+                ? existingIng.preferredStores 
+                : (existingIng.preferredStore ? [existingIng.preferredStore] : ['全聯']);
+            form.preferredStores = normalizeStoreList(rawExistingStores);
+            if (form.preferredStores.length === 0) form.preferredStores = ['全聯'];
             form.price = existingIng.price || 0;
             form.priceUnit = existingIng.priceUnit || '包';
             if (existingIng.per100g) {
@@ -569,8 +580,8 @@ const IngredientDetailModal = {
                 servingSize: Number(form.servingSize) || 10,
                 servingUnit: form.servingUnit || 'g',
                 storageZones: [...form.storageZones],
-                preferredStores: [...form.preferredStores],
-                preferredStore: form.preferredStores?.[0] || '全聯',
+                preferredStores: normalizeStoreList(form.preferredStores),
+                preferredStore: normalizeStoreList(form.preferredStores)?.[0] || '全聯',
                 price: Number(form.price) || 0,
                 priceUnit: form.priceUnit || '包',
                 priorityTier: Number(form.priorityTier) || 1,
@@ -601,8 +612,8 @@ const IngredientDetailModal = {
                 let shoppingUpdated = false;
                 props.engine.data.pantryInventory.shoppingList.forEach(item => {
                     if (item.targetId === targetId || item.name === cleanName) {
-                        item.preferredStores = [...form.preferredStores];
-                        item.store = form.preferredStores?.[0] || '全聯';
+                        item.preferredStores = normalizeStoreList(form.preferredStores);
+                        item.store = item.preferredStores?.[0] || '全聯';
                         shoppingUpdated = true;
                     }
                 });

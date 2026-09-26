@@ -1,3 +1,5 @@
+import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
+
 const { ref, computed } = Vue;
 
 export default {
@@ -9,7 +11,7 @@ export default {
         const activeStorePickerItemId = ref(null);
         const lastStoreAction = ref(null);
 
-        const availableStores = ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他'];
+        const availableStores = CANONICAL_STORES;
 
         const shoppingList = computed(() => {
             return engine?.data?.pantryInventory?.shoppingList || [];
@@ -24,20 +26,30 @@ export default {
         });
 
         const getItemStores = (item) => {
+            let stores = [];
             if (item.type === 'supply') {
-                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) return item.preferredStores;
-                const sup = engine?.data?.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                if (sup?.preferredStores && sup.preferredStores.length > 0) return sup.preferredStores;
-                if (sup?.store) return [sup.store];
-                if (item.store) return [item.store];
-                return ['Costco'];
+                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) {
+                    stores = item.preferredStores;
+                } else {
+                    const sup = engine?.data?.householdSupplies?.supplies?.find(s => s.id === item.targetId);
+                    if (sup?.preferredStores && sup.preferredStores.length > 0) stores = sup.preferredStores;
+                    else if (sup?.store) stores = [sup.store];
+                    else if (item.store) stores = [item.store];
+                    else stores = ['Costco'];
+                }
+            } else {
+                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) {
+                    stores = item.preferredStores;
+                } else {
+                    const ing = engine?.getIngredientById ? engine.getIngredientById(item.targetId) : null;
+                    if (ing?.preferredStores && ing.preferredStores.length > 0) stores = ing.preferredStores;
+                    else if (ing?.preferredStore) stores = [ing.preferredStore];
+                    else if (item.store) stores = [item.store];
+                    else stores = ['全聯'];
+                }
             }
-            if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) return item.preferredStores;
-            const ing = engine?.getIngredientById ? engine.getIngredientById(item.targetId) : null;
-            if (ing?.preferredStores && ing.preferredStores.length > 0) return ing.preferredStores;
-            if (ing?.preferredStore) return [ing.preferredStore];
-            if (item.store) return [item.store];
-            return ['全聯'];
+            const normalized = normalizeStoreList(stores);
+            return normalized.length > 0 ? normalized : (item.type === 'supply' ? ['Costco'] : ['全聯']);
         };
 
         const getItemStoreLabel = (item) => {
@@ -103,17 +115,19 @@ export default {
         };
 
         const toggleStoreForItem = async (item, store) => {
-            const currentStores = [...getItemStores(item)];
+            const canonicalStore = normalizeStoreName(store);
+            const currentStores = normalizeStoreList(getItemStores(item));
             let updatedStores = [];
-            if (currentStores.includes(store)) {
+            if (currentStores.includes(canonicalStore)) {
                 if (currentStores.length === 1) {
                     alert(`【${item.name}】至少需保留一個採買通路！若想更換通路，請先點選新的通路。`);
                     return;
                 }
-                updatedStores = currentStores.filter(s => s !== store);
+                updatedStores = currentStores.filter(s => s !== canonicalStore);
             } else {
-                updatedStores = [...currentStores, store];
+                updatedStores = [...currentStores, canonicalStore];
             }
+            updatedStores = normalizeStoreList(updatedStores);
 
             const previousStores = [...currentStores];
             const updatedLabel = updatedStores.join('、');
@@ -164,11 +178,11 @@ export default {
             const action = lastStoreAction.value;
             const item = (engine?.data?.pantryInventory?.shoppingList || []).find(it => it.id === action.itemId);
             if (item) {
-                const revertedStores = action.previousStores;
+                const revertedStores = normalizeStoreList(action.previousStores);
                 const revertedLabel = revertedStores.join('、');
                 item.preferredStores = revertedStores;
-                item.store = revertedStores[0] || '全聯';
-                item.preferredStore = revertedStores[0] || '全聯';
+                item.store = revertedStores[0] || (item.type === 'supply' ? 'Costco' : '全聯');
+                item.preferredStore = revertedStores[0] || (item.type === 'supply' ? 'Costco' : '全聯');
                 if (item.type === 'supply') {
                     if (engine?.data?.householdSupplies?.supplies) {
                         const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);

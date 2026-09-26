@@ -11,6 +11,7 @@ import {
 } from '../services/PersonalKitchenState.js';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
+import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 
 export default class KitchenEngine {
     constructor() {
@@ -69,9 +70,9 @@ export default class KitchenEngine {
             ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 if (this.data.rawIngredients[cat]) {
                     this.data.rawIngredients[cat].forEach(ing => {
-                        if (ing.preferredStore === 'EC 電商') ing.preferredStore = 'EC';
+                        if (ing.preferredStore) ing.preferredStore = normalizeStoreName(ing.preferredStore);
                         if (Array.isArray(ing.preferredStores)) {
-                            ing.preferredStores = ing.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                            ing.preferredStores = normalizeStoreList(ing.preferredStores);
                         }
                     });
                     this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
@@ -93,9 +94,9 @@ export default class KitchenEngine {
 
         // 正規化採買清單中的舊版通路名稱
         this.data.pantryInventory.shoppingList.forEach(item => {
-            if (item.store === 'EC 電商') item.store = 'EC';
+            if (item.store) item.store = normalizeStoreName(item.store);
             if (Array.isArray(item.preferredStores)) {
-                item.preferredStores = item.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                item.preferredStores = normalizeStoreList(item.preferredStores);
             }
         });
 
@@ -142,17 +143,17 @@ export default class KitchenEngine {
         this.data.householdSupplies = state?.householdSupplies || blank.householdSupplies;
         if (this.data.pantryInventory?.shoppingList) {
             this.data.pantryInventory.shoppingList.forEach(item => {
-                if (item.store === 'EC 電商') item.store = 'EC';
+                if (item.store) item.store = normalizeStoreName(item.store);
                 if (Array.isArray(item.preferredStores)) {
-                    item.preferredStores = item.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                    item.preferredStores = normalizeStoreList(item.preferredStores);
                 }
             });
         }
         if (this.data.householdSupplies?.supplies) {
             this.data.householdSupplies.supplies.forEach(sup => {
-                if (sup.store === 'EC 電商') sup.store = 'EC';
+                if (sup.store) sup.store = normalizeStoreName(sup.store);
                 if (Array.isArray(sup.preferredStores)) {
-                    sup.preferredStores = sup.preferredStores.map(s => s === 'EC 電商' ? 'EC' : s);
+                    sup.preferredStores = normalizeStoreList(sup.preferredStores);
                 }
             });
         }
@@ -841,9 +842,9 @@ export default class KitchenEngine {
                     defaultStore = '全聯';
                 }
             }
-            if (defaultStore === 'EC 電商') defaultStore = 'EC';
+            defaultStore = normalizeStoreName(defaultStore);
             const rawStores = item.preferredStores || (defaultStore ? [defaultStore] : ['全聯']);
-            const stores = rawStores.map(s => s === 'EC 電商' ? 'EC' : s);
+            const stores = normalizeStoreList(rawStores);
             this.data.pantryInventory.shoppingList.push({
                 id: 'shop_' + Date.now(),
                 type: item.type || 'food',
