@@ -2,12 +2,12 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。FK-001 與 FK-002 皆已完成實機驗收並關閉；常用餐點快捷與成員個別份量模式運作正常。
+FK 是已上線使用的 production system。FK-001、FK-002 與 FK-003 皆已完成實機驗收並關閉；成員營養目標、常用餐點快捷與成員個別份量模式運作正常。
 
 ## Current / Active Batch
 
-- Current：FK-003 更新 Bebe / Ariel 每日營養目標。
-- Active Batch：FK-003。
+- Current：FK-003 已完成並關閉。
+- Active Batch：None。
 
 ## Recent Completed Work
 
@@ -18,6 +18,7 @@ FK 是已上線使用的 production system。FK-001 與 FK-002 皆已完成實�
 - GitHub Pages 載入效能與 iOS PWA Version Tag 更新。
 - FK-001 已將 `favorite_foods.json` 納入 user state 判斷，完成必要入口 Version Tag、六項隔離驗證與 Ariel 的 iOS PWA 實機驗收；Batch 已關閉。
 - FK-002 完成料理計算機「就餐成員個別份量模式 UI」：每位成員獨立支援標準／剩餘模式，結合餐別與當日飲食紀錄預判，膠囊長按防誤觸展開，AI Prompt 動態配平，完成 Version Tag 更新、8 項煙霧測試與 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
+- FK-003 更新 Bebe / Ariel 每日營養目標：校準 KitchenEngine、TrackerView fallback、CalculatorView 吃剩餘額度配平上限與家庭知識庫文件（Bebe.md / Ariel.md 屬外層 Bebe-AI-OS、另由外層 repo 版本控制），更新 Version Tag 載入鏈並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
 
 ## Pending
 

@@ -19,7 +19,7 @@
   - `web/src/engine/KitchenEngine.js`（`this.profiles`）
   - `web/src/views/TrackerView.js`（`defaultProfiles` fallback）
   - `web/src/views/CalculatorView.js`（動態配平剩餘額度目標上限計算與提示詞）
-- 同步更新 Obsidian 知識庫對應之家庭檔案：
+- 同步更新 Obsidian 知識庫對應之家庭檔案（屬於外層 Bebe-AI-OS Local Git，不屬於 FK repo commit，由外層 repo 另行版本控制）：
   - `memory/family_profiles/Bebe.md`
   - `memory/family_profiles/Ariel.md`
 - 更新受影響前端檔案之 Version Tag 與入口鏈（`KitchenEngine.js`、`TrackerView.js`、`CalculatorView.js`、`main.js`、`index.html`）。
@@ -56,10 +56,11 @@
 
 ## Result / Handoff
 
-- 狀態：實作完成，等待 Bebe 進行 DIFF 驗收。
+- 狀態：Closed（完成）。已完成實作、PR #6 合併，以及 Bebe 在 production 正式站之實機驗收通過（2026-09-26）。
 - 完成內容：
   1. `KitchenEngine.js`：更新 Bebe（1450 kcal / P 90g / C 160g / F 50g / Na 1500mg）與 Ariel（1600 kcal / P 85g / C 200g / F 50g / Na 1800mg），Jason 保持不動。
   2. `TrackerView.js`：更新 fallback 中的 Bebe 目標對齊新基準。
   3. `CalculatorView.js`：更新動態配平吃剩餘額度中 Bebe（1450 / 90）與 Ariel（1600 / 85）之目標上限，Jason 保持 2200 / 120 不動。
-  4. 知識文件：同步更新 `memory/family_profiles/Bebe.md` 與 `memory/family_profiles/Ariel.md`。
+  4. 知識文件：同步更新 `memory/family_profiles/Bebe.md` 與 `memory/family_profiles/Ariel.md`（註：上述知識文件屬於外層 Bebe-AI-OS Local Git，不屬於 FK repo commit，由外層 repo 另行版本控制）。
   5. PWA 快取：更新 `KitchenEngine.js`、`CalculatorView.js`、`TrackerView.js`、`main.js` 與 `index.html` 之 Version Tag（`20260926_FK003_TARGETS`）。
+  6. 正式站驗收：2026-09-26 Bebe 在 production 正式站實機驗收通過，確認 Bebe / Ariel 每日進度、剩餘額度與各項目標數值完全吻合。
