@@ -2,12 +2,12 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。FK-001、FK-002 與 FK-003 皆已完成實機驗收並關閉；成員營養目標、常用餐點快捷與成員個別份量模式運作正常。
+FK 是已上線使用的 production system。FK-001、FK-002、FK-003 與 FK-004 皆已完成實機驗收並關閉；成員營養目標、常用餐點快捷、成員個別份量模式與採買通路選取狀態運作正常。
 
 ## Current / Active Batch
 
-- Current：FK-004 修正採買通路顯示與編輯選取狀態不同步。
-- Active Batch：FK-004。
+- Current：None。
+- Active Batch：None。
 
 ## Recent Completed Work
 
@@ -18,7 +18,8 @@ FK 是已上線使用的 production system。FK-001、FK-002 與 FK-003 皆已�
 - GitHub Pages 載入效能與 iOS PWA Version Tag 更新。
 - FK-001 已將 `favorite_foods.json` 納入 user state 判斷，完成必要入口 Version Tag、六項隔離驗證與 Ariel 的 iOS PWA 實機驗收；Batch 已關閉。
 - FK-002 完成料理計算機「就餐成員個別份量模式 UI」：每位成員獨立支援標準／剩餘模式，結合餐別與當日飲食紀錄預判，膠囊長按防誤觸展開，AI Prompt 動態配平，完成 Version Tag 更新、8 項煙霧測試與 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
-- FK-003 更新 Bebe / Ariel 每日營養目標：校準 KitchenEngine、TrackerView fallback、CalculatorView 吃剩餘額度配平上限與家庭知識庫文件（Bebe.md / Ariel.md 屬外層 Bebe-AI-OS、另由外層 repo 版本控制），更新 Version Tag 載入鏈並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
+- FK-003 更新 Bebe / Ariel 每日營養目標：校準 KitchenEngine、TrackerView fallback、CalculatorView 吃剩餘額度配平上限與家庭知識庫文件（Bebe.md / Ariel.md 屬外層 Bebe-AI-OS 的私人 memory 資料庫，受 .gitignore 排除，不納入 Git 版本控制；本次僅同步更新本機 Obsidian 檔案），更新 Version Tag 載入鏈並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
+- FK-004 修正採買通路顯示與編輯選取狀態不同步：官方母庫 3 筆 Costco 舊值改為 canonical Costco，新增共用 StoreNormalizer 統一映射與去重（Costco 好市多 / 好市多 → Costco、EC 電商 → EC），ShoppingView、PantryView 與 IngredientDetailModal 共用正規化邏輯解決選取與過濾不同步及雙胞胎別名問題，補齊 PWA Version Tag 載入鏈，並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
 
 ## Pending
 
