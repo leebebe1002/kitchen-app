@@ -29,8 +29,8 @@ export default class KitchenEngine {
         });
         // 家庭成員健康檔案 (Family Profiles)
         this.profiles = {
-            bebe: { name: 'Bebe', targetKcal: 1350, targetProtein: 105, targetCarbs: 140, targetFat: 40, targetSodium: 1500 },
-            ariel: { name: 'Ariel', targetKcal: 1450, targetProtein: 95, targetCarbs: 165, targetFat: 45, targetSodium: 1800 },
+            bebe: { name: 'Bebe', targetKcal: 1450, targetProtein: 90, targetCarbs: 160, targetFat: 50, targetSodium: 1500 },
+            ariel: { name: 'Ariel', targetKcal: 1600, targetProtein: 85, targetCarbs: 200, targetFat: 50, targetSodium: 1800 },
             jason: { name: 'Jason', targetKcal: 1800, targetProtein: 130, targetCarbs: 200, targetFat: 50, targetSodium: 2000 }
         };
         // 墓碑機制 (Tombstone)：記錄已刪除餐點 ID，防止雲端拉取歷史或合流時死而復生
