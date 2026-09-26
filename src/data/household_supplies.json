@@ -6,7 +6,7 @@
       "brand": "Kirkland 科克蘭",
       "price": 369,
       "priceUnit": "12捲/包",
-      "store": "Costco 好市多",
+      "store": "Costco",
       "photoUrl": "assets/supplies/paper_towel.jpg",
       "packQuantity": 12,
       "unitName": "捲"
@@ -17,7 +17,7 @@
       "brand": "Joy",
       "price": 289,
       "priceUnit": "2入/組",
-      "store": "Costco 好市多",
+      "store": "Costco",
       "photoUrl": "assets/supplies/dish_soap.jpg",
       "packQuantity": 2,
       "unitName": "瓶"
@@ -39,7 +39,7 @@
       "brand": "舒潔 / Kirkland",
       "price": 219,
       "priceUnit": "24包/箱",
-      "store": "Costco 好市多",
+      "store": "Costco",
       "photoUrl": "assets/supplies/box_tissues.jpg",
       "packQuantity": 24,
       "unitName": "包"

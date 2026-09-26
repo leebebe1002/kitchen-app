@@ -1,5 +1,6 @@
 const { ref, computed, watch } = Vue;
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260918_FIX_STATE_V2';
+import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260926_FK004_STORE_SYNC';
 
 export default {
     components: {
@@ -169,20 +170,30 @@ export default {
 
         // Helper to resolve all preferred stores for any shopping item (支援複選通路)
         const getItemStores = (item) => {
+            let stores = [];
             if (item.type === 'supply') {
-                if (item.preferredStores && item.preferredStores.length > 0) return item.preferredStores;
-                const sup = engine.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
-                if (sup?.preferredStores && sup.preferredStores.length > 0) return sup.preferredStores;
-                if (sup?.store) return [sup.store];
-                if (item.store) return [item.store];
-                return ['Costco'];
+                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) {
+                    stores = item.preferredStores;
+                } else {
+                    const sup = engine.data.householdSupplies?.supplies?.find(s => s.id === item.targetId);
+                    if (sup?.preferredStores && sup.preferredStores.length > 0) stores = sup.preferredStores;
+                    else if (sup?.store) stores = [sup.store];
+                    else if (item.store) stores = [item.store];
+                    else stores = ['Costco'];
+                }
+            } else {
+                if (Array.isArray(item.preferredStores) && item.preferredStores.length > 0) {
+                    stores = item.preferredStores;
+                } else {
+                    const ing = engine.getIngredientById(item.targetId);
+                    if (ing?.preferredStores && ing.preferredStores.length > 0) stores = ing.preferredStores;
+                    else if (ing?.preferredStore) stores = [ing.preferredStore];
+                    else if (item.store) stores = [item.store];
+                    else stores = ['全聯'];
+                }
             }
-            if (item.preferredStores && item.preferredStores.length > 0) return item.preferredStores;
-            const ing = engine.getIngredientById(item.targetId);
-            if (ing?.preferredStores && ing.preferredStores.length > 0) return ing.preferredStores;
-            if (ing?.preferredStore) return [ing.preferredStore];
-            if (item.store) return [item.store];
-            return ['全聯'];
+            const normalized = normalizeStoreList(stores);
+            return normalized.length > 0 ? normalized : (item.type === 'supply' ? ['Costco'] : ['全聯']);
         };
 
         const getItemStoreLabel = (item) => {
@@ -243,7 +254,7 @@ export default {
         };
 
         const activeStorePickerItemId = ref(null);
-        const availableStores = ['全聯', 'Costco', '義美', 'EC', '傳統市場', '其他'];
+        const availableStores = CANONICAL_STORES;
 
         const toggleStorePicker = (itemId) => {
             activeStorePickerItemId.value = activeStorePickerItemId.value === itemId ? null : itemId;
@@ -251,45 +262,47 @@ export default {
 
         // 複選切換通路 (Multi-select Store)
         const toggleStoreForItem = async (item, targetStore) => {
-            const currentStores = [...getItemStores(item)];
+            const canonicalStore = normalizeStoreName(targetStore);
+            const currentStores = normalizeStoreList(getItemStores(item));
             const oldStores = [...currentStores];
 
-            const idx = currentStores.indexOf(targetStore);
-            if (idx !== -1) {
-                if (currentStores.length > 1) {
-                    currentStores.splice(idx, 1);
-                } else {
+            let updatedStores = [];
+            if (currentStores.includes(canonicalStore)) {
+                if (currentStores.length === 1) {
                     alert(`【${item.name}】至少需保留一個採買通路！若想更換通路，請先點選新的通路。`);
                     return;
                 }
+                updatedStores = currentStores.filter(s => s !== canonicalStore);
             } else {
-                currentStores.push(targetStore);
+                updatedStores = [...currentStores, canonicalStore];
             }
+            updatedStores = normalizeStoreList(updatedStores);
 
             // 同步保存至 item 本身
-            item.preferredStores = currentStores;
-            item.store = currentStores[0];
+            item.preferredStores = updatedStores;
+            item.store = updatedStores[0];
+            item.preferredStore = updatedStores[0];
 
             if (item.type === 'supply') {
                 if (engine.data.householdSupplies?.supplies) {
                     const sup = engine.data.householdSupplies.supplies.find(s => s.id === item.targetId);
                     if (sup) {
-                        sup.preferredStores = currentStores;
-                        sup.store = currentStores[0];
+                        sup.preferredStores = updatedStores;
+                        sup.store = updatedStores[0];
                         await engine.saveJson('household_supplies.json', engine.data.householdSupplies);
                     }
                 }
             } else {
                 const ing = engine.getIngredientById(item.targetId);
                 if (ing) {
-                    ing.preferredStores = currentStores;
-                    ing.preferredStore = currentStores[0];
+                    ing.preferredStores = updatedStores;
+                    ing.preferredStore = updatedStores[0];
                     if (engine.data.rawIngredients) {
                         ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                             const rawIng = engine.data.rawIngredients[cat]?.find(i => i.id === item.targetId);
                             if (rawIng) {
-                                rawIng.preferredStores = currentStores;
-                                rawIng.preferredStore = currentStores[0];
+                                rawIng.preferredStores = updatedStores;
+                                rawIng.preferredStore = updatedStores[0];
                             }
                         });
                         await engine.saveJson('ingredients.json', engine.data.rawIngredients);
@@ -297,6 +310,8 @@ export default {
                 }
             }
             await engine.saveJson('pantry_inventory.json', engine.data.pantryInventory);
+            if (engine.persistPersonalKitchenState) engine.persistPersonalKitchenState();
+            if (engine.syncPersonalKitchenState) engine.syncPersonalKitchenState().catch(() => {});
 
             // 更新全域通知條 (常駐於畫面頂部)
             lastStoreAction.value = {
@@ -306,8 +321,8 @@ export default {
                 itemName: item.name,
                 type: item.type,
                 oldStores,
-                newStores: currentStores,
-                newStoreLabel: currentStores.join('、')
+                newStores: updatedStores,
+                newStoreLabel: updatedStores.join('、')
             };
 
             if (lastActionTimer) clearTimeout(lastActionTimer);
@@ -318,7 +333,8 @@ export default {
 
         const undoLastStoreAction = async () => {
             if (!lastStoreAction.value) return;
-            const { item, oldStores } = lastStoreAction.value;
+            const { item, oldStores: rawOldStores } = lastStoreAction.value;
+            const oldStores = normalizeStoreList(rawOldStores);
             lastStoreAction.value = null;
             if (lastActionTimer) clearTimeout(lastActionTimer);
 

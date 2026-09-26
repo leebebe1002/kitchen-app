@@ -6,8 +6,8 @@ FK 是已上線使用的 production system。FK-001、FK-002 與 FK-003 皆已�
 
 ## Current / Active Batch
 
-- Current：FK-003 已完成並關閉。
-- Active Batch：None。
+- Current：FK-004 修正採買通路顯示與編輯選取狀態不同步。
+- Active Batch：FK-004。
 
 ## Recent Completed Work
 
