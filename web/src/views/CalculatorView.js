@@ -1348,8 +1348,8 @@ export default {
                     const todayStr = getTodayStr();
                     const remainingDetails = remainingMembers.map(m => {
                         const memberDisplayName = m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason');
-                        const targetKcal = m === 'jason' ? 2200 : (m === 'ariel' ? 1600 : 1400);
-                        const targetP = m === 'jason' ? 120 : (m === 'ariel' ? 80 : 75);
+                        const targetKcal = m === 'jason' ? 2200 : (m === 'ariel' ? 1600 : 1450);
+                        const targetP = m === 'jason' ? 120 : (m === 'ariel' ? 85 : 90);
                         
                         const log = engine.getDailyLog(todayStr, m);
                         const consumedKcal = Math.round(log?.totals?.kcal || 0);

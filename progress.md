@@ -6,8 +6,8 @@ FK 是已上線使用的 production system。FK-001 與 FK-002 皆已完成實�
 
 ## Current / Active Batch
 
-- Current：FK-002 已完成並關閉。
-- Active Batch：None。
+- Current：FK-003 更新 Bebe / Ariel 每日營養目標。
+- Active Batch：FK-003。
 
 ## Recent Completed Work
 

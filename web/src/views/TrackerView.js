@@ -108,7 +108,7 @@ export default {
 
         const targetProfile = computed(() => {
             return engine.profiles[currentMember.value] || {
-                name: 'Bebe', targetKcal: 1350, targetProtein: 105, targetCarbs: 140, targetFat: 40, targetSodium: 1500
+                name: 'Bebe', targetKcal: 1450, targetProtein: 90, targetCarbs: 160, targetFat: 50, targetSodium: 1500
             };
         });
 
