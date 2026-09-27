@@ -2,7 +2,7 @@
 
 ## Current State
 
-FK 是已上線使用的 production system。FK-001、FK-002、FK-003 與 FK-004 皆已完成實機驗收並關閉；成員營養目標、常用餐點快捷、成員個別份量模式與採買通路選取狀態運作正常。
+FK 是已上線使用的 production system。FK-001、FK-002、FK-003、FK-004 與 FK-005 皆已完成實機驗收或調查確認並關閉；成員營養目標、常用餐點快捷、成員個別份量模式與採買通路選取狀態運作正常，已建立完整的 FK Data Map 與 SSOT 盤點報告。
 
 ## Current / Active Batch
 
@@ -20,10 +20,15 @@ FK 是已上線使用的 production system。FK-001、FK-002、FK-003 與 FK-004
 - FK-002 完成料理計算機「就餐成員個別份量模式 UI」：每位成員獨立支援標準／剩餘模式，結合餐別與當日飲食紀錄預判，膠囊長按防誤觸展開，AI Prompt 動態配平，完成 Version Tag 更新、8 項煙霧測試與 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
 - FK-003 更新 Bebe / Ariel 每日營養目標：校準 KitchenEngine、TrackerView fallback、CalculatorView 吃剩餘額度配平上限與家庭知識庫文件（Bebe.md / Ariel.md 屬外層 Bebe-AI-OS 的私人 memory 資料庫，受 .gitignore 排除，不納入 Git 版本控制；本次僅同步更新本機 Obsidian 檔案），更新 Version Tag 載入鏈並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
 - FK-004 修正採買通路顯示與編輯選取狀態不同步：官方母庫 3 筆 Costco 舊值改為 canonical Costco，新增共用 StoreNormalizer 統一映射與去重（Costco 好市多 / 好市多 → Costco、EC 電商 → EC），ShoppingView、PantryView 與 IngredientDetailModal 共用正規化邏輯解決選取與過濾不同步及雙胞胎別名問題，補齊 PWA Version Tag 載入鏈，並完成 Bebe 在 production 正式站之實機驗收；Batch 已關閉。
+- FK-005 已完成 FK 全資料位置、SSOT、localStorage、Supabase、Git JSON、restore source 與遺失風險盤點，建立正式 FK Data Map；確認 custom_ingredients、favorite_foods 與手機端自建／修改料理為 Local-only 高風險資料，meal_logs、meal-photos 與 fk_personal_kitchen_state 雖已有 Supabase SSOT 但缺乏獨立 cold backup，並確立後續上雲、同步與備份實作路徑；Batch 已關閉。
 
 ## Pending
 
-- 目前沒有排定的功能 Batch。
+- 後續排定之資料安全性與同步 Batch：
+  1. **FK-006**：Local-only 高風險資料上雲架構設計
+  2. **FK-007**：Local-only → Supabase sync 實作
+  3. **FK-008**：Supabase 自動 snapshot / cold backup
+  4. **後續 Batch**：deleted tombstone / offline merge / cache override 等 sync correctness
 - `PRD.md`、`DATA_SCHEMA.md`、`ROADMAP.md` 仍含舊名稱與舊架構／階段描述，尚未另案校準。
 
 ## Security / Technical Debt
@@ -34,7 +39,7 @@ FK 是已上線使用的 production system。FK-001、FK-002、FK-003 與 FK-004
 
 ## Next Action
 
-下一個功能需求開始時，再依 `batches/README.md` 建立 Batch 並確認資料邊界。
+依排定順序啟動 **FK-006：Local-only 高風險資料上雲架構設計**。
 
 ## Recommended Model
 
