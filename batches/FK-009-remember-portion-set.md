@@ -2,7 +2,7 @@
 
 - **Batch ID**：FK-009
 - **名稱**：記住這組份量（Remember Portion Set）
-- **狀態**：Merged — awaiting production verification
+- **狀態**：Closed — Production verified
 - **建立日期**：2026-09-28
 - **分支**：`feature/fk-009-remember-portion-set`
 - **目的**：讓 Bebe 在 Calculator 手動調整完份量後，可一鍵「記住這組份量」，未來同一成員使用同一組食材時，優先帶入已記住的份量，而非讓 AI 每次重新自由配比。
@@ -273,15 +273,23 @@ Bebe 於 2026-09-28 確認四項核心產品決策並已落實至代碼：
 
 ## 十三、實機驗收紀錄
 
-- **驗收日期**：2026-09-28
-- **驗收者**：Bebe
-- **驗收結果**：Local UI verification passed by Bebe (OK)
-- **驗收項目**：
-  1. 常用份量記住與橘心顯示正常
-  2. 手動微調後即時切換為「♡ 更新這組份量」，還原即切回「♥ 已記住」
-  3. AI 重算後常用份量優先覆寫成功，營養數值即時連動
-  4. 剩餘額度超額黃色 warning 顯示且份量不被偷偷竄改
-  5. 點擊取消正常清除記憶並切換回 unsaved
+- **本機 UI 驗收**：2026-09-28 由 Bebe 實機驗收通過。
+- **PR #11 功能 Merge**：已 merge 至 main 並部署至 Production。
+- **Production 實機問題與修正**：
+  - 首次 Production 驗收發現 iPhone 上 Member Card 底部按鈕被固定操作列遮擋。
+  - 於 PR #13（commit `e468eef` / `d88cc3c`）採用最小修法增加 Calculator results 區塊底部安全空間，並更新 PWA Version Tag 為 `20260928_FK009_PORTION_MEMORY_V2`。
+- **Production 最終驗收**：
+  - **驗收日期**：2026-09-28
+  - **驗收者**：Bebe
+  - **驗收結果**：Production UI verification passed by Bebe (OK)
+  - **驗收項目**：
+    1. 常用份量記住與橘心顯示正常
+    2. 手動微調後即時切換為「♡ 更新這組份量」，還原即切回「♥ 已記住」
+    3. AI 重算後常用份量優先覆寫成功，營養數值即時連動
+    4. 剩餘額度超額黃色 warning 顯示且份量不被偷偷竄改
+    5. 點擊取消正常清除記憶並切換回 unsaved
+    6. iPhone 正式站底部操作列安全間距正常，最後一張卡片底部按鈕完整可見、順暢點擊
+- **結論**：FK-009 功能完整驗收通過，正式關閉。
 
 ---
 
