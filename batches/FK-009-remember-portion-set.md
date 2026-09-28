@@ -2,7 +2,7 @@
 
 - **Batch ID**：FK-009
 - **名稱**：記住這組份量（Remember Portion Set）
-- **狀態**：Verified — Local UI verification passed by Bebe (Ready for PR)
+- **狀態**：Merged — awaiting production verification
 - **建立日期**：2026-09-28
 - **分支**：`feature/fk-009-remember-portion-set`
 - **目的**：讓 Bebe 在 Calculator 手動調整完份量後，可一鍵「記住這組份量」，未來同一成員使用同一組食材時，優先帶入已記住的份量，而非讓 AI 每次重新自由配比。
