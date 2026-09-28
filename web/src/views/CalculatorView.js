@@ -2256,7 +2256,7 @@ ${JSON.stringify(membersData, null, 2)}
                 </div>
             </div>
 
-            <div v-if="selectedDish && isCalculated" style="position: relative;">
+            <div v-if="selectedDish && isCalculated" style="position: relative; padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));">
                 <!-- 03 PORTIONS -->
                 <div id="portions-section" class="section-title">03 PORTIONS 全家備料大白板</div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
