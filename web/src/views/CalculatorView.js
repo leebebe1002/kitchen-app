@@ -113,6 +113,9 @@ export default {
         const chefApiKeyInput = ref('');
         const isChefKeyVisible = ref(true);
 
+        // 🔒 FK-009: 每位成員的「記住這組份量」按鈕三態 (per-member)
+        const portionMemoryButtonState = ref({ bebe: 'unsaved', ariel: 'unsaved', jason: 'unsaved' });
+
         // Modal 背景鎖定機制 (Body Scroll Lock)
         watch([showIngredientDetailModal, showCartModal, showRecordSuccessModal, showAddModal], (newVals) => {
             const isAnyOpen = newVals.some(v => v === true);
@@ -630,6 +633,11 @@ export default {
             saveStateToStorage();
         }, { deep: true });
 
+        // 🔒 FK-009: 食材或份量異動時即時更新三態按鈕狀態
+        watch([memberIngredients, selectedMasterIngredients, isCalculated], () => {
+            if (isCalculated.value) refreshAllPortionStates();
+        }, { deep: true });
+
         // 監聽料理清單與初始化
         let hasInitialized = false;
 
@@ -1013,6 +1021,129 @@ export default {
             }
         };
 
+        // ==========================================
+        // 🔒 FK-009: Portion Memory（記住這組份量）
+        // ==========================================
+        const FK009_KEY = 'kitchen_v2_portion_memory';
+
+        const readPortionStore = () => {
+            try {
+                const raw = localStorage.getItem(FK009_KEY);
+                const store = raw ? JSON.parse(raw) : { version: 1, sets: [] };
+                if (!Array.isArray(store.sets)) store.sets = [];
+                return store;
+            } catch (e) {
+                return { version: 1, sets: [] };
+            }
+        };
+
+        const writePortionStore = (store) => {
+            try { localStorage.setItem(FK009_KEY, JSON.stringify(store)); } catch (e) {}
+        };
+
+        // 食材 ID 集合排序後 join — 完全匹配識別鍵
+        const buildIngSetKey = (ingredientIds) =>
+            [...ingredientIds].filter(id => checkStock(id)).sort().join('|');
+
+        const findPortionEntry = (member, ingredientIds) => {
+            const key = buildIngSetKey(ingredientIds);
+            if (!key) return null;
+            return readPortionStore().sets.find(
+                s => s.member === member && s.ingredientSetKey === key
+            ) || null;
+        };
+
+        // 將記憶份量套用至 memberIngredients（最高優先覆寫），回傳是否有套用
+        const applyPortionMemory = (member) => {
+            const entry = findPortionEntry(member, selectedMasterIngredients.value);
+            if (!entry) return false;
+            const list = memberIngredients.value[member] || [];
+            entry.portions.forEach(saved => {
+                const target = list.find(i => i.id === saved.id);
+                if (target) {
+                    target.amount = saved.amount;
+                    target.unit = saved.unit;
+                }
+            });
+            return true;
+        };
+
+        // 比較目前份量與記憶是否完全一致
+        const portionsMatchEntry = (member, entry) => {
+            if (!entry) return false;
+            const activeList = getMemberActiveIngredients(member);
+            if (activeList.length !== entry.portions.length) return false;
+            return entry.portions.every(saved => {
+                const cur = activeList.find(c => c.id === saved.id);
+                return cur &&
+                    Math.round(Number(cur.amount) * 10) === Math.round(Number(saved.amount) * 10) &&
+                    cur.unit === saved.unit;
+            });
+        };
+
+        // 重新計算某位成員的按鈕狀態
+        const refreshPortionState = (member) => {
+            const entry = findPortionEntry(member, selectedMasterIngredients.value);
+            if (!entry) {
+                portionMemoryButtonState.value[member] = 'unsaved';
+            } else if (portionsMatchEntry(member, entry)) {
+                portionMemoryButtonState.value[member] = 'saved';
+            } else {
+                portionMemoryButtonState.value[member] = 'modified';
+            }
+        };
+
+        const refreshAllPortionStates = () => {
+            ['bebe', 'ariel', 'jason'].forEach(m => refreshPortionState(m));
+        };
+
+        // 儲存目前份量至 localStorage
+        const savePortionMemory = (member) => {
+            const activeList = getMemberActiveIngredients(member);
+            if (activeList.length === 0) return;
+            const key = buildIngSetKey(selectedMasterIngredients.value);
+            if (!key) return;
+            const store = readPortionStore();
+            const idx = store.sets.findIndex(s => s.member === member && s.ingredientSetKey === key);
+            const entry = {
+                id: idx >= 0 ? store.sets[idx].id : ('pm_' + Date.now()),
+                member,
+                ingredientSetKey: key,
+                portions: activeList.map(i => ({ id: i.id, amount: i.amount, unit: i.unit })),
+                savedAt: new Date().toISOString(),
+                dishContext: null
+            };
+            if (idx >= 0) { store.sets[idx] = entry; } else { store.sets.push(entry); }
+            writePortionStore(store);
+            portionMemoryButtonState.value[member] = 'saved';
+        };
+
+        // 取消記住：刪除該 member + ingredientSetKey 的記憶
+        const deletePortionMemory = (member) => {
+            const key = buildIngSetKey(selectedMasterIngredients.value);
+            if (!key) return;
+            const store = readPortionStore();
+            store.sets = store.sets.filter(
+                s => !(s.member === member && s.ingredientSetKey === key)
+            );
+            writePortionStore(store);
+            portionMemoryButtonState.value[member] = 'unsaved';
+        };
+
+        // 剩餘額度超額提示（只在 remaining 模式 + saved 狀態 + 超額時顯示）
+        const getPortionMemoryWarning = (member) => {
+            if (memberPortionModes.value[member] !== 'remaining') return null;
+            if (portionMemoryButtonState.value[member] !== 'saved') return null;
+            const todayStr = getTodayStr();
+            const profile = engine.profiles[member];
+            const log = engine.getDailyLog(todayStr, member);
+            const consumed = Math.round(log?.totals?.kcal || 0);
+            const remaining = Math.max(0, (profile?.targetKcal || 1450) - consumed);
+            const current = Math.round(getMemberNutrition(member).kcal || 0);
+            if (current <= remaining) return null;
+            return { currentKcal: current, remainingKcal: remaining };
+        };
+
         // Drawer Controls
         const openAddModal = () => {
             console.log('[Calculator] openAddModal called');
@@ -1169,6 +1300,9 @@ export default {
         });
 
         const acceptLocalCalculation = () => {
+            // 🔒 FK-009: 套用記住的份量（接受本地計算時同步執行）
+            activeMembers.value.forEach(m => applyPortionMemory(m));
+            refreshAllPortionStates();
             aiHudState.isOpen = false;
             isCalculated.value = true;
             isResultStale.value = false;
@@ -1201,6 +1335,10 @@ export default {
 
             // 3. 呼叫 Gemini AI
             const aiSuccess = await callAiChefAdvisor();
+
+            // 🔒 FK-009: portion memory 最後覆寫（最高優先，覆蓋 AI / autoBalance 結果）
+            activeMembers.value.forEach(m => applyPortionMemory(m));
+            refreshAllPortionStates();
 
             if (aiSuccess) {
                 aiHudState.status = 'success';
@@ -1395,6 +1533,7 @@ ${JSON.stringify(membersData, null, 2)}
 
 3. 【💬 主廚透明評語 (Chef Comment)】：
    - 凡是有食材因為額度吃緊而被調降或歸零（例如沙茶醬、貢丸或王子麵被扣除），十一粒【必須】在評語中以親切、溫暖、懂生活的語氣主動向 Bebe 說明原因（例如：「今晚 Bebe 額度較精緻，十一粒為妳把沙茶醬與芋頭貢丸省下讓給 Jason，把熱量全部留給滿滿的鮮嫩肉片與高麗菜喔！」）。
+   - 評語聚焦於食材調配心意、生活提醒與食材取捨原因，請勿在評語中寫出任何食材的具體克數或份量數字；實際份量由 Calculator 卡片統一呈現。
 
 請輸出嚴格的合法 JSON（不要 markdown 標籤，必須包含所有 ${selectedIngs.length} 種食材）：
 {
@@ -1871,7 +2010,11 @@ ${JSON.stringify(membersData, null, 2)}
             saveChefKey,
             aiHudState,
             acceptLocalCalculation,
-            retryAiCalculation
+            retryAiCalculation,
+            portionMemoryButtonState,
+            savePortionMemory,
+            deletePortionMemory,
+            getPortionMemoryWarning
         };
     },
     template: `
@@ -2278,6 +2421,34 @@ ${JSON.stringify(membersData, null, 2)}
                                     style="width: 32px; height: 32px; padding: 0; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--color-border); background: #FFFFFF; cursor: pointer; color: var(--color-text-main); user-select: none; transition: all 0.15s ease;">
                                 +
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- 🔒 FK-009: 記住這組份量 -->
+                    <div style="margin-top: 14px; margin-bottom: 2px;">
+                        <!-- ⚠️ 剩餘額度超額提示（僅在 remaining 模式 + 超額時顯示）-->
+                        <div v-if="getPortionMemoryWarning(member)"
+                             style="margin-bottom: 8px; padding: 5px 10px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; font-size: 0.76rem; color: #92400E; display: flex; align-items: center; gap: 5px;">
+                            <span>⚠️</span>
+                            <span>常用份量約 {{ getPortionMemoryWarning(member).currentKcal }} kcal，超過今日剩餘額度 {{ getPortionMemoryWarning(member).remainingKcal }} kcal</span>
+                        </div>
+                        <!-- 按鈕區塊（居中，低視覺權重）-->
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 28px;">
+                            <!-- unsaved / modified -->
+                            <button v-if="portionMemoryButtonState[member] !== 'saved'"
+                                    @click="savePortionMemory(member)"
+                                    style="background: none; border: none; cursor: pointer; font-size: 0.8rem; color: #C4B5A0; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 3px; transition: color 0.18s ease; user-select: none;"
+                                    @mouseover="$event.target.style.color='#9CA3AF'" @mouseout="$event.target.style.color='#C4B5A0'">
+                                {{ portionMemoryButtonState[member] === 'modified' ? '♡ 更新這組份量' : '♡ 記住這組份量' }}
+                            </button>
+                            <!-- saved -->
+                            <template v-else>
+                                <span style="font-size: 0.8rem; color: #F97316; display: inline-flex; align-items: center; gap: 3px; user-select: none;">♥ 已記住這組份量</span>
+                                <span style="color: #E5E7EB; font-size: 0.78rem; user-select: none;">·</span>
+                                <button @click="deletePortionMemory(member)"
+                                        style="background: none; border: none; cursor: pointer; font-size: 0.74rem; color: #D1D5DB; padding: 0; transition: color 0.18s ease; user-select: none;"
+                                        @mouseover="$event.target.style.color='#9CA3AF'" @mouseout="$event.target.style.color='#D1D5DB'">取消</button>
+                            </template>
                         </div>
                     </div>
                 </div>

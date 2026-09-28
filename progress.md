@@ -6,8 +6,8 @@ FK 是已上線使用的 production system。FK-001、FK-002、FK-003、FK-004 �
 
 ## Current / Active Batch
 
-- Current：None。
-- Active Batch：None。
+- Current：FK-009。
+- Active Batch：FK-009「記住這組份量」— Ready for PR / awaiting merge（本機 UI 驗收已由 Bebe 通過）。
 
 ## Recent Completed Work
 
