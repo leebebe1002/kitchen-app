@@ -1,5 +1,5 @@
 import CloudSyncEngine from './CloudSyncEngine.js';
-import supabaseService from '../services/SupabaseService.js';
+import supabaseService from '../services/SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
 import {
     PERSONAL_SCOPES,
     emptyPersonalKitchenState,
@@ -9,7 +9,7 @@ import {
     setActivePersonalScope,
     writePersonalKitchenState
 } from '../services/PersonalKitchenState.js';
-import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
+import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js?v=20260929_SUPABASE_KEY_V1';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 

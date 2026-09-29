@@ -1,5 +1,5 @@
-import authService from './FamilyAuthService.js';
-import { SUPABASE_CONFIG } from './SupabaseService.js';
+import authService from './FamilyAuthService.js?v=20260929_SUPABASE_KEY_V1';
+import { SUPABASE_CONFIG } from './SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
 
 class PersonalKitchenSyncService {
     get enabled() {

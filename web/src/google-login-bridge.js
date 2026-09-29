@@ -1,4 +1,4 @@
-import { SUPABASE_CONFIG } from './services/SupabaseService.js';
+import { SUPABASE_CONFIG } from './services/SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
 
 const GOOGLE_RETURN_RELOAD_KEY = 'family_kitchen_google_return_reload';
 

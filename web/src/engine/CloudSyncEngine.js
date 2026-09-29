@@ -8,11 +8,8 @@ class CloudSyncEngine {
     constructor(options = {}) {
         this.repoOwner = 'leebebe1002';
         this.repoName = 'kitchen-app';
-        // 🔐 家庭專屬安全通訊密鑰 (動態組裝)
-        const _p1 = 'gh' + 'p_';
-        const _p2 = 'IZgsS7hK' + 'PbFwbeRK';
-        const _p3 = 'VhDTCQjl' + 'Z2n8652TxOkr';
-        this.token = _p1 + _p2 + _p3;
+        // 🔐 既有 GitHub PAT 已撤銷並停用，全面由 Supabase 接管同步中樞
+        this.token = '';
         // 🔐 既有 GitHub PAT 已過期失效，全面由 Supabase 雲端資料庫接管同步中樞
         // 關閉 GitHub API 輪詢以避免背景 401 錯誤與重複網路開銷
         this.enabled = false;

@@ -531,7 +531,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 
                 raw_bytes = base64.b64decode(b64_data)
                 
-                service_role_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmZ2RuZWFjdXp3eWZpYnB1dXBxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODQxODk0MywiZXhwIjoyMTAzOTk0OTQzfQ.TCy79Vt8e8LZ_tyd53UeIkSed_9VP-PmzUjf-h-9URM"
+                service_role_key = os.environ.get("SUPABASE_SECRET_KEY")
+                if not service_role_key:
+                    self.send_response(503)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Supabase proxy credential not configured (SUPABASE_SECRET_KEY required)"}).encode("utf-8"))
+                    return
                 supabase_url = "https://zfgdneacuzwyfibpuupq.supabase.co"
                 bucket = "meal-photos"
                 

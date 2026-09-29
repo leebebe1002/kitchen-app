@@ -1,10 +1,11 @@
-# Family Kitchen 2.0｜AI 協作規則
+# Family Kitchen 2.0 (`kitchen-app`)｜AI 協作規則
 
-本檔只補充 FK 專屬規則；工作區共用規則以根目錄 `AGENTS.md` 為準。
+本檔是本 repository 的 vendor-neutral AI 協作規則 SSOT。所有 AI 工具與協作者皆以此為唯一準則。
 
 ## 開始修改前
 
-- 先讀 `PRD.md`、`DATA_SCHEMA.md`、`DESIGN_SYSTEM.md`、`ROADMAP.md`。
+- 先讀 `README.md`、`docs/PRD.md`、`docs/DATA_SCHEMA.md`、`docs/DESIGN_SYSTEM.md`。
+- 任務與需求管理以 **GitHub Issues** 為 SSOT；日常開發不再建立新的 Batch Markdown 或維護 `progress.md`。
 - 再依任務讀取實際資料流；涉及庫存、採買、家用品、食材或同步時，至少檢查 `web/src/engine/KitchenEngine.js`、`web/src/services/PersonalKitchenState.js`、`web/src/services/PersonalKitchenSyncService.js` 與相關 View／migration。
 - 規格文件有部分舊架構描述；遇到文件與 production 實作不一致時，先回報，不可默默改變資料邊界。
 - FK 已是 production system。優先做最小、可驗證、可回復的修改，避免不必要的大規模重構。
@@ -44,8 +45,25 @@
 - 同一個需要 singleton 行為的模組必須使用完全相同的 URL；不可用不同 Version Tag 載入兩份實例。`FamilyAuthService.js` 與同步服務共用 session 的既有無版本 URL 規則不得破壞。
 - Version Tag 使用可辨識且唯一的日期／變更名稱；只更新實際受影響的載入鏈，不做無關 cache bust。
 
-## 修改與驗收
+## 驗證標準
+
+修改程式碼後必須執行以下基礎驗證：
+
+```bash
+# 1. Python 腳本語法檢驗
+python3 -m py_compile server.py update_ingredients.py
+
+# 2. JavaScript 模組語法檢驗
+find web/src -name "*.js" -exec node -c {} +
+
+# 3. 靜態資料結構 (JSON) 完整性檢查
+python3 -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in glob.glob('src/data/*.json') + glob.glob('web/*.json')]"
+```
+
+## 修改、驗收與交接
 
 - 不得為了整理程式碼改動 production 行為；跨資料層、scope、localStorage key、Supabase schema／RLS 或 merge policy 的變更必須先列出影響範圍。
 - 資料寫入路徑的修改至少驗證：`household`、`ariel`、本機無登入、遠端空白、遠端已有資料、舊 cache 與重複食材 reference。
-- 未經要求不修改 `PRD.md`、`DATA_SCHEMA.md`、`DESIGN_SYSTEM.md`、`ROADMAP.md`；發現明確錯誤或落差時只回報並等待決定。
+- 未經要求不修改 `docs/PRD.md`、`docs/DATA_SCHEMA.md`、`docs/DESIGN_SYSTEM.md`；發現明確錯誤或落差時只回報並等待決定。
+- 重大架構決策寫入 `docs/decisions/`；一般實作細節留於 Git commit / PR 即可。
+- **Handoff 規則**：正常交付時維持 clean working tree + commit + Issue 更新；中途被迫換工具時使用 Issue comment / Draft PR / 臨時 `NEXT.md`（接手完成後立即刪除），嚴禁建立永久 `HANDOFF.md`。

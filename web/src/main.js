@@ -1,15 +1,15 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260926_FK004_STORE_SYNC';
+import KitchenEngine from './engine/KitchenEngine.js?v=20260929_SUPABASE_KEY_V1';
 import CalculatorView from './views/CalculatorView.js?v=20260928_FK009_PORTION_MEMORY_V2';
-import TrackerView from './views/TrackerView.js?v=20260926_FK003_TARGETS';
+import TrackerView from './views/TrackerView.js?v=20260929_SUPABASE_KEY_V1';
 import PantryView from './views/PantryView.js?v=20260926_FK004_STORE_SYNC';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260918_FIX_STATE_V2';
 // 每次修正登入回跳邏輯時都更新版本字串，避免 iPhone PWA 沿用舊模組快取。
 // 與 PersonalKitchenSyncService 使用相同的模組網址，確保 Google 登入後
 // 同一份 session 會被同步服務讀到；網址加上不同版本參數會建立另一個實例。
-import authService from './services/FamilyAuthService.js';
+import authService from './services/FamilyAuthService.js?v=20260929_SUPABASE_KEY_V1';
 
 const App = {
     components: {

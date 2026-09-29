@@ -1,4 +1,4 @@
-import { SUPABASE_CONFIG } from './SupabaseService.js';
+import { SUPABASE_CONFIG } from './SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
 
 const SESSION_KEY = 'family_kitchen_auth_session';
 

@@ -1,4 +1,4 @@
-import SupabaseService from '../services/SupabaseService.js';
+import SupabaseService from '../services/SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
 
 const { ref, computed, onMounted, onUnmounted, nextTick, watch } = Vue;
 

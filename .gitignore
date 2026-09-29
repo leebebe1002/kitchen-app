@@ -11,3 +11,8 @@ __pycache__/
 
 # Backups
 backups/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
