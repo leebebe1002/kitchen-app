@@ -276,6 +276,25 @@ export default class KitchenEngine {
         }
     }
 
+    /**
+     * 🛡️ 安全防護：比對已作廢的歷史外洩測試金鑰指紋（不儲存完整金鑰字面值）
+     * 該舊金鑰已於 Google AI Studio 廢止。此處結合長度、公開後綴與 32-bit FNV-1a 指紋，
+     * 大幅降低誤判風險，供 legacy client 清理本地舊快取使用（非密碼學抗碰撞保證）。
+     * @param {string} key
+     * @returns {boolean}
+     */
+    static isRevokedLegacyKey(key) {
+        if (!key || typeof key !== 'string') return false;
+        // 快速特徵比對：長度 39 且後綴符合已作廢之公開標記
+        if (key.length !== 39 || !key.endsWith('wMZQ')) return false;
+        // FNV-1a 32-bit hash 指紋校驗 (雜湊值：efceaf35)
+        let hash = 2166136261;
+        for (let i = 0; i < key.length; i++) {
+            hash = Math.imul(hash ^ key.charCodeAt(i), 16777619) >>> 0;
+        }
+        return hash.toString(16) === 'efceaf35';
+    }
+
     // 智慧增量合併使用者狀態
     mergeUserState(filename, localData, serverData) {
         if (filename === 'pantry_inventory.json') {
@@ -352,7 +371,7 @@ export default class KitchenEngine {
             return { ...(serverData || {}), ...(localData || {}) };
         } else if (filename === 'config.json') {
             const merged = { ...(serverData || {}), ...(localData || {}) };
-            if (merged.gemini_api_key === 'AIzaSyBasMvp1ztbHtoGF1vNamSkhGoVuRxwMZQ') {
+            if (KitchenEngine.isRevokedLegacyKey(merged.gemini_api_key)) {
                 merged.gemini_api_key = '';
             }
             return merged;
