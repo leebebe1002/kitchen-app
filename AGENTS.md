@@ -4,7 +4,7 @@
 
 ## 開始修改前
 
-- 先讀 `README.md`、`docs/PRD.md`、`docs/DATA_SCHEMA.md`、`docs/DESIGN_SYSTEM.md`。
+- 開始修改前先讀 `README.md`；其餘規格依任務範圍按需載入：產品需求讀 `docs/PRD.md`、資料模型／同步讀 `docs/DATA_SCHEMA.md`、介面／樣式讀 `docs/DESIGN_SYSTEM.md`。涉及多個面向就讀取對應多份文件，不省略必要規格。
 - 任務與需求管理以 **GitHub Issues** 為 SSOT；日常開發不再建立新的 Batch Markdown 或維護 `progress.md`。
 - 再依任務讀取實際資料流；涉及庫存、採買、家用品、食材或同步時，至少檢查 `web/src/engine/KitchenEngine.js`、`web/src/services/PersonalKitchenState.js`、`web/src/services/PersonalKitchenSyncService.js` 與相關 View／migration。
 - 規格文件有部分舊架構描述；遇到文件與 production 實作不一致時，先回報，不可默默改變資料邊界。
@@ -54,7 +54,8 @@
 python3 -m py_compile server.py update_ingredients.py
 
 # 2. JavaScript 模組語法檢驗
-find web/src -name "*.js" -exec node -c {} +
+find web/src -type f -name '*.js' \
+  -exec sh -c 'for f do node --check "$f" || exit 1; done' sh {} +
 
 # 3. 靜態資料結構 (JSON) 完整性檢查
 python3 -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in glob.glob('src/data/*.json') + glob.glob('web/*.json')]"
