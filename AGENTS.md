@@ -1,6 +1,6 @@
 # Family Kitchen 2.0 (`kitchen-app`)｜AI 協作規則
 
-本檔是本 repository 的 vendor-neutral AI 協作規則 SSOT。所有 AI 工具與協作者皆以此為唯一準則。
+本檔是本 repository 的 vendor-neutral **FK 專屬**產品架構、資料安全及開發流程規範 SSOT。所有 AI 工具與協作者均須遵守本檔及透過工具全域入口載入的 Bebe-AI-OS `.agents/core-rules.md`；跨專案共用的 AI 核心行為、授權與驗收規範以中央檔案為唯一來源。若兩者衝突，先停止相關操作並回報，不得擅自降低中央規範的安全要求。
 
 ## 開始修改前
 
@@ -66,4 +66,4 @@ python3 -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in gl
 - 資料寫入路徑的修改至少驗證：`household`、`ariel`、本機無登入、遠端空白、遠端已有資料、舊 cache 與重複食材 reference。
 - 未經要求不修改 `docs/PRD.md`、`docs/DATA_SCHEMA.md`、`docs/DESIGN_SYSTEM.md`；發現明確錯誤或落差時只回報並等待決定。
 - 重大架構決策寫入 `docs/decisions/`；一般實作細節留於 Git commit / PR 即可。
-- **Handoff 規則**：正常交付時維持 clean working tree + commit + Issue 更新；中途被迫換工具時使用 Issue comment / Draft PR / 臨時 `NEXT.md`（接手完成後立即刪除），嚴禁建立永久 `HANDOFF.md`。
+- **Handoff 規則**：正常交付依已授權範圍完成驗收、Commit 與 Issue 更新；Commit 必須先取得 Bebe 事前明確授權，不得為了達成 clean working tree 而擅自處理本次任務以外的既有變更。中途被迫換工具時使用 Issue comment / Draft PR / 臨時 `NEXT.md`（接手完成後立即刪除），嚴禁建立永久 `HANDOFF.md`。
