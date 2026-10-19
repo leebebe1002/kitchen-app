@@ -22,7 +22,7 @@
 8. [佈局與手勢操作規範 (Layout & Motion Standards)](#8-佈局與手勢操作規範-layout--motion-standards)
 9. [系統全面向量 SVG 圖示規範 (SVG Vector Icon Matrix)](#9-系統全面向量-svg-圖示規範-svg-vector-icon-matrix)
    - 9.1 [全系統 SVG 統一線條粗細原則 (Strict Uniform Stroke Width)](#91-全系統-svg-統一線條粗細原則-strict-uniform-stroke-width)
-   - 9.2 [FM 風格旗艦底部導航 5 大 Dock Icon 規範 (Final Confirmed)](#92-fm-風格旗艦底部導航-5-大-dock-icon-規範-final-confirmed)
+   - 9.2 [Bottom Navigation Dock（現行實作規格）](#92-bottom-navigation-dock現行實作規格)
 
 ---
 
@@ -34,7 +34,7 @@
    - 移除所有干擾性圖示（如多餘的 ⭐ 星號、雜亂的裝飾線條）。
    - 透過「白底、奶灰、柔和綠框」等乾淨色彩，降低做飯時的心理負擔。
 3. **大拇指友善（Thumb-Zone Ergonomics）**：
-   - 底部常駐「毛玻璃單行橫排按鈕」，核心操作均在單手大拇指舒適觸及區。
+   - 底部常駐純白固定 Dock（左右四個導航圖示及中央突出圓鈕），核心操作位於單手大拇指容易觸及的區域；實際規格見 9.2。
 4. **實體感微互動（Tactile Feedback）**：
    - 短按（Toggle）與 750ms 重長按（Inspect）明確分流，輔以微縮放與平滑位移過渡。
 
@@ -207,9 +207,10 @@ graph LR
 
 ## 8. 佈局與手勢操作規範 (Layout & Motion Standards)
 
-1. **滿版毛玻璃浮動底欄（SSOT）**：
-   - 樣式：`background: rgba(248, 246, 240, 0.88); backdrop-filter: blur(16px); border-top: 1px solid rgba(232, 229, 221, 0.8);`
-   - 容器安全邊距：內容最下方一律保留 `padding-bottom: 100px`，杜絕任何按鈕遮擋問題。
+1. **固定底部導航（Bottom Navigation Dock）**：
+   - 結構：`main.js` 中的 `.bottom-dock-container > .bottom-dock`，固定於畫面底部並橫向滿版；預設純白底（`var(--fk-dock-bg, #FFFFFF)`），**沒有**毛玻璃模糊或頂部邊框，改以頂部陰影分隔內容（詳見 9.2）。
+   - 導航內容高度為 `var(--fk-dock-height)`（目前 `50px`）；容器另加 `padding-bottom: var(--fk-dock-safe-area)`，目前為 `max(16px, env(safe-area-inset-bottom, 16px))`。
+   - 主內容 `.view-content` 依 CSS 保留底部內距：`calc(var(--fk-dock-height) + var(--fk-dock-safe-area) + var(--fk-fab-popout) + 24px)`。目前 `--fk-fab-popout: 16px` 用於內容避讓，**不是**中央按鈕的 `top` 位移。
 2. **動態過渡曲線 (Transitions)**：
    - 標準曲線：`transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);`
    - 按鈕按下縮放：`transform: scale(0.97);`
@@ -220,18 +221,18 @@ graph LR
 
 ### 9.1 全系統 SVG 統一線條粗細原則 (Strict Uniform Stroke Width & Optical Consistency)
 
-為徹底杜絕視覺不協調與粗細割裂感，全系統所有 SVG 線條**強制遵守絕對統一線寬與純線條語義**：
-1. **全域統一線寬基準**：全站所有 SVG 圖示（無論是頂部 Header、主功能 Tab、家庭成員膠囊、還是底部 Dock 圖示）一律採用 **`stroke-width: 1.8`**（或 CSS `stroke-width: 1.8px !important`）。
-2. **100% 純線條空心美學 (Pure Outline / Hollow Only)**：
-   - 全面杜絕在線條圖示內混入實心色塊（Solid Fill），避免產生嚴重的視覺重量失衡。
-   - **中央大圓鈕星芒**：改為**純線條空心 4 角微光星芒**（`fill: none`），線條粗細與十字 `＋` 完全相同（1.8px）。
+一般圖示以一致的輕量線條為設計原則；**底部 Dock 的現行 CSS 有專用尺寸與線寬，須以 9.2 節為準**，不可將以下通用基準直接套用至 Dock：
+1. **一般圖示線寬基準**：`stroke-width: 1.8` 為既有通用設計基準；但底部 Dock 左右四個圖示由 CSS 強制設定 `stroke-width: 1.111 !important`（SVG 顯示尺寸 `34.56px`、`viewBox` 為 `24 × 24`，換算視覺線寬約 `1.6px`），中央加號另設為 `1.5 !important`。
+2. **線條圖示與 Dock 星芒例外**：
+   - 一般線條圖示維持空心（`fill: none`），但**中央大圓鈕右上方的單顆星芒為實心例外**，不可誤寫為空心。
+   - **中央大圓鈕**：十字加號為 `1.5` 線寬、圓角端點；星芒為旋轉 `45°` 的 `<path class="starburst">`，由 CSS 填入 `var(--color-primary-ink)` 並取消描邊。
    - **超市手推車雙輪**：改為**純線條空心小圓環**（`fill: none`），避免因線寬而糊成大黑坨。
-   - **今日紀錄三圓環**：三環半徑定為 `r=9, r=6, r=3`，間距保持 3.0px 呼吸感，線寬嚴格保持 1.8px，不黏滯、不厚重。
+   - **底部 Dock 的今日紀錄三圓環**：現行 `<g transform="rotate(155 12 12)">` 包含三個 `<circle>`，半徑依序為 `8.5`、`5.8`、`3.1`，各自以 `stroke-dasharray="45 10"`、`"26 10"`、`"11 7"` 呈現弧線；線寬遵循 Dock 專用 CSS。
 3. **向量標準規範**：
    - 視圖：`viewBox="0 0 24 24"`
    - 描邊端點：`stroke-linecap="round"`
    - 描邊折角：`stroke-linejoin="round"`
-   - 全域填充：`fill="none"`
+   - 一般線條圖示填充：`fill="none"`（底部 Dock 中央實心星芒除外）
 
 | 介面功能 / 位置 | 定案 SVG 款式 | 設計語意說明 |
 | :--- | :--- | :--- |
@@ -246,30 +247,37 @@ graph LR
 
 ---
 
-### 9.2 1:1 像素級復刻記帳 App 底部導航 5 大 Dock 規格 (Final Production Replica)
+### 9.2 Bottom Navigation Dock（現行實作規格）
 
-對照記帳 App 目標截圖進行 100% 像素級還原，實現純白極致扁平、大幅浮空大圓鈕與溫潤珊瑚奶粉光暈：
+本節依 `web/style.css` 與 `web/src/main.js` 的現行實作記錄，**不再以舊記帳 App 截圖或過時的 SVG 複製碼作為規格**。HTML 為 `<nav class="bottom-dock-container">`，內含 `.bottom-dock`：左側兩個 `.dock-tab`、中央一個 `.dock-center-btn`、右側兩個 `.dock-tab`，共五個操作入口。
 
-* **容器 (Container)**：
-  - 背景：`#FFFFFF` 純白
-  - 頂線：`1px solid #ECECEC` 細緻極簡淺灰
-  - 高度：`54px`（另包含 iOS Home Bar 安全內距 `padding-bottom: env(safe-area-inset-bottom, 16px)`）
-  - 圖示線寬：`1.8px` 統一，色彩為深炭褐灰 `#2D2A26`
-* **中央突出大圓鈕 (The Big Floating Button)**：
-  - 直徑：`66px`
-  - 垂直位置：`top: -26px`（近 45% 懸空突出於白色底欄上方，形成半露半嵌飄浮感）
-  - 邊框：`3.5px solid #ECA498`（目標截圖溫潤珊瑚奶粉）
-  - 光暈陰影：`0 4px 18px rgba(236, 164, 152, 0.45)`
-  - 中央加號：**純淨端正圓角十字（無星芒，無多餘雜訊）**，端點圓潤，線寬 `2.3px`，長度完美居中
+* **固定底欄與安全區域**：
+  - 外層 `.bottom-dock-container`：`position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;`；背景 `var(--fk-dock-bg, #FFFFFF)`（目前無覆寫，顯示純白），**沒有** `border-top` 或 `backdrop-filter`。
+  - 頂部陰影：`0 -4px 14px rgba(0, 0, 0, 0.08), 0 -1px 3px rgba(0, 0, 0, 0.04)`。
+  - 內層 `.bottom-dock`：高度 `var(--fk-dock-height) = 50px`、`max-width: 480px`、水平置中、左右 `padding: 0 16px`、`transform: translateY(1.5px)`。
+  - 外層另有 `padding-bottom: var(--fk-dock-safe-area)`，即 `max(16px, env(safe-area-inset-bottom, 16px))`。**50px 不包含**這段 iOS 安全區域內距。
+  - iOS 鍵盤出現時套用 `.is-keyboard-open`：`translateY(100%)`、透明度 `0` 並停用點擊。
+* **左右四個導航 Tab**：
+  - 左右各一組 `.dock-side-group`，皆 `flex: 1 1 0`、`justify-content: space-between`、`transform: translateY(2px)`。每個 `.dock-tab` 固定寬 `48px`、高度 `100%`；中央 `.dock-center-wrap` 保留 `108px` 寬。
+  - SVG 皆為 `viewBox="0 0 24 24"`，實際顯示 `34.56 × 34.56px`。CSS 指定 `stroke-width: 1.111 !important`（按 1.44 倍縮放，視覺約 `1.6px`），`fill: none`、圓角端點及折角。
+  - 未選取：描邊 `#8E8A85`、`opacity: 0.85`；選取：`var(--color-primary) = #FFCA60`、`opacity: 1`，**線寬不變**。按下 Tab 為 `scale(0.92)`。
+* **中央新增記錄 FAB**：
+  - `.dock-center-btn` 為 **`75 × 75px`** 白底圓形，邊框 `3.5px solid var(--fk-fab-border)`；目前 `--fk-fab-border: var(--color-primary) = #FFCA60`，**不是珊瑚粉色**。
+  - 按鈕置於 `108px` 寬的 `.dock-center-wrap`，透過 flex 水平與垂直置中；按鈕本身 `position: relative; transform: none`，**沒有** `top: -26px`。以 `50px` 內容列計算，圓鈕自然高出列頂 `12.5px`；考量整列下移 `1.5px`，約高出外層白底頂端 **`11px`**。
+  - 常態陰影：`0 1px 3px rgba(0, 0, 0, 0.06), 0 0 2px rgba(0, 0, 0, 0.14)`，不是珊瑚粉光暈；按下為 `scale(0.92)`、邊框 `#E7B44E`、陰影 `0 1px 2px rgba(0, 0, 0, 0.14)`。
+  - SVG 顯示尺寸 `36 × 36px`，描邊色 `var(--color-primary-ink) = #725210`。中央十字由兩條 `<line>` 組成（座標 `12,5→12,19`、`5,12→19,12`），CSS 線寬 `1.5 !important`、圓角端點。
+  - **右上角確實有一顆星芒**：`<path class="starburst" transform="rotate(45 19 5)">`，CSS 指定實心 `fill: var(--color-primary-ink) !important`、`stroke: none !important`。中央按鈕點擊 `openRecordActions`，開啟新增記錄操作選單。
+  - 鍵盤焦點樣式：Tab 與 FAB 使用 `2px solid var(--fk-fab-border)`、`outline-offset: 3px`。
 
-| 順序 | 功能 Tab | 定案圖示 (Icon) | 規格與視覺語意 | 標準 SVG 代碼 |
-| :---: | :--- | :--- | :--- | :--- |
-| **1** | **備料計算器** | **日系指針烘焙秤** | 寬平托盤 + 大器梯形秤身 + 圓形指針刻度盤 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5h17c-.6 2-2.5 3-5.5 3h-6C6 8 4.1 7 3.5 5z"></path><line x1="12" y1="8" x2="12" y2="10"></line><path d="M5.5 10h13l1.5 10.5a1 1 0 0 1-1 1.5H5a1 1 0 0 1-1-1.5L5.5 10z"></path><circle cx="12" cy="15.5" r="3.2"></circle><line x1="12" y1="15.5" x2="13.8" y2="13.8"></line></svg>` |
-| **2** | **今日紀錄** | **優雅同心三圓環** | 幾何同心三道進度弧線，俐落呼吸感 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 12,3.5 A 8.5,8.5 0 1,1 5.5,6.5"></path><path d="M 12,6.2 A 5.8,5.8 0 1,1 7.5,8.5"></path><path d="M 12,9 A 3,3 0 1,1 9.5,10.5"></path></svg>` |
-| **3** | **中央大圓鈕 (CTA)** | **純粹居中十字加號** | 100% 復刻目標截圖：直徑 66px，懸浮 -26px，3.5px 珊瑚奶粉外環 + 溫潤光暈，正中圓角加號（無星芒）。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>` |
-| **4** | **智慧冰箱** | **雙門飽滿冰箱** | 圓潤雙門分界線，比例勻稱穩重大器 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="3.5"></rect><line x1="4.5" y1="9.5" x2="19.5" y2="9.5"></line><line x1="7.5" y1="5.5" x2="7.5" y2="7.5"></line><line x1="7.5" y1="12.5" x2="7.5" y2="15.5"></line></svg>` |
-| **5** | **採買清單** | **超市手推車** | 勻稱車身與雙輪，間距舒展平衡 (1.8px)。 | `<svg viewBox="0 0 24 24" stroke="#2D2A26" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5h3.2l2.3 11a1.8 1.8 0 0 0 1.8 1.5h9.4a1.8 1.8 0 0 0 1.8-1.5L22.5 7.5H6.2"></path><circle cx="9.5" cy="19.5" r="1.5"></circle><circle cx="17.5" cy="19.5" r="1.5"></circle></svg>` |
+| 順序 | 功能／HTML 行為 | 現行 SVG 結構（`web/src/main.js`） |
+| :---: | :--- | :--- |
+| **1** | **備料計算器**：`.dock-tab`，切換 `calculator` | 指針烘焙秤：托盤 `path`、支柱 `line`、秤身 `path`、指針盤 `circle r="3"` 與 `line`。 |
+| **2** | **今日紀錄**：`.dock-tab`，切換 `tracker` | 三個斷續同心圓 `circle`：`r="8.5"`／`"5.8"`／`"3.1"`，`stroke-dasharray="45 10"`／`"26 10"`／`"11 7"`；包在 `<g transform="rotate(155 12 12)">` 中。 |
+| **3** | **新增記錄**：`.dock-center-btn`，執行 `openRecordActions` | 正中十字兩條 `line`，右上角一個旋轉 `45°` 的實心 `path.starburst`。 |
+| **4** | **智慧冰箱**：`.dock-tab`，切換 `pantry` | 雙門冰箱：`rect x="5" y="2.5" width="14" height="19" rx="3"`、分界線 `line y="10"`，上下門把各一條 `line`。 |
+| **5** | **採買清單**：`.dock-tab`，切換 `shopping` | 超市手推車：一段 `path` 描繪把手與車身，兩輪為 `circle r="1.3"`，圓心 `(9.5, 19.5)`／`(17.5, 19.5)`。 |
 
+SVG 路徑座標以 **`web/src/main.js` 原始標記**為準；尺寸、色彩、陰影與狀態樣式以 **`web/style.css`** 為準，不另維護第二份易過時的 SVG 程式碼。
 ---
 
 *Family Kitchen 2.0 Design System Specification | Maintained by 十一粒 for Bebe-AI-OS*
