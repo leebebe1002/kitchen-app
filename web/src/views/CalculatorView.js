@@ -1746,8 +1746,61 @@ ${JSON.stringify(membersData, null, 2)}
             alert('✨ 已重置為全家專屬黃金配方推薦值！');
         };
 
-        const copySOP = () => {
-            alert('食譜與全家備料清單已複製！');
+        const copySOP = async () => {
+            if (!currentDish.value) return;
+
+            const ingredients = totalIngredientsList.value.map(item => {
+                const breakdown = activeMembers.value.length > 1 && item.breakdown.length
+                    ? `（${item.breakdown.map(b => `${b.memberName} ${b.amount}${b.unit}`).join('、')}）`
+                    : '';
+                return `${item.name}：${item.amount}${item.unit}${breakdown}`;
+            });
+            const lines = [
+                `${currentDish.value.name}｜全家總備料（${totalPortions.value} 人份）`,
+                '',
+                '【食材與份量】',
+                ...ingredients,
+                '',
+                '【料理 SOP】',
+                ...(currentSopSteps.value.length ? currentSopSteps.value : ['此料理尚無 SOP 步驟。'])
+            ];
+            const text = lines.join('\n');
+
+            // HTTPS／iOS PWA 優先使用 Clipboard API，只有真正成功才顯示成功。
+            if (window.isSecureContext && navigator.clipboard?.writeText) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    alert('食譜、全家備料與 SOP 已複製！');
+                    return;
+                } catch (error) {
+                    console.warn('Clipboard API 複製失敗，改試備援方式：', error);
+                }
+            }
+
+            // 本機 HTTP 或不支援 Clipboard API 的瀏覽器，使用傳統文字選取備援。
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.readOnly = true;
+            textarea.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+            document.body.appendChild(textarea);
+
+            let copied = false;
+            try {
+                textarea.focus();
+                textarea.select();
+                textarea.setSelectionRange(0, text.length);
+                copied = document.execCommand('copy');
+            } catch (error) {
+                console.warn('備援複製失敗：', error);
+            } finally {
+                textarea.remove();
+            }
+
+            if (copied) {
+                alert('食譜、全家備料與 SOP 已複製！');
+            } else {
+                prompt('無法自動複製，請長按以下文字手動複製：', text);
+            }
         };
 
         const goToTracker = () => {
@@ -2280,7 +2333,7 @@ ${JSON.stringify(membersData, null, 2)}
                         <button class="btn-icon" 
                                 @click="copySOP" 
                                 style="width: 32px; height: 32px; border-radius: 50%; background: #FAF8F5; border: 1px solid var(--color-border); color: #4B5563; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04);" 
-                                title="複製食譜">
+                                title="複製食譜、全家備料與 SOP" aria-label="複製食譜、全家備料與 SOP">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
