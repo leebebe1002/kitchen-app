@@ -30,7 +30,7 @@ export default class KitchenEngine {
         });
         // 家庭成員健康檔案 (Family Profiles)
         this.profiles = {
-            bebe: { name: 'Bebe', targetKcal: 1450, targetProtein: 90, targetCarbs: 160, targetFat: 50, targetSodium: 1500 },
+            bebe: { name: 'Bebe', targetKcal: 1500, targetProtein: 95, targetCarbs: 167, targetFat: 50, targetSodium: 1500 },
             ariel: { name: 'Ariel', targetKcal: 1600, targetProtein: 85, targetCarbs: 200, targetFat: 50, targetSodium: 1800 },
             jason: { name: 'Jason', targetKcal: 1800, targetProtein: 130, targetCarbs: 200, targetFat: 50, targetSodium: 2000 }
         };

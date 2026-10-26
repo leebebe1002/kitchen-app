@@ -1138,7 +1138,7 @@ export default {
             const profile = engine.profiles[member];
             const log = engine.getDailyLog(todayStr, member);
             const consumed = Math.round(log?.totals?.kcal || 0);
-            const remaining = Math.max(0, (profile?.targetKcal || 1450) - consumed);
+            const remaining = Math.max(0, (profile?.targetKcal ?? engine.profiles.bebe.targetKcal) - consumed);
             const current = Math.round(getMemberNutrition(member).kcal || 0);
             if (current <= remaining) return null;
             return { currentKcal: current, remainingKcal: remaining };
@@ -1486,8 +1486,10 @@ export default {
                     const todayStr = getTodayStr();
                     const remainingDetails = remainingMembers.map(m => {
                         const memberDisplayName = m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason');
-                        const targetKcal = m === 'jason' ? 2200 : (m === 'ariel' ? 1600 : 1450);
-                        const targetP = m === 'jason' ? 120 : (m === 'ariel' ? 85 : 90);
+                        // 以家庭成員目標為單一來源；保留 Jason 此模式既有的特殊額度，不在本次調整。
+                        const profile = engine.profiles[m];
+                        const targetKcal = m === 'jason' ? 2200 : profile.targetKcal;
+                        const targetP = m === 'jason' ? 120 : profile.targetProtein;
                         
                         const log = engine.getDailyLog(todayStr, m);
                         const consumedKcal = Math.round(log?.totals?.kcal || 0);

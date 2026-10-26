@@ -1,8 +1,8 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20260929_SUPABASE_KEY_V1';
-import CalculatorView from './views/CalculatorView.js?v=20261022_FK_COPY_SOP_V1';
-import TrackerView from './views/TrackerView.js?v=20260929_SUPABASE_KEY_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261026_BEBE_NUTRITION_V1';
+import CalculatorView from './views/CalculatorView.js?v=20261026_BEBE_NUTRITION_V1';
+import TrackerView from './views/TrackerView.js?v=20261026_BEBE_NUTRITION_V1';
 import PantryView from './views/PantryView.js?v=20260926_FK004_STORE_SYNC';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260918_FIX_STATE_V2';
