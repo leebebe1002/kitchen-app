@@ -1,4 +1,5 @@
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
+import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261027_CHEF_BUDGET_V1';
 import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260926_FK004_STORE_SYNC';
 
 export default {
@@ -107,6 +108,7 @@ export default {
 
         // 🤖 【Gemini AI 智能求解變數宣告在 setup 最頂部，避免 TDZ ReferenceError】
         const isAiChefLoading = ref(false);
+        let activeChefRequest = null;
         const aiChefAdvice = ref(null);
         const showChefNote = ref(false);
         const showChefKeyInput = ref(false);
@@ -678,6 +680,7 @@ export default {
         });
 
         onUnmounted(() => {
+            cancelChefRequest();
             window.removeEventListener('pointerdown', handleGlobalClick);
         });
 
@@ -1099,6 +1102,7 @@ export default {
 
         // 儲存目前份量至 localStorage
         const savePortionMemory = (member) => {
+            cancelChefRequest();
             const activeList = getMemberActiveIngredients(member);
             if (activeList.length === 0) return;
             const key = buildIngSetKey(selectedMasterIngredients.value);
@@ -1120,6 +1124,7 @@ export default {
 
         // 取消記住：刪除該 member + ingredientSetKey 的記憶
         const deletePortionMemory = (member) => {
+            cancelChefRequest();
             const key = buildIngSetKey(selectedMasterIngredients.value);
             if (!key) return;
             const store = readPortionStore();
@@ -1290,79 +1295,35 @@ export default {
             return engine.getMemberStatusColor(member, getMemberNutrition(member));
         };
 
-        // 🌟 AI 智能計算 HUD 遮罩狀態機
-        const aiHudState = reactive({
-            isOpen: false,
-            status: 'loading', // 'loading' | 'success' | 'error'
-            title: '十一粒 AI 主廚精算中...',
-            subTitle: '正在依據全家 InBody 與 4 階梯營養目標精算黃金備料...',
-            errorReason: ''
-        });
-
-        const acceptLocalCalculation = () => {
-            // 🔒 FK-009: 套用記住的份量（接受本地計算時同步執行）
-            activeMembers.value.forEach(m => applyPortionMemory(m));
-            refreshAllPortionStates();
-            aiHudState.isOpen = false;
-            isCalculated.value = true;
-            isResultStale.value = false;
-            showChefNote.value = true;
-            setTimeout(() => {
-                const target = document.getElementById('portions-section');
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 100);
-        };
-
-        const retryAiCalculation = async () => {
-            await calculate();
-        };
-
         const calculate = async () => {
-            // 1. 先以優化後本地智能求解器初始化基線 (確保 0 秒有優質底層)
+            if (isAiChefLoading.value || activeMembers.value.length === 0) return;
+            const started = performance.now();
             activeMembers.value.forEach(m => {
                 autoBalanceMemberPortions(m);
+                applyPortionMemory(m);
             });
-            isResultStale.value = false;
-
-            // 2. 開啟 AI HUD 遮罩
-            aiHudState.isOpen = true;
-            aiHudState.status = 'loading';
-            aiHudState.title = '十一粒 AI 主廚精算中...';
-            aiHudState.subTitle = '正在依據全家 InBody 與 4 階梯營養目標精算黃金備料...';
-            aiHudState.errorReason = '';
-
-            // 3. 呼叫 Gemini AI
-            const aiSuccess = await callAiChefAdvisor();
-
-            // 🔒 FK-009: portion memory 最後覆寫（最高優先，覆蓋 AI / autoBalance 結果）
-            activeMembers.value.forEach(m => applyPortionMemory(m));
             refreshAllPortionStates();
-
-            if (aiSuccess) {
-                aiHudState.status = 'success';
-                aiHudState.title = '🎉 AI 智能精算完成！';
-                aiHudState.subTitle = '已依據 InBody 目標完成各成員專屬份量調配。';
-                setTimeout(() => {
-                    aiHudState.isOpen = false;
-                    isCalculated.value = true;
-                    showChefNote.value = false;
-                    setTimeout(() => {
-                        const target = document.getElementById('portions-section');
-                        if (target) {
-                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    }, 100);
-                }, 400);
-            } else {
-                // 失敗或超時，停在 HUD 遮罩並秀出原因與按鈕
-                aiHudState.status = 'error';
-                aiHudState.title = '線上 AI 暫時無法連線';
-                aiHudState.errorReason = aiChefAdvice.value?.errReason || '連線逾時或 API 無回應';
-                aiHudState.subTitle = '系統已為您準備好安全的「本地智慧配比」，您可選擇立即查看或重新嘗試。';
-            }
+            isResultStale.value = false;
+            isCalculated.value = true;
+            logChefTiming({ phase: 'local', durationMs: Math.round(performance.now() - started) });
+            if (getMemberActiveIngredients(activeMembers.value[0]).length) await callAiChefAdvisor(started);
         };
+
+        const cancelChefRequest = () => {
+            if (!activeChefRequest) return;
+            activeChefRequest.controller.abort();
+            activeChefRequest = null;
+            isAiChefLoading.value = false;
+            aiChefAdvice.value = { source: 'local', portions: {},
+                chefComment: '已保留目前份量；操作有變更，這次 AI 精算已取消。' };
+            showChefNote.value = true;
+        };
+
+        // Synchronous invalidation also catches edit-and-revert before a response arrives.
+        watch([selectedDish, selectedMasterIngredients, memberIngredients, diners, memberPortionModes,
+            currentSlot, () => engine.personalScope, () => engine.data.pantryInventory.foodStockStatus,
+            () => engine.data.ingredients, () => engine.data.dailyLogs, () => engine.profiles],
+            cancelChefRequest, { deep: true, flush: 'sync' });
 
         const openChefKeyModal = () => {
             chefApiKeyInput.value = (
@@ -1390,14 +1351,21 @@ export default {
             await engine.saveJson('config.json', engine.data.config);
             showChefKeyInput.value = false;
             alert(key ? '🎉 Gemini API Key 已成功儲存啟用！' : '已清除金鑰');
-            if (key) await callAiChefAdvisor();
+            if (key) await calculate();
         };
 
-        const callAiChefAdvisor = async () => {
+        const callAiChefAdvisor = async (started = performance.now()) => {
+            if (isAiChefLoading.value || activeMembers.value.length === 0) return false;
+            const request = { controller: new AbortController(), scope: engine.personalScope };
+            activeChefRequest = request;
+            const expected = Object.fromEntries(activeMembers.value.map(m =>
+                [m, getMemberActiveIngredients(m).map(i => ({ ...i }))]));
             isAiChefLoading.value = true;
             aiChefAdvice.value = null;
 
             try {
+                const prepareStarted = performance.now();
+                const memoryBefore = localStorage.getItem(FK009_KEY);
                 const slotName = currentSlot.value ? currentSlot.value.name : '早午餐';
                 const dishName = currentDish.value?.name || '料理';
 
@@ -1431,7 +1399,7 @@ export default {
                 );
 
                 // 收集當前勾選的所有食材 (包含食物優先級階梯)
-                const selectedIngs = selectedMasterIngredients.value.map(id => {
+                const selectedIngs = selectedMasterIngredients.value.filter(checkStock).map(id => {
                     const ing = engine.getIngredientById(id);
                     const cat = ing?.category || 'proteins';
                     return {
@@ -1439,9 +1407,10 @@ export default {
                         name: ing?.name || id,
                         category: cat,
                         priorityTier: ing?.priorityTier || 1, // 1: 原型營養, 2: 原型慢碳, 3: 加工精緻, 4: 高脂厚醬
-                        unit: ing?.unitLabel || (['egg'].includes(id) ? '顆' : (['bacon'].includes(id) ? '條' : 'g')),
-                        isCount: ['egg', 'bacon', 'bagel'].includes(id),
-                        per100g: ing?.per100g || { kcal: 50, protein: 1, carbs: 10, fat: 0.2, sodium: 5 }
+                        unit: expected[activeMembers.value[0]].find(i => i.id === id)?.unit,
+                        isCount: !!(ing?.isCount || ing?.perUnit),
+                        per100g: ing?.per100g,
+                        perUnit: ing?.perUnit
                     };
                 });
 
@@ -1537,7 +1506,9 @@ ${JSON.stringify(membersData, null, 2)}
    - 凡是有食材因為額度吃緊而被調降或歸零（例如沙茶醬、貢丸或王子麵被扣除），十一粒【必須】在評語中以親切、溫暖、懂生活的語氣主動向 Bebe 說明原因（例如：「今晚 Bebe 額度較精緻，十一粒為妳把沙茶醬與芋頭貢丸省下讓給 Jason，把熱量全部留給滿滿的鮮嫩肉片與高麗菜喔！」）。
    - 評語聚焦於食材調配心意、生活提醒與食材取捨原因，請勿在評語中寫出任何食材的具體克數或份量數字；實際份量由 Calculator 卡片統一呈現。
 
-請輸出嚴格的合法 JSON（不要 markdown 標籤，必須包含所有 ${selectedIngs.length} 種食材）：
+以目前本地配比為基礎優化，沿用食材單位，不輸出推理過程；評語最多兩句。
+目前配比：${JSON.stringify(expected)}
+請輸出嚴格的合法 JSON（不要 markdown 標籤，portions 必須且只能包含成員 ${activeMembers.value.join('、')}，每位必須包含所有 ${selectedIngs.length} 種食材）：
 {
   "chefComment": "十一粒主廚溫暖且懂生活的評語",
   "portions": {
@@ -1549,112 +1520,18 @@ ${JSON.stringify(membersData, null, 2)}
 
                 apiKey = (apiKey || '').trim();
 
-                // 🌟 Google 官方 2026 真實有效端點輪詢 (100% 精確對齊 Google 官方返回清單)
-                const endpoints = [
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent',
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent'
-                ];
-                
-                let resultJson = null;
-                let lastErrDetail = '';
-
-                // 1. 先嘗試 2026 最新官方主力端點
-                for (let i = 0; i < endpoints.length; i++) {
-                    const endpoint = endpoints[i];
-                    const fetchUrl = `${endpoint}?key=${encodeURIComponent(apiKey)}`;
-                    try {
-                        const resp = await fetch(fetchUrl, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: prompt }] }],
-                                generationConfig: { 
-                                    responseMimeType: "application/json",
-                                    temperature: 0.2
-                                }
-                            })
-                        });
-
-                        if (resp.ok) {
-                            const resData = await resp.json();
-                            const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (rawText) {
-                                const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-                                if (jsonMatch) {
-                                    resultJson = JSON.parse(jsonMatch[0]);
-                                    console.log('🎉 [十一粒 AI] 成功獲取線上 Gemini AI 配餐結果：', resultJson);
-                                    break;
-                                }
-                            }
-                        } else {
-                            const errTxt = await resp.text();
-                            console.warn(`[Gemini API] 端點 ${endpoint} 回應失敗:`, resp.status, errTxt);
-                            if (resp.status === 429) {
-                                lastErrDetail = `額度限制 (429)`;
-                                break;
-                            } else {
-                                lastErrDetail = `HTTP ${resp.status}`;
-                                continue;
-                            }
-                        }
-                    } catch (err) {
-                        console.warn(`[Gemini API] 連線例外:`, err);
-                        lastErrDetail = err.message || String(err);
-                        continue;
-                    }
+                logChefTiming({ phase: 'prepare', durationMs: Math.round(performance.now() - prepareStarted) });
+                const resultJson = await requestChef({ apiKey, prompt,
+                    signal: request.controller.signal, deadline: started + CHEF_TOTAL_MS });
+                if (activeChefRequest !== request || request.controller.signal.aborted) return false;
+                if (engine.personalScope !== request.scope || localStorage.getItem(FK009_KEY) !== memoryBefore) {
+                    cancelChefRequest();
+                    return false;
                 }
-
-                // 2. 🛡️ 終極動態探測 (Auto-Discovery)：若預設端點未命中，主動向 Google 查詢該 Key 真正支援的模型
-                if (!resultJson) {
-                    try {
-                        console.log('🔍 [Gemini API] 啟動動態模型自適應探測 (ListModels)...');
-                        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
-                        if (listResp.ok) {
-                            const listData = await listResp.json();
-                            const available = (listData?.models || []).filter(m => 
-                                m.supportedGenerationMethods?.includes('generateContent') &&
-                                !m.name.includes('tts') &&
-                                !m.name.includes('image') &&
-                                !m.name.includes('robotics') &&
-                                !m.name.includes('embedding')
-                            );
-                            console.log('📋 [Gemini API] 探測到支援文字模型:', available.map(m => m.name));
-                            for (const vm of available.slice(0, 5)) {
-                                const vmUrl = `https://generativelanguage.googleapis.com/v1beta/${vm.name}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                                const vmResp = await fetch(vmUrl, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        contents: [{ parts: [{ text: prompt }] }],
-                                        generationConfig: {
-                                            responseMimeType: "application/json",
-                                            temperature: 0.2
-                                        }
-                                    })
-                                });
-                                if (vmResp.ok) {
-                                    const vmData = await vmResp.json();
-                                    const rawText = vmData.candidates?.[0]?.content?.parts?.[0]?.text;
-                                    const jsonMatch = rawText?.match(/\{[\s\S]*\}/);
-                                    if (jsonMatch) {
-                                        resultJson = JSON.parse(jsonMatch[0]);
-                                        console.log('🎉 [十一粒 AI] 動態探測調用成功！使用模型:', vm.name, resultJson);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    } catch (probeErr) {
-                        console.warn('[Gemini API] 動態探測例外:', probeErr);
-                    }
-                }
-
+                const validationStarted = performance.now();
+                validateChefResult(resultJson, expected, engine);
+                // Release before synchronous writes, so our own application isn't an edit.
+                activeChefRequest = null;
                 if (resultJson && resultJson.portions) {
                     // 🌟 成功獲取 AI 精算數值！覆寫至各成員的右側實際主數值！
                     const totalSelectedCount = selectedMasterIngredients.value.length;
@@ -1662,7 +1539,7 @@ ${JSON.stringify(membersData, null, 2)}
                         const aiItems = resultJson.portions[member];
                         if (Array.isArray(aiItems) && memberIngredients.value[member]) {
                             aiItems.forEach(aiItem => {
-                                const target = memberIngredients.value[member].find(i => i.id === aiItem.id || getIngredientName(i.id) === aiItem.id);
+                                const target = memberIngredients.value[member].find(i => i.id === aiItem.id);
                                 if (target && typeof aiItem.amount === 'number') {
                                     let safeAmount = aiItem.amount;
                                     const targetIdLower = (target.id || '').toLowerCase();
@@ -1681,49 +1558,37 @@ ${JSON.stringify(membersData, null, 2)}
                             });
                         }
                     });
+                    activeMembers.value.forEach(m => applyPortionMemory(m));
+                    refreshAllPortionStates();
+                    logChefTiming({ phase: 'validateApply', durationMs: Math.round(performance.now() - validationStarted) });
                     resultJson.source = 'ai';
                     aiChefAdvice.value = resultJson;
                     showChefNote.value = false;
                     return true;
-                } else {
-                    // 🌟 本地系統配比無縫接管（帶出具體失敗原因提示）
-                    let friendlyReason = "連線逾時或 API 無回應";
-                    if (lastErrDetail.includes('503')) {
-                        friendlyReason = "Google AI 官方伺服器目前過載或短暫維護中 (503 Service Unavailable)";
-                    } else if (lastErrDetail.includes('429') || lastErrDetail.includes('額度')) {
-                        friendlyReason = "Google API 呼叫額度暫時用盡或請求過於頻繁 (429 Rate Limit)";
-                    } else if (lastErrDetail.includes('403') || lastErrDetail.includes('400')) {
-                        friendlyReason = "Gemini API Key 金鑰無效或權限受限";
-                    } else if (lastErrDetail.includes('Failed to fetch') || lastErrDetail.includes('Network')) {
-                        friendlyReason = "手機網路連線不穩或跨域請求受阻";
-                    } else if (lastErrDetail) {
-                        friendlyReason = lastErrDetail;
-                    }
-
-                    activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
-                    aiChefAdvice.value = {
-                        source: 'local',
-                        errReason: friendlyReason,
-                        chefComment: `⚠️ 目前因「${friendlyReason}」，線上 AI 主廚暫時無法連線。系統已自動由「本地智慧引擎」接管，依據每位成員的每日熱量與 InBody 目標完成基礎均衡備料分配。`,
-                        portions: {}
-                    };
-                    showChefNote.value = true;
-                    return false;
                 }
-            } catch (e) {
-                console.error("AI Chef error:", e);
-                const errMsg = e.message || String(e);
-                activeMembers.value.forEach(m => autoBalanceMemberPortions(m));
-                aiChefAdvice.value = {
-                    source: 'local',
-                    errReason: errMsg,
-                    chefComment: `⚠️ 目前因「${errMsg}」，線上 AI 主廚暫時無法連線。系統已自動由「本地智慧引擎」接管，依據每位成員的每日熱量與 InBody 目標完成基礎均衡備料分配。`,
-                    portions: {}
+            } catch (error) {
+                if (activeChefRequest !== request || request.controller.signal.aborted) return false;
+                const reasons = {
+                    '404': '模型或 API 路徑無法使用 (404)',
+                    '429': 'AI 暫時限流，請稍後再試 (429)',
+                    '503': 'AI 服務暫時忙碌 (503)',
+                    '400': 'AI 請求設定不相容 (400)',
+                    '401': 'API Key 無效或權限不足 (401)',
+                    '403': 'API Key 無效或權限不足 (403)',
+                    timeout: 'AI 等待時間已達上限',
+                    invalid: 'AI 回傳資料不完整或不合理',
+                    network: '網路連線未完成'
                 };
+                const reason = reasons[error.code] || 'AI 暫時無法完成精算';
+                aiChefAdvice.value = { source: 'local', errReason: reason,
+                    chefComment: `${reason}。已保留本地配比與記住的份量，可繼續調整。`, portions: {} };
                 showChefNote.value = true;
                 return false;
             } finally {
-                isAiChefLoading.value = false;
+                if (activeChefRequest === request) activeChefRequest = null;
+                // A cancelled older call must not clear a newer call's loading state.
+                if (!activeChefRequest) isAiChefLoading.value = false;
+                logChefTiming({ phase: 'total', durationMs: Math.round(performance.now() - started) });
             }
         };
 
@@ -1813,6 +1678,7 @@ ${JSON.stringify(membersData, null, 2)}
         };
 
         const recordMeal = async () => {
+            cancelChefRequest();
             if (!currentDish.value) return;
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
@@ -2063,9 +1929,6 @@ ${JSON.stringify(membersData, null, 2)}
             isChefKeyVisible,
             openChefKeyModal,
             saveChefKey,
-            aiHudState,
-            acceptLocalCalculation,
-            retryAiCalculation,
             portionMemoryButtonState,
             savePortionMemory,
             deletePortionMemory,
@@ -2294,7 +2157,7 @@ ${JSON.stringify(membersData, null, 2)}
 
                 <!-- 計算操作橫列 (右側正圓計算按鈕，原全域雙切已融入成員膠囊) -->
                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 24px;">
-                    <button class="btn-icon" @click="calculate" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
+                    <button class="btn-icon" @click="calculate" :disabled="isAiChefLoading" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="4" y="2" width="16" height="20" rx="2"></rect>
                             <line x1="8" y1="6" x2="16" y2="6"></line>
@@ -2320,7 +2183,7 @@ ${JSON.stringify(membersData, null, 2)}
                             <span style="font-weight: 700; color: var(--color-text-main);">全家總備料 ({{ totalPortions }} 人份)</span>
                             <span v-if="isAiChefLoading" style="font-size: 0.74rem; color: #92400E; background: #FEF3C7; padding: 2px 9px; border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #FDE68A;">
                                 <span class="apple-spinner"></span>
-                                <span>AI 精算中...</span>
+                                <span>AI 優化中...</span>
                             </span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
                             <span v-else style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #E5E7EB;">
@@ -2343,6 +2206,9 @@ ${JSON.stringify(membersData, null, 2)}
                         </button>
                     </div>
                     
+                    <p v-if="isAiChefLoading" role="status" style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
+                        本地配比已可使用；AI 最多等待 20 秒。調整份量會取消這次 AI 精算。
+                    </p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
                         <li v-for="item in totalIngredientsList" :key="item.id" style="margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5;">
                             <span style="font-weight: 700; color: var(--color-text-main);">✔️ {{ item.name }}：</span>
@@ -2399,7 +2265,7 @@ ${JSON.stringify(membersData, null, 2)}
                     </div>
 
                     <!-- Expandable Chef Note Box (Collapsible) -->
-                    <div v-if="member === 'bebe' && showChefNote && aiChefAdvice && aiChefAdvice.chefComment" 
+                    <div v-if="member === activeMembers[0] && showChefNote && aiChefAdvice && aiChefAdvice.chefComment"
                          :style="{
                              marginBottom: '14px',
                              background: aiChefAdvice.source === 'ai' ? '#FFFDF8' : '#FFFBEB',
@@ -2666,59 +2532,6 @@ ${JSON.stringify(membersData, null, 2)}
                             留在此頁繼續
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- 🌟 AI 主廚智能精算 HUD 遮罩模態框 (Apple-style Frosted Glass HUD) -->
-            <div v-if="aiHudState.isOpen" class="modal-overlay" style="z-index: 1200; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px;">
-                <div class="card" style="width: 100%; max-width: 360px; padding: 28px 22px; border-radius: 24px; background: #FFFFFF; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
-                    
-                    <!-- 1. LOADING 狀態 -->
-                    <div v-if="aiHudState.status === 'loading'" style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="position: relative; width: 64px; height: 64px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                            <span class="apple-spinner" style="width: 48px; height: 48px; border-width: 3.5px; border-top-color: var(--color-primary, #F5A623);"></span>
-                            <span style="position: absolute; font-size: 1.3rem;">✨</span>
-                        </div>
-                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: var(--color-text-main); font-weight: 700;">{{ aiHudState.title }}</h3>
-                        <p style="font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 0;">{{ aiHudState.subTitle }}</p>
-                    </div>
-
-                    <!-- 2. SUCCESS 狀態 -->
-                    <div v-else-if="aiHudState.status === 'success'" style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #ECFDF5; border: 2px solid #10B981; color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 16px;">
-                            ✓
-                        </div>
-                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: #065F46; font-weight: 700;">{{ aiHudState.title }}</h3>
-                        <p style="font-size: 0.85rem; color: #047857; line-height: 1.5; margin-bottom: 0;">{{ aiHudState.subTitle }}</p>
-                    </div>
-
-                    <!-- 3. ERROR 狀態 (超時 / 429 額度 / 連線中斷) -->
-                    <div v-else-if="aiHudState.status === 'error'" style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="width: 58px; height: 58px; border-radius: 50%; background: #FEF3C7; border: 2px solid #F59E0B; color: #D97706; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 14px;">
-                            ⚠️
-                        </div>
-                        <h3 style="margin-bottom: 8px; font-size: 1.15rem; color: #92400E; font-weight: 700;">{{ aiHudState.title }}</h3>
-                        
-                        <div style="margin-bottom: 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 10px 14px; font-size: 0.82rem; color: #B45309; line-height: 1.5; text-align: left; width: 100%; box-sizing: border-box;">
-                            <strong>💡 狀況原因：</strong>{{ aiHudState.errorReason }}
-                        </div>
-                        
-                        <p style="font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 20px;">
-                            系統已準備好安全的「本地智慧配比」，您可直接查看或稍後重試。
-                        </p>
-
-                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                            <button @click="acceptLocalCalculation" 
-                                    style="width: 100%; padding: 12px 16px; border-radius: 14px; background: var(--color-primary, #F5A623); color: #FFFFFF; font-weight: 700; font-size: 0.92rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245, 166, 35, 0.35);">
-                                <span>⚙️ 使用系統配比 (立即查看)</span>
-                            </button>
-                            <button @click="retryAiCalculation" 
-                                    style="width: 100%; padding: 10px 16px; border-radius: 14px; background: #F3F4F6; color: #4B5563; font-weight: 600; font-size: 0.85rem; border: 1px solid #E5E7EB; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                <span>🔄 重新嘗試 AI 精算</span>
-                            </button>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 

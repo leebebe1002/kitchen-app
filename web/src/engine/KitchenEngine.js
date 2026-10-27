@@ -53,6 +53,8 @@ export default class KitchenEngine {
             this.fetchJson('favorite_foods.json', 'rawFavoriteFoods', {favorites:[]}),
             this.fetchJson('config.json', 'config', {})
         ]);
+        // Migrate legacy browser-only credentials before removing them from shared configuration.
+        this.protectLocalGeminiKey();
         
         // 🛡️【第 1 優先守門】：立即載入個人專屬廚房狀態 (household / ariel)
         // 必須在任何食材清洗或業務邏輯執行前完成，確保 this.data.pantryInventory 100% 是使用者真實最新的庫存資料！
@@ -274,6 +276,31 @@ export default class KitchenEngine {
                 this.data[key] = defaultValue;
             }
         }
+    }
+
+    // Gemini credentials must never remain in a general-purpose JSON cache or get
+    // sent to the local dev server. Preserve an existing browser key on migration.
+    protectLocalGeminiKey() {
+        const cacheKey = 'kitchen_v2_config.json';
+        let oldConfig = null;
+        try { oldConfig = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) {}
+        const legacyKey = oldConfig?.geminiApiKey || oldConfig?.gemini_api_key;
+        try {
+            const storageKeys = ['family_kitchen_gemini_key', 'kitchen_v2_gemini_api_key', 'gemini_api_key', 'GEMINI_API_KEY'];
+            const hasKey = storageKeys.some(key => !!localStorage.getItem(key));
+            if (!hasKey && typeof legacyKey === 'string' && legacyKey.trim() &&
+                !KitchenEngine.isRevokedLegacyKey(legacyKey.trim())) {
+                localStorage.setItem('family_kitchen_gemini_key', legacyKey.trim());
+            }
+        } catch (e) {
+            // If browser storage is unavailable, do not silently claim migration succeeded.
+            console.warn('[FK] Local Gemini Key migration unavailable');
+        }
+        const safeConfig = { ...(this.data.config || {}) };
+        delete safeConfig.geminiApiKey;
+        delete safeConfig.gemini_api_key;
+        this.data.config = safeConfig;
+        this.safeSetLocalStorage(cacheKey, safeConfig);
     }
 
     /**
@@ -619,6 +646,14 @@ export default class KitchenEngine {
     }
 
     async saveJson(filename, dataObj) {
+        // Defense in depth: callers may still pass legacy config objects containing an API key.
+        if (filename === 'config.json') {
+            const safeConfig = { ...(dataObj || {}) };
+            delete safeConfig.geminiApiKey;
+            delete safeConfig.gemini_api_key;
+            dataObj = safeConfig;
+            this.data.config = safeConfig;
+        }
         const localKey = 'kitchen_v2_' + filename;
         // 個人資料只寫入目前資料空間；不可再覆寫舊版共用本機快取或靜態 JSON 檔。
         if (filename === 'pantry_inventory.json' || filename === 'household_supplies.json') {

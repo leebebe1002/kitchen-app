@@ -66,6 +66,49 @@ async function run() {
     });
     assert.equal(mergedDishes.dishes.length, 1, 'Dishes merge should function normally');
 
+    // 5. Existing browser key must survive migration; config JSON must be credential-free.
+    const fakeStore = new Map();
+    globalThis.localStorage = {
+        getItem: k => fakeStore.get(k) ?? null,
+        setItem: (k, v) => fakeStore.set(k, String(v)),
+        removeItem: k => fakeStore.delete(k)
+    };
+    const oldConfig = { gemini_api_key: FAKE_ACTIVE_KEY_1, geminiApiKey: FAKE_ACTIVE_KEY_1, preferredUnit: 'g' };
+    localStorage.setItem('kitchen_v2_config.json', JSON.stringify(oldConfig));
+    engine.data.config = { ...oldConfig };
+    engine.protectLocalGeminiKey();
+    assert.equal(localStorage.getItem('family_kitchen_gemini_key'), FAKE_ACTIVE_KEY_1);
+    assert.deepEqual(JSON.parse(localStorage.getItem('kitchen_v2_config.json')), { preferredUnit: 'g' });
+    assert.equal(engine.data.config.gemini_api_key, undefined);
+    assert.equal(engine.data.config.geminiApiKey, undefined);
+    assert.equal(engine.data.config.preferredUnit, 'g');
+
+    // A newer user-selected key takes precedence over a stale legacy cache.
+    localStorage.setItem('family_kitchen_gemini_key', FAKE_ACTIVE_KEY_2);
+    localStorage.setItem('kitchen_v2_config.json', JSON.stringify(oldConfig));
+    engine.data.config = { ...oldConfig };
+    engine.protectLocalGeminiKey();
+    assert.equal(localStorage.getItem('family_kitchen_gemini_key'), FAKE_ACTIVE_KEY_2);
+
+    // Both camelCase and snake_case secrets are stripped even if passed to saveJson.
+    await engine.saveJson('config.json', { ...oldConfig, preferredUnit: 'ml' });
+    assert.deepEqual(JSON.parse(localStorage.getItem('kitchen_v2_config.json')), { preferredUnit: 'ml' });
+    assert.equal(engine.data.config.gemini_api_key, undefined);
+    assert.equal(localStorage.getItem('family_kitchen_gemini_key'), FAKE_ACTIVE_KEY_2);
+
+    // Simulate the localhost write route: even a legacy caller may not send a key in POST JSON.
+    globalThis.window = { location: { hostname: 'localhost' } };
+    let sent = null;
+    globalThis.fetch = async (url, options) => {
+        assert.equal(url, '/api/data/config.json');
+        sent = JSON.parse(options.body);
+        return { ok: true };
+    };
+    await engine.saveJson('config.json', { ...oldConfig, preferredUnit: 'g' });
+    assert.deepEqual(sent, { preferredUnit: 'g' });
+    delete globalThis.window;
+    delete globalThis.fetch;
+
     console.log('✅ All KitchenEngine security & revoked key tests passed successfully!');
 }
 
