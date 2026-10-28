@@ -1,10 +1,12 @@
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261027_CHEF_BUDGET_V1';
+import WeightBasisBadge, { weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
 import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260926_FK004_STORE_SYNC';
 
 export default {
     components: {
-        IngredientDetailModal
+        IngredientDetailModal,
+        WeightBasisBadge
     },
     props: ['engine', 'onNavigate'],
     setup(props) {
@@ -1620,7 +1622,7 @@ ${JSON.stringify(membersData, null, 2)}
                 const breakdown = activeMembers.value.length > 1 && item.breakdown.length
                     ? `（${item.breakdown.map(b => `${b.memberName} ${b.amount}${b.unit}`).join('、')}）`
                     : '';
-                return `${item.name}：${item.amount}${item.unit}${breakdown}`;
+                return `${weightBasisText(engine.getIngredientById(item.id), item.unit)}${item.name}：${item.amount}${item.unit}${breakdown}`;
             });
             const lines = [
                 `${currentDish.value.name}｜全家總備料（${totalPortions.value} 人份）`,
@@ -2209,11 +2211,13 @@ ${JSON.stringify(membersData, null, 2)}
                     <p v-if="isAiChefLoading" role="status" style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
                         本地配比已可使用；AI 最多等待 20 秒。調整份量會取消這次 AI 精算。
                     </p>
+                    <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
-                        <li v-for="item in totalIngredientsList" :key="item.id" style="margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5;">
-                            <span style="font-weight: 700; color: var(--color-text-main);">✔️ {{ item.name }}：</span>
-                            <span style="font-weight: 800; color: var(--color-primary);">{{ item.amount }}{{ item.unit }}</span>
-                            <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" style="font-size: 0.8rem; color: #888; font-weight: 400; margin-left: 6px;">
+                        <li v-for="item in totalIngredientsList" :key="item.id" class="prep-ingredient-row">
+                            <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
+                            <span class="prep-ingredient-name">{{ item.name }}</span>
+                            <span class="prep-ingredient-amount">{{ item.amount }}{{ item.unit }}</span>
+                            <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" class="prep-ingredient-breakdown">
                                 (<span v-for="(b, bIdx) in item.breakdown" :key="bIdx">{{ b.memberName }} {{ b.amount }}{{ b.unit }}<span v-if="bIdx < item.breakdown.length - 1">, </span></span>)
                             </span>
                         </li>
@@ -2305,13 +2309,14 @@ ${JSON.stringify(membersData, null, 2)}
 
                     <!-- Member Steppers: Name + (Xg) + [ - ] Yg [ + ] -->
                     <div v-for="ing in getMemberActiveIngredients(member)" :key="ing.id" 
-                          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">
-                        <div style="display: flex; align-items: baseline;">
-                            <span style="font-weight: 500;">{{ getIngredientName(ing.id) }}</span>
+                          class="member-ingredient-row">
+                        <div class="member-ingredient-label">
+                            <weight-basis-badge :ingredient="engine.getIngredientById(ing.id)" :unit="ing.unit" />
+                            <div class="member-ingredient-name"><span style="font-weight: 500;">{{ getIngredientName(ing.id) }}</span>
                             <span v-if="getDefaultAmount(member, ing.id)" 
                                   style="font-size: 0.75rem; color: #9CA3AF; font-weight: 400; margin-left: 6px;">
                                 ({{ getDefaultAmount(member, ing.id) }})
-                            </span>
+                            </span></div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <button class="btn-icon stepper-btn" 

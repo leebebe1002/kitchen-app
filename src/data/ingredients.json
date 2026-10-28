@@ -760,6 +760,8 @@
         },
         {
             "id": "broccoli",
+            "weightBasis": "raw",
+            "weightBasisSource": "USDA SR26 11090, Broccoli, raw；每 100g 可食部 34 kcal、蛋白質 2.82g、脂肪 0.37g、碳水 6.64g、鈉 33mg，與現值四捨五入一致。https://resources.finalsite.net/images/v1703097900/chambersburgk12paus/wbizjgl4kbr2njyrxfeo/broccoli.pdf",
             "name": "綠花椰菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -1308,6 +1310,8 @@
         },
         {
             "id": "brown_rice",
+            "weightBasis": "cooked",
+            "weightBasisSource": "既有名稱「現煮米飯/糙米飯」及料理 SOP 明定熟飯；現值 111 kcal、蛋白質 2.6g、碳水 23g 為熟糙米基準，不代表所有白飯品種。USDA SR 歷史資料對照：https://mspace.lib.umanitoba.ca/xmlui/bitstream/1993/20008/1/Ryland_Development_of.pdf",
             "name": "現煮米飯/糙米飯",
             "category": "carbs",
             "unitLabel": "g",
@@ -1630,6 +1634,8 @@
         },
         {
             "id": "chia_seeds",
+            "weightBasis": "dry",
+            "weightBasisSource": "USDA 2018 Seeds, chia seeds, dried 對照表：每 100g 486 kcal、蛋白質 16.5g、脂肪 30.7g、碳水 42.1g、鈉 16mg，與現值一致；秤乾籽，不含浸泡水。https://repositorio.unife.edu.pe/server/api/core/bitstreams/df064297-c4b5-428e-a209-80ea643781ef/content",
             "name": "奇亞籽",
             "category": "sauces",
             "unitLabel": "g",

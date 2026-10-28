@@ -360,7 +360,15 @@ export default class KitchenEngine {
                 merged[cat] = serverList.map(sIng => {
                     const lIng = localMap.get(sIng.id);
                     if (lIng) {
-                        return { ...sIng, ...lIng };
+                        const ingredient = { ...sIng, ...lIng };
+                        // 舊快取改過營養或食材規格時，不能沿用母庫已查證的重量基準。
+                        if (!lIng.weightBasis && sIng.weightBasis
+                            && ['name', 'brand', 'unitLabel', 'isCount', 'per100g', 'perUnit', 'perServing', 'servingSize', 'servingUnit']
+                                .some(key => JSON.stringify(lIng[key]) !== JSON.stringify(sIng[key]))) {
+                            ingredient.weightBasis = 'unknown';
+                            ingredient.weightBasisSource = '';
+                        }
+                        return ingredient;
                     }
                     return sIng;
                 });

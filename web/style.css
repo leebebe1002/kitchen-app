@@ -17,6 +17,7 @@
     --color-text-main: #333333; /* 質感深灰炭黑文字 (#333333) */
     --color-text-muted: #B3B3B3; /* 輔助灰文字 (#B3B3B3) */
     --color-border: #ECECEC; /* 淺灰邊框 (#ECECEC) */
+    --color-prep-ink: #31777A; /* 沿用 fk-baseline.html 的 success 文字色 */
     --fk-dock-height: 50px;
     --fk-dock-safe-area: max(16px, env(safe-area-inset-bottom, 16px));
     --fk-fab-popout: 16px;
@@ -32,6 +33,48 @@
     --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.04);
     --shadow-floating: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
+
+.weight-basis-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 50%;
+    border: 1px solid var(--color-cart-gray);
+    background: transparent;
+    color: var(--color-text-main);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+}
+.weight-basis-legend { font-size: 12px; line-height: 1.6; margin-bottom: 12px; color: var(--color-text-main); }
+.prep-ingredient-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 8px;
+    row-gap: 2px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.prep-ingredient-name { font-weight: 500; overflow-wrap: anywhere; }
+.prep-ingredient-amount { color: #92400E; font-weight: 600; white-space: nowrap; }
+.prep-ingredient-breakdown { grid-column: 2 / -1; font-size: 0.8rem; color: var(--color-text-main); }
+.member-ingredient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+}
+.member-ingredient-label { display: flex; align-items: center; gap: 8px; flex: 1 1 130px; min-width: 0; }
+.member-ingredient-name { min-width: 0; overflow-wrap: anywhere; }
 
 * {
     box-sizing: border-box;

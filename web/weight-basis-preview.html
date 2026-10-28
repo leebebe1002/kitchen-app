@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self'; img-src 'self' data:;">
+<title>FK 重量基準 UI 驗收</title>
+<link rel="stylesheet" href="./style.css?v=20261028_WEIGHT_BASIS_V2">
+<style>
+body { height: auto; overflow: auto; }
+.preview-shell { max-width: 480px; margin: auto; padding: 16px; }
+.preview-note { margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
+</style>
+<script src="./vue.global.js"></script>
+</head>
+<body><main class="preview-shell">
+<p class="preview-note">本機 UI 驗收：使用正式 CalculatorView 與標籤元件。資料與儲存皆為隔離測試；「即食示例」僅示範樣式，並非已查證食材。可測試加減、輸入、複製與 SOP，重新整理即重置。</p>
+<div id="preview"></div>
+</main>
+<script type="module">
+// 在載入應用模組前隔離瀏覽器儲存，不讀寫使用者原有資料。
+const makeStorage = () => {
+    const values = new Map();
+    return { getItem: k => values.get(k) ?? null, setItem: (k,v) => values.set(k,String(v)), removeItem: k => values.delete(k) };
+};
+Object.defineProperty(window, 'localStorage', { value: makeStorage() });
+Object.defineProperty(window, 'sessionStorage', { value: makeStorage() });
+const readOnlyFetch = window.fetch.bind(window);
+window.fetch = (url, options = {}) => {
+    const target = new URL(url, location.href);
+    if (target.origin !== location.origin || (options.method || 'GET') !== 'GET') throw Error('預覽禁止遠端請求與資料寫入');
+    return readOnlyFetch(url, options);
+};
+const [{default: Calculator}, {default: Engine}, ingredients] = await Promise.all([
+    import('./src/views/CalculatorView.js?v=20261028_WEIGHT_BASIS_V2'),
+    import('./src/engine/KitchenEngine.js?v=20261028_WEIGHT_BASIS_V2'),
+    fetch('../src/data/ingredients.json').then(r => r.json())
+]);
+const engine = new Engine(); // 不呼叫 initialize 或同步。
+engine.saveJson = async () => { throw Error('預覽不儲存資料'); };
+engine.data.ingredients = Object.values(ingredients).flat();
+engine.data.ingredients.push({id:'preview_as_sold',name:'即食示例（測試資料）超長食材名稱測試',category:'proteins',unitLabel:'g',weightBasis:'as_sold',per100g:{}});
+const ids = ['broccoli','brown_rice','chia_seeds','preview_as_sold','salmon','egg'];
+engine.data.pantryInventory = {foodStockStatus:Object.fromEntries(ids.map(id=>[id,true]))};
+engine.data.dishes = [];
+let view;
+Vue.createApp({...Calculator, setup(props) { view = Calculator.setup(props); return view; }}, {engine}).mount('#preview');
+engine.data.dishes = [{id:'home_cooking',name:'重量基準驗收',recommendedProteins:['egg','salmon','preview_as_sold'],recommendedVeggies:['broccoli'],recommendedCarbs:['brown_rice'],recommendedSauces:['chia_seeds'],sopSteps:['此為 UI 驗收示例，請依已確認的重量基準秤量。']}];
+await Vue.nextTick();
+view.diners.value = {bebe:true,ariel:true,jason:true};
+view.isCalculated.value = true;
+await Vue.nextTick();
+document.getElementById('portions-section')?.scrollIntoView();
+</script>
+</body>
+</html>
