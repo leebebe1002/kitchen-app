@@ -2,6 +2,8 @@
     "proteins": [
         {
             "id": "whey_protein",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "乳清蛋白粉",
             "category": "proteins",
             "unitLabel": "g",
@@ -24,6 +26,8 @@
         },
         {
             "id": "tuna",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "水煮罐頭鮪魚以開罐瀝乾後的可食部備料；品牌實際營養標示仍待核對",
             "name": "水煮鮪魚",
             "brand": "Kirkland 科克蘭",
             "category": "proteins",
@@ -47,6 +51,8 @@
         },
         {
             "id": "shrimp",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "蝦仁",
             "category": "proteins",
             "unitLabel": "g",
@@ -70,15 +76,17 @@
         },
         {
             "id": "sous_vide_chicken",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生、去皮雞胸可食部平均值；不採舒肥／醃製雞胸標示；TFDA:I04024；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "雞胸肉",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 115,
-                "protein": 23,
-                "fat": 1.5,
+                "kcal": 119,
+                "protein": 23.3,
+                "fat": 2.1,
                 "carbs": 0,
-                "sodium": 180
+                "sodium": 50
             },
             "storageZone": "fridge",
             "storageZones": [
@@ -94,6 +102,8 @@
         },
         {
             "id": "pork_shoulder",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "豬梅花肉片",
             "category": "proteins",
             "unitLabel": "g",
@@ -140,6 +150,8 @@
         },
         {
             "id": "tofu",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "板豆腐",
             "category": "proteins",
             "unitLabel": "g",
@@ -162,12 +174,14 @@
         },
         {
             "id": "plain_yogurt",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；未加糖全脂原味優格；不代表所有一般優格；USDA:171284；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "一般優格",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 61,
-                "protein": 4,
+                "protein": 3.5,
                 "fat": 3.3,
                 "carbs": 4.7,
                 "sodium": 46
@@ -228,6 +242,8 @@
         },
         {
             "id": "chicken_thigh",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "雞腿肉",
             "category": "proteins",
             "unitLabel": "g",
@@ -250,6 +266,8 @@
         },
         {
             "id": "beef_slice",
+            "weightBasis": "raw",
+            "weightBasisSource": "使用者確認：牛肉片生重；現有營養值待核對",
             "name": "牛肉片",
             "category": "proteins",
             "unitLabel": "g",
@@ -272,6 +290,8 @@
         },
         {
             "id": "boneless_short_rib",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "無骨牛小排",
             "brand": "Costco 好市多",
             "category": "proteins",
@@ -296,6 +316,8 @@
         },
         {
             "id": "shrimp_paste",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依商品／食材物理狀態推定備料秤重基準；現有營養數值尚未核實，勿視為可靠營養標示",
             "name": "蝦仁漿",
             "category": "proteins",
             "unitLabel": "g",
@@ -318,15 +340,17 @@
         },
         {
             "id": "frozen_tofu",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；冷凍豆腐原狀可食部，非脫水乾凍豆腐；TFDA:R4701001；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "凍豆腐",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 131,
+                "protein": 12.9,
+                "fat": 7.1,
+                "carbs": 3.9,
+                "sodium": 8
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -340,15 +364,17 @@
         },
         {
             "id": "edamame",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生鮮、去殼毛豆仁；帶殼重、加鹽冷凍即食毛豆不適用；試修五項值重核相符；TFDA:H1100101；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "毛豆",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 129,
+                "protein": 14.6,
+                "fat": 3.3,
+                "carbs": 12.5,
+                "sodium": 1
             },
             "preferredStore": "義美",
             "preferredStores": [
@@ -364,15 +390,17 @@
         },
         {
             "id": "salmon",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；八筆非 Alaska Native 生鮭魚物種／養殖狀態記錄等權算術平均；每 100 g 可食部；並非市場占比加權或品牌標示，120–208 kcal 範圍；方法與樣本見稽核表；USDA:173686, USDA:173688, USDA:173689, USDA:173691, USDA:173715, USDA:175136, USDA:175138, USDA:175167；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "鮭魚",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 151.6,
+                "protein": 20.7,
+                "fat": 7.1,
+                "carbs": 0,
+                "sodium": 55.8
             },
             "preferredStore": "Costco",
             "preferredStores": [
@@ -386,15 +414,17 @@
         },
         {
             "id": "full_fat_milk_250",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；全脂鮮乳平均值，以實際 g 秤量；ID 的 250 不代表 250 g 一份；TFDA:L01021；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "全脂鮮奶",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 63,
+                "protein": 3.1,
+                "fat": 3.6,
+                "carbs": 4.8,
+                "sodium": 37
             },
             "preferredStore": "義美",
             "preferredStores": [
@@ -410,15 +440,17 @@
         },
         {
             "id": "crab_stick",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；冷凍蟹味棒原狀，魚漿製品；不代表特定品牌；TFDA:R6700101；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "蟹肉棒",
             "category": "proteins",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 118,
+                "protein": 9.3,
+                "fat": 0.7,
+                "carbs": 18.6,
+                "sodium": 694
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -525,6 +557,8 @@
         },
         {
             "id": "greek_yogurt",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "希臘優格",
             "brand": "",
             "category": "proteins",
@@ -556,6 +590,8 @@
         },
         {
             "id": "sugar_free_soymilk",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "無糖豆漿",
             "brand": "",
             "category": "proteins",
@@ -590,6 +626,8 @@
         },
         {
             "id": "whey_protein_cocoa",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "乳清蛋白（法式可可）",
             "brand": "Myprotein / 戰神 / 果果",
             "category": "proteins",
@@ -622,6 +660,8 @@
         },
         {
             "id": "pea_protein_sesame",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "豌豆蛋白（芝麻歐蕾）",
             "brand": "樂維根 / 果果",
             "category": "proteins",
@@ -654,6 +694,8 @@
         },
         {
             "id": "low_sugar_soymilk",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "低糖豆漿",
             "brand": "義美 / 光泉",
             "category": "proteins",
@@ -689,6 +731,8 @@
     "veggies": [
         {
             "id": "mango",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "芒果",
             "category": "veggies",
             "unitLabel": "g",
@@ -714,6 +758,8 @@
         },
         {
             "id": "cabbage",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生高麗菜可食部；USDA:169975；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "高麗菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -737,6 +783,8 @@
         },
         {
             "id": "baby_cabbage",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "娃娃菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -761,7 +809,7 @@
         {
             "id": "broccoli",
             "weightBasis": "raw",
-            "weightBasisSource": "USDA SR26 11090, Broccoli, raw；每 100g 可食部 34 kcal、蛋白質 2.82g、脂肪 0.37g、碳水 6.64g、鈉 33mg，與現值四捨五入一致。https://resources.finalsite.net/images/v1703097900/chambersburgk12paus/wbizjgl4kbr2njyrxfeo/broccoli.pdf",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生綠花椰菜可食部；非加鹽熟食；USDA:170379；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "綠花椰菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -784,6 +832,8 @@
         },
         {
             "id": "kimchi",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "韓式泡菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -807,15 +857,17 @@
         },
         {
             "id": "black_fungus",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生鮮濕木耳可食部；泡發乾木耳的含水率不固定，僅能作濕重近似，絕不套用乾木耳值；TFDA:G0100101；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "黑木耳",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 25,
-                "protein": 1,
-                "fat": 0.2,
-                "carbs": 6.5,
-                "sodium": 10
+                "kcal": 38,
+                "protein": 0.9,
+                "fat": 0.1,
+                "carbs": 8.8,
+                "sodium": 12
             },
             "storageZone": "fridge",
             "preferredStore": "Costco",
@@ -830,15 +882,17 @@
         },
         {
             "id": "baby_corn",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生玉米筍可食部；TFDA:E1300201；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "玉米筍",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 31,
-                "protein": 1.5,
-                "fat": 0.3,
-                "carbs": 6.5,
-                "sodium": 2
+                "kcal": 33,
+                "protein": 1.8,
+                "fat": 0.2,
+                "carbs": 7,
+                "sodium": 0
             },
             "storageZone": "fridge",
             "preferredStore": "全聯",
@@ -876,6 +930,8 @@
         },
         {
             "id": "spinach",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生菠菜可食部；USDA:168462；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "菠菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -899,15 +955,17 @@
         },
         {
             "id": "chinese_cabbage",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生大白菜 pe-tsai；不使用小白菜 pak-choi；USDA:169979；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "大白菜",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 13,
+                "kcal": 16,
                 "protein": 1.2,
                 "fat": 0.2,
-                "carbs": 2.4,
-                "sodium": 15
+                "carbs": 3.2,
+                "sodium": 9
             },
             "storageZone": "fridge",
             "preferredStore": "全聯",
@@ -922,6 +980,8 @@
         },
         {
             "id": "zucchini",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生櫛瓜含皮可食部；USDA:169291；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "櫛瓜",
             "category": "veggies",
             "unitLabel": "g",
@@ -957,6 +1017,8 @@
         },
         {
             "id": "cucumber",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生小黃瓜含皮可食部；USDA:168409；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "小黃瓜",
             "category": "veggies",
             "unitLabel": "g",
@@ -980,6 +1042,8 @@
         },
         {
             "id": "greens",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "綜合生菜",
             "category": "veggies",
             "unitLabel": "g",
@@ -1002,6 +1066,8 @@
         },
         {
             "id": "carrot",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生胡蘿蔔可食部；USDA:170393；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "紅蘿蔔",
             "category": "veggies",
             "unitLabel": "g",
@@ -1027,6 +1093,8 @@
         },
         {
             "id": "onion",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生洋蔥可食部；USDA:170000；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "洋蔥",
             "category": "veggies",
             "unitLabel": "g",
@@ -1051,15 +1119,17 @@
         },
         {
             "id": "mushroom",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生鮮香菇平均值；非乾菇或熟菇；TFDA:G08001；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "香菇",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 38,
-                "protein": 3.1,
-                "fat": 0.3,
-                "carbs": 6.8,
-                "sodium": 6
+                "kcal": 39,
+                "protein": 3,
+                "fat": 0.1,
+                "carbs": 7.6,
+                "sodium": 1
             },
             "storageZone": "fridge",
             "preferredStore": "全聯",
@@ -1075,6 +1145,8 @@
         },
         {
             "id": "beech_mushroom",
+            "weightBasis": "raw",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "鴻喜菇/雪白菇",
             "category": "veggies",
             "unitLabel": "g",
@@ -1098,6 +1170,8 @@
         },
         {
             "id": "frozen_berry",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "冷凍莓果",
             "category": "veggies",
             "unitLabel": "g",
@@ -1120,15 +1194,17 @@
         },
         {
             "id": "nori_strips",
+            "weightBasis": "dry",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；未調味壽司海苔片切絲的乾重近似；油炸、調味海苔不適用；TFDA:F9900201；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "海苔絲",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 278,
+                "protein": 46.5,
+                "fat": 3.7,
+                "carbs": 32.1,
+                "sodium": 387
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1143,15 +1219,17 @@
         },
         {
             "id": "cherry_tomatoes",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；紅色系小番茄平均值，生、去蒂可食部；非單一品種標示；TFDA:E74004；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "小番茄",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 33,
+                "protein": 0.9,
+                "fat": 0.2,
+                "carbs": 7.4,
+                "sodium": 6
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1166,15 +1244,17 @@
         },
         {
             "id": "bean_sprouts",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生黃豆芽可食部；不是綠豆芽；TFDA:E7700401；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "黃豆芽",
             "category": "veggies",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 47,
+                "protein": 5.3,
+                "fat": 1.6,
+                "carbs": 5,
+                "sodium": 7
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1189,6 +1269,8 @@
         },
         {
             "id": "scallion",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生青蔥，包含青葉與蔥白；USDA:170005；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "青蔥",
             "category": "veggies",
             "unitLabel": "g",
@@ -1197,7 +1279,7 @@
                 "protein": 1.8,
                 "fat": 0.2,
                 "carbs": 7.3,
-                "sodium": 10
+                "sodium": 16
             },
             "storageZone": "fridge",
             "storageZones": [
@@ -1212,6 +1294,8 @@
         },
         {
             "id": "enoki_mushroom",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生金針菇可食部；USDA:169382；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "金針菇",
             "category": "veggies",
             "unitLabel": "g",
@@ -1257,7 +1341,14 @@
             "storageZones": [
                 "pantry"
             ],
-            "priorityTier": 3
+            "priorityTier": 3,
+            "perUnit": {
+                "kcal": 390.9,
+                "protein": 13.1,
+                "fat": 7.7,
+                "carbs": 67.3,
+                "sodium": 1070.1
+            }
         },
         {
             "id": "bagel",
@@ -1284,6 +1375,8 @@
         },
         {
             "id": "corn",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "金黃玉米粒(無加糖)",
             "brand": "好市多/綠巨人",
             "category": "carbs",
@@ -1334,14 +1427,16 @@
         },
         {
             "id": "potato",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生馬鈴薯含皮可食部；USDA:170026；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "馬鈴薯",
             "category": "carbs",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 77,
-                "protein": 2,
+                "protein": 2.1,
                 "fat": 0.1,
-                "carbs": 17,
+                "carbs": 17.5,
                 "sodium": 6
             },
             "storageZone": "pantry",
@@ -1358,6 +1453,8 @@
         },
         {
             "id": "granola",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "綜合燕麥",
             "category": "carbs",
             "unitLabel": "g",
@@ -1381,6 +1478,8 @@
         },
         {
             "id": "prince_noodles",
+            "weightBasis": "dry",
+            "weightBasisSource": "依商品／食材物理狀態推定備料秤重基準；現有營養數值尚未核實，勿視為可靠營養標示",
             "name": "王子麵",
             "category": "carbs",
             "unitLabel": "g",
@@ -1403,15 +1502,17 @@
         },
         {
             "id": "sweet_potato",
+            "weightBasis": "raw",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生地瓜可食部；美國通用品種，台灣甘藷的含水率及品種可能不同；維持既有試修的一位小數值；USDA:168482；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "地瓜",
             "category": "carbs",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 86,
+                "protein": 1.6,
+                "fat": 0.1,
+                "carbs": 20.1,
+                "sodium": 55
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1427,15 +1528,19 @@
         },
         {
             "id": "steamed_noodle",
-            "name": "蒸煮麵",
+            "weightBasis": "dry",
+            "weightBasisSource": "2026-10-29 使用者確認維力蒸煮麵，每包乾重65g；每100g營養標示參照愛買、東森購物相符通路產品頁（https://www.rakuten.com.tw/shop/amart/product/518108/ 及 https://www.etmall.com.tw/i/3025524/），仍以實際包裝最新標示為準",
+            "name": "維力蒸煮麵",
+            "brand": "維力",
             "category": "carbs",
             "unitLabel": "g",
+            "gramsPerPack": 65,
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 362.2,
+                "protein": 9.1,
+                "fat": 1,
+                "carbs": 79.2,
+                "sodium": 712
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1449,6 +1554,8 @@
         },
         {
             "id": "angel_hair_pasta",
+            "weightBasis": "dry",
+            "weightBasisSource": "使用者確認：義大利麵按乾重秤量；使用者確認：原始營養數值來自本人提供的產品包裝標示，重量基準為烹煮前乾重；不得擅自以通用資料庫覆蓋",
             "name": "義大利（天使）",
             "category": "carbs",
             "storageZones": [
@@ -1472,6 +1579,8 @@
         },
         {
             "id": "shin_ramen",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "辛拉麵",
             "category": "carbs",
             "storageZones": [
@@ -1520,6 +1629,8 @@
     "sauces": [
         {
             "id": "bibimbap_secret",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "韓式辣醬直接按產品原狀秤重；品牌實際營養標示仍待核對",
             "name": "韓式辣醬",
             "category": "sauces",
             "unitLabel": "g",
@@ -1542,6 +1653,8 @@
         },
         {
             "id": "balsamic",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "巴薩米克醋",
             "category": "sauces",
             "unitLabel": "g",
@@ -1565,15 +1678,17 @@
         },
         {
             "id": "sesame_powder",
+            "weightBasis": "dry",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；黑芝麻粉乾重，非調糖芝麻飲品；TFDA:C1620101；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "黑芝麻粉",
             "category": "sauces",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 570,
-                "protein": 18,
-                "fat": 49,
-                "carbs": 23,
-                "sodium": 5
+                "kcal": 601,
+                "protein": 15.7,
+                "fat": 55.2,
+                "carbs": 20.8,
+                "sodium": 3
             },
             "storageZone": "pantry",
             "preferredStore": "義美",
@@ -1588,6 +1703,8 @@
         },
         {
             "id": "matcha_powder",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "抹茶粉",
             "category": "sauces",
             "unitLabel": "g",
@@ -1611,15 +1728,17 @@
         },
         {
             "id": "cocoa_powder",
+            "weightBasis": "dry",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；無糖未鹼化乾可可粉；含纖維 37 g；採來源 228 kcal 與特定 Atwater 係數，不用 4/9/4 回算；USDA:169593；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "可可粉",
             "category": "sauces",
             "unitLabel": "g",
             "per100g": {
                 "kcal": 228,
-                "protein": 20,
-                "fat": 14,
-                "carbs": 58,
-                "sodium": 20
+                "protein": 19.6,
+                "fat": 13.7,
+                "carbs": 57.9,
+                "sodium": 21
             },
             "storageZone": "pantry",
             "preferredStore": "Costco",
@@ -1635,7 +1754,7 @@
         {
             "id": "chia_seeds",
             "weightBasis": "dry",
-            "weightBasisSource": "USDA 2018 Seeds, chia seeds, dried 對照表：每 100g 486 kcal、蛋白質 16.5g、脂肪 30.7g、碳水 42.1g、鈉 16mg，與現值一致；秤乾籽，不含浸泡水。https://repositorio.unife.edu.pe/server/api/core/bitstreams/df064297-c4b5-428e-a209-80ea643781ef/content",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；乾奇亞籽，可食部；USDA:170554；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "奇亞籽",
             "category": "sauces",
             "unitLabel": "g",
@@ -1659,15 +1778,17 @@
         },
         {
             "id": "smoked_sea_salt",
+            "weightBasis": "dry",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；純煙燻鹽暫以食鹽估算；非複方調味鹽，含水率／礦物質差異未涵蓋；100 g 鈉 38800 mg，不是 1 g；USDA:173468；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "煙燻海鹽",
             "category": "sauces",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 0,
+                "protein": 0,
+                "fat": 0,
+                "carbs": 0,
+                "sodium": 38800
             },
             "preferredStore": "Costco",
             "preferredStores": [
@@ -1682,15 +1803,17 @@
         },
         {
             "id": "soy_sauce",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；一般黃豆小麥醬油 shoyu 原狀；非低鈉或醬油膏；TFDA 一般醬油粗脂肪缺值，故選五項齊全 USDA，不把缺值填零；USDA:174277；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "醬油",
             "category": "sauces",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 53,
+                "protein": 8.1,
+                "fat": 0.6,
+                "carbs": 4.9,
+                "sodium": 5490
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1704,15 +1827,17 @@
         },
         {
             "id": "shacha_sauce",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；葷沙茶醬，先將油脂及固形物拌勻再秤重；不適用素沙茶或瀝油固形物；TFDA:P1001701；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "沙茶醬",
             "category": "sauces",
             "unitLabel": "g",
             "per100g": {
-                "kcal": 100,
-                "protein": 10,
-                "fat": 5,
-                "carbs": 10,
-                "sodium": 100
+                "kcal": 729,
+                "protein": 10.2,
+                "fat": 71.8,
+                "carbs": 10.4,
+                "sodium": 421
             },
             "preferredStore": "全聯",
             "preferredStores": [
@@ -1726,6 +1851,8 @@
         },
         {
             "id": "maple_syrup",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；純楓糖漿原狀；非楓糖風味糖漿；USDA:169661；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "楓糖漿",
             "category": "sauces",
             "unitLabel": "g",
@@ -1749,6 +1876,8 @@
         },
         {
             "id": "italian_herbs",
+            "weightBasis": "dry",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "義大利綜合香料",
             "category": "sauces",
             "unitLabel": "g",
@@ -1772,6 +1901,8 @@
         },
         {
             "id": "lemon_juice",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；生鮮檸檬汁，非加糖飲品；USDA:167747；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "新鮮檸檬汁",
             "category": "sauces",
             "unitLabel": "g",
@@ -1795,6 +1926,8 @@
         },
         {
             "id": "yuzu_vinegar",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "和風柚子醋/果醋",
             "category": "sauces",
             "unitLabel": "g",
@@ -1818,6 +1951,8 @@
         },
         {
             "id": "horseradish_mayo",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依商品／食材物理狀態推定備料秤重基準；現有營養數值尚未核實，勿視為可靠營養標示",
             "name": "辣根蛋黃醬",
             "category": "sauces",
             "storageZones": [
@@ -1840,6 +1975,8 @@
         },
         {
             "id": "olive_oil",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；純橄欖油原狀；USDA:171413；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "橄欖油",
             "category": "sauces",
             "unitLabel": "g",
@@ -1848,7 +1985,7 @@
                 "protein": 0,
                 "fat": 100,
                 "carbs": 0,
-                "sodium": 0
+                "sodium": 2
             },
             "storageZone": "pantry",
             "preferredStore": "Costco",
@@ -1863,6 +2000,8 @@
         },
         {
             "id": "truffle_olive_oil",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "松露橄欖油",
             "category": "sauces",
             "unitLabel": "g",
@@ -1886,6 +2025,8 @@
         },
         {
             "id": "sriracha_mayo",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "J-Lek是拉差美乃滋",
             "brand": "J-Lek",
             "category": "sauces",
@@ -1910,6 +2051,8 @@
         },
         {
             "id": "sugar_free_peanut_butter",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "無糖花生醬",
             "category": "sauces",
             "storageZones": [
@@ -1933,6 +2076,8 @@
         },
         {
             "id": "avocado_mash",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；未調味酪梨果肉泥，排除皮籽；若為加鹽商品不適用；USDA:171705；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "酪梨泥",
             "category": "sauces",
             "unitLabel": "g",
@@ -1956,6 +2101,8 @@
         },
         {
             "id": "avocado_oil",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；純酪梨油原狀；USDA:173573；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "酪梨油",
             "category": "sauces",
             "unitLabel": "g",
@@ -1978,6 +2125,8 @@
         },
         {
             "id": "unsalted_butter",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；無鹽奶油原狀；USDA:173430；詳見 docs/audits/nutrition-2026-10-28.json",
             "name": "無鹽奶油",
             "category": "sauces",
             "unitLabel": "g",
@@ -2001,6 +2150,8 @@
         },
         {
             "id": "brown_sugar_syrup",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "黑糖漿",
             "category": "sauces",
             "unitLabel": "g",
@@ -2050,10 +2201,19 @@
             "preferredStores": [
                 "Costco"
             ],
-            "priorityTier": 1
+            "priorityTier": 1,
+            "perUnit": {
+                "kcal": 20,
+                "protein": 0.3,
+                "fat": 0,
+                "carbs": 4.6,
+                "sodium": 18
+            }
         },
         {
             "id": "ing_1787563079531",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "義美烏醋按產品原狀秤量；目前全零營養值未核實",
             "name": "義美烏醋",
             "brand": "",
             "category": "sauces",
@@ -2086,6 +2246,8 @@
         },
         {
             "id": "black_coffee",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "黑咖啡",
             "brand": "Nespresso / 現煮美式",
             "category": "sauces",
@@ -2119,6 +2281,8 @@
         },
         {
             "id": "yuzu_liqueur",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "柚子酒按產品原狀以ml計量；酒精熱量未完整反映於三大營養素，現有數值待核實",
             "name": "柚子酒",
             "brand": "日本梅乃宿 / 自釀",
             "category": "sauces",
@@ -2153,6 +2317,8 @@
         },
         {
             "id": "yuzu_jam",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "依食材名稱及現有營養數值推定備料狀態；營養數值尚未逐筆來源查證",
             "name": "柚子果醬",
             "brand": "韓式黃金柚子茶醬",
             "category": "sauces",

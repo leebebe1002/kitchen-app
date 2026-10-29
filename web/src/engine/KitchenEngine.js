@@ -12,6 +12,8 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js?v=20260929_SUPABASE_KEY_V1';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
+import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261029_WILLI_NOODLE_V1';
+import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261029_WILLI_NOODLE_V1';
 
 export default class KitchenEngine {
     constructor() {
@@ -254,9 +256,13 @@ export default class KitchenEngine {
             if (response && response.ok) {
                 const serverData = await response.json();
                 
-                if (isUserState && cachedData) {
+                if (filename === 'ingredients.json' || (isUserState && cachedData)) {
                     // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/自訂通路/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
+                    if (filename === 'ingredients.json' && cached && !localStorage.getItem(localKey + '_pre_nutrition_v1')) {
+                        // Keep the exact pre-migration cache; a failed backup leaves the old cache intact.
+                        localStorage.setItem(localKey + '_pre_nutrition_v1', cached);
+                    }
                     this.data[key] = mergedData;
                     this.safeSetLocalStorage(localKey, mergedData);
                 } else {
@@ -351,26 +357,18 @@ export default class KitchenEngine {
             return merged;
         } else if (filename === 'ingredients.json') {
             // 🛡️ 保留使用者在本地修改過的食材通路與自訂規格
-            if (!serverData || !localData) return localData || serverData;
+            if (!serverData || !Object.values(serverData).some(value => Array.isArray(value) && value.length)) return localData || serverData;
             const merged = { ...serverData };
+            let customList = [];
+            try { customList = JSON.parse(localStorage.getItem('kitchen_v2_custom_ingredients') || '[]'); } catch (e) {}
+            const customMap = new Map((Array.isArray(customList) ? customList : []).map(i => [i.id, i]));
             ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
                 const serverList = serverData[cat] || [];
-                const localList = localData[cat] || [];
+                const localList = localData?.[cat] || [];
                 const localMap = new Map(localList.map(i => [i.id, i]));
                 merged[cat] = serverList.map(sIng => {
                     const lIng = localMap.get(sIng.id);
-                    if (lIng) {
-                        const ingredient = { ...sIng, ...lIng };
-                        // 舊快取改過營養或食材規格時，不能沿用母庫已查證的重量基準。
-                        if (!lIng.weightBasis && sIng.weightBasis
-                            && ['name', 'brand', 'unitLabel', 'isCount', 'per100g', 'perUnit', 'perServing', 'servingSize', 'servingUnit']
-                                .some(key => JSON.stringify(lIng[key]) !== JSON.stringify(sIng[key]))) {
-                            ingredient.weightBasis = 'unknown';
-                            ingredient.weightBasisSource = '';
-                        }
-                        return ingredient;
-                    }
-                    return sIng;
+                    return mergeIngredientNutrition(sIng, lIng, customMap.get(sIng.id));
                 });
                 // 加入使用者自訂的新食材 (🛡️ 嚴格防呆：若母庫中已存在同名食材，絕不把本地舊雙胞胎重複加進去)
                 localList.forEach(lIng => {
@@ -683,10 +681,14 @@ export default class KitchenEngine {
             (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         if (isLocalServer) {
             try {
+                const serverPayload = filename === 'ingredients.json'
+                    ? JSON.parse(JSON.stringify(dataObj, (key, value) =>
+                        ['nutritionCache', 'nutritionReviewRequired'].includes(key) ? undefined : value))
+                    : dataObj;
                 const response = await fetch(`/api/data/${filename}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataObj)
+                    body: JSON.stringify(serverPayload)
                 });
                 if (!response.ok) {
                     console.log(`Cloud mode: persisted ${filename} to localStorage.`);
@@ -769,6 +771,17 @@ export default class KitchenEngine {
         if (existingSameName) {
             console.log(`[saveIngredient] 發現已有完全同名食材【${existingSameName.name}】(${existingSameName.id})，更新既有食材而非建立雙胞胎。`);
             ingData.id = existingSameName.id;
+        }
+
+        const previous = this.getIngredientById(ingData.id);
+        ingData = { ...previous, ...ingData };
+        if (previous?.nutritionCache) {
+            ingData.nutritionCache = { ...previous.nutritionCache,
+                edited: previous.nutritionCache.edited || !sameNutrition(previous, ingData) };
+        }
+        if (previous && !sameNutrition(previous, ingData)) {
+            ingData.nutritionReviewRequired = false;
+            ingData.weightBasisSource = '';
         }
 
         // 🛡️ 鐵律守門：若食材包含 Base64 照片，上傳圖床；失敗則清空 photoUrl，絕不存入資料庫
@@ -982,6 +995,10 @@ export default class KitchenEngine {
     }
 
     // --- Calculation Methods ---
+    getNutritionIssues(ingredients) {
+        return ingredients.map(req => ingredientNutritionIssue(this.getIngredientById(req.id), req)).filter(Boolean);
+    }
+
     calculateNutritionForMember(ingredients, memberKey) {
         // ingredients format: [{ id: 'tuna', amount: 80 }, ...]
         let total = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
@@ -989,17 +1006,12 @@ export default class KitchenEngine {
         ingredients.forEach(req => {
             const ingData = this.getIngredientById(req.id);
             if (ingData) {
-                if (ingData.isCount || ingData.perUnit) {
-                    const n = ingData.perUnit || ingData.per100g || {};
-                    const units = Number(req.amount) || 0;
-                    total.kcal += (n.kcal || 0) * units;
-                    total.protein += (n.protein || 0) * units;
-                    total.carbs += (n.carbs || 0) * units;
-                    total.fat += (n.fat || 0) * units;
-                    total.sodium += (n.sodium || 0) * units;
-                } else if (ingData.per100g) {
-                    const ratio = (Number(req.amount) || 0) / 100;
-                    const n = ingData.per100g;
+                const basis = ingredientNutritionBasis(ingData, req);
+                if (!basis && Number(req.amount) > 0) {
+                    Object.keys(total).forEach(key => { total[key] = NaN; });
+                } else if (basis) {
+                    const ratio = (Number(req.amount) || 0) / basis.divisor;
+                    const n = basis.nutrients;
                     total.kcal += (n.kcal || 0) * ratio;
                     total.protein += (n.protein || 0) * ratio;
                     total.carbs += (n.carbs || 0) * ratio;

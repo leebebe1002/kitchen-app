@@ -1,7 +1,7 @@
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261027_CHEF_BUDGET_V1';
 import WeightBasisBadge, { weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20260926_FK004_STORE_SYNC';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261029_NUTRITION_GUARD_V1';
 
 export default {
     components: {
@@ -719,8 +719,9 @@ export default {
                     const memberName = engine.profiles[member]?.name || member;
                     
                     if (item) {
-                        if (!totals[ingId]) {
-                            totals[ingId] = {
+                        const totalKey = `${ingId}:${item.unit}`;
+                        if (!totals[totalKey]) {
+                            totals[totalKey] = {
                                 id: ingId,
                                 name: getIngredientName(ingId),
                                 amount: 0,
@@ -728,9 +729,10 @@ export default {
                                 breakdown: []
                             };
                         }
-                        totals[ingId].amount += Number(item.amount);
+                        const total = totals[totalKey];
+                        total.amount += Number(item.amount);
                         if (Number(item.amount) > 0) {
-                            totals[ingId].breakdown.push({
+                            total.breakdown.push({
                                 memberName,
                                 amount: item.amount,
                                 unit: item.unit
@@ -847,7 +849,9 @@ export default {
                 }
             });
 
-            const activeList = list.filter(item => selectedMasterIngredients.value.includes(item.id) && checkStock(item.id));
+            // Preserve unresolved recipe/memory units instead of silently turning grams into strips.
+            const activeList = list.filter(item => selectedMasterIngredients.value.includes(item.id)
+                && checkStock(item.id) && !engine.getNutritionIssues([item]).length);
             if (activeList.length === 0) return;
 
             const isJason = member === 'jason';
@@ -964,7 +968,7 @@ export default {
                 if (item.id === 'greek_yogurt' || item.id === 'plain_yogurt') {
                     item.amount = isJason ? 140 : (member === 'ariel' ? 120 : 100);
                     item.unit = 'g';
-                } else if (item.id === 'mango' || item.id === 'banana') {
+                } else if ((item.id === 'mango' || item.id === 'banana') && item.unit === 'g') {
                     item.amount = isJason ? 120 : (member === 'ariel' ? 100 : 80);
                     item.unit = 'g';
                 }
@@ -1308,6 +1312,11 @@ export default {
             isResultStale.value = false;
             isCalculated.value = true;
             logChefTiming({ phase: 'local', durationMs: Math.round(performance.now() - started) });
+            if (activeMembers.value.some(member => engine.getNutritionIssues(getMemberActiveIngredients(member)).length)) {
+                aiChefAdvice.value = { source: 'local', portions: {}, chefComment: '營養資料待確認，已保留備料份量。' };
+                showChefNote.value = true;
+                return;
+            }
             if (getMemberActiveIngredients(activeMembers.value[0]).length) await callAiChefAdvisor(started);
         };
 
@@ -1622,7 +1631,8 @@ ${JSON.stringify(membersData, null, 2)}
                 const breakdown = activeMembers.value.length > 1 && item.breakdown.length
                     ? `（${item.breakdown.map(b => `${b.memberName} ${b.amount}${b.unit}`).join('、')}）`
                     : '';
-                return `${weightBasisText(engine.getIngredientById(item.id), item.unit)}${item.name}：${item.amount}${item.unit}${breakdown}`;
+                const pending = engine.getNutritionIssues([item]).length ? '（營養換算待確認）' : '';
+                return `${weightBasisText(engine.getIngredientById(item.id), item.unit)}${item.name}：${item.amount}${item.unit}${breakdown}${pending}`;
             });
             const lines = [
                 `${currentDish.value.name}｜全家總備料（${totalPortions.value} 人份）`,
@@ -1682,6 +1692,11 @@ ${JSON.stringify(membersData, null, 2)}
         const recordMeal = async () => {
             cancelChefRequest();
             if (!currentDish.value) return;
+            const issues = activeMembers.value.flatMap(member => engine.getNutritionIssues(getMemberActiveIngredients(member)));
+            if (issues.length) {
+                alert(`營養資料待確認，請先確認後再記錄：\n${[...new Set(issues)].join('\n')}`);
+                return;
+            }
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
@@ -2213,7 +2228,8 @@ ${JSON.stringify(membersData, null, 2)}
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
-                        <li v-for="item in totalIngredientsList" :key="item.id" class="prep-ingredient-row">
+                        <li v-for="item in totalIngredientsList" :key="item.id + ':' + item.unit" class="prep-ingredient-row">
+                            <span v-if="engine.getNutritionIssues([item]).length" style="font-size: 0.75rem; color: var(--color-text-muted);">營養換算待確認</span>
                             <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
                             <span class="prep-ingredient-name">{{ item.name }}</span>
                             <span class="prep-ingredient-amount">{{ item.amount }}{{ item.unit }}</span>
@@ -2288,8 +2304,11 @@ ${JSON.stringify(membersData, null, 2)}
                         <div>{{ aiChefAdvice.chefComment }}</div>
                     </div>
                     
+                    <p v-if="engine.getNutritionIssues(getMemberActiveIngredients(member)).length" role="status" style="color: var(--color-text-muted); font-size: 0.8rem;">
+                        營養總量待確認：{{ engine.getNutritionIssues(getMemberActiveIngredients(member)).join('；') }}
+                    </p>
                     <!-- Status Tags -->
-                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">
+                    <div v-else style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">
                         <span class="status-tag" :class="getMemberStatus(member).kcal">
                             {{ statusIcon(getMemberStatus(member).kcal) }} 熱量: {{ getMemberNutrition(member).kcal }}k
                         </span>

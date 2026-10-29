@@ -32,6 +32,8 @@ const IngredientDetailModal = {
     },
     emits: ['close', 'saved', 'deleted', 'removeFromDish'],
     setup(props, { emit }) {
+        const nutritionChanged = ref(false);
+        const hasUnitNutrition = computed(() => !!props.engine.getIngredientById(form.id)?.perUnit);
         const form = reactive({
             id: '',
             name: '',
@@ -74,6 +76,7 @@ const IngredientDetailModal = {
         const albumInputRef = ref(null);
 
         const initForm = () => {
+            nutritionChanged.value = false;
             if (props.mode === 'create') {
                 form.id = 'ing_' + Date.now();
                 form.name = props.initialName || '';
@@ -119,14 +122,6 @@ const IngredientDetailModal = {
                         fat: Number(ing.per100g.fat) || 0,
                         sodium: Number(ing.per100g.sodium) || 0
                     };
-                } else if (ing.perUnit) {
-                    form.per100g = {
-                        kcal: Math.round((ing.perUnit.kcal || 0) * 1.8),
-                        protein: Math.round((ing.perUnit.protein || 0) * 1.8 * 10) / 10,
-                        carbs: Math.round((ing.perUnit.carbs || 0) * 1.8 * 10) / 10,
-                        fat: Math.round((ing.perUnit.fat || 0) * 1.8 * 10) / 10,
-                        sodium: Math.round((ing.perUnit.sodium || 0) * 1.8)
-                    };
                 } else {
                     form.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
                 }
@@ -144,6 +139,12 @@ const IngredientDetailModal = {
                 }
 
                 form.displayBasis = isSauceOrOil ? 'serving' : '100g';
+                if (ing.perUnit) {
+                    form.perServing = { ...ing.perUnit };
+                    form.servingSize = 1;
+                    form.servingUnit = ing.unitLabel;
+                    form.displayBasis = 'serving';
+                }
                 photo.url = ing.photoUrl || ing.photo || null;
             } else {
                 photo.url = null;
@@ -186,14 +187,17 @@ const IngredientDetailModal = {
         };
 
         const on100gInput = () => {
+            nutritionChanged.value = true;
             calcServingFrom100g();
         };
 
         const onServingInput = () => {
-            calc100gFromServing();
+            nutritionChanged.value = true;
+            if (!hasUnitNutrition.value) calc100gFromServing();
         };
 
         const onServingSizeChange = () => {
+            nutritionChanged.value = true;
             if (form.displayBasis === 'serving') {
                 calc100gFromServing();
             } else {
@@ -272,6 +276,7 @@ const IngredientDetailModal = {
 
         const switchToExisting = (existingIng) => {
             if (!existingIng) return;
+            nutritionChanged.value = false;
             form.id = existingIng.id;
             form.name = existingIng.name;
             form.brand = existingIng.brand || '';
@@ -306,6 +311,12 @@ const IngredientDetailModal = {
                     fat: Number(existingIng.perServing.fat) || 0,
                     sodium: Number(existingIng.perServing.sodium) || 0
                 };
+            }
+            if (existingIng.perUnit) {
+                form.perServing = { ...existingIng.perUnit };
+                form.servingSize = 1;
+                form.servingUnit = existingIng.unitLabel;
+                form.displayBasis = 'serving';
             }
             photo.url = existingIng.photoUrl || null;
             modalMode.value = 'edit';
@@ -465,6 +476,11 @@ const IngredientDetailModal = {
             photo.isAnalyzing = false;
 
             if (data && data.status === 'success' && data.result) {
+                if (hasUnitNutrition.value) {
+                    photo.status = 'error';
+                    photo.message = '此食材按顆／包計算，請依每單位標示手動填寫；不能從每百克推算。';
+                    return;
+                }
                 const resData = data.result;
                 if (props.mode === 'create' || !form.name) {
                     if (resData.name) form.name = resData.name;
@@ -602,6 +618,26 @@ const IngredientDetailModal = {
                 }
             };
 
+            const previous = props.engine.getIngredientById(targetId);
+            if (previous) {
+                for (const key of ['unitLabel', 'isCount', 'perUnit', 'gramsPerPack', 'weightBasis', 'weightBasisSource', 'nutritionCache', 'nutritionReviewRequired']) {
+                    if (previous[key] !== undefined) ingData[key] = previous[key];
+                }
+                if (!nutritionChanged.value && photo.status !== 'success') {
+                    for (const key of ['per100g', 'perServing', 'servingSize', 'servingUnit']) {
+                        delete ingData[key];
+                        if (previous[key] !== undefined) ingData[key] = previous[key];
+                    }
+                } else if (hasUnitNutrition.value) {
+                    // Editing one strip/egg must never invent a 100 g conversion.
+                    ingData.perUnit = { ...form.perServing };
+                    for (const key of ['per100g', 'perServing', 'servingSize', 'servingUnit']) {
+                        delete ingData[key];
+                        if (previous[key] !== undefined) ingData[key] = previous[key];
+                    }
+                }
+            }
+
             // 儲存至總庫
             if (props.engine?.saveIngredient) {
                 await props.engine.saveIngredient(ingData);
@@ -648,6 +684,7 @@ const IngredientDetailModal = {
         };
 
         return {
+            hasUnitNutrition,
             modalMode,
             duplicateMatch,
             similarMatches,
@@ -768,23 +805,26 @@ const IngredientDetailModal = {
                 </div>
 
                 <!-- 3. 營養成份規格：純文字俐落排版 + 雙軌自動換算 -->
+                <p v-if="modalMode === 'edit' && engine.getNutritionIssues([{ id: form.id, amount: 1 }]).length" role="status" style="font-size: 0.8rem; color: var(--color-text-muted);">
+                    {{ engine.getNutritionIssues([{ id: form.id, amount: 1 }]).join('；') }}
+                </p>
                 <div style="background: #FAF8F5; border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-weight: 700; font-size: 0.9rem; color: var(--color-text-main);">營養成份規格：</span>
                         <div style="display: flex; background: #E5E7EB; padding: 2px; border-radius: 8px; gap: 2px;">
-                            <button @click="form.displayBasis = '100g'" 
+                            <button v-if="!hasUnitNutrition" @click="form.displayBasis = '100g'"
                                     :style="{ background: form.displayBasis === '100g' ? 'var(--color-primary)' : 'transparent', color: form.displayBasis === '100g' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
                                 每 100g/mL
                             </button>
                             <button @click="form.displayBasis = 'serving'" 
                                     :style="{ background: form.displayBasis === 'serving' ? 'var(--color-primary)' : 'transparent', color: form.displayBasis === 'serving' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
-                                按單份
+                                {{ hasUnitNutrition ? '每' + form.servingUnit : '按單份' }}
                             </button>
                         </div>
                     </div>
 
                     <!-- 份量基準輸入 (僅在「按單份」模式下展示) -->
-                    <div v-if="form.displayBasis === 'serving'" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.85rem; background: #FFFFFF; padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--color-primary);">
+                    <div v-if="form.displayBasis === 'serving' && !hasUnitNutrition" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.85rem; background: #FFFFFF; padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--color-primary);">
                         <span style="font-weight: 700; color: var(--color-text-main);">單份份量：</span>
                         <input type="number" v-model.number="form.servingSize" @input="onServingSizeChange" style="width: 54px; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: 6px; font-weight: 700; text-align: right; background: #FAF8F5;">
                         <span style="font-weight: 600; color: var(--color-text-muted);">{{ form.servingUnit || 'g' }}</span>

@@ -181,7 +181,8 @@ await check('real 20s timer: hung transports abort at 12s + remaining budget', a
 });
 await check('before/after same 10ms mock failures', async () => {
     const path = new URL('../web/src/views/CalculatorView.js', import.meta.url);
-    let source = execFileSync('git', ['show', 'HEAD:web/src/views/CalculatorView.js'], { encoding: 'utf8' });
+    // Compare against the version before the bounded-latency fix, even after it is committed.
+    let source = execFileSync('git', ['show', 'ce14579^:web/src/views/CalculatorView.js'], { encoding: 'utf8' });
     source = source.replace(/from '([^']+)'/g, (_, spec) => `from '${new URL(spec, path).href}'`);
     const { default: oldComponent } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
     const results = [];
