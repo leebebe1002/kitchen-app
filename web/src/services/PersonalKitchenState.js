@@ -5,7 +5,6 @@
  * 生效，之後 Supabase 會沿用同一個 scope id，因此不需要再次搬動 UI 資料。
  */
 const STORAGE_PREFIX = 'kitchen_v2_personal_state_';
-const ACTIVE_SCOPE_KEY = 'kitchen_v2_active_storage_scope';
 
 export const PERSONAL_SCOPES = {
     household: {
@@ -20,16 +19,6 @@ export const PERSONAL_SCOPES = {
     }
 };
 
-export function getActivePersonalScope() {
-    const saved = localStorage.getItem(ACTIVE_SCOPE_KEY);
-    return PERSONAL_SCOPES[saved] ? saved : 'household';
-}
-
-export function setActivePersonalScope(scopeId) {
-    if (!PERSONAL_SCOPES[scopeId]) return;
-    localStorage.setItem(ACTIVE_SCOPE_KEY, scopeId);
-}
-
 export function emptyPersonalKitchenState() {
     return {
         pantryInventory: {
@@ -40,7 +29,10 @@ export function emptyPersonalKitchenState() {
         },
         householdSupplies: { supplies: [] },
         version: 1,
-        updatedAt: null
+        updatedAt: null,
+        revision: null,
+        syncStatus: null,
+        dirty: false
     };
 }
 
@@ -54,39 +46,52 @@ export function hasPersonalKitchenData(state) {
         || supplies.length > 0;
 }
 
-export function readPersonalKitchenState(scopeId) {
-    try {
-        const saved = localStorage.getItem(STORAGE_PREFIX + scopeId);
-        return saved ? JSON.parse(saved) : null;
-    } catch (error) {
-        console.warn('Unable to read personal kitchen state:', error);
-        return null;
+// Missing keys are the only first-use signal; I/O and malformed data must fail closed.
+export function validatePersonalKitchenState(scopeId, state) {
+    const object = value => value && typeof value === 'object' && !Array.isArray(value);
+    if (!Object.hasOwn(PERSONAL_SCOPES, scopeId) || !object(state)
+        || (state.scopeId && state.scopeId !== scopeId)
+        || !object(state.pantryInventory) || !object(state.householdSupplies)) {
+        throw new Error('本機庫存資料或資料空間不正確，原資料已保留。');
     }
+    const pantry = state.pantryInventory;
+    if (['foodStockStatus', 'supplyStockStatus'].some(key => pantry[key] !== undefined && !object(pantry[key]))
+        || ['shoppingList', 'foodCart'].some(key => pantry[key] !== undefined && !Array.isArray(pantry[key]))
+        || (state.householdSupplies.supplies !== undefined && !Array.isArray(state.householdSupplies.supplies))) {
+        throw new Error('本機庫存資料格式不正確，原資料已保留。');
+    }
+    return state;
+}
+
+export function readPersonalKitchenState(scopeId) {
+    if (!Object.hasOwn(PERSONAL_SCOPES, scopeId)) throw new Error('未知的庫存資料空間。');
+    const saved = localStorage.getItem(STORAGE_PREFIX + scopeId);
+    return saved === null ? null : validatePersonalKitchenState(scopeId, JSON.parse(saved));
 }
 
 export function restorePersonalKitchenStateBackup(scopeId) {
-    try {
-        const backup = localStorage.getItem(STORAGE_PREFIX + scopeId + '_backup');
-        if (backup) {
-            localStorage.setItem(STORAGE_PREFIX + scopeId, backup);
-            return JSON.parse(backup);
-        }
-    } catch (e) {
-        console.warn('Unable to restore backup:', e);
-    }
-    return null;
+    if (!Object.hasOwn(PERSONAL_SCOPES, scopeId)) throw new Error('請指定有效的庫存資料空間。');
+    const backup = localStorage.getItem(STORAGE_PREFIX + scopeId + '_backup');
+    if (backup === null) return null;
+    const state = validatePersonalKitchenState(scopeId, JSON.parse(backup));
+    // Restore is a local draft, never an acknowledgment of a remote revision.
+    return writePersonalKitchenState(scopeId, state);
 }
 
 export function writePersonalKitchenState(scopeId, state, { preserveUpdatedAt = false } = {}) {
-    if (!PERSONAL_SCOPES[scopeId]) return;
-    try {
-        const current = localStorage.getItem(STORAGE_PREFIX + scopeId);
-        if (current) {
-            localStorage.setItem(STORAGE_PREFIX + scopeId + '_backup', current);
-        }
-    } catch (e) {}
-    localStorage.setItem(STORAGE_PREFIX + scopeId, JSON.stringify({
+    validatePersonalKitchenState(scopeId, state);
+    const current = localStorage.getItem(STORAGE_PREFIX + scopeId);
+    const next = {
         ...state,
-        updatedAt: preserveUpdatedAt && state?.updatedAt ? state.updatedAt : new Date().toISOString()
-    }));
+        scopeId,
+        dirty: preserveUpdatedAt ? Boolean(state.dirty) : true,
+        updatedAt: preserveUpdatedAt ? (state.updatedAt || null) : new Date().toISOString()
+    };
+    const serialized = JSON.stringify(next);
+    if (current !== null) {
+        validatePersonalKitchenState(scopeId, JSON.parse(current));
+        localStorage.setItem(STORAGE_PREFIX + scopeId + '_backup', current);
+    }
+    localStorage.setItem(STORAGE_PREFIX + scopeId, serialized);
+    return next;
 }

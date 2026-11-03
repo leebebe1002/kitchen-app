@@ -1,15 +1,12 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261029_WILLI_NOODLE_V1';
-import CalculatorView from './views/CalculatorView.js?v=20261029_NUTRITION_GUARD_V1';
-import TrackerView from './views/TrackerView.js?v=20261026_BEBE_NUTRITION_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261102_FK22_MEALS_V1';
+import CalculatorView from './views/CalculatorView.js?v=20261102_FK22_MEALS_V1';
+import TrackerView from './views/TrackerView.js?v=20261103_FK22_TRACKER_AUTH_V2';
 import PantryView from './views/PantryView.js?v=20261029_NUTRITION_GUARD_V1';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
-import { PERSONAL_SCOPES } from './services/PersonalKitchenState.js?v=20260918_FIX_STATE_V2';
-// 每次修正登入回跳邏輯時都更新版本字串，避免 iPhone PWA 沿用舊模組快取。
-// 與 PersonalKitchenSyncService 使用相同的模組網址，確保 Google 登入後
-// 同一份 session 會被同步服務讀到；網址加上不同版本參數會建立另一個實例。
-import authService from './services/FamilyAuthService.js?v=20260929_SUPABASE_KEY_V1';
+// Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
+import authService from './services/FamilyAuthService.js';
 
 const App = {
     components: {
@@ -26,8 +23,12 @@ const App = {
         const isKeyboardOpen = ref(false);
         const trackerView = ref(null);
         const showRecordActions = ref(false);
-        const personalScope = ref(localStorage.getItem('kitchen_v2_active_storage_scope') || 'household');
-        const personalScopes = Object.values(PERSONAL_SCOPES);
+        const personalReady = ref(false);
+        const personalMessage = ref(authService.message);
+        const identityVersion = ref(0);
+        let identityAttempt = 0;
+        let removeAuthListener = () => {};
+        let removeIdentityListeners = () => {};
         const showAccount = ref(false);
         const loginEmail = ref('');
         const loginCode = ref('');
@@ -54,9 +55,33 @@ const App = {
             }
 
             try {
-                currentUser.value = await authService.initialize();
-                engine.value = new KitchenEngine();
-                await engine.value.initialize();
+                removeAuthListener = authService.subscribe(() => {
+                    identityAttempt += 1;
+                    personalReady.value = false;
+                    currentUser.value = null;
+                    personalMessage.value = authService.message;
+                    identityVersion.value += 1;
+                    document.body.classList.remove('modal-open');
+                    engine.value?.clearPersonalScope();
+                });
+                await confirmIdentity();
+                const resume = () => { if (!document.hidden) return confirmIdentity(); };
+                const offline = () => authService.invalidate('目前離線。連線後會重新確認庫存權限，本機資料仍保留。');
+                const storage = event => {
+                    if (event.key === 'family_kitchen_auth_session' || event.key === null) return confirmIdentity();
+                };
+                window.addEventListener('online', resume);
+                window.addEventListener('offline', offline);
+                window.addEventListener('pageshow', resume);
+                window.addEventListener('storage', storage);
+                document.addEventListener('visibilitychange', resume);
+                removeIdentityListeners = () => {
+                    window.removeEventListener('online', resume);
+                    window.removeEventListener('offline', offline);
+                    window.removeEventListener('pageshow', resume);
+                    window.removeEventListener('storage', storage);
+                    document.removeEventListener('visibilitychange', resume);
+                };
                 isLoading.value = false;
             } catch (e) {
                 console.error("Failed to load KitchenEngine:", e);
@@ -67,6 +92,8 @@ const App = {
 
         onBeforeUnmount(() => {
             removeKeyboardListeners();
+            removeAuthListener();
+            removeIdentityListeners();
         });
 
         const setTab = (tab) => {
@@ -108,10 +135,24 @@ const App = {
             window.location.reload();
         };
 
-        const selectPersonalScope = (scopeId) => {
-            if (!engine.value) return;
-            engine.value.setPersonalScope(scopeId);
-            personalScope.value = scopeId;
+        const loadAuthorizedKitchen = async () => {
+            const attempt = ++identityAttempt;
+            const nextEngine = new KitchenEngine({ cloudSync: engine.value?.cloudSync });
+            await nextEngine.initialize();
+            if (attempt !== identityAttempt) {
+                if (!engine.value) { nextEngine.clearPersonalScope(); engine.value = nextEngine; }
+                return;
+            }
+            engine.value = nextEngine;
+            currentUser.value = authService.user;
+            personalReady.value = nextEngine.hasPersonalAccess();
+            personalMessage.value = authService.message;
+            identityVersion.value += 1;
+        };
+
+        const confirmIdentity = async () => {
+            await authService.initialize();
+            await loadAuthorizedKitchen();
         };
 
         const requestLoginCode = async () => {
@@ -129,19 +170,15 @@ const App = {
             }
         };
 
-        const signInWithGoogle = () => {
-            loginMessage.value = '';
-            authService.signInWithGoogle();
-        };
-
         const verifyLoginCode = async () => {
             loginMessage.value = '';
             loginSending.value = true;
             try {
-                currentUser.value = await authService.verifyEmailCode(loginEmail.value, loginCode.value);
+                await authService.verifyEmailCode(loginEmail.value, loginCode.value);
                 loginMessage.value = '此裝置已完成同步登入。正在同步你的資料…';
-                await engine.value?.syncPersonalKitchenState();
-                loginMessage.value = '同步登入完成。';
+                await loadAuthorizedKitchen();
+                if (!personalReady.value) throw new Error(personalMessage.value);
+                loginMessage.value = '登入與庫存權限已確認。';
             } catch (error) {
                 loginMessage.value = error.message || '無法驗證登入碼。';
             } finally {
@@ -168,9 +205,9 @@ const App = {
             closeRecordActions,
             selectRecordAction,
             refreshData,
-            personalScope,
-            personalScopes,
-            selectPersonalScope,
+            personalReady,
+            personalMessage,
+            identityVersion,
             showAccount,
             loginEmail,
             loginCode,
@@ -180,7 +217,6 @@ const App = {
             currentUser,
             requestLoginCode,
             verifyLoginCode,
-            signInWithGoogle,
             signOut
         };
     },
@@ -215,22 +251,18 @@ const App = {
 
             <!-- 主內容分頁區域 (Padding-bottom 自動適配 5 鍵 Dock) -->
             <main v-else class="view-content">
-                <section v-if="currentTab === 'pantry' || currentTab === 'shopping'" class="personal-scope-switcher" aria-label="目前的庫存與採買資料空間">
-                    <span class="personal-scope-label">目前查看</span>
-                    <div class="personal-scope-options" role="group" aria-label="切換資料空間">
-                        <button v-for="scope in personalScopes" :key="scope.id" class="personal-scope-option" :class="{ active: personalScope === scope.id }" @click="selectPersonalScope(scope.id)">
-                            {{ scope.label }}
-                        </button>
-                    </div>
+                <section v-if="!personalReady && (currentTab === 'pantry' || currentTab === 'shopping')" class="account-copy" role="status">
+                    <p>{{ personalMessage }}</p>
+                    <button class="action-sheet-row" @click="showAccount = true">確認登入</button>
                 </section>
                 <!-- 1. 備料計算器 -->
-                <CalculatorView v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
+                <CalculatorView :key="'calculator-' + identityVersion" v-if="currentTab === 'calculator'" :engine="engine" :onNavigate="setTab" />
                 <!-- 2. 今日紀錄 -->
                 <TrackerView v-if="currentTab === 'tracker'" ref="trackerView" :engine="engine" />
                 <!-- 4. 智慧冰箱 -->
-                <PantryView v-if="currentTab === 'pantry'" :engine="engine" />
+                <PantryView :key="'pantry-' + identityVersion" v-if="currentTab === 'pantry' && personalReady" :engine="engine" />
                 <!-- 5. 獨立採買清單 -->
-                <ShoppingView v-if="currentTab === 'shopping'" :engine="engine" />
+                <ShoppingView :key="'shopping-' + identityVersion" v-if="currentTab === 'shopping' && personalReady" :engine="engine" />
             </main>
 
             <!-- 📱 1:1 復刻記帳 App 5 鍵式純白浮空底部導航列 -->
@@ -316,9 +348,18 @@ const App = {
                         <button class="action-sheet-row" @click="signOut">登出此裝置</button>
                     </template>
                     <template v-else>
-                        <p class="account-copy">第一次請使用自己的 Google 帳戶登入；完成後，這台裝置會保持登入並自動同步。</p>
-                        <button class="action-sheet-row account-google-button" @click="signInWithGoogle">使用 Google 登入</button>
+                        <p class="account-copy">請使用自己的 Email 取得驗證碼；登入後會自動確認庫存權限。</p>
+                        <label class="account-email-label" for="family-login-email">Email</label>
+                        <input id="family-login-email" class="account-email-input" v-model="loginEmail" type="email" autocomplete="email" :disabled="loginSending">
+                        <button class="action-sheet-row" @click="requestLoginCode" :disabled="loginSending">{{ loginStep === 'code' ? '重新寄送驗證碼' : '取得驗證碼' }}</button>
+                        <template v-if="loginStep === 'code'">
+                            <label class="account-email-label" for="family-login-code">驗證碼</label>
+                            <input id="family-login-code" class="account-email-input" v-model="loginCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" :disabled="loginSending">
+                            <button class="action-sheet-row" @click="verifyLoginCode" :disabled="loginSending">確認登入</button>
+                        </template>
                     </template>
+                    <p v-if="!personalReady" class="account-message" role="status">{{ personalMessage }}</p>
+                    <button v-if="!personalReady" class="action-sheet-row" @click="signOut">登出此裝置</button>
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
                     <button class="action-sheet-cancel" @click="showAccount = false">關閉</button>
                 </section>

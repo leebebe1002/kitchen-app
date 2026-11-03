@@ -1,33 +1,45 @@
+import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
+import authService from '../services/FamilyAuthService.js';
 import CloudSyncEngine from './CloudSyncEngine.js';
-import supabaseService from '../services/SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
+import supabaseService from '../services/SupabaseService.js?v=20261102_FK22_MEALS_V1';
 import {
     PERSONAL_SCOPES,
     emptyPersonalKitchenState,
-    getActivePersonalScope,
     hasPersonalKitchenData,
     readPersonalKitchenState,
-    setActivePersonalScope,
     writePersonalKitchenState
-} from '../services/PersonalKitchenState.js';
-import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js?v=20260929_SUPABASE_KEY_V1';
+} from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
+import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261029_WILLI_NOODLE_V1';
 import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261029_WILLI_NOODLE_V1';
 
 export default class KitchenEngine {
-    constructor() {
+    constructor({ auth = authService, cloudSync } = {}) {
         const { reactive } = Vue;
-        this.cloudSync = new CloudSyncEngine();
+        this.cloudSync = cloudSync || new CloudSyncEngine();
         this.supabase = supabaseService;
         this.personalKitchenSync = personalKitchenSyncService;
-        this.personalScope = getActivePersonalScope();
+        this.auth = auth;
+        this.personalContext = null;
+        this.personalScope = null;
+        this.personalRevision = null;
+        this.mealAccess = null;
+        this.mealState = emptyMealState();
+        this.mealMutation = 0;
+        this.mealReadSequence = new Map();
+        this.mealSyncPromise = null;
+        // Invalidate pending personal-state requests whenever the selected scope changes.
+        this.personalScopeGeneration = 0;
+        this.personalSyncSequence = 0;
         this.data = reactive({
             ingredients: [],
             householdSupplies: [],
             pantryInventory: {},
             dishes: [],
-            dailyLogs: {},
+            dailyLogs: { logs: [] },
+            mealSyncMessage: '請登入並確認餐點權限。',
             config: { gemini_api_key: '', openai_api_key: '' }
         });
         // 家庭成員健康檔案 (Family Profiles)
@@ -48,10 +60,7 @@ export default class KitchenEngine {
     async initialize() {
         await Promise.all([
             this.fetchJson('ingredients.json', 'rawIngredients', {}),
-            this.fetchJson('household_supplies.json', 'householdSupplies', {supplies:[]}),
-            this.fetchJson('pantry_inventory.json', 'pantryInventory', {}),
             this.fetchJson('dishes.json', 'rawDishes', {dishes:[]}),
-            this.fetchJson('daily_logs.json', 'dailyLogs', {}),
             this.fetchJson('favorite_foods.json', 'rawFavoriteFoods', {favorites:[]}),
             this.fetchJson('config.json', 'config', {})
         ]);
@@ -60,10 +69,11 @@ export default class KitchenEngine {
         
         // 🛡️【第 1 優先守門】：立即載入個人專屬廚房狀態 (household / ariel)
         // 必須在任何食材清洗或業務邏輯執行前完成，確保 this.data.pantryInventory 100% 是使用者真實最新的庫存資料！
-        this.initializePersonalKitchenState();
+        await this.initializePersonalKitchenState();
+        await this.initializeMealLogs();
 
         // 🛡️【第 2 優先守門】：食材名稱去重與清洗 (徹底消除歷史雙胞胎如重複洋蔥)
-        this.cleanDuplicateIngredients();
+        if (this.hasPersonalAccess()) this.cleanDuplicateIngredients();
 
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
@@ -112,36 +122,65 @@ export default class KitchenEngine {
         console.log("KitchenEngine Initialized with State Protection & Instant Startup", this.data);
     }
 
-    getPersonalScopeOptions() {
-        return Object.values(PERSONAL_SCOPES);
+    hasPersonalAccess() {
+        return Boolean(this.personalScope && this.auth.isCurrentContext(this.personalContext));
+    }
+
+    clearPersonalScope() {
+        this.clearMealLogs();
+        this.personalScopeGeneration += 1;
+        this.personalScope = null;
+        this.personalRevision = null;
+        this.personalContext = null;
+        this.applyPersonalKitchenState(emptyPersonalKitchenState());
     }
 
     getPersonalKitchenSnapshot() {
         const localState = readPersonalKitchenState(this.personalScope);
-        return {
+        return JSON.parse(JSON.stringify({
+            ...localState,
             pantryInventory: this.data.pantryInventory || emptyPersonalKitchenState().pantryInventory,
             householdSupplies: this.data.householdSupplies || { supplies: [] },
+            revision: this.personalRevision,
             version: localState?.version || 1,
             updatedAt: localState?.updatedAt || null
-        };
+        }));
     }
 
-    initializePersonalKitchenState() {
-        const savedState = readPersonalKitchenState(this.personalScope);
+    async initializePersonalKitchenState() {
+        const context = this.auth.getPersonalContext();
+        if (!context) {
+            this.clearPersonalScope();
+            return;
+        }
+        this.personalContext = context;
+        this.personalScope = context.scopeId;
+        this.personalRevision = null;
+        let savedState;
+        try { savedState = readPersonalKitchenState(this.personalScope); }
+        catch (error) { this.clearPersonalScope(); throw error; }
         if (savedState) {
             this.applyPersonalKitchenState(savedState);
             return;
         }
-
-        // 只把現有版本的資料歸入 household；樂樂永遠從空白狀態開始。
+        // Only a verified household may adopt legacy device data; never load it for ariel.
+        if (this.personalScope === 'household') {
+            await Promise.all([
+                this.fetchJson('pantry_inventory.json', 'pantryInventory', {}),
+                this.fetchJson('household_supplies.json', 'householdSupplies', { supplies: [] })
+            ]);
+            if (!this.hasPersonalAccess()) { this.clearPersonalScope(); return; }
+        }
         const initialState = this.personalScope === 'household'
-            ? this.getPersonalKitchenSnapshot()
-            : emptyPersonalKitchenState();
-        writePersonalKitchenState(this.personalScope, initialState);
+            ? this.getPersonalKitchenSnapshot() : emptyPersonalKitchenState();
+        // An untouched empty kitchen is not a new edit that may replace existing cloud data.
+        writePersonalKitchenState(this.personalScope, initialState, { preserveUpdatedAt: !hasPersonalKitchenData(initialState) });
         this.applyPersonalKitchenState(initialState);
     }
 
     applyPersonalKitchenState(state) {
+        // Never borrow another tab's accepted revision for this screen's older contents.
+        if (Number.isSafeInteger(state?.revision) && state.revision >= 0) this.personalRevision = state.revision;
         const blank = emptyPersonalKitchenState();
         this.data.pantryInventory = state?.pantryInventory || blank.pantryInventory;
         this.data.householdSupplies = state?.householdSupplies || blank.householdSupplies;
@@ -164,40 +203,74 @@ export default class KitchenEngine {
     }
 
     persistPersonalKitchenState() {
+        if (!this.hasPersonalAccess()) return false;
         writePersonalKitchenState(this.personalScope, this.getPersonalKitchenSnapshot());
+        return true;
     }
 
     async syncPersonalKitchenState() {
-        if (!this.personalKitchenSync?.enabled) return false;
+        if (!this.hasPersonalAccess() || !this.personalKitchenSync?.enabled) return false;
+        const scopeId = this.personalScope;
+        const context = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        const sequence = ++this.personalSyncSequence;
         const localState = this.getPersonalKitchenSnapshot();
-        const cloudState = await this.personalKitchenSync.getState(this.personalScope);
-        const localTime = Date.parse(localState.updatedAt || 0);
-        const cloudTime = Date.parse(cloudState?.updatedAt || 0);
-
-        // 第一次建立 Supabase 空間時，遠端只有空白預設列。不可用它覆蓋
-        // 目前 Bebe + Jason 已在使用的資料；應由本機資料安全地完成首次遷移。
-        if (cloudState && cloudTime > localTime && !(hasPersonalKitchenData(localState) && !hasPersonalKitchenData(cloudState))) {
+        const snapshot = JSON.stringify(localState);
+        const isCurrent = () => this.hasPersonalAccess() && this.personalContext === context
+            && this.personalScope === scopeId && this.personalScopeGeneration === generation
+            && this.personalSyncSequence === sequence
+            && JSON.stringify(this.getPersonalKitchenSnapshot()) === snapshot;
+        const cloudState = await this.personalKitchenSync.getState(scopeId);
+        if (!isCurrent()) return false;
+        const conflict = () => { throw Object.assign(new Error('庫存版本衝突，本機與遠端資料已保留，請確認後再同步。'), { code: 'FK_SYNC_CONFLICT' }); };
+        if (!cloudState || !Number.isSafeInteger(cloudState.revision) || cloudState.revision < 0) {
+            throw new Error('無法確認伺服器庫存版本，已停止同步。');
+        }
+        const known = Number.isSafeInteger(localState.revision) && localState.revision >= 0;
+        if (known && localState.revision > cloudState.revision) return conflict();
+        const localHasData = hasPersonalKitchenData(localState);
+        const cloudHasData = hasPersonalKitchenData(cloudState);
+        const sameRevision = known && localState.revision === cloudState.revision;
+        // An old empty row cannot authorize an unbased draft, but a confirmed base can be edited.
+        if (!sameRevision && !cloudHasData && cloudState.syncStatus === 'legacy' && (localHasData || localState.dirty)) return conflict();
+        const acceptCloud = () => {
+            // Preserve primary before changing the screen; backup failure cannot apply a clear.
+            writePersonalKitchenState(scopeId, cloudState, { preserveUpdatedAt: true });
             this.applyPersonalKitchenState(cloudState);
-            writePersonalKitchenState(this.personalScope, cloudState, { preserveUpdatedAt: true });
             return true;
+        };
+        if (!sameRevision) {
+            // A rolling backup cannot protect an unresolved draft from a newer clear.
+            if (!localState.dirty && (cloudState.syncStatus === 'cleared' || !localHasData || known)) return acceptCloud();
+            if (cloudState.syncStatus !== 'initial' || known) return conflict();
         }
-
-        const saved = await this.personalKitchenSync.saveState(this.personalScope, localState);
-        if (saved && typeof saved === 'object') {
-            writePersonalKitchenState(this.personalScope, saved, { preserveUpdatedAt: true });
+        if (sameRevision && !localState.dirty) return true;
+        // Only a proven initial row or a draft based on this exact revision may be written.
+        const saved = await this.personalKitchenSync.saveState(scopeId, { ...localState, revision: cloudState.revision });
+        if (!isCurrent()) return false;
+        if (!saved || !Number.isSafeInteger(saved.revision) || saved.revision !== cloudState.revision + 1) {
+            throw new Error('未收到有效的庫存寫入確認，本機草稿已保留。');
         }
+        writePersonalKitchenState(scopeId, saved, { preserveUpdatedAt: true });
+        this.applyPersonalKitchenState(saved);
         return true;
     }
 
     setPersonalScope(scopeId) {
-        if (!PERSONAL_SCOPES[scopeId] || scopeId === this.personalScope) return;
+        const context = this.auth.getPersonalContext();
+        if (!context || context.scopeId !== scopeId || !PERSONAL_SCOPES[scopeId]) return;
+        if (scopeId === this.personalScope && context === this.personalContext) return;
+        this.personalScopeGeneration += 1;
         this.persistPersonalKitchenState();
         this.personalScope = scopeId;
-        setActivePersonalScope(scopeId);
+        this.personalRevision = null;
+        this.personalContext = context;
 
-        const savedState = readPersonalKitchenState(scopeId);
+        let savedState;
+        try { savedState = readPersonalKitchenState(scopeId); }
+        catch (error) { this.clearPersonalScope(); throw error; }
         const nextState = savedState || emptyPersonalKitchenState();
-        if (!savedState) writePersonalKitchenState(scopeId, nextState);
+        if (!savedState) writePersonalKitchenState(scopeId, nextState, { preserveUpdatedAt: true });
         this.applyPersonalKitchenState(nextState);
         this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
     }
@@ -208,6 +281,7 @@ export default class KitchenEngine {
     }
 
     async fetchJson(filename, key, defaultValue) {
+        if (filename === 'daily_logs.json') throw new Error('舊共用餐點未確認歸屬，不自動載入。');
         const localKey = 'kitchen_v2_' + filename;
         const cached = localStorage.getItem(localKey);
         let cachedData = null;
@@ -633,25 +707,14 @@ export default class KitchenEngine {
         }
     }
 
-    async syncWithCloud() {
-        if (!this.cloudSync) return false;
-        try {
-            // 🌟 雲端同步僅限於「全家飲食記錄 (daily_logs.json)」雙向合流，確保採買清單與自訂通路 100% 保留本地原貌
-            const cloudDailyLogs = await this.cloudSync.fetchFromCloud('daily_logs.json');
-            if (cloudDailyLogs) {
-                this.data.dailyLogs = this.cloudSync.mergeDailyLogs(this.data.dailyLogs, cloudDailyLogs, this.deletedMealIds);
-                this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
-                // 將合併後的完整歷史紀錄回推雲端
-                await this.cloudSync.pushToCloud('daily_logs.json', this.data.dailyLogs);
-            }
-            return true;
-        } catch (e) {
-            console.warn("syncWithCloud warning:", e);
-            return false;
-        }
+    async syncWithCloud(date, member) {
+        const synced = await this.syncMealDrafts();
+        if (date && member) return (await this.fetchMealsFromSupabase(date, member)) && synced;
+        return synced;
     }
 
     async saveJson(filename, dataObj) {
+        if (filename === 'daily_logs.json') throw new Error('餐點須使用已驗證帳號的餐點儲存入口。');
         // Defense in depth: callers may still pass legacy config objects containing an API key.
         if (filename === 'config.json') {
             const safeConfig = { ...(dataObj || {}) };
@@ -663,7 +726,7 @@ export default class KitchenEngine {
         const localKey = 'kitchen_v2_' + filename;
         // 個人資料只寫入目前資料空間；不可再覆寫舊版共用本機快取或靜態 JSON 檔。
         if (filename === 'pantry_inventory.json' || filename === 'household_supplies.json') {
-            this.persistPersonalKitchenState();
+            if (!this.persistPersonalKitchenState()) return false;
             this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
             return true;
         }
@@ -876,6 +939,7 @@ export default class KitchenEngine {
     }
 
     async toggleShoppingList(itemOrId) {
+        if (!this.hasPersonalAccess()) return false;
         if (!this.data.pantryInventory.shoppingList) {
             this.data.pantryInventory.shoppingList = [];
         }
@@ -935,18 +999,21 @@ export default class KitchenEngine {
     }
 
     async toggleStock(id, hasStock) {
+        if (!this.hasPersonalAccess()) return false;
         if (!this.data.pantryInventory.foodStockStatus) this.data.pantryInventory.foodStockStatus = {};
         this.data.pantryInventory.foodStockStatus[id] = hasStock;
         await this.saveJson('pantry_inventory.json', this.data.pantryInventory);
     }
 
     async toggleSupplyStock(id, hasStock) {
+        if (!this.hasPersonalAccess()) return false;
         if (!this.data.pantryInventory.supplyStockStatus) this.data.pantryInventory.supplyStockStatus = {};
         this.data.pantryInventory.supplyStockStatus[id] = hasStock;
         await this.saveJson('pantry_inventory.json', this.data.pantryInventory);
     }
 
     async toggleShoppingItemPurchased(id) {
+        if (!this.hasPersonalAccess()) return false;
         const list = this.data.pantryInventory.shoppingList || [];
         const item = list.find(s => s.id === id);
         if (item) {
@@ -956,12 +1023,14 @@ export default class KitchenEngine {
     }
 
     async deleteShoppingItem(id) {
+        if (!this.hasPersonalAccess()) return false;
         if (!this.data.pantryInventory.shoppingList) return;
         this.data.pantryInventory.shoppingList = this.data.pantryInventory.shoppingList.filter(s => s.id !== id);
         await this.saveJson('pantry_inventory.json', this.data.pantryInventory);
     }
 
     async clearPurchasedShoppingList() {
+        if (!this.hasPersonalAccess()) return false;
         if (!this.data.pantryInventory.shoppingList) return;
         const list = this.data.pantryInventory.shoppingList;
         
@@ -984,6 +1053,7 @@ export default class KitchenEngine {
     }
 
     async deleteSupply(id) {
+        if (!this.hasPersonalAccess()) return false;
         if (this.data.householdSupplies && this.data.householdSupplies.supplies) {
             this.data.householdSupplies.supplies = this.data.householdSupplies.supplies.filter(s => s.id !== id);
             await this.saveJson('household_supplies.json', this.data.householdSupplies);
@@ -1054,192 +1124,167 @@ export default class KitchenEngine {
         return statuses;
     }
 
-    // --- Daily Logs Methods (Page 2 Integration) ---
+    // --- Verified meal logs; the old shared cache is preserved for a separate migration. ---
+    clearMealLogs() {
+        this.mealAccess = null;
+        this.mealState = emptyMealState();
+        this.mealMutation += 1;
+        this.data.dailyLogs = { logs: [] };
+        this.data.mealSyncMessage = '請登入並確認餐點權限。本機草稿仍保留。';
+    }
+
+    hasMealAccess() {
+        return Boolean(this.mealAccess && this.auth.isCurrentContext(this.mealAccess.identity));
+    }
+
+    canAccessMeal(member) {
+        return this.hasMealAccess() && ['bebe', 'ariel', 'jason'].includes(member)
+            && (this.mealAccess.isManager || this.mealAccess.member === member);
+    }
+
+    requireMealAccess(member) {
+        if (!this.canAccessMeal(member)) throw new Error('請登入並確認這位成員的餐點權限。');
+        return this.mealAccess;
+    }
+
+    async initializeMealLogs() {
+        this.clearMealLogs();
+        const identity = this.auth.getPersonalContext();
+        if (!identity) return false;
+        try {
+            const access = await this.supabase.getMealAccess();
+            if (!this.auth.isCurrentContext(identity) || access.identity !== identity) return false;
+            const state = readMealState(identity.userId);
+            this.mealAccess = access;
+            this.applyMealState(state);
+            this.data.mealSyncMessage = state.pending.length ? '餐點有本機草稿，等待同步。'
+                : (localStorage.getItem('kitchen_v2_daily_logs.json') !== null ? '舊裝置餐點已保留，待確認歸屬；不會自動上傳。' : '');
+            return true;
+        } catch (error) {
+            if (this.auth.isCurrentContext(identity)) this.data.mealSyncMessage = error.message;
+            return false;
+        }
+    }
+
+    applyMealState(state) {
+        this.mealState = state;
+        this.data.dailyLogs = { logs: state.logs.map(day => ({ ...day,
+            diners: Object.fromEntries(Object.entries(day.diners || {}).filter(([member]) => this.canAccessMeal(member))) })) };
+    }
+
+    persistMealState(state) {
+        if (!this.hasMealAccess()) throw new Error('登入已變更，餐點未儲存。');
+        writeMealState(this.mealAccess.identity.userId, state);
+        this.mealMutation += 1;
+        this.applyMealState(state);
+    }
+
+    setMealDay(state, date, member, meals) {
+        let day = state.logs.find(row => row.date === date);
+        if (!day) { day = { date, diners: {} }; state.logs.push(day); }
+        const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+        meals.forEach(meal => Object.keys(totals).forEach(key => { totals[key] += Number((meal.nutrients || meal.nutrition)?.[key]) || 0; }));
+        Object.keys(totals).forEach(key => { totals[key] = Math.round(totals[key] * 10) / 10; });
+        day.diners[member] = { totals, meals };
+    }
+
     getDailyLog(date, member) {
-        if (!this.data.dailyLogs || !this.data.dailyLogs.logs) {
-            return { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
+        if (this.canAccessMeal(member)) {
+            const day = this.data.dailyLogs.logs.find(row => row.date === date);
+            if (day?.diners?.[member]) return day.diners[member];
         }
-        const dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
-        if (!dayEntry || !dayEntry.diners || !dayEntry.diners[member]) {
-            return { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
-        }
-        return dayEntry.diners[member];
+        return { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
     }
 
     async fetchMealsFromSupabase(date, member) {
-        if (!this.supabase) return;
+        if (!this.canAccessMeal(member)) return false;
+        const access = this.mealAccess;
+        const mutation = this.mealMutation;
+        const key = date + '/' + member;
+        const sequence = (this.mealReadSequence.get(key) || 0) + 1;
+        this.mealReadSequence.set(key, sequence);
         try {
-            const cloudMeals = await this.supabase.getMealsByDate(date, member);
-            if (Array.isArray(cloudMeals) && cloudMeals.length > 0) {
-                if (!this.data.dailyLogs) this.data.dailyLogs = { logs: [] };
-                if (!this.data.dailyLogs.logs) this.data.dailyLogs.logs = [];
-
-                let dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
-                if (!dayEntry) {
-                    dayEntry = {
-                        date: date,
-                        diners: {
-                            bebe: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
-                            ariel: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
-                            jason: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] }
-                        }
-                    };
-                    this.data.dailyLogs.logs.push(dayEntry);
-                }
-
-                if (!dayEntry.diners[member]) {
-                    dayEntry.diners[member] = { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
-                }
-
-                // 墓碑過濾：剔除已被標記刪除的紀錄
-                const validCloudMeals = (this.deletedMealIds && this.deletedMealIds.size > 0)
-                    ? cloudMeals.filter(m => !this.deletedMealIds.has(String(m.id)))
-                    : cloudMeals;
-
-                dayEntry.diners[member].meals = validCloudMeals;
-
-                // Recalculate totals
-                const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-                validCloudMeals.forEach(m => {
-                    const n = m.nutrients || {};
-                    totals.kcal += (n.kcal || 0);
-                    totals.protein += (n.protein || 0);
-                    totals.carbs += (n.carbs || 0);
-                    totals.fat += (n.fat || 0);
-                    totals.sodium += (n.sodium || 0);
-                });
-
-                Object.keys(totals).forEach(k => {
-                    totals[k] = Math.round(totals[k] * 10) / 10;
-                });
-                dayEntry.diners[member].totals = totals;
-
-                this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
-            }
-        } catch (err) {
-            console.warn('⚠️ [Supabase] 讀取雲端飲食紀錄失敗，維持本地離線資料:', err);
+            const cloud = await this.supabase.getMealsByDate(date, member);
+            if (!this.hasMealAccess() || access !== this.mealAccess || mutation !== this.mealMutation || sequence !== this.mealReadSequence.get(key)) return false;
+            if (!Array.isArray(cloud)) throw new Error('餐點雲端讀取失敗，保留本機資料。');
+            const meals = new Map(cloud.map(meal => [meal.id, meal]));
+            this.mealState.pending.filter(item => item.date === date && item.member === member).forEach(item => {
+                if (item.operation === 'delete') meals.delete(item.id);
+                else meals.set(item.id, item.meal);
+            });
+            const next = JSON.parse(JSON.stringify(this.mealState));
+            this.setMealDay(next, date, member, [...meals.values()]);
+            this.persistMealState(next);
+            return true;
+        } catch (error) {
+            if (access === this.mealAccess && this.auth.isCurrentContext(access.identity)) this.data.mealSyncMessage = error.message;
+            return false;
         }
+    }
+
+    async syncMealDrafts() {
+        if (!this.hasMealAccess()) return false;
+        if (this.mealSyncPromise) return this.mealSyncPromise;
+        const access = this.mealAccess;
+        const operation = (async () => {
+            try {
+                while (this.mealState.pending.length) {
+                    if (!this.hasMealAccess() || this.mealAccess !== access) return false;
+                    const item = JSON.parse(JSON.stringify(this.mealState.pending[0]));
+                    this.requireMealAccess(item.member);
+                    const saved = item.operation === 'delete'
+                        ? await this.supabase.deleteMeal(item.id, item.date, item.member)
+                        : await this.supabase.saveMeal(item.date, item.member, item.meal);
+                    if (!this.hasMealAccess() || this.mealAccess !== access) return false;
+                    if (saved !== true) throw new Error('餐點未收到雲端確認。');
+                    const next = JSON.parse(JSON.stringify(this.mealState));
+                    next.pending = next.pending.filter(pending => pending.mutationId !== item.mutationId);
+                    this.persistMealState(next);
+                }
+                this.data.mealSyncMessage = '餐點已同步。';
+                return true;
+            } catch (error) {
+                if (access === this.mealAccess) this.data.mealSyncMessage = `餐點已保留於本機，尚未同步。${error.message}`;
+                return false;
+            }
+        })();
+        this.mealSyncPromise = operation;
+        try { return await operation; }
+        finally { if (this.mealSyncPromise === operation) this.mealSyncPromise = null; }
     }
 
     async recordMeal(date, member, meal) {
-        if (!meal.id) {
-            meal.id = 'meal_' + Date.now() + '_' + member;
+        const access = this.requireMealAccess(member);
+        if (!meal.id) meal.id = 'meal_' + crypto.randomUUID();
+        const draft = JSON.parse(JSON.stringify(meal));
+        if (draft.photoUrl?.startsWith('data:')) {
+            draft.photoUrl = await this.supabase.uploadMealPhoto(draft.photoUrl, member).catch(() => null);
         }
-
-        // 1. 🛡️ 鐵律守門：若附帶 Base64 實拍照片，上傳至 Supabase Storage 圖床並替換為公開 URL；若失敗，絕對禁止保留 Base64 字串！
-        if (meal.photoUrl && meal.photoUrl.startsWith('data:')) {
-            let uploadedUrl = null;
-            if (this.supabase) {
-                try {
-                    uploadedUrl = await this.supabase.uploadMealPhoto(meal.photoUrl, member);
-                    if (uploadedUrl) {
-                        meal.photoUrl = uploadedUrl;
-                    }
-                } catch (pErr) {
-                    console.warn('⚠️ [Supabase] 照片上傳失敗:', pErr);
-                }
-            }
-            if (!uploadedUrl) {
-                console.warn('⚠️ [KitchenEngine] 未能取得公開圖床 URL，清除 Base64 照片字串以維護系統極速開啟');
-                meal.photoUrl = null;
-            }
+        if (!this.hasMealAccess() || access !== this.mealAccess) throw new Error('登入已變更，請確認餐點帳號。');
+        const next = JSON.parse(JSON.stringify(this.mealState));
+        if (next.logs.some(day => Object.entries(day.diners || {}).some(([person, log]) =>
+            (day.date !== date || person !== member) && log.meals.some(row => row.id === draft.id)))) {
+            throw new Error('餐點 ID 已屬於其他日期或成員，請保留原紀錄。');
         }
-
-        if (!this.data.dailyLogs) this.data.dailyLogs = { logs: [] };
-        if (!this.data.dailyLogs.logs) this.data.dailyLogs.logs = [];
-        
-        let dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
-        if (!dayEntry) {
-            dayEntry = {
-                date: date,
-                diners: {
-                    bebe: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
-                    ariel: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] },
-                    jason: { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] }
-                }
-            };
-            this.data.dailyLogs.logs.push(dayEntry);
-        }
-        
-        if (!dayEntry.diners[member]) {
-            dayEntry.diners[member] = { totals: { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 }, meals: [] };
-        }
-        
-        // Push meal
-        dayEntry.diners[member].meals.push(meal);
-        
-        // Recalculate totals
-        const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-        dayEntry.diners[member].meals.forEach(m => {
-            const n = m.nutrients || m.nutrition || {};
-            totals.kcal += (n.kcal || 0);
-            totals.protein += (n.protein || 0);
-            totals.carbs += (n.carbs || 0);
-            totals.fat += (n.fat || 0);
-            totals.sodium += (n.sodium || 0);
-        });
-        
-        // Round totals
-        Object.keys(totals).forEach(k => {
-            totals[k] = Math.round(totals[k] * 10) / 10;
-        });
-        dayEntry.diners[member].totals = totals;
-        
-        // 2. 本地離線暫存保護
-        this.safeSetLocalStorage('kitchen_v2_daily_logs.json', this.data.dailyLogs);
-
-        // 3. 異步同步至 Supabase 雲端資料庫
-        if (this.supabase) {
-            try {
-                await this.supabase.saveMeal(date, member, meal);
-            } catch (dbErr) {
-                console.warn('⚠️ [Supabase] 寫入雲端資料庫失敗 (已保存在本地離線快取):', dbErr);
-            }
-        }
+        const meals = [...this.getDailyLog(date, member).meals.filter(row => row.id !== draft.id), draft];
+        this.setMealDay(next, date, member, meals);
+        next.pending = next.pending.filter(item => item.id !== draft.id);
+        next.pending.push({ operation: 'save', id: draft.id, date, member, meal: draft, mutationId: crypto.randomUUID() });
+        this.persistMealState(next);
+        this.data.mealSyncMessage = '餐點已保留於本機，等待同步。';
+        return this.syncMealDrafts();
     }
 
     async deleteMeal(date, member, mealId) {
-        if (!this.data.dailyLogs?.logs) return;
-        const dayEntry = this.data.dailyLogs.logs.find(l => l.date === date);
-        if (!dayEntry || !dayEntry.diners || !dayEntry.diners[member]) return;
-
-        dayEntry.diners[member].meals = dayEntry.diners[member].meals.filter(m => m.id !== mealId);
-
-        // Recalculate totals
-        const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-        dayEntry.diners[member].meals.forEach(m => {
-            const n = m.nutrients || m.nutrition || {};
-            totals.kcal += (n.kcal || 0);
-            totals.protein += (n.protein || 0);
-            totals.carbs += (n.carbs || 0);
-            totals.fat += (n.fat || 0);
-            totals.sodium += (n.sodium || 0);
-        });
-
-        Object.keys(totals).forEach(k => {
-            totals[k] = Math.round(totals[k] * 10) / 10;
-        });
-        dayEntry.diners[member].totals = totals;
-
-        // 記錄墓碑 (Tombstone)：防止雲端拉取或合流時死而復生
-        if (mealId) {
-            this.deletedMealIds.add(String(mealId));
-            try {
-                localStorage.setItem('kitchen_v2_deleted_meal_ids', JSON.stringify(Array.from(this.deletedMealIds)));
-            } catch (e) {}
-        }
-
-        // 雙向持久化：儲存至本地快取並推播至 GitHub 雲端中樞
-        await this.saveJson('daily_logs.json', this.data.dailyLogs);
-
-        // 雲端刪除 (Supabase)
-        if (this.supabase) {
-            try {
-                await this.supabase.deleteMeal(mealId);
-            } catch (dbErr) {
-                console.warn('⚠️ [Supabase] 刪除雲端餐點失敗:', dbErr);
-            }
-        }
+        this.requireMealAccess(member);
+        const next = JSON.parse(JSON.stringify(this.mealState));
+        const original = this.getDailyLog(date, member).meals.find(meal => meal.id === mealId);
+        if (!original) return false;
+        this.setMealDay(next, date, member, this.getDailyLog(date, member).meals.filter(meal => meal.id !== mealId));
+        next.pending = next.pending.filter(item => item.id !== mealId);
+        next.pending.push({ operation: 'delete', id: mealId, date, member, meal: original, mutationId: crypto.randomUUID() });
+        this.persistMealState(next);
+        return this.syncMealDrafts();
     }
 
     // --- Favorite Foods Methods ---

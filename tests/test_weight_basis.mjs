@@ -40,11 +40,13 @@ for (const row of audit.ingredients) {
   if (original[field]) current[field] = original[field]; else delete current[field];
  }
 }
-// The 2026-10-28 audit is immutable history; normalize the explicitly approved new brand change for comparison.
+// Keep HEAD metadata in the comparison; the approved noodle values are asserted above.
 const originalNoodle = baseline.carbs.find(i=>i.id==='steamed_noodle');
 noodleCurrent.name = originalNoodle.name;
-delete noodleCurrent.brand;
-delete noodleCurrent.gramsPerPack;
+for (const field of ['brand', 'gramsPerPack']) {
+ if (Object.hasOwn(originalNoodle, field)) noodleCurrent[field] = originalNoodle[field];
+ else delete noodleCurrent[field];
+}
 assert.deepEqual(stripped, baseline, 'Only audited changes plus verified steamed noodle update are allowed');
 assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 78, '78 ingredient bases should be explicitly tagged');
 const allIngredients = Object.values(official).flat();

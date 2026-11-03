@@ -1,3 +1,4 @@
+import { authorizeTestEngine } from './personal_scope_fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -71,6 +72,7 @@ globalThis.Vue = vm.runInNewContext(fs.readFileSync('web/vue.global.js','utf8') 
 const {default: KitchenEngine} = await import('../web/src/engine/KitchenEngine.js');
 const {readPersonalKitchenState, writePersonalKitchenState, emptyPersonalKitchenState} = await import('../web/src/services/PersonalKitchenState.js');
 const engine = new KitchenEngine();
+authorizeTestEngine(engine);
 engine.data.ingredients = all;
 const single = (id,amount,unit) => [{id,amount,unit}];
 for (const member of ['bebe','ariel','jason']) {
@@ -117,9 +119,10 @@ const legacy = Object.fromEntries(Object.entries(official).map(([cat,group]) => 
     return result;
 })]));
 for (const scope of ['household','ariel']) {
-    engine.personalScope = scope;
+    authorizeTestEngine(engine, scope);
     const state = {...emptyPersonalKitchenState(), pantryInventory:{foodStockStatus:{salmon:scope==='household'}, supplyStockStatus:{}, shoppingList:[{id:scope,targetId:'salmon'}],foodCart:[]}};
     writePersonalKitchenState(scope,state);
+    engine.applyPersonalKitchenState(state);
     const stored = localStorage.getItem('kitchen_v2_personal_state_'+scope);
     const cached = structuredClone(legacy);
     cached.proteins.find(i => i.id === 'salmon').preferredStores = ['義美'];
@@ -160,18 +163,22 @@ assert.equal(readPersonalKitchenState('household').pantryInventory.foodStockStat
 assert.equal(readPersonalKitchenState('ariel').pantryInventory.foodStockStatus.salmon,false);
 
 for (const scope of ['household','ariel']) {
-    engine.personalScope=scope;
+    authorizeTestEngine(engine, scope);
     engine.applyPersonalKitchenState(readPersonalKitchenState(scope));
     engine.personalKitchenSync={enabled:false};
     assert.equal(await engine.syncPersonalKitchenState(),false,'Logged out does not use remote');
     let saved;
     engine.personalKitchenSync={enabled:true,getState:async id => {
         assert.equal(id,scope);
-        return {...emptyPersonalKitchenState(),updatedAt:'2999-01-01T00:00:00Z'};
+        return {...emptyPersonalKitchenState(),revision:0,syncStatus:'legacy',updatedAt:'2999-01-01T00:00:00Z'};
     },saveState:async (id,state) => {assert.equal(id,scope);saved=JSON.parse(JSON.stringify(state));return {...state,updatedAt:'2026-10-28T00:00:00Z'};}};
-    await engine.syncPersonalKitchenState();
-    assert(saved.pantryInventory.shoppingList.length>0,'Empty newer remote cannot wipe local data');
-    const remote={...emptyPersonalKitchenState(),pantryInventory:{foodStockStatus:{edamame:true},supplyStockStatus:{},shoppingList:[{id:scope+'_remote'}],foodCart:[]},updatedAt:'2999-01-01T00:00:00Z'};
+    const before = localStorage.getItem('kitchen_v2_personal_state_'+scope);
+    await assert.rejects(engine.syncPersonalKitchenState(), { code: 'FK_SYNC_CONFLICT' });
+    assert.equal(saved,undefined,'Ambiguous historical empty state must not be overwritten');
+    assert.equal(localStorage.getItem('kitchen_v2_personal_state_'+scope), before);
+    writePersonalKitchenState(scope,{...readPersonalKitchenState(scope),revision:0,dirty:false},{preserveUpdatedAt:true});
+    engine.applyPersonalKitchenState(readPersonalKitchenState(scope));
+    const remote={...emptyPersonalKitchenState(),revision:1,syncStatus:'active',pantryInventory:{foodStockStatus:{edamame:true},supplyStockStatus:{},shoppingList:[{id:scope+'_remote'}],foodCart:[]},updatedAt:'2999-01-01T00:00:00Z'};
     engine.personalKitchenSync={enabled:true,getState:async () => remote,saveState:async () => {throw Error('Newer populated remote should be read');}};
     await engine.syncPersonalKitchenState();
     assert.equal(engine.data.pantryInventory.shoppingList[0].id,scope+'_remote');

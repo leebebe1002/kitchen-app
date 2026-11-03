@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+globalThis.Vue=vm.runInNewContext(fs.readFileSync('web/vue.global.js','utf8')+';Vue',{console,setTimeout,clearTimeout});
+globalThis.window={addEventListener(){},removeEventListener(){}};globalThis.document={body:{classList:{add(){},remove(){}}}};
+globalThis.localStorage={getItem:()=>null};const alerts=[];globalThis.alert=m=>alerts.push(m);globalThis.fetch=()=>{throw Error('No network');};
+const {default:Tracker}=await import('../web/src/views/TrackerView.js');
+const {ref,h,createRenderer,nextTick}=Vue;const calls=[];let release;
+const pending=new Promise(r=>{release=r;});
+const makeEngine=(user,member)=>({mealAccess:{identity:{userId:user},member,isManager:member==='bebe'},data:{mealSyncMessage:'',config:{}},profiles:{bebe:{targetKcal:1500},ariel:{targetKcal:1500}},canAccessMeal(m){return this.mealAccess.isManager||m===this.mealAccess.member;},hasMealAccess:()=>true,getDailyLog:()=>({totals:{},meals:[]}),getFavoriteFoods:()=>[],syncWithCloud:async()=>true,recordMeal:async(date,who,meal)=>{calls.push({date,who,meal});await pending;return false;}});
+const current=ref(makeEngine('A','bebe'));let view;
+const renderer=createRenderer({createElement:()=>({}),insert(){},remove(){},setElementText(){},patchProp(){},createText:()=>({}),createComment:()=>({}),setText(){},setComment(){},parentNode:()=>null,nextSibling:()=>null});const root={};
+const mountedTracker={props:['engine'],setup(props){view=Tracker.setup(props);return()=>h('div');}};
+renderer.render(h({setup:()=>()=>h(mountedTracker,{engine:current.value})}),root);await nextTick();
+view.voiceText.value='private unfinished A';view.showAiModal.value=true;
+const first=view.confirmSaveRecord();const duplicate=view.confirmSaveRecord();await nextTick();assert.equal(calls.length,1,'Double tap must not create a second meal or upload');
+current.value=makeEngine('A','bebe');await nextTick();assert.equal(view.voiceText.value,'private unfinished A','Same-account foreground revalidation preserves draft');
+// A signed-out session must not leave the previous member's draft rendered on Tracker.
+// Foreground revalidation may temporarily have no identity: preserve state, hide content.
+const suspended=makeEngine('A','bebe');suspended.mealAccess=null;suspended.canAccessMeal=()=>false;suspended.hasMealAccess=()=>false;
+current.value=suspended;await nextTick();assert.equal(view.voiceText.value,'private unfinished A','Temporary revalidation must preserve draft in memory');
+assert.match(Tracker.template,/<div v-if="engine\.hasMealAccess\(\)" class="view-tracker"/, 'Tracker private root must be hidden without valid verified meal access');
+current.value=makeEngine('A','bebe');await nextTick();assert.equal(view.voiceText.value,'private unfinished A','Same account may resume its draft');
+current.value=makeEngine('B','ariel');await nextTick();assert.equal(view.currentMember.value,'ariel');assert.equal(view.voiceText.value,'');assert.equal(view.showAiModal.value,false);view.voiceText.value='new private B';
+release();await Promise.all([first,duplicate]);assert.equal(view.voiceText.value,'new private B','Old account callback must not clear the new account form');assert.equal(alerts.length,0,'Old account cannot announce a save in new account UI');
+current.value=makeEngine('C','bebe');await nextTick();view.voiceText.value='private analysis C';
+let answer;let entered;const enteredRequest=new Promise(r=>{entered=r;});
+globalThis.fetch=async url=>{assert.equal(url,'/api/analyze-food-nlp');entered();return new Promise(resolve=>{answer=()=>resolve({json:async()=>({status:'success',result:{dishName:'private C result',kcal:1}})});});};
+const analysis=view.triggerVoiceAnalysis();await enteredRequest;
+current.value=makeEngine('D','ariel');await nextTick();view.resultForm.value.dishName='new D result';answer();await analysis;
+assert.equal(view.resultForm.value.dishName,'new D result','Old private analysis cannot populate the next account form');
+Vue.compile(Tracker.template,{decodeEntities:t=>t});renderer.render(null,root);console.log('PASS: Tracker double submission, same-account draft retention, cross-account form clearing and stale callback suppression.');

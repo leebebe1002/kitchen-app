@@ -1,3 +1,4 @@
+import { authorizeTestEngine, switchTestScope } from './personal_scope_fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -33,6 +34,7 @@ const {validateChefResult} = await import('../web/src/services/ChefAdvisor.js?v=
 const key = 'kitchen_v2_ingredients.json';
 const backupKey = key + '_pre_nutrition_v1';
 const engine = new Engine();
+authorizeTestEngine(engine);
 engine.personalKitchenSync = {enabled:false};
 const merge = (local, server = official) => engine.mergeUserState('ingredients.json', local, server);
 
@@ -115,7 +117,7 @@ engine.data.householdSupplies = {supplies:[]};
 engine.persistPersonalKitchenState();
 const household = localStorage.getItem('kitchen_v2_personal_state_household');
 const shared = engine.data.ingredients;
-engine.setPersonalScope('ariel');
+switchTestScope(engine, 'ariel');
 assert.equal(engine.data.ingredients,shared);
 assert.deepEqual(engine.data.pantryInventory.shoppingList,[]);
 assert.deepEqual(engine.data.pantryInventory.foodStockStatus,{});
@@ -126,28 +128,29 @@ for (const scope of ['household','ariel']) {
 }
 
 // Exercise the real REST adapter against fake responses; never authenticate with a real account.
-const {default: auth} = await import('../web/src/services/FamilyAuthService.js?v=20260929_SUPABASE_KEY_V1');
-const {default: sync} = await import('../web/src/services/PersonalKitchenSyncService.js?v=20260929_SUPABASE_KEY_V1');
-const originalToken = auth.getAccessToken;
+const {default: auth} = await import('../web/src/services/FamilyAuthService.js');
+const {default: sync} = await import('../web/src/services/PersonalKitchenSyncService.js');
+const originalContext = auth.context;
 try {
-    auth.getAccessToken = () => '';
+    auth.context = null;
     assert.equal(await sync.getState('household'),null);
     assert.equal(await sync.saveState('ariel',{}),false);
-    auth.getAccessToken = () => 'isolated-test-token';
+    localStorage.setItem('family_kitchen_auth_session', JSON.stringify({ access_token: 'isolated-test-token' }));
     for (const scope of ['household','ariel']) {
+        auth.context = Object.freeze({ scopeId: scope, token: 'isolated-test-token', expiresAt: Date.now() + 60000 });
         const state = JSON.parse(localStorage.getItem('kitchen_v2_personal_state_'+scope));
         globalThis.fetch = async (url, options) => {
             assert(url.includes('scope_id=eq.'+scope));
             assert.equal(options.headers.Authorization,'Bearer isolated-test-token');
             if (options.method === 'PATCH') {
-                assert.deepEqual(Object.keys(JSON.parse(options.body)).sort(),['household_supplies','pantry_inventory','version']);
+                assert.deepEqual(Object.keys(JSON.parse(options.body)).sort(),['household_supplies','pantry_inventory']);
             }
-            return {ok:true,json:async () => [{scope_id:scope,pantry_inventory:state.pantryInventory,household_supplies:state.householdSupplies,version:2,updated_at:'2026-10-29T00:00:00Z'}]};
+            return {ok:true,json:async () => [{scope_id:scope,pantry_inventory:state.pantryInventory,household_supplies:state.householdSupplies,version:2,sync_revision:2,sync_status:'active',updated_at:'2026-10-29T00:00:00Z'}]};
         };
         assert.deepEqual((await sync.getState(scope)).pantryInventory,state.pantryInventory);
-        assert.equal((await sync.saveState(scope,state)).version,2);
+        assert.equal((await sync.saveState(scope,{...state,revision:1})).version,2);
     }
-} finally {auth.getAccessToken = originalToken;globalThis.fetch = offline;}
+} finally {auth.context = originalContext;globalThis.fetch = offline;}
 
 const {h,reactive,createRenderer,nextTick} = Vue;
 const renderer = createRenderer({createElement:()=>({}),insert(){},remove(){},setElementText(){},patchProp(){},createText:()=>({}),createComment:()=>({}),setText(){},setComment(){},parentNode:()=>null,nextSibling:()=>null});

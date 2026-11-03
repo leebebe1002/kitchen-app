@@ -1,4 +1,4 @@
-import authService from './services/FamilyAuthService.js?v=20260907_FAMILY_AUTH_REDIRECT_V2';
+import authService from './services/FamilyAuthService.js';
 
 const EMAIL = 'family-login-email';
 

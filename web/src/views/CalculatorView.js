@@ -1689,43 +1689,53 @@ ${JSON.stringify(membersData, null, 2)}
             }
         };
 
+        let savingMeals = false;
         const recordMeal = async () => {
-            cancelChefRequest();
-            if (!currentDish.value) return;
-            const issues = activeMembers.value.flatMap(member => engine.getNutritionIssues(getMemberActiveIngredients(member)));
-            if (issues.length) {
-                alert(`營養資料待確認，請先確認後再記錄：\n${[...new Set(issues)].join('\n')}`);
-                return;
-            }
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            if (savingMeals) return;
+            savingMeals = true;
+            try {
+                cancelChefRequest();
+                if (!currentDish.value) return;
+                const issues = activeMembers.value.flatMap(member => engine.getNutritionIssues(getMemberActiveIngredients(member)));
+                if (issues.length) {
+                    alert(`營養資料待確認，請先確認後再記錄：\n${[...new Set(issues)].join('\n')}`);
+                    return;
+                }
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
             
-            for (const member of activeMembers.value) {
-                const ingredients = getMemberActiveIngredients(member).map(i => ({
-                    id: i.id,
-                    name: getIngredientName(i.id),
-                    amount: i.amount,
-                    unit: i.unit
-                }));
-                const nutrition = getMemberNutrition(member);
+                const permitted = activeMembers.value.filter(member => engine.canAccessMeal(member));
+                if (!permitted.length) { alert('請登入並確認餐點權限後再記錄。'); return; }
+                let allSynced = true;
+                for (const member of permitted) {
+                    const ingredients = getMemberActiveIngredients(member).map(i => ({
+                        id: i.id,
+                        name: getIngredientName(i.id),
+                        amount: i.amount,
+                        unit: i.unit
+                    }));
+                    const nutrition = getMemberNutrition(member);
                 
-                const mealEntry = {
-                    id: 'meal_' + Date.now() + '_' + member,
-                    dishId: currentDish.value.id,
-                    dishName: currentDish.value.name,
-                    time: timeStr,
-                    nutrients: nutrition,
-                    ingredientsSummary: ingredients.map(i => `${i.name} ${i.amount}${i.unit}`)
-                };
+                    const mealEntry = {
+                        id: 'meal_' + crypto.randomUUID(),
+                        dishId: currentDish.value.id,
+                        dishName: currentDish.value.name,
+                        time: timeStr,
+                        nutrients: nutrition,
+                        ingredientsSummary: ingredients.map(i => `${i.name} ${i.amount}${i.unit}`)
+                    };
                 
-                await engine.recordMeal(dateStr, member, mealEntry);
-            }
+                    try { if (await engine.recordMeal(dateStr, member, mealEntry) === false) allSynced = false; }
+                    catch (error) { alert(error.message); return; }
+                }
             
-            recordSuccessDishName.value = currentDish.value.name;
-            recordSuccessDate.value = dateStr;
-            showRecordSuccessModal.value = true;
-            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+                if (!allSynced) { alert('餐點已保留於此裝置，部分尚未同步。請連線並確認登入後重試。'); return; }
+                recordSuccessDishName.value = currentDish.value.name;
+                recordSuccessDate.value = dateStr;
+                showRecordSuccessModal.value = true;
+                if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+            } finally { savingMeals = false; }
         };
 
         const selectedIngredient = ref(null);
@@ -2236,6 +2246,7 @@ ${JSON.stringify(membersData, null, 2)}
                             <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" class="prep-ingredient-breakdown">
                                 (<span v-for="(b, bIdx) in item.breakdown" :key="bIdx">{{ b.memberName }} {{ b.amount }}{{ b.unit }}<span v-if="bIdx < item.breakdown.length - 1">, </span></span>)
                             </span>
+
                         </li>
                     </ul>
 
@@ -2546,7 +2557,7 @@ ${JSON.stringify(membersData, null, 2)}
                         飲食紀錄成功！
                     </div>
                     <div style="font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 22px;">
-                        已成功為全家記錄<strong>【{{ recordSuccessDishName }}】</strong>至今日飲食追蹤庫存！
+                        已成功記錄<strong>【{{ recordSuccessDishName }}】</strong>至今日飲食追蹤庫存！
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         <button class="btn-primary" @click="goToTracker" style="width: 100%; padding: 13px; border-radius: 12px; font-weight: 700; background: var(--color-primary); color: #FFF; border: none; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">

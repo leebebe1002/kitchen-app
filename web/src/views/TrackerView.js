@@ -1,11 +1,10 @@
-import SupabaseService from '../services/SupabaseService.js?v=20260929_SUPABASE_KEY_V1';
+import SupabaseService from '../services/SupabaseService.js?v=20261102_FK22_MEALS_V1';
 
 const { ref, computed, onMounted, onUnmounted, nextTick, watch } = Vue;
 
 export default {
     props: ['engine'],
     setup(props) {
-        const engine = props.engine;
         
         // Today's date by default (e.g. "2026-08-12")
         const getTodayStr = () => {
@@ -17,7 +16,21 @@ export default {
         };
 
         const currentDate = ref(getTodayStr());
-        const currentMember = ref('bebe'); // bebe, ariel, jason
+        const currentMember = ref(props.engine.mealAccess?.member || 'bebe');
+        const isCurrentMealActor = identity => Boolean(identity && identity === props.engine.mealAccess?.identity && props.engine.hasMealAccess());
+        let formOwner = props.engine.mealAccess?.identity?.userId || null;
+        watch(() => props.engine.mealAccess?.identity?.userId, userId => {
+            if (!userId) { stopCameraStream(); isAiAnalyzing.value = false; return; }
+            if (formOwner && formOwner !== userId) {
+                voiceText.value = ''; capturedPhotoUrl.value = null; previewPhotoUrl.value = null;
+                baseNutrients.value = { dishName: '', kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0, items: [], aiNote: '' };
+                selectedPortionRatio.value = '1'; expandedMeals.value = {}; isAiAnalyzing.value = false;
+                resultForm.value = { dishName: '', kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0, items: [], aiNote: '' };
+                showAiModal.value = false;
+            }
+            formOwner = userId;
+            if (!props.engine.canAccessMeal(currentMember.value)) currentMember.value = props.engine.mealAccess.member;
+        });
 
         // AI Modal States (畫面 B / 畫面 C / 語音輸入)
         const showAiModal = ref(false);
@@ -107,10 +120,10 @@ export default {
         };
 
         const targetProfile = computed(() => {
-            return engine.profiles[currentMember.value] || engine.profiles.bebe;
+            return props.engine.profiles[currentMember.value] || props.engine.profiles.bebe;
         });
 
-        const favoriteFoods = computed(() => engine.getFavoriteFoods());
+        const favoriteFoods = computed(() => props.engine.getFavoriteFoods());
 
         const selectFavoriteFood = (fav) => {
             capturedPhotoUrl.value = null;
@@ -128,7 +141,7 @@ export default {
         const removeFavoriteFood = async (fav, event) => {
             if (event) event.stopPropagation();
             if (confirm(`確定要將【${fav.name}】從常用餐點快捷移除嗎？`)) {
-                await engine.deleteFavoriteFood(fav.id || fav.name);
+                await props.engine.deleteFavoriteFood(fav.id || fav.name);
             }
         };
 
@@ -147,7 +160,7 @@ export default {
                 },
                 aiNote: resultForm.value.aiNote
             };
-            await engine.saveFavoriteFood(newFav);
+            await props.engine.saveFavoriteFood(newFav);
             alert(`🎉 已成功將【${resultForm.value.dishName}】收錄為常用快捷餐點！`);
         };
 
@@ -155,7 +168,7 @@ export default {
 
         const memberLog = computed(() => {
             refreshCounter.value; // 響應式依賴
-            return engine.getDailyLog(currentDate.value, currentMember.value);
+            return props.engine.getDailyLog(currentDate.value, currentMember.value);
         });
 
         const totals = computed(() => {
@@ -219,8 +232,11 @@ export default {
         const deleteMeal = async (mealId) => {
             if (confirm('確定要刪除這筆飲食紀錄嗎？')) {
                 if (navigator.vibrate) navigator.vibrate(40);
-                await engine.deleteMeal(currentDate.value, currentMember.value, mealId);
-                refreshCounter.value++;
+                try {
+                    const synced = await props.engine.deleteMeal(currentDate.value, currentMember.value, mealId);
+                    if (!synced) alert(props.engine.data.mealSyncMessage || '刪除尚未同步，本機資料仍保留。');
+                    refreshCounter.value++;
+                } catch (error) { alert(error.message); }
             }
         };
 
@@ -231,6 +247,8 @@ export default {
         const isStreamReady = ref(false);
 
         const startCameraStream = async () => {
+            const identity = props.engine.mealAccess?.identity;
+            if (!isCurrentMealActor(identity)) return;
             isStreamReady.value = false;
             try {
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -239,13 +257,14 @@ export default {
                         video: { facingMode: { ideal: 'environment' } },
                         audio: false
                     });
+                    if (!isCurrentMealActor(identity)) { stream.getTracks().forEach(track => track.stop()); return; }
                     mediaStream = stream;
                     if (videoRef.value) {
                         videoRef.value.srcObject = stream;
                         videoRef.value.setAttribute('playsinline', 'true');
                         videoRef.value.setAttribute('muted', 'true');
                         await videoRef.value.play().catch(e => console.log('Video play catch:', e));
-                        isStreamReady.value = true;
+                        if (isCurrentMealActor(identity)) isStreamReady.value = true;
                     }
                 }
             } catch (err) {
@@ -274,6 +293,7 @@ export default {
         };
 
         const openAiModal = async (type = 'camera') => {
+            if (!props.engine.canAccessMeal(currentMember.value)) { alert('請登入並確認餐點權限。'); return; }
             modalStep.value = type;
             capturedPhotoUrl.value = null;
             isAiAnalyzing.value = false;
@@ -384,8 +404,8 @@ export default {
                 localStorage.getItem('kitchen_v2_gemini_api_key') ||
                 localStorage.getItem('gemini_api_key') ||
                 localStorage.getItem('GEMINI_API_KEY') ||
-                engine.data?.config?.geminiApiKey ||
-                engine.data?.config?.gemini_api_key ||
+                props.engine.data?.config?.geminiApiKey ||
+                props.engine.data?.config?.gemini_api_key ||
                 ''
             );
         };
@@ -401,9 +421,9 @@ export default {
             localStorage.setItem('kitchen_v2_gemini_api_key', k);
             localStorage.setItem('gemini_api_key', k);
             localStorage.setItem('GEMINI_API_KEY', k);
-            if (engine.data?.config) {
-                engine.data.config.gemini_api_key = k;
-                engine.data.config.geminiApiKey = k;
+            if (props.engine.data?.config) {
+                props.engine.data.config.gemini_api_key = k;
+                props.engine.data.config.geminiApiKey = k;
             }
             showApiKeyModal.value = false;
             alert(k ? '✨ Gemini API Key 已成功儲存！' : '已清除 API Key');
@@ -685,6 +705,7 @@ export default {
         };
 
         const triggerAlbumSelect = () => {
+            if (!props.engine.canAccessMeal(currentMember.value)) { alert('請登入並確認餐點權限。'); return; }
             if (albumInput.value) {
                 albumInput.value.value = '';
                 albumInput.value.click();
@@ -693,6 +714,8 @@ export default {
 
         // Handle Native Mobile Camera Snap
         const handleNativeCameraSnap = (event) => {
+            const identity = props.engine.mealAccess?.identity;
+            if (!isCurrentMealActor(identity)) return;
             const file = event.target.files && event.target.files[0];
             if (file) {
                 showAiModal.value = true;
@@ -703,6 +726,7 @@ export default {
                     const rawDataUrl = e.target.result;
                     // 即時等比壓縮，避免傳輸超大照片卡死
                     const compressed = await compressImage(rawDataUrl, 1000, 1000, 0.82);
+                    if (!isCurrentMealActor(identity)) return;
                     capturedPhotoUrl.value = compressed;
                     stopCameraStream();
                     processPhotoResult(file.name || '外食拍照餐點', compressed);
@@ -714,6 +738,8 @@ export default {
 
         // Handle Album File Upload
         const handleAlbumUpload = (event) => {
+            const identity = props.engine.mealAccess?.identity;
+            if (!isCurrentMealActor(identity)) return;
             const file = event.target.files && event.target.files[0];
             if (file) {
                 showAiModal.value = true;
@@ -724,6 +750,7 @@ export default {
                     const rawDataUrl = e.target.result;
                     // 即時等比壓縮，避免相簿超高畫質相片卡死
                     const compressed = await compressImage(rawDataUrl, 1000, 1000, 0.82);
+                    if (!isCurrentMealActor(identity)) return;
                     capturedPhotoUrl.value = compressed;
                     stopCameraStream();
                     processPhotoResult(file.name || '相簿選取餐點', compressed);
@@ -735,6 +762,8 @@ export default {
 
         // 📸 真正的 Gemini Vision API 視覺辨識 (優先前端直接連線，支援 Cloud Mode 與本地 Server)
         const processPhotoResult = async (hintText = '', directPhotoUrl = null) => {
+            const identity = props.engine.mealAccess?.identity;
+            if (!isCurrentMealActor(identity)) return;
             showAiModal.value = true;
             isAiAnalyzing.value = true;
             modalStep.value = 'result';
@@ -762,6 +791,7 @@ export default {
                 // 1. 若有 Client-side Gemini API Key，直接由前端呼叫 Gemini 官方 API (極速 1~2 秒，支援 Cloud Mode)
                 try {
                     const clientRes = await callClientGeminiVision(photoData, apiKey);
+                    if (!isCurrentMealActor(identity)) return;
                     if (clientRes.status === 'success' && clientRes.result) {
                         setResultFormWithBase({
                             dishName: clientRes.result.dishName || '拍照餐點',
@@ -781,7 +811,8 @@ export default {
                     console.warn('Direct Client Vision failed, trying backend fallback:', err);
                 }
 
-                // 2. 本地 Server Fallback (若處於 Local 伺服器環境)
+                if (!isCurrentMealActor(identity)) return;
+            // 2. 本地 Server Fallback (若處於 Local 伺服器環境)
                 try {
                     const res = await fetch('/api/analyze-meal-photo', {
                         method: 'POST',
@@ -792,6 +823,7 @@ export default {
                         })
                     });
                     const data = await res.json();
+                    if (!isCurrentMealActor(identity)) return;
                     if (data.status === 'success' && data.result) {
                         setResultFormWithBase({
                             dishName: data.result.dishName || '拍照餐點',
@@ -809,6 +841,7 @@ export default {
                 }
             }
 
+            if (!isCurrentMealActor(identity)) return;
             // 清理檔名 hintText（若為相機預設檔名如 IMG_xxx.jpeg，則替換為友善名稱）
             let fallbackName = hintText;
             if (!fallbackName || /^(IMG_|photo_|image_|\d+|\w+\.(jpe?g|png|webp|heic))/i.test(fallbackName)) {
@@ -831,6 +864,8 @@ export default {
 
         // 🎙️ 真正的 Gemini LLM 自然語言深度語意解析
         const triggerVoiceAnalysis = async () => {
+            const identity = props.engine.mealAccess?.identity;
+            if (!isCurrentMealActor(identity)) return;
             const text = (voiceText.value || '').trim();
             if (!text) {
                 alert('請輸入或說出你吃了什麼！');
@@ -849,6 +884,7 @@ export default {
             if (apiKey) {
                 try {
                     const clientRes = await callClientGeminiNLP(text, apiKey);
+                    if (!isCurrentMealActor(identity)) return;
                     if (clientRes.status === 'success' && clientRes.result) {
                         setResultFormWithBase({
                             dishName: clientRes.result.dishName || text,
@@ -869,6 +905,7 @@ export default {
                 }
             }
 
+            if (!isCurrentMealActor(identity)) return;
             // 2. 本地 Server Fallback (若有本機 Python Server)
             try {
                 const res = await fetch('/api/analyze-food-nlp', {
@@ -877,6 +914,7 @@ export default {
                     body: JSON.stringify({ text, apiKey })
                 });
                 const data = await res.json();
+                if (!isCurrentMealActor(identity)) return;
                 if (data.status === 'success' && data.result) {
                     setResultFormWithBase({
                         dishName: data.result.dishName || text,
@@ -893,6 +931,7 @@ export default {
                 console.log('NLP API request failed:', e);
             }
 
+            if (!isCurrentMealActor(identity)) return;
             // 網路離線或無 Key 時的備援與清楚錯誤提示
             setResultFormWithBase({
                 dishName: text,
@@ -908,75 +947,92 @@ export default {
         };
 
         // 畫面 C: 確認寫入今日紀錄
+        let savingMeal = false;
         const confirmSaveRecord = async () => {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            if (savingMeal) return;
+            savingMeal = true;
+            try {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 
-            const isFromPhoto = Boolean(capturedPhotoUrl.value);
+                const isFromPhoto = Boolean(capturedPhotoUrl.value);
             
-            // 份量比例標籤處理
-            const ratio = selectedPortionRatio.value;
-            const ratioLabels = {
-                '0.25': '1/4 份',
-                '0.33': '1/3 份',
-                '0.5': '1/2 份',
-                '0.67': '2/3 份',
-                '0.75': '3/4 份',
-                '1.5': '1.5 份',
-                '2': '2 份'
-            };
-            let recordDishName = resultForm.value.dishName;
-            if (ratio !== '1' && ratioLabels[ratio] && !recordDishName.includes(ratioLabels[ratio])) {
-                recordDishName = `${recordDishName} (${ratioLabels[ratio]})`;
-            }
-
-            // ☁️ 優先將實拍照片上傳至 Supabase 雲端圖床 (避免 Base64 塞爆 JSON 與 iCloud 同步)
-            let finalPhotoUrl = null;
-            if (isFromPhoto && capturedPhotoUrl.value && capturedPhotoUrl.value.startsWith('data:')) {
-                try {
-                    const cloudUrl = await SupabaseService.uploadMealPhoto(capturedPhotoUrl.value, currentMember.value);
-                    if (cloudUrl) {
-                        finalPhotoUrl = cloudUrl;
-                        console.log('🎉 [Tracker] 食物照片已成功儲存至 Supabase 雲端圖床:', cloudUrl);
-                    } else {
-                        console.warn('⚠️ [Tracker] 雲端圖床上傳未成功，餐點數值已正常記錄，略過 Base64 圖檔以保護系統秒開速度');
-                    }
-                } catch (e) {
-                    console.warn('⚠️ [Tracker] 雲端圖床上傳異常:', e);
+                // 份量比例標籤處理
+                const ratio = selectedPortionRatio.value;
+                const ratioLabels = {
+                    '0.25': '1/4 份',
+                    '0.33': '1/3 份',
+                    '0.5': '1/2 份',
+                    '0.67': '2/3 份',
+                    '0.75': '3/4 份',
+                    '1.5': '1.5 份',
+                    '2': '2 份'
+                };
+                let recordDishName = resultForm.value.dishName;
+                if (ratio !== '1' && ratioLabels[ratio] && !recordDishName.includes(ratioLabels[ratio])) {
+                    recordDishName = `${recordDishName} (${ratioLabels[ratio]})`;
                 }
-            } else if (capturedPhotoUrl.value && !capturedPhotoUrl.value.startsWith('data:')) {
-                finalPhotoUrl = capturedPhotoUrl.value;
-            }
 
-            const meal = {
-                id: 'meal_' + Date.now() + '_' + currentMember.value,
-                dishName: recordDishName,
-                time: timeStr,
-                source: isFromPhoto ? 'photo_ai' : 'nlp_ai',
-                nutrients: {
-                    kcal: Number(resultForm.value.kcal) || 0,
-                    protein: Number(resultForm.value.protein) || 0,
-                    carbs: Number(resultForm.value.carbs) || 0,
-                    fat: Number(resultForm.value.fat) || 0,
-                    sodium: Number(resultForm.value.sodium) || 0
-                },
-                aiNote: resultForm.value.aiNote,
-                photoUrl: finalPhotoUrl,
-                items: Array.isArray(resultForm.value.items) ? resultForm.value.items : [],
-                portionRatio: ratio
-            };
+                const recordEngine = props.engine;
+                const recordIdentity = recordEngine.mealAccess?.identity;
+                if (!recordEngine.canAccessMeal(currentMember.value)) { alert('請登入並確認餐點權限。'); return; }
+                const recordDate = currentDate.value;
+                const recordMember = currentMember.value;
 
-            await engine.recordMeal(currentDate.value, currentMember.value, meal);
-            voiceText.value = ''; // 記錄完成後清空輸入字串
-            closeAiModal();
-            alert(`🎉 已成功將【${recordDishName}】記錄至今日時間軸！`);
+                // ☁️ 優先將實拍照片上傳至 Supabase 雲端圖床 (避免 Base64 塞爆 JSON 與 iCloud 同步)
+                let finalPhotoUrl = null;
+                if (isFromPhoto && capturedPhotoUrl.value && capturedPhotoUrl.value.startsWith('data:')) {
+                    try {
+                        const cloudUrl = await SupabaseService.uploadMealPhoto(capturedPhotoUrl.value, currentMember.value);
+                        if (cloudUrl) {
+                            finalPhotoUrl = cloudUrl;
+                            console.log('🎉 [Tracker] 食物照片已成功儲存至 Supabase 雲端圖床:', cloudUrl);
+                        } else {
+                            console.warn('⚠️ [Tracker] 雲端圖床上傳未成功，餐點數值已正常記錄，略過 Base64 圖檔以保護系統秒開速度');
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ [Tracker] 雲端圖床上傳異常:', e);
+                    }
+                } else if (capturedPhotoUrl.value && !capturedPhotoUrl.value.startsWith('data:')) {
+                    finalPhotoUrl = capturedPhotoUrl.value;
+                }
+
+                const meal = {
+                    id: 'meal_' + crypto.randomUUID(),
+                    dishName: recordDishName,
+                    time: timeStr,
+                    source: isFromPhoto ? 'photo_ai' : 'nlp_ai',
+                    nutrients: {
+                        kcal: Number(resultForm.value.kcal) || 0,
+                        protein: Number(resultForm.value.protein) || 0,
+                        carbs: Number(resultForm.value.carbs) || 0,
+                        fat: Number(resultForm.value.fat) || 0,
+                        sodium: Number(resultForm.value.sodium) || 0
+                    },
+                    aiNote: resultForm.value.aiNote,
+                    photoUrl: finalPhotoUrl,
+                    items: Array.isArray(resultForm.value.items) ? resultForm.value.items : [],
+                    portionRatio: ratio
+                };
+
+                if (recordEngine !== props.engine || recordIdentity !== recordEngine.mealAccess?.identity || !recordEngine.hasMealAccess()) {
+                    alert('登入已變更，請重新確認餐點帳號。'); return;
+                }
+                let synced;
+                try { synced = await recordEngine.recordMeal(recordDate, recordMember, meal); }
+                catch (error) { alert(error.message); return; }
+                if (recordEngine !== props.engine || recordIdentity !== recordEngine.mealAccess?.identity) return;
+                voiceText.value = ''; // 記錄完成後清空輸入字串
+                closeAiModal();
+                alert(synced ? `已將【${recordDishName}】同步至餐點紀錄。` : '餐點已保留於此裝置，尚未同步。請連線並確認登入後重試。');
+            } finally { savingMeal = false; }
         };
 
         const isSyncing = ref(false);
         const syncNow = async () => {
             isSyncing.value = true;
-            if (engine.syncWithCloud) {
-                await engine.syncWithCloud();
+            if (props.engine.syncWithCloud) {
+                await props.engine.syncWithCloud(currentDate.value, currentMember.value);
             }
             refreshCounter.value++;
             setTimeout(() => {
@@ -985,20 +1041,20 @@ export default {
         };
 
         watch([currentDate, currentMember], async ([newDate, newMember]) => {
-            if (engine.fetchMealsFromSupabase) {
-                await engine.fetchMealsFromSupabase(newDate, newMember);
+            if (props.engine.fetchMealsFromSupabase) {
+                await props.engine.fetchMealsFromSupabase(newDate, newMember);
                 refreshCounter.value++;
             }
         });
 
         onMounted(async () => {
-            if (engine.fetchMealsFromSupabase) {
-                await engine.fetchMealsFromSupabase(currentDate.value, currentMember.value);
+            if (props.engine.fetchMealsFromSupabase) {
+                await props.engine.fetchMealsFromSupabase(currentDate.value, currentMember.value);
                 refreshCounter.value++;
             }
             await syncNow();
-            if (engine.cloudSync) {
-                engine.cloudSync.onSync((event) => {
+            if (props.engine.cloudSync) {
+                props.engine.cloudSync.onSync((event) => {
                     if (event === 'refresh_needed' || event === 'sync_success') {
                         refreshCounter.value++;
                     }
@@ -1011,7 +1067,7 @@ export default {
         });
 
         return {
-            engine,
+            engine: computed(() => props.engine),
             currentDate,
             currentMember,
             targetProfile,
@@ -1067,7 +1123,7 @@ export default {
         };
     },
     template: `
-        <div class="view-tracker" style="padding-top: 6px;">
+        <div v-if="engine.hasMealAccess()" class="view-tracker" style="padding-top: 6px;">
             <!-- Date Switcher & Cloud Sync Pill -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 14px; align-items: center;">
                 <button class="btn-icon" @click="changeDate(-1)" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
@@ -1093,9 +1149,10 @@ export default {
                 </button>
             </div>
             
+            <p v-if="engine.data.mealSyncMessage" role="status">{{ engine.data.mealSyncMessage }}</p>
             <!-- Family Member Selector Capsules (與第一頁配色完全 1:1 一致：未選白底灰字，選中淡湖藍底 #EAF6F7 + 湖藍邊框 #7DC7CC + 深綠字 #19585C) -->
             <div class="capsule-group" style="margin-bottom: 20px;">
-                <button class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'" 
+                <button v-if="engine.canAccessMeal('bebe')" class="capsule" :class="{ 'selected': currentMember === 'bebe' }" @click="currentMember = 'bebe'"
                         :style="{ 
                             background: currentMember === 'bebe' ? '#EAF6F7' : '#FFFFFF',
                             borderColor: currentMember === 'bebe' ? '#7DC7CC' : 'var(--color-border)',
@@ -1110,7 +1167,7 @@ export default {
                     </svg>
                     <span>Bebe</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'" 
+                <button v-if="engine.canAccessMeal('ariel')" class="capsule" :class="{ 'selected': currentMember === 'ariel' }" @click="currentMember = 'ariel'"
                         :style="{ 
                             background: currentMember === 'ariel' ? '#EAF6F7' : '#FFFFFF',
                             borderColor: currentMember === 'ariel' ? '#7DC7CC' : 'var(--color-border)',
@@ -1122,7 +1179,7 @@ export default {
                     </svg>
                     <span>樂樂</span>
                 </button>
-                <button class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'" 
+                <button v-if="engine.canAccessMeal('jason')" class="capsule" :class="{ 'selected': currentMember === 'jason' }" @click="currentMember = 'jason'"
                         :style="{ 
                             background: currentMember === 'jason' ? '#EAF6F7' : '#FFFFFF',
                             borderColor: currentMember === 'jason' ? '#7DC7CC' : 'var(--color-border)',
@@ -1340,7 +1397,7 @@ export default {
             <input type="file" accept="image/*" ref="albumInput" @change="handleAlbumUpload" style="display: none;">
 
             <!-- 全螢幕 / 抽屜 AI 辨識視窗 (100% 還原 畫面 B & 畫面 C) -->
-            <div v-if="showAiModal" class="modal-overlay" @click.self="closeAiModal">
+            <div v-if="showAiModal && engine.hasMealAccess()" class="modal-overlay" @click.self="closeAiModal">
                 <div class="drawer-content" style="max-height: 92vh; padding: 20px 20px 32px 20px;">
                     
                     <!-- 畫面 B：【開頁即拍自訂相機畫面】 -->
@@ -1746,12 +1803,15 @@ export default {
             </div>
 
             <!-- 食物照片放大預覽 Lightbox Modal -->
-            <div v-if="previewPhotoUrl" class="modal-overlay" @click.self="closePhotoPreview" style="background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+            <div v-if="previewPhotoUrl && engine.hasMealAccess()" class="modal-overlay" @click.self="closePhotoPreview" style="background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
                 <div style="position: relative; max-width: 92vw; max-height: 85vh;">
                     <img :src="previewPhotoUrl" style="max-width: 100%; max-height: 80vh; border-radius: 16px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: block;">
                     <button @click="closePhotoPreview" style="position: absolute; top: -14px; right: -14px; width: 36px; height: 36px; border-radius: 50%; background: #FFFFFF; border: none; font-size: 1.1rem; font-weight: 700; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">✕</button>
                 </div>
             </div>
         </div>
+        <section v-else class="view-tracker account-copy" role="status">
+            <p>{{ engine.data.mealSyncMessage || '請登入並確認餐點權限。' }}</p>
+        </section>
     `
 };
