@@ -726,6 +726,110 @@
                 "義美"
             ],
             "priorityTier": 1
+        },
+        {
+            "id": "ing_1789703581239",
+            "weightBasis": "unknown",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；原資料未指定生熟或可食部重量基準，待確認",
+            "name": "豆腐麵",
+            "category": "proteins",
+            "unitLabel": "g",
+            "nutritionReviewRequired": true,
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "ing_1790221450416",
+            "weightBasis": "unknown",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；原資料未指定生熟或可食部重量基準，待確認",
+            "name": "蛤蜊",
+            "category": "proteins",
+            "unitLabel": "g",
+            "nutritionReviewRequired": true,
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "傳統市場"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "ing_1790393110939",
+            "weightBasis": "unknown",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；原資料未指定生熟或可食部重量基準，待確認",
+            "name": "韓式燒烤牛肉",
+            "category": "proteins",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 188,
+                "protein": 20,
+                "fat": 11.4,
+                "carbs": 1.8,
+                "sodium": 0
+            },
+            "servingSize": 100,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 188,
+                "protein": 20,
+                "fat": 11.4,
+                "carbs": 1.8,
+                "sodium": 0
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "priorityTier": 1
+        },
+        {
+            "id": "ing_1790571924504",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "無糖豆漿（義美）",
+            "category": "proteins",
+            "unitLabel": "mL",
+            "per100g": {
+                "kcal": 34,
+                "protein": 3.4,
+                "fat": 1.7,
+                "carbs": 1.2,
+                "sodium": 8
+            },
+            "servingSize": 250,
+            "servingUnit": "mL",
+            "perServing": {
+                "kcal": 84.9,
+                "protein": 8.5,
+                "fat": 4.3,
+                "carbs": 3,
+                "sodium": 20
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯",
+                "義美"
+            ],
+            "priorityTier": 1
         }
     ],
     "veggies": [
@@ -1315,6 +1419,23 @@
                 "全聯"
             ],
             "priorityTier": 1
+        },
+        {
+            "id": "ing_1787714321224",
+            "weightBasis": "unknown",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；原資料未指定生熟或可食部重量基準，待確認",
+            "name": "洋菇",
+            "category": "veggies",
+            "unitLabel": "g",
+            "nutritionReviewRequired": true,
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ]
         }
     ],
     "carbs": [
@@ -1624,6 +1745,39 @@
                 "EC"
             ],
             "priorityTier": 2
+        },
+        {
+            "id": "ing_1788172010738",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "奇美鮮肉包",
+            "category": "carbs",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 269,
+                "protein": 7.5,
+                "fat": 9.8,
+                "carbs": 37.7,
+                "sodium": 181
+            },
+            "servingSize": 65,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 175,
+                "protein": 4.9,
+                "fat": 6.4,
+                "carbs": 24.5,
+                "sodium": 118
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "priorityTier": 3
         }
     ],
     "sauces": [
@@ -2350,6 +2504,140 @@
                 "全聯"
             ],
             "priorityTier": 3
+        },
+        {
+            "id": "ing_1788320414881",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "起司",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 393,
+                "protein": 25,
+                "fat": 32.1,
+                "carbs": 3.6,
+                "sodium": 643
+            },
+            "servingSize": 20,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 78.6,
+                "protein": 5,
+                "fat": 6.4,
+                "carbs": 0.7,
+                "sodium": 129
+            },
+            "storageZone": "freezer",
+            "storageZones": [
+                "freezer"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco",
+                "全聯"
+            ],
+            "priorityTier": 4
+        },
+        {
+            "id": "ing_1791178416667",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "統一肉躁醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 709,
+                "protein": 1.9,
+                "fat": 70.8,
+                "carbs": 16,
+                "sodium": 2033
+            },
+            "servingSize": 11,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 78,
+                "protein": 0.2,
+                "fat": 7.8,
+                "carbs": 1.8,
+                "sodium": 224
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "priorityTier": 4
+        },
+        {
+            "id": "ing_1791259732501",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "金芝麻沙拉醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "per100g": {
+                "kcal": 539,
+                "protein": 4,
+                "fat": 51.6,
+                "carbs": 14.6,
+                "sodium": 984
+            },
+            "servingSize": 15,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 81,
+                "protein": 0.6,
+                "fat": 7.7,
+                "carbs": 2.2,
+                "sodium": 148
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "Costco",
+            "preferredStores": [
+                "Costco"
+            ],
+            "priorityTier": 4
+        },
+        {
+            "id": "ing_1791259841726",
+            "weightBasis": "as_sold",
+            "weightBasisSource": "2026-11-03 自 iPhone 匯入；暫依購買狀態計量，品牌標示與重量基準尚待核對",
+            "name": "炸醬",
+            "category": "sauces",
+            "unitLabel": "g",
+            "brand": "維力",
+            "per100g": {
+                "kcal": 450.7,
+                "protein": 12.7,
+                "fat": 37.5,
+                "carbs": 15.6,
+                "sodium": 3290
+            },
+            "servingSize": 25,
+            "servingUnit": "g",
+            "perServing": {
+                "kcal": 113,
+                "protein": 3.2,
+                "fat": 9.4,
+                "carbs": 3.9,
+                "sodium": 823
+            },
+            "storageZone": "fridge",
+            "storageZones": [
+                "fridge"
+            ],
+            "preferredStore": "全聯",
+            "preferredStores": [
+                "全聯"
+            ],
+            "priorityTier": 4
         }
     ]
 }

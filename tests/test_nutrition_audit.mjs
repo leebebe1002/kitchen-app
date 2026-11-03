@@ -10,9 +10,11 @@ const all = Object.values(official).flat();
 const byId = new Map(all.map(i => [i.id, i]));
 const keys = ['kcal', 'protein', 'fat', 'carbs', 'sodium'];
 const countUnits = new Set(['顆', '個', '條', '包', '根']);
-assert.equal(all.length, 89);
-assert.equal(byId.size, 89);
-assert.deepEqual(audit.ingredients.map(i => i.id), all.map(i => i.id));
+assert.equal(all.length, 99);
+assert.equal(byId.size, 99);
+const auditedIds = new Set(audit.ingredients.map(i => i.id));
+assert.equal(auditedIds.size, 89, 'The historical audit still covers the original 89 ingredients');
+assert.deepEqual(audit.ingredients.map(i => i.id), all.filter(i => auditedIds.has(i.id)).map(i => i.id));
 const counts = {};
 for (const row of audit.ingredients) {
     counts[row.status] = (counts[row.status] || 0) + 1;
@@ -114,6 +116,7 @@ assert.deepEqual(unresolvedCounts,['century_egg','mushroom_meatball','egg_dumpli
 
 const legacy = Object.fromEntries(Object.entries(official).map(([cat,group]) => [cat,group.map(i => {
     const row = audit.ingredients.find(r => r.id === i.id);
+    if (!row) return { ...i }; // The ten additions were not part of the historical nutrition audit.
     const result = {...i,...row.atHead};
     for (const field of ['per100g','perServing','perUnit']) if (!row.atHead[field]) delete result[field];
     return result;

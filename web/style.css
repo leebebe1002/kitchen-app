@@ -1028,6 +1028,8 @@ input[type=number].no-spin {
 
 .account-sheet {
     text-align: left;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
 }
 
 .account-copy,

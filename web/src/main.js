@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261102_FK22_MEALS_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261103_FK14_BASELINE_ONCE_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261102_FK22_MEALS_V1';
 import TrackerView from './views/TrackerView.js?v=20261103_FK22_TRACKER_AUTH_V2';
 import PantryView from './views/PantryView.js?v=20261029_NUTRITION_GUARD_V1';
@@ -36,6 +36,8 @@ const App = {
         const loginMessage = ref('');
         const loginSending = ref(false);
         const currentUser = ref(null);
+        const baselineUpdating = ref(false);
+        const baselineMessage = ref('');
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -192,7 +194,26 @@ const App = {
             loginMessage.value = '';
         };
 
+        const adoptIngredientBaseline = async () => {
+            if (!engine.value || baselineUpdating.value || engine.value.data.ingredientBaselineApplied) return;
+            if (!confirm('請先關閉其他 FK 分頁。這次會備份本機食材，再採用 99 項食材的營養與換算基準；價格、通路、額外私房食材、庫存、採買及飲食紀錄都保留。三項缺失營養仍待補。確定更新這台裝置？')) return;
+            baselineUpdating.value = true;
+            baselineMessage.value = '';
+            try {
+                await engine.value.adoptIngredientBaseline();
+                baselineMessage.value = '已備份並採用 99 項食材基準。豆腐麵、蛤蜊、洋菇仍待補營養；你之後的編輯會保留在這台裝置。';
+            } catch (updateError) {
+                baselineMessage.value = updateError.message || '無法完成食材更新，請保留原資料並稍後重試。';
+                if (updateError.requiresReload) error.value = baselineMessage.value;
+            } finally {
+                baselineUpdating.value = false;
+            }
+        };
+
         return {
+            adoptIngredientBaseline,
+            baselineUpdating,
+            baselineMessage,
             currentTab,
             setTab,
             engine,
@@ -361,6 +382,14 @@ const App = {
                     <p v-if="!personalReady" class="account-message" role="status">{{ personalMessage }}</p>
                     <button v-if="!personalReady" class="action-sheet-row" @click="signOut">登出此裝置</button>
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
+                    <details v-if="engine">
+                        <summary class="account-email-label">食材資料更新</summary>
+                        <p class="account-copy">一次採用 99 項食材的營養與換算基準，更新前先備份。手機日後補值仍只存本機。</p>
+                        <button class="action-sheet-row" @click="adoptIngredientBaseline" :disabled="baselineUpdating || engine.data.ingredientBaselineApplied">
+                            {{ baselineUpdating ? '備份與更新中…' : engine.data.ingredientBaselineApplied ? '此裝置已採用 99 項基準' : '備份並更新這台裝置的食材' }}
+                        </button>
+                        <p v-if="baselineMessage" class="account-message" role="status">{{ baselineMessage }}</p>
+                    </details>
                     <button class="action-sheet-cancel" @click="showAccount = false">關閉</button>
                 </section>
             </div>
