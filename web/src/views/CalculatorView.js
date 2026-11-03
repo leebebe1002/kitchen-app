@@ -1,6 +1,6 @@
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261027_CHEF_BUDGET_V1';
-import WeightBasisBadge, { weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
+import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
 import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261029_NUTRITION_GUARD_V1';
 
 export default {
@@ -515,7 +515,7 @@ export default {
                                 } else {
                                     let safeAmount = 50;
                                     if (ingData) {
-                                        if (ingData.isCount || defaultUnit === '顆' || defaultUnit === '包' || defaultUnit === '條') {
+                                        if (getWeightBasis(ingData, defaultUnit) === 'count') {
                                              safeAmount = 1;
                                         } else if (ingData.category === 'sauces') {
                                             safeAmount = 10;
@@ -745,11 +745,16 @@ export default {
         });
 
         // 🧬 食材天生角色屬性判定 (Data-Driven Smart Role Classifier)
-        const getIngredientRole = (ingData) => {
+        function getIngredientRole(ingData) {
             if (!ingData) return { role: 'other', defaultAmount: 50, step: 5, unit: 'g' };
             const id = (ingData.id || '').toLowerCase();
             const name = (ingData.name || '').toLowerCase();
             const cat = (ingData.category || '').toLowerCase();
+
+            // 先依實際計數單位判定，避免名稱或分類把數量當成克數。
+            if (getWeightBasis(ingData) === 'count') {
+                return { role: 'count', defaultAmount: 1, step: 1, unit: ingData.unitLabel || '顆' };
+            }
 
             // 0. 優格碗與輕食專屬配料 (燕麥脆片、希臘優格、冷凍莓果、糖漿與風味粉)
             if (id.includes('granola') || name.includes('綜合燕麥') || name.includes('燕麥脆片') || name.includes('穀物脆片')) {
@@ -772,11 +777,6 @@ export default {
             const microKeywords = ['鹽', '海鹽', '胡椒', '七味粉', '孜然', '辣椒粉', '肉桂粉', '香草粉', '香料', '咖哩粉', '薑黃粉'];
             if (microKeywords.some(kw => name.includes(kw)) || id.includes('salt') || id.includes('pepper') || id.includes('spice') || id.includes('powder')) {
                 return { role: 'micro', defaultAmount: 1, step: 1, unit: 'g', max: 5 };
-            }
-
-            // 2. 顆粒/個數計量 (蛋、貝果、吐司、蘋果、香蕉等) ➔ 預設 1, 步進 1
-            if (ingData.isCount || ingData.unitLabel === '顆' || ingData.unitLabel === '個' || ingData.unitLabel === '包' || ingData.unitLabel === '條' || id === 'egg' || id === 'bagel') {
-                return { role: 'count', defaultAmount: 1, step: 1, unit: ingData.unitLabel || '顆' };
             }
 
             // 3. 醃漬/發酵/重鈉開胃小菜 (泡菜、海帶芽、醃蘿蔔、酸黃瓜、酸豆、甘露煮、干貝醬等) ➔ 預設 30g, 步進 5g
@@ -824,7 +824,7 @@ export default {
             }
 
             return { role: 'other', defaultAmount: 50, step: 5, unit: ingData.unitLabel || 'g' };
-        };
+        }
 
         // 🧠 智慧總預算動態求解器 (Macro Budget Constraint Solver)
         function autoBalanceMemberPortions(member) {
@@ -1196,8 +1196,9 @@ export default {
             }
 
             const defaultUnit = ing.unitLabel || (ing.isCount ? '顆' : 'g');
+            const isCount = getWeightBasis(ing, defaultUnit) === 'count';
             let safeAmount = 50;
-            if (ing.isCount) safeAmount = 1;
+            if (isCount) safeAmount = 1;
             else if (ing.category === 'sauces') safeAmount = 8;
             else if (ing.category === 'veggies') safeAmount = 50;
             else if (ing.category === 'proteins') safeAmount = 60;
@@ -1218,7 +1219,7 @@ export default {
             ['bebe', 'ariel', 'jason'].forEach(m => {
                 if (!dish.memberPortions[m]) dish.memberPortions[m] = [];
                 if (!dish.memberPortions[m].some(i => i.id === ing.id)) {
-                    const memberAmount = (m === 'jason' && !ing.isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
+                    const memberAmount = (m === 'jason' && !isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
                     dish.memberPortions[m].push({
                         id: ing.id,
                         amount: memberAmount,
@@ -1237,7 +1238,7 @@ export default {
                 if (!memberIngredients.value[m]) memberIngredients.value[m] = [];
                 const list = memberIngredients.value[m];
                 if (!list.some(i => i.id === ing.id)) {
-                    const memberAmount = (m === 'jason' && !ing.isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
+                    const memberAmount = (m === 'jason' && !isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
                     list.push({
                         id: ing.id,
                         amount: memberAmount,
@@ -2239,14 +2240,13 @@ ${JSON.stringify(membersData, null, 2)}
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
                         <li v-for="item in totalIngredientsList" :key="item.id + ':' + item.unit" class="prep-ingredient-row">
-                            <span v-if="engine.getNutritionIssues([item]).length" style="font-size: 0.75rem; color: var(--color-text-muted);">營養換算待確認</span>
                             <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
                             <span class="prep-ingredient-name">{{ item.name }}</span>
                             <span class="prep-ingredient-amount">{{ item.amount }}{{ item.unit }}</span>
                             <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" class="prep-ingredient-breakdown">
                                 (<span v-for="(b, bIdx) in item.breakdown" :key="bIdx">{{ b.memberName }} {{ b.amount }}{{ b.unit }}<span v-if="bIdx < item.breakdown.length - 1">, </span></span>)
                             </span>
-
+                            <span v-if="engine.getNutritionIssues([item]).length" class="prep-ingredient-warning">營養換算待確認，請核對份量</span>
                         </li>
                     </ul>
 

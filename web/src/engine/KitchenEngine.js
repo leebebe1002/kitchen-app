@@ -15,7 +15,7 @@ import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
 import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261103_FK14_KEEP_PHOTOS_V1';
 import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
-import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261029_WILLI_NOODLE_V1';
+import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261103_FK21_COUNT_DEFAULTS_V1';
 
 export default class KitchenEngine {
     constructor({ auth = authService, cloudSync, photoStore = ingredientPhotoStore } = {}) {

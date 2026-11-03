@@ -1,4 +1,4 @@
-const countUnits = new Set(['顆', '個', '條', '包', '根']);
+const countUnits = new Set(['顆', '個', '條', '包', '根', '片', '盒', '罐', '袋']);
 
 export function ingredientNutritionBasis(ingredient, request = {}) {
     if (!ingredient) return null;
