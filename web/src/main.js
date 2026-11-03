@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261103_FK14_BASELINE_ONCE_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261103_FK14_KEEP_PHOTOS_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261102_FK22_MEALS_V1';
 import TrackerView from './views/TrackerView.js?v=20261103_FK22_TRACKER_AUTH_V2';
 import PantryView from './views/PantryView.js?v=20261029_NUTRITION_GUARD_V1';
@@ -201,7 +201,7 @@ const App = {
             baselineMessage.value = '';
             try {
                 await engine.value.adoptIngredientBaseline();
-                baselineMessage.value = '已備份並採用 99 項食材基準。豆腐麵、蛤蜊、洋菇仍待補營養；你之後的編輯會保留在這台裝置。';
+                baselineMessage.value = '已保留照片並備份、採用 99 項食材基準。豆腐麵、蛤蜊、洋菇仍待補營養；你之後的編輯會保留在這台裝置。';
             } catch (updateError) {
                 baselineMessage.value = updateError.message || '無法完成食材更新，請保留原資料並稍後重試。';
                 if (updateError.requiresReload) error.value = baselineMessage.value;
@@ -384,7 +384,7 @@ const App = {
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
                     <details v-if="engine">
                         <summary class="account-email-label">食材資料更新</summary>
-                        <p class="account-copy">一次採用 99 項食材的營養與換算基準，更新前先備份。手機日後補值仍只存本機。</p>
+                        <p class="account-copy">一次採用 99 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。手機日後補值仍只存本機。</p>
                         <button class="action-sheet-row" @click="adoptIngredientBaseline" :disabled="baselineUpdating || engine.data.ingredientBaselineApplied">
                             {{ baselineUpdating ? '備份與更新中…' : engine.data.ingredientBaselineApplied ? '此裝置已採用 99 項基準' : '備份並更新這台裝置的食材' }}
                         </button>

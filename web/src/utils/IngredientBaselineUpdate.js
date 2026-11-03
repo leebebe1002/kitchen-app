@@ -1,5 +1,6 @@
 import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
 import { normalizeIngredientName } from './IngredientMatcher.js?v=20260918_FIX_STATE_V2';
+import { hasEmbeddedIngredientPhoto } from './IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
 
 export const BASELINE_UPDATE_KEY = 'kitchen_v2_ingredient_baseline_20261103';
 export const INGREDIENT_CACHE_KEY = 'kitchen_v2_ingredients.json';
@@ -51,10 +52,14 @@ function validateEntries(list) {
     return list;
 }
 
-export function applyIngredientBaseline(official, storage = localStorage) {
+export function applyIngredientBaseline(official, storage = localStorage, prepared = null) {
     if (recoverIngredientBaseline(storage)) return null;
-    const before = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, storage.getItem(key)]));
-    if (Object.values(before).some(value => value && /data:/i.test(value))) {
+    const source = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, storage.getItem(key)]));
+    if (prepared && Object.keys(source).some(key => source[key] !== prepared.source[key])) {
+        throw new Error('備份期間食材已變更，請關閉其他 FK 分頁後重試；原資料已保留。');
+    }
+    const before = prepared?.before || source;
+    if (Object.values(before).some(value => value && hasEmbeddedIngredientPhoto(JSON.parse(value)))) {
         throw new Error('食材內仍有暫存照片，無法安全建立備份；原資料未更動。');
     }
     const cached = before[INGREDIENT_CACHE_KEY] === null ? {} : JSON.parse(before[INGREDIENT_CACHE_KEY]);
@@ -63,12 +68,17 @@ export function applyIngredientBaseline(official, storage = localStorage) {
         throw new Error('本機食材格式不正確，原資料未更動。');
     }
     const custom = validateEntries(before[CUSTOM_INGREDIENT_KEY] === null ? [] : JSON.parse(before[CUSTOM_INGREDIENT_KEY]));
+    const customMap = new Map(custom.map(item => [item.id, item]));
     const local = validateEntries(categories.flatMap(cat => cached[cat] || []));
     const officialMap = new Map(categories.flatMap(cat => official[cat]).map(item => [item.id, item]));
     const patch = item => {
         const base = officialMap.get(item.id);
         if (!base) return item;
         const next = { ...item };
+        for (const field of ['photoUrl', 'photo']) if (!next[field] && !next.localPhotoRefs?.[field]
+            && customMap.get(item.id)?.localPhotoRefs?.[field]) {
+            next.localPhotoRefs = { ...next.localPhotoRefs, [field]: customMap.get(item.id).localPhotoRefs[field] };
+        }
         for (const field of fields) {
             delete next[field];
             if (base[field] !== undefined) next[field] = base[field];

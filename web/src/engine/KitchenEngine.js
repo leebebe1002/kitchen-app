@@ -13,16 +13,18 @@ import personalKitchenSyncService from '../services/PersonalKitchenSyncService.j
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline } from '../utils/IngredientBaselineUpdate.js?v=20261103_FK14_BASELINE_ONCE_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261103_FK14_KEEP_PHOTOS_V1';
+import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
 import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261029_WILLI_NOODLE_V1';
 
 export default class KitchenEngine {
-    constructor({ auth = authService, cloudSync } = {}) {
+    constructor({ auth = authService, cloudSync, photoStore = ingredientPhotoStore } = {}) {
         const { reactive } = Vue;
         this.cloudSync = cloudSync || new CloudSyncEngine();
         this.supabase = supabaseService;
         this.personalKitchenSync = personalKitchenSyncService;
         this.auth = auth;
+        this.ingredientPhotoStore = photoStore;
         this.personalContext = null;
         this.personalScope = null;
         this.personalRevision = null;
@@ -79,6 +81,7 @@ export default class KitchenEngine {
 
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
+        await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore);
 
         // 2. 攤平食材列表並正規化舊版通路名稱
         this.data.ingredients = [];
@@ -336,7 +339,8 @@ export default class KitchenEngine {
                 if (filename === 'ingredients.json' || (isUserState && cachedData)) {
                     // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/自訂通路/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
-                    if (filename === 'ingredients.json' && cached && !localStorage.getItem(localKey + '_pre_nutrition_v1')) {
+                    if (filename === 'ingredients.json' && cached && !hasEmbeddedIngredientPhoto(cachedData)
+                        && !localStorage.getItem(localKey + '_pre_nutrition_v1')) {
                         // Keep the exact pre-migration cache; a failed backup leaves the old cache intact.
                         localStorage.setItem(localKey + '_pre_nutrition_v1', cached);
                     }
@@ -359,6 +363,7 @@ export default class KitchenEngine {
                 this.data[key] = defaultValue;
             }
         }
+        if (filename === 'ingredients.json') await hydrateIngredientPhotos(this.data[key], this.ingredientPhotoStore);
     }
 
     async adoptIngredientBaseline() {
@@ -373,9 +378,12 @@ export default class KitchenEngine {
             const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
             if (!response.ok) throw new Error('無法取得食材基準，原資料未更動。');
             const official = await approvedIngredientBaseline(await response.text());
-            const updated = applyIngredientBaseline(official);
+            const source = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, localStorage.getItem(key)]));
+            const prepared = await prepareIngredientPhotoBackup(source, this.ingredientPhotoStore);
+            const updated = applyIngredientBaseline(official, localStorage, prepared);
             this.data.ingredientBaselineApplied = true;
             if (!updated) return false;
+            await hydrateIngredientPhotos(updated, this.ingredientPhotoStore);
             this.data.rawIngredients = updated;
             this.data.ingredients = ['proteins', 'veggies', 'carbs', 'sauces'].flatMap(cat => updated[cat]);
             return true;
@@ -611,7 +619,7 @@ export default class KitchenEngine {
                     const customList = JSON.parse(customStr);
                     if (Array.isArray(customList)) {
                         const filtered = customList.filter(c => !removedCustomIds.has(c.id));
-                        localStorage.setItem(customKey, JSON.stringify(filtered));
+                        this.safeSetLocalStorage(customKey, filtered);
                     }
                 }
             } catch (e) {}
@@ -687,7 +695,7 @@ export default class KitchenEngine {
                     filteredCustomList.push(customIng);
                 });
 
-                localStorage.setItem(customKey, JSON.stringify(filteredCustomList));
+                this.safeSetLocalStorage(customKey, filteredCustomList);
             }
         } catch (e) {
             console.warn("Error merging custom user ingredients", e);
@@ -697,7 +705,8 @@ export default class KitchenEngine {
     safeSetLocalStorage(key, dataObj) {
         try {
             let targetObj = dataObj;
-            let jsonStr = JSON.stringify(targetObj);
+            let jsonStr = [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].includes(key)
+                ? serializeIngredientPhotos(targetObj) : JSON.stringify(targetObj);
             // 🛡️ 雙重安全閥：若飲食紀錄物件異常膨脹（> 500KB），主動過濾殘存的 Base64 照片字串
             if (key === 'kitchen_v2_daily_logs.json' && jsonStr.length > 500 * 1024) {
                 console.warn(`[SafeStorage] daily_logs 物件過大 (${jsonStr.length} bytes)，啟動自動清洗...`);
@@ -771,8 +780,8 @@ export default class KitchenEngine {
         if (isLocalServer) {
             try {
                 const serverPayload = filename === 'ingredients.json'
-                    ? JSON.parse(JSON.stringify(dataObj, (key, value) =>
-                        ['nutritionCache', 'nutritionReviewRequired'].includes(key) ? undefined : value))
+                    ? JSON.parse(JSON.stringify(JSON.parse(serializeIngredientPhotos(dataObj)), (key, value) =>
+                        ['nutritionCache', 'nutritionReviewRequired', 'localPhotoRefs'].includes(key) ? undefined : value))
                     : dataObj;
                 const response = await fetch(`/api/data/${filename}`, {
                     method: 'POST',
@@ -864,6 +873,15 @@ export default class KitchenEngine {
 
         const previous = this.getIngredientById(ingData.id);
         ingData = { ...previous, ...ingData };
+        for (const field of ['photoUrl', 'photo']) {
+            const originalField = typeof ingData[field] === 'string' && ingData[field].startsWith('blob:')
+                && ['photoUrl', 'photo'].find(key => previous?.[key] === ingData[field] && previous?.localPhotoRefs?.[key]);
+            if (originalField) ingData.localPhotoRefs = { ...ingData.localPhotoRefs, [field]: previous.localPhotoRefs[originalField] };
+            else if (ingData[field] !== previous?.[field] && ingData.localPhotoRefs?.[field]) {
+                ingData.localPhotoRefs = { ...ingData.localPhotoRefs };
+                delete ingData.localPhotoRefs[field];
+            }
+        }
         if (previous?.nutritionCache) {
             ingData.nutritionCache = { ...previous.nutritionCache,
                 edited: previous.nutritionCache.edited || !sameNutrition(previous, ingData) };
@@ -934,7 +952,7 @@ export default class KitchenEngine {
             } catch (e) {}
             customList = customList.filter(i => i.id !== ingData.id);
             customList.push(ingData);
-            localStorage.setItem(customKey, JSON.stringify(customList));
+            this.safeSetLocalStorage(customKey, customList);
         } catch (e) {}
     }
 
