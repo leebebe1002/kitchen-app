@@ -48,7 +48,7 @@ for (const field of ['brand', 'gramsPerPack']) {
  else delete noodleCurrent[field];
 }
 assert.deepEqual(stripped, baseline, 'Only audited changes plus verified steamed noodle update are allowed');
-assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 78, '78 ingredient bases should be explicitly tagged');
+assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 88, 'Original 78 plus ten imported ingredient bases should be explicitly tagged');
 const allIngredients = Object.values(official).flat();
 const expectedUserBases = {sous_vide_chicken:'raw',beef_slice:'raw',salmon:'raw',black_fungus:'as_sold',sweet_potato:'raw',steamed_noodle:'dry',angel_hair_pasta:'dry',edamame:'as_sold'};
 for (const [id,basis] of Object.entries(expectedUserBases)) assert.equal(allIngredients.find(i => i.id === id).weightBasis,basis, id);

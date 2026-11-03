@@ -58,7 +58,7 @@ export function mergeIngredientNutrition(official, local, custom) {
     const sameIdentity = canonicalNoodleUpgrade ||
         ['name', 'brand'].every(key => (local[key] || '') === (official[key] || ''));
     const sameBasis = !local.weightBasis || local.weightBasis === 'unknown' || local.weightBasis === official.weightBasis;
-    const knownDefault = sameIdentity && sameBasis && (sameNutrition(local, official)
+    const knownDefault = (sameIdentity || record?.acceptedBaseline === '20261103') && sameBasis && (sameNutrition(local, official)
         || (record?.edited === false && sameNutrition(local, record.base))
         || (!record && legacyNutrition[official.id] && sameNutrition(local, legacyNutrition[official.id])));
     const refresh = !edited && knownDefault;
@@ -73,7 +73,9 @@ export function mergeIngredientNutrition(official, local, custom) {
         if ((refresh ? official : local)[key] !== undefined) merged[key] = (refresh ? official : local)[key];
     }
     merged.nutritionCache = { base, edited: edited || !knownDefault };
-    merged.nutritionReviewRequired = !refresh && (!!local.nutritionReviewRequired || (!edited && (!sameBasis || !sameNutrition(local, official))));
+    if (record?.acceptedBaseline === '20261103') merged.nutritionCache.acceptedBaseline = '20261103';
+    merged.nutritionReviewRequired = refresh ? !!official.nutritionReviewRequired
+        : (!!local.nutritionReviewRequired || (!edited && (!sameBasis || !sameNutrition(local, official))));
     if (refresh) {
         if (!local.weightBasis || local.weightBasis === 'unknown' || local.weightBasis === official.weightBasis) {
             merged.weightBasis = official.weightBasis;

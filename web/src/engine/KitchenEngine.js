@@ -12,7 +12,8 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261029_WILLI_NOODLE_V1';
+import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline } from '../utils/IngredientBaselineUpdate.js?v=20261103_FK14_BASELINE_ONCE_V1';
 import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261029_WILLI_NOODLE_V1';
 
 export default class KitchenEngine {
@@ -35,6 +36,7 @@ export default class KitchenEngine {
         this.personalSyncSequence = 0;
         this.data = reactive({
             ingredients: [],
+            ingredientBaselineApplied: false,
             householdSupplies: [],
             pantryInventory: {},
             dishes: [],
@@ -282,6 +284,7 @@ export default class KitchenEngine {
 
     async fetchJson(filename, key, defaultValue) {
         if (filename === 'daily_logs.json') throw new Error('舊共用餐點未確認歸屬，不自動載入。');
+        if (filename === 'ingredients.json') this.data.ingredientBaselineApplied = recoverIngredientBaseline();
         const localKey = 'kitchen_v2_' + filename;
         const cached = localStorage.getItem(localKey);
         let cachedData = null;
@@ -355,6 +358,29 @@ export default class KitchenEngine {
             } else {
                 this.data[key] = defaultValue;
             }
+        }
+    }
+
+    async adoptIngredientBaseline() {
+        if (this.ingredientBaselineUpdating) throw new Error('食材更新進行中。');
+        this.ingredientBaselineUpdating = true;
+        try {
+            if (recoverIngredientBaseline()) {
+                this.data.ingredientBaselineApplied = true;
+                return false;
+            }
+            const url = new URL('../../../src/data/ingredients.json', import.meta.url);
+            const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+            if (!response.ok) throw new Error('無法取得食材基準，原資料未更動。');
+            const official = await approvedIngredientBaseline(await response.text());
+            const updated = applyIngredientBaseline(official);
+            this.data.ingredientBaselineApplied = true;
+            if (!updated) return false;
+            this.data.rawIngredients = updated;
+            this.data.ingredients = ['proteins', 'veggies', 'carbs', 'sauces'].flatMap(cat => updated[cat]);
+            return true;
+        } finally {
+            this.ingredientBaselineUpdating = false;
         }
     }
 
