@@ -53,7 +53,7 @@ let holdState = null;
 let holdPatch = null;
 const requests = [];
 const publicData = {
-    'ingredients.json': { proteins: [{ id: 'fixture', name: '測試', unitLabel: 'g', per100g: { kcal: 100, protein: 10 } }], veggies: [], carbs: [], sauces: [] },
+    'ingredients.json': { proteins: [{ id: 'fixture', name: '測試', nutritionEvidence:{kind:'product_label',status:'verified',identity:{name:'測試',brand:''}}, unitLabel: 'g', per100g: { kcal: 100, protein: 10, carbs:0, fat:0, sodium:0 } }], veggies: [], carbs: [], sauces: [] },
     'dishes.json': { dishes: [] }, 'favorite_foods.json': { favorites: [] }, 'config.json': {}, 'daily_logs.json': {},
     'pantry_inventory.json': state('legacy').pantryInventory,
     'household_supplies.json': state('legacy').householdSupplies

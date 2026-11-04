@@ -1,4 +1,4 @@
-import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
+import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261104_NUTRITION_V3';
 import { normalizeIngredientName } from './IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { hasEmbeddedIngredientPhoto } from './IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
 

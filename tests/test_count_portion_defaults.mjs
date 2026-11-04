@@ -53,7 +53,7 @@ for (const scope of ['household', 'ariel', null]) {
         await nextTick();
         assert.equal(dish.defaultIngredients.find(i => i.id === id).amount, 1, id + ': count must not inherit a gram default');
         for (const member of ['bebe', 'jason', 'ariel']) {
-            assert.equal(dish.memberPortions[member].find(i => i.id === id).amount, 1, member + ':' + id);
+            assert(!dish.memberPortions[member].some(i => i.id === id), 'No new permanent personal portion');
             assert.equal(view.memberIngredients.value[member].find(i => i.id === id).amount, 1);
             assert.equal(view.memberIngredients.value[member].find(i => i.id === id).unit, ing.unitLabel);
         }
@@ -69,13 +69,13 @@ for (const scope of ['household', 'ariel', null]) {
         view.adjustMemberAmount(member, item, 1);
         assert.equal(item.amount, 2, 'Missing nutrition must not prevent manual quantity input');
     }
-    engine.getIngredientById('salmon').isCount = true;
+    engine.data.ingredients.find(i => i.id === 'salmon').isCount = true;
     await view.addExistingToDish(engine.getIngredientById('salmon'));
     await nextTick();
-    assert.equal(dish.memberPortions.bebe.find(i => i.id === 'salmon').amount, 60);
-    assert.equal(dish.memberPortions.jason.find(i => i.id === 'salmon').amount, 78);
+    assert.equal(view.memberIngredients.value.bebe.find(i => i.id === 'salmon').amount, 0);
+    assert.equal(view.memberIngredients.value.jason.find(i => i.id === 'salmon').amount, 0);
     const saved = JSON.parse(values.get('kitchen_v2_dishes.json')).dishes[0];
-    assert.equal(saved.memberPortions.jason.find(i => i.id === 'egg_dumpling').amount, 1);
+    assert.deepEqual(saved.memberPortions.jason, [], 'No personal amounts persisted to dish');
     for (const id of pending) {
         assert(engine.getNutritionIssues([{ id, amount: 1, unit: engine.getIngredientById(id).unitLabel }]).length);
         assert(Number.isNaN(engine.calculateNutritionForMember([{ id, amount: 1 }], 'bebe').kcal));
@@ -107,7 +107,7 @@ for (const scope of ['household', 'ariel', null]) {
     // Old/manual quantities cannot be silently reinterpreted or overwritten by re-adding.
     for (const member of ['bebe', 'jason']) {
         const amount = member === 'bebe' ? 60 : 78;
-        dish.memberPortions[member].find(i => i.id === 'egg_dumpling').amount = amount;
+        dish.memberPortions[member].push({id:'egg_dumpling',amount,unit:'顆'});
         view.memberIngredients.value[member].find(i => i.id === 'egg_dumpling').amount = amount;
     }
     await view.addExistingToDish(engine.getIngredientById('egg_dumpling'));
@@ -122,6 +122,7 @@ for (const scope of ['household', 'ariel', null]) {
     close();
     const reopened = mount(engine);
     await nextTick();
+    for (const member of ['bebe','jason']) reopened.view.useHistoricalPortions(member);
     assert.equal(reopened.view.memberIngredients.value.bebe.find(i => i.id === 'egg_dumpling').amount, 60);
     assert.equal(reopened.view.memberIngredients.value.jason.find(i => i.id === 'egg_dumpling').amount, 78);
     reopened.close();
@@ -153,7 +154,7 @@ for (const scope of ['household', 'ariel', null]) {
         }
         await app.view.recordMeal();
         assert.equal(recorded, 0, unit + ': unresolved recording must be blocked independently');
-        engine.getIngredientById('unit_fixture').perUnit = { kcal: 50, protein: 5 };
+        Object.assign(engine.data.ingredients[0], {perUnit:{kcal:50,protein:5,carbs:0,fat:0,sodium:0},nutritionEvidence:{kind:'product_label',status:'verified',identity:{name:'隔離單位測試',brand:''}}});
         for (const member of ['bebe', 'jason', 'ariel']) {
             const req = [{ id: 'unit_fixture', amount: 2, unit }];
             assert.deepEqual(engine.getNutritionIssues(req), []);

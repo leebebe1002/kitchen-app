@@ -1,3 +1,4 @@
+import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261104_NUTRITION_V3';
 const { ref, reactive, computed, watch, onMounted } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -33,6 +34,14 @@ const IngredientDetailModal = {
     emits: ['close', 'saved', 'deleted', 'removeFromDish'],
     setup(props, { emit }) {
         const nutritionChanged = ref(false);
+        const evidenceConfirmed = ref(false);
+        const evidenceSpec = ref('');
+        const evidenceBasis = ref('unknown');
+        const evidenceUnit = ref('g');
+        const evidenceSource = ref('');
+        const gramsPerUnit = ref(null);
+        const sourceEvidence = computed(() => withNutritionEvidence(props.initialIngredient)?.nutritionEvidence);
+        const sourceText = computed(() => nutritionEvidenceText(withNutritionEvidence(props.initialIngredient)));
         const hasUnitNutrition = computed(() => !!props.engine.getIngredientById(form.id)?.perUnit);
         const form = reactive({
             id: '',
@@ -48,18 +57,18 @@ const IngredientDetailModal = {
             price: 0,
             priceUnit: '包',
             per100g: {
-                kcal: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-                sodium: 0
+                kcal: null,
+                protein: null,
+                carbs: null,
+                fat: null,
+                sodium: null
             },
             perServing: {
-                kcal: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-                sodium: 0
+                kcal: null,
+                protein: null,
+                carbs: null,
+                fat: null,
+                sodium: null
             }
         });
 
@@ -77,6 +86,12 @@ const IngredientDetailModal = {
 
         const initForm = () => {
             nutritionChanged.value = false;
+            evidenceConfirmed.value = false;
+            evidenceSpec.value = props.initialIngredient?.nutritionEvidence?.specification || '';
+            evidenceBasis.value = props.initialIngredient?.weightBasis || 'unknown';
+            evidenceUnit.value = props.initialIngredient?.unitLabel || 'g';
+            evidenceSource.value = props.initialIngredient?.nutritionEvidence?.note || '';
+            gramsPerUnit.value = props.initialIngredient?.gramsPerUnit || null;
             if (props.mode === 'create') {
                 form.id = 'ing_' + Date.now();
                 form.name = props.initialName || '';
@@ -91,8 +106,8 @@ const IngredientDetailModal = {
                 form.price = 0;
                 form.priceUnit = '包';
                 form.priorityTier = 1;
-                form.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
-                form.perServing = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+                form.per100g = { kcal: null, protein: null, carbs: null, fat: null, sodium: null };
+                form.perServing = { kcal: null, protein: null, carbs: null, fat: null, sodium: null };
             } else if (props.initialIngredient) {
                 const ing = props.initialIngredient;
                 form.id = ing.id;
@@ -116,23 +131,23 @@ const IngredientDetailModal = {
                 // 營養數值回填
                 if (ing.per100g) {
                     form.per100g = {
-                        kcal: Number(ing.per100g.kcal) || 0,
-                        protein: Number(ing.per100g.protein) || 0,
-                        carbs: Number(ing.per100g.carbs) || 0,
-                        fat: Number(ing.per100g.fat) || 0,
-                        sodium: Number(ing.per100g.sodium) || 0
+                        kcal: nutrientNumber(ing.per100g.kcal),
+                        protein: nutrientNumber(ing.per100g.protein),
+                        carbs: nutrientNumber(ing.per100g.carbs),
+                        fat: nutrientNumber(ing.per100g.fat),
+                        sodium: nutrientNumber(ing.per100g.sodium)
                     };
                 } else {
-                    form.per100g = { kcal: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 };
+                    form.per100g = { kcal: null, protein: null, carbs: null, fat: null, sodium: null };
                 }
 
                 if (ing.perServing) {
                     form.perServing = {
-                        kcal: Number(ing.perServing.kcal) || 0,
-                        protein: Number(ing.perServing.protein) || 0,
-                        carbs: Number(ing.perServing.carbs) || 0,
-                        fat: Number(ing.perServing.fat) || 0,
-                        sodium: Number(ing.perServing.sodium) || 0
+                        kcal: nutrientNumber(ing.perServing.kcal),
+                        protein: nutrientNumber(ing.perServing.protein),
+                        carbs: nutrientNumber(ing.perServing.carbs),
+                        fat: nutrientNumber(ing.perServing.fat),
+                        sodium: nutrientNumber(ing.perServing.sodium)
                     };
                 } else {
                     calcServingFrom100g();
@@ -163,28 +178,21 @@ const IngredientDetailModal = {
         });
 
         // 雙軌換算邏輯
-        const calcServingFrom100g = () => {
-            const isSauceOrOil = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category);
-            const size = Number(form.servingSize) || (isSauceOrOil ? 10 : 100);
-            const ratio = size / 100;
-            form.perServing.kcal = Math.round((form.per100g.kcal || 0) * ratio);
-            form.perServing.protein = Math.round((form.per100g.protein || 0) * ratio * 10) / 10;
-            form.perServing.carbs = Math.round((form.per100g.carbs || 0) * ratio * 10) / 10;
-            form.perServing.fat = Math.round((form.per100g.fat || 0) * ratio * 10) / 10;
-            form.perServing.sodium = Math.round((form.per100g.sodium || 0) * ratio * 10) / 10;
-        };
-
-        const calc100gFromServing = () => {
-            const isSauceOrOil = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category);
-            const size = Number(form.servingSize) || (isSauceOrOil ? 10 : 100);
-            if (size <= 0) return;
-            const ratio = 100 / size;
-            form.per100g.kcal = Math.round((form.perServing.kcal || 0) * ratio);
-            form.per100g.protein = Math.round((form.perServing.protein || 0) * ratio * 10) / 10;
-            form.per100g.carbs = Math.round((form.perServing.carbs || 0) * ratio * 10) / 10;
-            form.per100g.fat = Math.round((form.perServing.fat || 0) * ratio * 10) / 10;
-            form.per100g.sodium = Math.round((form.perServing.sodium || 0) * ratio * 10) / 10;
-        };
+        function scaleNutrients(values, ratio) {
+            return Object.fromEntries(nutrientKeys.map(key => [key, nutrientNumber(values?.[key]) === null
+                || !Number.isFinite(ratio) || ratio <= 0 ? null : Math.round(Number(values[key]) * ratio * 10) / 10]));
+        }
+        function calcServingFrom100g() {
+            const sameUnit = form.servingUnit?.toLowerCase() === (evidenceUnit.value === 'ml' ? 'ml' : 'g');
+            form.perServing = scaleNutrients(form.per100g, sameUnit ? Number(form.servingSize) / 100 : NaN);
+        }
+        function calc100gFromServing() {
+            const sameUnit = form.servingUnit?.toLowerCase() === (evidenceUnit.value === 'ml' ? 'ml' : 'g');
+            form.per100g = scaleNutrients(form.perServing, sameUnit ? 100 / Number(form.servingSize) : NaN);
+        }
+        watch(() => JSON.stringify([form.name, form.brand, form.per100g, form.perServing, form.servingSize,
+            form.servingUnit, evidenceSpec.value, evidenceBasis.value, evidenceUnit.value, gramsPerUnit.value, evidenceSource.value]),
+            () => { evidenceConfirmed.value = false; }, {flush:'sync'});
 
         const on100gInput = () => {
             nutritionChanged.value = true;
@@ -296,20 +304,20 @@ const IngredientDetailModal = {
             form.priceUnit = existingIng.priceUnit || '包';
             if (existingIng.per100g) {
                 form.per100g = {
-                    kcal: Number(existingIng.per100g.kcal) || 0,
-                    protein: Number(existingIng.per100g.protein) || 0,
-                    carbs: Number(existingIng.per100g.carbs) || 0,
-                    fat: Number(existingIng.per100g.fat) || 0,
-                    sodium: Number(existingIng.per100g.sodium) || 0
+                    kcal: nutrientNumber(existingIng.per100g.kcal),
+                    protein: nutrientNumber(existingIng.per100g.protein),
+                    carbs: nutrientNumber(existingIng.per100g.carbs),
+                    fat: nutrientNumber(existingIng.per100g.fat),
+                    sodium: nutrientNumber(existingIng.per100g.sodium)
                 };
             }
             if (existingIng.perServing) {
                 form.perServing = {
-                    kcal: Number(existingIng.perServing.kcal) || 0,
-                    protein: Number(existingIng.perServing.protein) || 0,
-                    carbs: Number(existingIng.perServing.carbs) || 0,
-                    fat: Number(existingIng.perServing.fat) || 0,
-                    sodium: Number(existingIng.perServing.sodium) || 0
+                    kcal: nutrientNumber(existingIng.perServing.kcal),
+                    protein: nutrientNumber(existingIng.perServing.protein),
+                    carbs: nutrientNumber(existingIng.perServing.carbs),
+                    fat: nutrientNumber(existingIng.perServing.fat),
+                    sodium: nutrientNumber(existingIng.perServing.sodium)
                 };
             }
             if (existingIng.perUnit) {
@@ -319,6 +327,10 @@ const IngredientDetailModal = {
                 form.displayBasis = 'serving';
             }
             photo.url = existingIng.photoUrl || null;
+            evidenceConfirmed.value = false;
+            evidenceSpec.value = existingIng.nutritionEvidence?.specification || '';
+            evidenceUnit.value = existingIng.unitLabel || 'g';
+            evidenceBasis.value = existingIng.weightBasis || 'unknown';
             modalMode.value = 'edit';
         };
 
@@ -374,6 +386,7 @@ const IngredientDetailModal = {
             const cleanB64 = b64Data.replace(/[\n\r\s]/g, '');
 
             const prompt = `你是一個專業的食品營養標示 OCR 與食材萃取專家。
+缺漏或無法辨識欄位必須輸出 null，禁止猜測或補 0。請另回傳 specification（商品規格）及 weightBasis（raw/cooked/dry/as_sold/unknown）。每100g 不得混用每100mL，servingUnit 必須如實辨識。
 請仔細辨識這張食品外包裝或營養標示照片，萃取以下資訊並輸出純 JSON 格式（不要有 markdown 標記或其他文字）：
 {
   "name": "食材或商品名稱 (繁體中文)",
@@ -482,34 +495,25 @@ const IngredientDetailModal = {
                     return;
                 }
                 const resData = data.result;
+                nutritionChanged.value = true;
+                evidenceConfirmed.value = false;
+                evidenceSpec.value = resData.specification || '';
+                evidenceBasis.value = ['raw','cooked','dry','as_sold'].includes(resData.weightBasis) ? resData.weightBasis : 'unknown';
+                evidenceUnit.value = String(resData.servingUnit || '').toLowerCase() === 'ml' ? 'ml' : 'g';
                 if (props.mode === 'create' || !form.name) {
                     if (resData.name) form.name = resData.name;
                 }
                 if (resData.brand && !form.brand) form.brand = resData.brand;
-                if (resData.servingSize) form.servingSize = Number(resData.servingSize) || 10;
+                form.servingSize = nutrientNumber(resData.servingSize);
                 if (resData.servingUnit) form.servingUnit = resData.servingUnit || 'g';
 
-                if (resData.per100g) {
-                    form.per100g = {
-                        kcal: Number(resData.per100g.kcal) || 0,
-                        protein: Number(resData.per100g.protein) || 0,
-                        carbs: Number(resData.per100g.carbs) || 0,
-                        fat: Number(resData.per100g.fat) || 0,
-                        sodium: Number(resData.per100g.sodium) || 0
-                    };
+                for (const field of ['per100g','perServing']) {
+                    form[field] = Object.fromEntries(nutrientKeys.map(key => [key, nutrientNumber(resData[field]?.[key])]));
                 }
 
-                if (resData.perServing) {
-                    form.perServing = {
-                        kcal: Number(resData.perServing.kcal) || 0,
-                        protein: Number(resData.perServing.protein) || 0,
-                        carbs: Number(resData.perServing.carbs) || 0,
-                        fat: Number(resData.perServing.fat) || 0,
-                        sodium: Number(resData.perServing.sodium) || 0
-                    };
-                } else {
-                    calcServingFrom100g();
-                }
+                // Derive only within the same declared mass/volume unit, retaining unknown fields.
+                if (!completeNutrients(form.per100g) && completeNutrients(form.perServing)) calc100gFromServing();
+                else if (!completeNutrients(form.perServing) && completeNutrients(form.per100g)) calcServingFrom100g();
 
                 // 自動分類判定
                 const autoCategory = props.engine.detectNutrientCategory(
@@ -520,7 +524,7 @@ const IngredientDetailModal = {
                 form.displayBasis = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category) ? 'serving' : '100g';
 
                 photo.status = 'success';
-                photo.message = `✨ 已成功帶入【${resData.name || form.name || '食材'}】的熱量與營養成份！`;
+                photo.message = `✨ 已成功帶入【${resData.name || form.name || '食材'}】的辨識結果；請逐欄核對，空白表示待確認。`;
             } else {
                 photo.status = 'error';
                 photo.message = `${data?.message || 'AI 辨識未完成'}，請在下方直接手動填寫。`;
@@ -593,8 +597,8 @@ const IngredientDetailModal = {
                 name: cleanName,
                 brand: form.brand || '',
                 category: form.category,
-                servingSize: Number(form.servingSize) || 10,
-                servingUnit: form.servingUnit || 'g',
+                servingSize: nutrientNumber(form.servingSize),
+                servingUnit: (form.servingUnit || 'g').toLowerCase(),
                 storageZones: [...form.storageZones],
                 preferredStores: normalizeStoreList(form.preferredStores),
                 preferredStore: normalizeStoreList(form.preferredStores)?.[0] || '全聯',
@@ -603,18 +607,18 @@ const IngredientDetailModal = {
                 priorityTier: Number(form.priorityTier) || 1,
                 photoUrl: photo.url || null,
                 per100g: {
-                    kcal: Number(form.per100g.kcal) || 0,
-                    protein: Number(form.per100g.protein) || 0,
-                    carbs: Number(form.per100g.carbs) || 0,
-                    fat: Number(form.per100g.fat) || 0,
-                    sodium: Number(form.per100g.sodium) || 0
+                    kcal: nutrientNumber(form.per100g.kcal),
+                    protein: nutrientNumber(form.per100g.protein),
+                    carbs: nutrientNumber(form.per100g.carbs),
+                    fat: nutrientNumber(form.per100g.fat),
+                    sodium: nutrientNumber(form.per100g.sodium)
                 },
                 perServing: {
-                    kcal: Number(form.perServing.kcal) || 0,
-                    protein: Number(form.perServing.protein) || 0,
-                    carbs: Number(form.perServing.carbs) || 0,
-                    fat: Number(form.perServing.fat) || 0,
-                    sodium: Number(form.perServing.sodium) || 0
+                    kcal: nutrientNumber(form.perServing.kcal),
+                    protein: nutrientNumber(form.perServing.protein),
+                    carbs: nutrientNumber(form.perServing.carbs),
+                    fat: nutrientNumber(form.perServing.fat),
+                    sodium: nutrientNumber(form.perServing.sodium)
                 }
             };
 
@@ -638,9 +642,39 @@ const IngredientDetailModal = {
                 }
             }
 
+            const nutritionEdited = nutritionChanged.value || photo.status === 'success' || !previous;
+            if (nutritionEdited || evidenceConfirmed.value) {
+                const perCount = hasUnitNutrition.value;
+                ingData.unitLabel = perCount ? previous.unitLabel : evidenceUnit.value;
+                ingData.weightBasis = evidenceBasis.value;
+                if (perCount) ingData.perUnit = Object.fromEntries(nutrientKeys.map(key => [key, nutrientNumber(form.perServing[key])]));
+                if (!perCount && !['g','ml'].includes(ingData.unitLabel)) {
+                    if (Number(gramsPerUnit.value) > 0 && completeNutrients(ingData.per100g)) {
+                        ingData.gramsPerUnit = Number(gramsPerUnit.value);
+                        ingData.perUnit = scaleNutrients(ingData.per100g, ingData.gramsPerUnit / 100);
+                    }
+                }
+                const values = ingData.perUnit || ingData.per100g;
+                const consistencyIssue = labelConsistencyIssue(ingData);
+                if (evidenceConfirmed.value && consistencyIssue) { alert(consistencyIssue); return; }
+                const valid = evidenceConfirmed.value && completeNutrients(values) && evidenceSpec.value.trim()
+                    && form.brand.trim() && evidenceBasis.value !== 'unknown';
+                if (evidenceConfirmed.value && !valid) {
+                    alert('請核對品牌、商品規格、重量基準與五項營養；缺漏欄位請保留待確認。');
+                    return;
+                }
+                ingData.nutritionEvidence = {kind:'product_label', status: valid ? 'verified' : 'pending',
+                    checkedAt:valid ? new Date().toISOString().slice(0,10) : null,
+                    identity:{name:cleanName, brand:form.brand || ''}, specification:evidenceSpec.value.trim(),
+                    weightBasis:evidenceBasis.value, note:evidenceSource.value.trim() || '本人產品標示，辨識後待核對', sources:[]};
+                ingData.nutritionEvidence.snapshot = evidenceSnapshot(ingData);
+                ingData.nutritionReviewRequired = !valid;
+            }
+
             // 儲存至總庫
             if (props.engine?.saveIngredient) {
-                await props.engine.saveIngredient(ingData);
+                try { await props.engine.saveIngredient(ingData); }
+                catch (error) { alert(error.message || '尚未儲存，請保留畫面後重試。'); return; }
             }
 
             // 同步更新採買清單中已存在的該品項通路
@@ -684,6 +718,7 @@ const IngredientDetailModal = {
         };
 
         return {
+            evidenceConfirmed, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
             hasUnitNutrition,
             modalMode,
             duplicateMatch,
@@ -804,6 +839,20 @@ const IngredientDetailModal = {
                     </div>
                 </div>
 
+                <div class="card" style="margin-bottom:12px;flex-shrink:0;display:grid;gap:8px;font-size:0.85rem;line-height:1.5;">
+                    <p role="status">{{ sourceText }}</p>
+                    <p>產品標示僅用於此品牌與規格；空白值不會當成 0。修改營養後需重新核對。</p>
+                    <p v-if="sourceEvidence">{{ sourceEvidence.note }} · {{ sourceEvidence.checkedAt || '日期待確認' }}</p>
+                    <p style="overflow-wrap:anywhere;" v-for="source in (sourceEvidence && sourceEvidence.sources || [])" :key="source.ref || source.url">{{ source.ref }} {{ source.title }} {{ source.url }}</p>
+                    <label style="display:block;">品牌 <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="form.brand"></label>
+                    <label style="display:block;">商品規格（容量／口味／版本）<input style="width:100%;" v-model="evidenceSpec"></label>
+                    <label style="display:block;">來源備註 <input style="width:100%;" v-model="evidenceSource"></label>
+                    <label>重量基準 <select v-model="evidenceBasis"><option value="unknown">待確認</option><option value="raw">生重／可食部</option><option value="cooked">熟重／可食部</option><option value="dry">乾重</option><option value="as_sold">販售／即食狀態</option></select></label>
+                    <label v-if="!hasUnitNutrition">計量單位 <select v-model="evidenceUnit"><option value="g">g</option><option value="ml">ml</option><option v-if="!['g','ml'].includes(evidenceUnit)" :value="evidenceUnit">{{ evidenceUnit }}</option></select></label>
+                    <label v-if="!hasUnitNutrition && !['g','ml'].includes(evidenceUnit)" style="display:block;">每 {{ evidenceUnit }} 可食重量 g（依包裝或實測）<input type="number" min="0" v-model.number="gramsPerUnit"></label>
+                    <label style="display:block;"><input type="checkbox" v-model="evidenceConfirmed">我已核對此品牌／規格、重量單位、五項數值與照片標示一致</label>
+                </div>
+
                 <!-- 3. 營養成份規格：純文字俐落排版 + 雙軌自動換算 -->
                 <p v-if="modalMode === 'edit' && engine.getNutritionIssues([{ id: form.id, amount: 1 }]).length" role="status" style="font-size: 0.8rem; color: var(--color-text-muted);">
                     {{ engine.getNutritionIssues([{ id: form.id, amount: 1 }]).join('；') }}
@@ -827,78 +876,15 @@ const IngredientDetailModal = {
                     <div v-if="form.displayBasis === 'serving' && !hasUnitNutrition" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.85rem; background: #FFFFFF; padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--color-primary);">
                         <span style="font-weight: 700; color: var(--color-text-main);">單份份量：</span>
                         <input type="number" v-model.number="form.servingSize" @input="onServingSizeChange" style="width: 54px; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: 6px; font-weight: 700; text-align: right; background: #FAF8F5;">
-                        <span style="font-weight: 600; color: var(--color-text-muted);">{{ form.servingUnit || 'g' }}</span>
+                        <select v-model="form.servingUnit" @change="onServingSizeChange"><option value="g">g</option><option value="ml">ml</option></select>
                     </div>
 
-                    <!-- 營養素數值輸入格 (純文字，無表情圖示) -->
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.85rem;">
-                        <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-weight: 600;">熱量</span>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" 
-                                       v-if="form.displayBasis === '100g'"
-                                       v-model.number="form.per100g.kcal" 
-                                       @input="on100gInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <input type="number" 
-                                       v-else
-                                       v-model.number="form.perServing.kcal" 
-                                       @input="onServingInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">kcal</span>
-                            </div>
-                        </div>
-
-                        <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-weight: 600;">蛋白質</span>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" 
-                                       v-if="form.displayBasis === '100g'"
-                                       v-model.number="form.per100g.protein" 
-                                       @input="on100gInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <input type="number" 
-                                       v-else
-                                       v-model.number="form.perServing.protein" 
-                                       @input="onServingInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                            </div>
-                        </div>
-
-                        <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-weight: 600;">碳水</span>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" 
-                                       v-if="form.displayBasis === '100g'"
-                                       v-model.number="form.per100g.carbs" 
-                                       @input="on100gInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <input type="number" 
-                                       v-else
-                                       v-model.number="form.perServing.carbs" 
-                                       @input="onServingInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                            </div>
-                        </div>
-
-                        <div style="background: #FFF; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between;">
-                            <span style="font-weight: 600;">脂肪</span>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" 
-                                       v-if="form.displayBasis === '100g'"
-                                       v-model.number="form.per100g.fat" 
-                                       @input="on100gInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <input type="number" 
-                                       v-else
-                                       v-model.number="form.perServing.fat" 
-                                       @input="onServingInput" 
-                                       style="width: 54px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 4px; font-weight: 700; text-align: right;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted);">g</span>
-                            </div>
-                        </div>
+                    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+                        <label v-for="field in [{key:'kcal',name:'熱量',unit:'kcal'},{key:'protein',name:'蛋白質',unit:'g'},{key:'carbs',name:'碳水',unit:'g'},{key:'fat',name:'脂肪',unit:'g'},{key:'sodium',name:'鈉',unit:'mg'}]" :key="field.key" style="min-width:0;background:#fff;padding:8px;border-radius:8px;font-size:0.85rem;">
+                            {{ field.name }} {{ field.unit }}
+                            <input v-if="form.displayBasis === '100g'" type="number" min="0" v-model.number="form.per100g[field.key]" @input="on100gInput" style="width:100%;min-width:0;box-sizing:border-box;">
+                            <input v-else type="number" min="0" v-model.number="form.perServing[field.key]" @input="onServingInput" style="width:100%;min-width:0;box-sizing:border-box;">
+                        </label>
                     </div>
                 </div>
 

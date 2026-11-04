@@ -1,3 +1,4 @@
+import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261104_NUTRITION_V3';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
 import CloudSyncEngine from './CloudSyncEngine.js';
@@ -12,10 +13,10 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261103_FK14_BASELINE_ONCE_V1';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261103_FK14_KEEP_PHOTOS_V1';
+import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261104_NUTRITION_V3';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261104_NUTRITION_V3';
 import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
-import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261103_FK21_COUNT_DEFAULTS_V1';
+import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261104_NUTRITION_V3';
 
 export default class KitchenEngine {
     constructor({ auth = authService, cloudSync, photoStore = ingredientPhotoStore } = {}) {
@@ -47,11 +48,11 @@ export default class KitchenEngine {
             config: { gemini_api_key: '', openai_api_key: '' }
         });
         // 家庭成員健康檔案 (Family Profiles)
-        this.profiles = {
+        this.profiles = Vue.reactive({
             bebe: { name: 'Bebe', targetKcal: 1500, targetProtein: 95, targetCarbs: 167, targetFat: 50, targetSodium: 1500 },
             ariel: { name: 'Ariel', targetKcal: 1600, targetProtein: 85, targetCarbs: 200, targetFat: 50, targetSodium: 1800 },
             jason: { name: 'Jason', targetKcal: 1800, targetProtein: 130, targetCarbs: 200, targetFat: 50, targetSodium: 2000 }
-        };
+        });
         // 墓碑機制 (Tombstone)：記錄已刪除餐點 ID，防止雲端拉取歷史或合流時死而復生
         try {
             const savedTombstones = localStorage.getItem('kitchen_v2_deleted_meal_ids');
@@ -808,7 +809,7 @@ export default class KitchenEngine {
         if (!id) return null;
         // 1. 精準 ID 匹配
         let found = this.data.ingredients.find(ing => ing.id === id);
-        if (found) return found;
+        if (found) return withNutritionEvidence(found);
         
         // 2. 智慧名稱匹配 (例如 id='shin_ramen' 但庫存裡有名稱為 '辛拉麵')
         const normalized = id.toLowerCase().replace(/[-_]/g, '');
@@ -817,7 +818,7 @@ export default class KitchenEngine {
             const ingNameNorm = (ing.name || '').toLowerCase().replace(/[\s\(\)（）\-_]/g, '');
             return ingIdNorm === normalized || ingNameNorm === normalized || ing.name === id;
         });
-        if (found) return found;
+        if (found) return withNutritionEvidence(found);
         
         // 3. 常見別名字典 (Alias Map)
         const aliasMap = {
@@ -832,7 +833,7 @@ export default class KitchenEngine {
         for (const [canonicalId, aliases] of Object.entries(aliasMap)) {
             if (id === canonicalId || aliases.includes(id)) {
                 found = this.data.ingredients.find(ing => ing.id === canonicalId || aliases.includes(ing.name) || aliases.includes(ing.id));
-                if (found) return found;
+                if (found) return withNutritionEvidence(found);
             }
         }
         return null;
@@ -872,6 +873,12 @@ export default class KitchenEngine {
         }
 
         const previous = this.getIngredientById(ingData.id);
+        const before = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, localStorage.getItem(key)]));
+        const backup = await prepareIngredientPhotoBackup(before, this.ingredientPhotoStore);
+        if ([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])) {
+            throw new Error('備份期間食材已變更，原資料保留，請重開編輯。');
+        }
+        localStorage.setItem('kitchen_v2_nutrition_edit_backup', JSON.stringify({before:backup.before, savedAt:new Date().toISOString()}));
         ingData = { ...previous, ...ingData };
         for (const field of ['photoUrl', 'photo']) {
             const originalField = typeof ingData[field] === 'string' && ingData[field].startsWith('blob:')
@@ -886,10 +893,13 @@ export default class KitchenEngine {
             ingData.nutritionCache = { ...previous.nutritionCache,
                 edited: previous.nutritionCache.edited || !sameNutrition(previous, ingData) };
         }
-        if (previous && !sameNutrition(previous, ingData)) {
+        if (previous && (!sameNutrition(previous, ingData) || previous.name !== ingData.name || (previous.brand || '') !== (ingData.brand || ''))) {
+            if (ingData.nutritionEvidence === previous.nutritionEvidence) ingData.nutritionEvidence = { kind: 'missing', status: 'pending' };
             ingData.nutritionReviewRequired = false;
             ingData.weightBasisSource = '';
         }
+
+        if (!ingData.nutritionEvidence) ingData.nutritionEvidence = { kind: 'missing', status: 'pending' };
 
         // 🛡️ 鐵律守門：若食材包含 Base64 照片，上傳圖床；失敗則清空 photoUrl，絕不存入資料庫
         if (ingData.photoUrl && ingData.photoUrl.startsWith('data:')) {
@@ -1121,7 +1131,7 @@ export default class KitchenEngine {
             const ingData = this.getIngredientById(req.id);
             if (ingData) {
                 const basis = ingredientNutritionBasis(ingData, req);
-                if (!basis && Number(req.amount) > 0) {
+                if (ingredientNutritionIssue(ingData, req) || (!basis && Number(req.amount) > 0)) {
                     Object.keys(total).forEach(key => { total[key] = NaN; });
                 } else if (basis) {
                     const ratio = (Number(req.amount) || 0) / basis.divisor;
@@ -1132,6 +1142,8 @@ export default class KitchenEngine {
                     total.fat += (n.fat || 0) * ratio;
                     total.sodium += (n.sodium || 0) * ratio;
                 }
+            } else if (Number(req.amount) !== 0) {
+                Object.keys(total).forEach(key => { total[key] = NaN; });
             }
         });
 

@@ -34,6 +34,9 @@ const {validateChefResult} = await import('../web/src/services/ChefAdvisor.js?v=
 const key = 'kitchen_v2_ingredients.json';
 const backupKey = key + '_pre_nutrition_v1';
 const engine = new Engine();
+// Unit/cache migration tests isolate arithmetic; source trust has a separate production-engine suite.
+const lookup = engine.getIngredientById.bind(engine);
+engine.getIngredientById = id => {const ing = lookup(id); return ing && {...ing,nutritionEvidence:undefined};};
 authorizeTestEngine(engine);
 engine.personalKitchenSync = {enabled:false};
 const merge = (local, server = official) => engine.mergeUserState('ingredients.json', local, server);
@@ -246,6 +249,7 @@ engine.data.pantryInventory.foodStockStatus = {bacon:true};
 const {view,close} = mount(Calculator,{engine});
 engine.data.dishes = [{id:'pasta_meal',name:'單位測試料理',recommendedProteins:['bacon'],memberPortions:{bebe:[{id:'bacon',amount:20,unit:'g'}],jason:[{id:'bacon',amount:2,unit:'條'}],ariel:[{id:'bacon',amount:25,unit:'g'}]}}];
 await nextTick();view.diners.value = {bebe:true,jason:true,ariel:true};await nextTick();
+for (const member of ['bebe','jason','ariel']) view.useHistoricalPortions(member);
 assert.equal(view.totalIngredientsList.value.length,2);
 for (const total of view.totalIngredientsList.value) assert.equal(total.amount,total.breakdown.reduce((sum,b)=>sum+Number(b.amount),0));
 await view.copySOP();assert(copied.includes('45g'));assert(copied.includes('2條'));

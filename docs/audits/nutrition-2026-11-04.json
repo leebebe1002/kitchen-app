@@ -1,0 +1,903 @@
+{
+  "date": "2026-11-04",
+  "method": "沿用 89 項歷史稽核；新增10項逐項列為待確認。來源未確認不等於數值錯誤；不新增猜測營養或重量。",
+  "ingredients": [
+    {
+      "id": "whey_protein",
+      "name": "乳清蛋白粉",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "未指定品牌、口味、濃縮或分離型；保留既有值，不能用另一款乳清標示覆蓋。"
+    },
+    {
+      "id": "tuna",
+      "name": "水煮鮪魚",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "Kirkland 罐頭規格、地區版本及瀝乾重量未留存；既有數字未取得同版標示，保留。"
+    },
+    {
+      "id": "shrimp",
+      "name": "蝦仁",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "生蝦仁的物種、泡水及保水處理會影響蛋白與鈉；既有 Na280 未找到對應標示，保留。"
+    },
+    {
+      "id": "sous_vide_chicken",
+      "name": "雞胸肉",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生、去皮雞胸可食部平均值；不採舒肥／醃製雞胸標示"
+    },
+    {
+      "id": "pork_shoulder",
+      "name": "豬梅花肉片",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "生梅花肉的修脂比例不明；TFDA 豬肩胛肉／排差異大，不能挑一筆當原品項標示。"
+    },
+    {
+      "id": "egg",
+      "name": "蛋",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "既有每顆值保留；蛋種、大小及單顆去殼重量未記錄，不能把每 100 g 當一顆。"
+    },
+    {
+      "id": "tofu",
+      "name": "板豆腐",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "板豆腐含水率與凝固劑差異大；TFDA 傳統豆腐不同年度 88／96 kcal，現有五項不是任一筆完整記錄；保留待品牌確認。"
+    },
+    {
+      "id": "plain_yogurt",
+      "name": "一般優格",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "未加糖全脂原味優格；不代表所有一般優格"
+    },
+    {
+      "id": "bacon",
+      "name": "培根",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "每條值保留；per100g 與 perServing 是 perUnit × 約 1.8 的舊轉換，未有單條 g 重證據；不可拿其顯示值視為實際每 100 g 標示。"
+    },
+    {
+      "id": "chicken_thigh",
+      "name": "雞腿肉",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "生雞腿是否含皮、修脂未定；TFDA 去皮去骨值不能代表含皮，保留待確認。"
+    },
+    {
+      "id": "beef_slice",
+      "name": "牛肉片",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "已確認生重，但部位／修脂不明；現有 P26 有熟肉可能，不能僅據此判錯；TFDA 生牛肉片 120–430 kcal，保留待指定部位。"
+    },
+    {
+      "id": "boneless_short_rib",
+      "name": "無骨牛小排",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "Costco 無骨牛小排的油花等級與包裝標示未留存；不同牛肋部位不可互換，保留。"
+    },
+    {
+      "id": "shrimp_paste",
+      "name": "蝦仁漿",
+      "historicalStatus": "預設佔位待修",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "確認是 FK 預設佔位，仍未修。老四川同名品 219.1 kcal 且含豬背脂／花枝，與 FK 未知配方可能差很大，不擅採該品牌值。"
+    },
+    {
+      "id": "frozen_tofu",
+      "name": "凍豆腐",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "冷凍豆腐原狀可食部，非脫水乾凍豆腐"
+    },
+    {
+      "id": "edamame",
+      "name": "毛豆",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生鮮、去殼毛豆仁；帶殼重、加鹽冷凍即食毛豆不適用；試修五項值重核相符"
+    },
+    {
+      "id": "salmon",
+      "name": "鮭魚",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "八筆非 Alaska Native 生鮭魚物種／養殖狀態記錄等權算術平均；每 100 g 可食部；並非市場占比加權或品牌標示，120–208 kcal 範圍；方法與樣本見稽核表"
+    },
+    {
+      "id": "full_fat_milk_250",
+      "name": "全脂鮮奶",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "全脂鮮乳平均值，以實際 g 秤量；ID 的 250 不代表 250 g 一份"
+    },
+    {
+      "id": "crab_stick",
+      "name": "蟹肉棒",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "冷凍蟹味棒原狀，魚漿製品；不代表特定品牌"
+    },
+    {
+      "id": "century_egg",
+      "name": "皮蛋",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "UI 計顆，但只有 per100g，isCount／perUnit 未設；1 顆目前誤按 1 g 計算，缺單顆可食重量，保留並阻擋發布。"
+    },
+    {
+      "id": "mushroom_meatball",
+      "name": "香菇貢丸",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "UI 計顆、只有 per100g；缺品牌與單顆 g 重，會少算，不能猜單顆份量。"
+    },
+    {
+      "id": "egg_dumpling",
+      "name": "蛋餃",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "UI 計顆、只有 per100g；缺品牌與單顆 g 重，會少算，不能猜單顆份量。"
+    },
+    {
+      "id": "taro_meatball",
+      "name": "芋頭貢丸",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "UI 計顆但 isCount=false，只有 per100g；50 kcal / P1 / F0.2 與名稱可疑，未有產品標示，不能改成任意芋圓／貢丸。"
+    },
+    {
+      "id": "greek_yogurt",
+      "name": "希臘優格",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "59 kcal 很接近 USDA 無脂希臘優格，但名稱沒註明無脂；原品牌／脂肪類型未確認，保留，避免誤套全脂。"
+    },
+    {
+      "id": "sugar_free_soymilk",
+      "name": "無糖豆漿",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "無糖豆漿濃度不明；100 g／份換算一致，但尚無對應產品標示，保留。"
+    },
+    {
+      "id": "whey_protein_cocoa",
+      "name": "乳清蛋白（法式可可）",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "多個品牌混列，30 g／份換算誤差在原值捨入範圍；沒有單一可驗證 SKU，不當作品牌標示。"
+    },
+    {
+      "id": "pea_protein_sesame",
+      "name": "豌豆蛋白（芝麻歐蕾）",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "多個品牌混列，30 g／份換算誤差在原值捨入範圍；沒有單一可驗證 SKU，不當作品牌標示。"
+    },
+    {
+      "id": "low_sugar_soymilk",
+      "name": "低糖豆漿",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "義美／光泉混列；per100g 欄實際按 100 ml 使用，密度與品牌標示未查明，不宣稱 100 g=100 ml。"
+    },
+    {
+      "id": "ing_1789703581239",
+      "name": "豆腐麵",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790221450416",
+      "name": "蛤蜊",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790393110939",
+      "name": "韓式燒烤牛肉",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790571924504",
+      "name": "無糖豆漿（義美）",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "mango",
+      "name": "芒果",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "原新增 commit 明列現有值，但無原始來源；TFDA 西洋種平均熱量相同、C13.0／Na5 不同，不因同熱量就宣稱核實，保留。"
+    },
+    {
+      "id": "cabbage",
+      "name": "高麗菜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生高麗菜可食部"
+    },
+    {
+      "id": "baby_cabbage",
+      "name": "娃娃菜",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "娃娃菜品種未明；不可用小白菜 pak-choi 或任意大白菜樣本冒充標示，保留。"
+    },
+    {
+      "id": "broccoli",
+      "name": "綠花椰菜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生綠花椰菜可食部；非加鹽熟食"
+    },
+    {
+      "id": "kimchi",
+      "name": "韓式泡菜",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "韓式泡菜的糖、發酵與鹽度依品牌配方不同，既有 Na800 未取得對應來源，保留。"
+    },
+    {
+      "id": "black_fungus",
+      "name": "黑木耳",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生鮮濕木耳可食部；泡發乾木耳的含水率不固定，僅能作濕重近似，絕不套用乾木耳值"
+    },
+    {
+      "id": "baby_corn",
+      "name": "玉米筍",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生玉米筍可食部"
+    },
+    {
+      "id": "banana",
+      "name": "香蕉",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "每根值保留；缺單根去皮重量，不能以 USDA 的 medium 或任意 100 g 當固定一根。"
+    },
+    {
+      "id": "spinach",
+      "name": "菠菜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生菠菜可食部"
+    },
+    {
+      "id": "chinese_cabbage",
+      "name": "大白菜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生大白菜 pe-tsai；不使用小白菜 pak-choi"
+    },
+    {
+      "id": "zucchini",
+      "name": "櫛瓜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生櫛瓜含皮可食部"
+    },
+    {
+      "id": "cucumber",
+      "name": "小黃瓜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生小黃瓜含皮可食部"
+    },
+    {
+      "id": "greens",
+      "name": "綜合生菜",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "綜合生菜比例未記；數值近似 USDA 綠葉萵苣，但不可把單一萵苣當已知混合比例。"
+    },
+    {
+      "id": "carrot",
+      "name": "紅蘿蔔",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生胡蘿蔔可食部"
+    },
+    {
+      "id": "onion",
+      "name": "洋蔥",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生洋蔥可食部"
+    },
+    {
+      "id": "mushroom",
+      "name": "香菇",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生鮮香菇平均值；非乾菇或熟菇"
+    },
+    {
+      "id": "beech_mushroom",
+      "name": "鴻喜菇/雪白菇",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "鴻喜菇／雪白菇混列，TFDA 兩者五項不同；未指定比例，不為省事另造等權平均。"
+    },
+    {
+      "id": "frozen_berry",
+      "name": "冷凍莓果",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "莓果種類、混合比例及有無加糖不明；不採單一藍莓或草莓作已核實值。"
+    },
+    {
+      "id": "nori_strips",
+      "name": "海苔絲",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "未調味壽司海苔片切絲的乾重近似；油炸、調味海苔不適用"
+    },
+    {
+      "id": "cherry_tomatoes",
+      "name": "小番茄",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "紅色系小番茄平均值，生、去蒂可食部；非單一品種標示"
+    },
+    {
+      "id": "bean_sprouts",
+      "name": "黃豆芽",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生黃豆芽可食部；不是綠豆芽"
+    },
+    {
+      "id": "scallion",
+      "name": "青蔥",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生青蔥，包含青葉與蔥白"
+    },
+    {
+      "id": "enoki_mushroom",
+      "name": "金針菇",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生金針菇可食部"
+    },
+    {
+      "id": "ing_1787714321224",
+      "name": "洋菇",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "green_pepper_noodle",
+      "name": "青花椒乾拌麵",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "只補 perUnit=既有每包 perServing，修正一包算成全零；未取得同一 SKU 原標示，五項本身仍待確認。"
+    },
+    {
+      "id": "bagel",
+      "name": "原味貝果",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "每個值保留；品牌、尺寸、每個重量未知，不能硬換成每 100 g。"
+    },
+    {
+      "id": "corn",
+      "name": "金黃玉米粒(無加糖)",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "好市多／綠巨人混列；罐頭液、瀝乾或含液基準未知，保留待包裝。"
+    },
+    {
+      "id": "brown_rice",
+      "name": "現煮米飯/糙米飯",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "熟重已標，但白飯／糙米飯混列；米種、含水率、比例未知，111 kcal 不能代表所有飯，保留。"
+    },
+    {
+      "id": "potato",
+      "name": "馬鈴薯",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生馬鈴薯含皮可食部"
+    },
+    {
+      "id": "granola",
+      "name": "綜合燕麥",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "綜合燕麥可能含糖油與堅果，不可套生燕麥資料；配方或品牌未知，保留。"
+    },
+    {
+      "id": "prince_noodles",
+      "name": "王子麵",
+      "historicalStatus": "預設佔位待修",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "確認是 FK 預設佔位，仍未修。原味 40 g 含調味包、50 g 滷味無調味包版本不同；原資料沒 SKU。需確認是否連調味包使用，不強套不相符版本。"
+    },
+    {
+      "id": "sweet_potato",
+      "name": "地瓜",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生地瓜可食部；美國通用品種，台灣甘藷的含水率及品種可能不同；維持既有試修的一位小數值"
+    },
+    {
+      "id": "steamed_noodle",
+      "name": "維力蒸煮麵",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "product_label",
+      "status": "pending",
+      "checkedAt": "2026-10-29",
+      "note": "通路標示已交叉核對 65g／包；仍待本人核對實際產品與規格。"
+    },
+    {
+      "id": "angel_hair_pasta",
+      "name": "義大利（天使）",
+      "historicalStatus": "可靠已核實",
+      "kind": "product_label",
+      "status": "verified",
+      "checkedAt": "2026-10-28",
+      "note": "使用者本次明確確認的乾麵每 100 g 產品標示；依證言核實與保留，非獨立重閱實物標示。"
+    },
+    {
+      "id": "shin_ramen",
+      "name": "辛拉麵",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "366 kcal / F3.5 類似非油炸型，但名稱只有辛拉麵；未確認油炸／非油炸與地區配方，保留。"
+    },
+    {
+      "id": "potato_ramen",
+      "name": "馬鈴薯泡麵",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "UI 計包、只有 per100g；未留單包 g 重與品牌，1 包目前按 1 g 計算，阻擋發布。"
+    },
+    {
+      "id": "ing_1788172010738",
+      "name": "奇美鮮肉包",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "bibimbap_secret",
+      "name": "韓式辣醬",
+      "historicalStatus": "無法查證",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "可能為韓式辣醬或自製拌飯醬；配方不明，不能用純 gochujang 或任意配方替換。"
+    },
+    {
+      "id": "balsamic",
+      "name": "巴薩米克醋",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "巴薩米克醋依濃縮程度／加糖不同；未對應品牌，保留。"
+    },
+    {
+      "id": "sesame_powder",
+      "name": "黑芝麻粉",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "黑芝麻粉乾重，非調糖芝麻飲品"
+    },
+    {
+      "id": "matcha_powder",
+      "name": "抹茶粉",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "未註明純抹茶／調糖粉與品牌；未能核對現有完整五項，不單靠三大營養素回算。"
+    },
+    {
+      "id": "cocoa_powder",
+      "name": "可可粉",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "無糖未鹼化乾可可粉；含纖維 37 g；採來源 228 kcal 與特定 Atwater 係數，不用 4/9/4 回算"
+    },
+    {
+      "id": "chia_seeds",
+      "name": "奇亞籽",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "乾奇亞籽，可食部"
+    },
+    {
+      "id": "smoked_sea_salt",
+      "name": "煙燻海鹽",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "純煙燻鹽暫以食鹽估算；非複方調味鹽，含水率／礦物質差異未涵蓋；100 g 鈉 38800 mg，不是 1 g"
+    },
+    {
+      "id": "soy_sauce",
+      "name": "醬油",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "一般黃豆小麥醬油 shoyu 原狀；非低鈉或醬油膏；TFDA 一般醬油粗脂肪缺值，故選五項齊全 USDA，不把缺值填零"
+    },
+    {
+      "id": "shacha_sauce",
+      "name": "沙茶醬",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "葷沙茶醬，先將油脂及固形物拌勻再秤重；不適用素沙茶或瀝油固形物"
+    },
+    {
+      "id": "maple_syrup",
+      "name": "楓糖漿",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "純楓糖漿原狀；非楓糖風味糖漿"
+    },
+    {
+      "id": "italian_herbs",
+      "name": "義大利綜合香料",
+      "historicalStatus": "無法查證",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "香料種類與混合比例未知，無可重現同品配方；目前無法查證完整五項。"
+    },
+    {
+      "id": "lemon_juice",
+      "name": "新鮮檸檬汁",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "生鮮檸檬汁，非加糖飲品"
+    },
+    {
+      "id": "yuzu_vinegar",
+      "name": "和風柚子醋/果醋",
+      "historicalStatus": "無法查證",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "和風柚子醋醬與果醋混為同項，鈉糖可能差很大，無法選擇對應通用樣本；需明確產品。"
+    },
+    {
+      "id": "horseradish_mayo",
+      "name": "辣根蛋黃醬",
+      "historicalStatus": "無法查證",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "150 kcal / P10 / F5 對蛋黃醬名稱可疑；未知配方或原標示，無法查證，不用 4/9/4 直接定錯。"
+    },
+    {
+      "id": "olive_oil",
+      "name": "橄欖油",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "純橄欖油原狀"
+    },
+    {
+      "id": "truffle_olive_oil",
+      "name": "松露橄欖油",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "若純油可近似橄欖油，但含松露顆粒／調味物的商品不同；未取得配方，保留。"
+    },
+    {
+      "id": "sriracha_mayo",
+      "name": "J-Lek是拉差美乃滋",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "J-Lek 地區版本及每 100 ml／g 標示可能不同，未取得與 FK 同款官網完整營養表；保留，不能把 ml 值寫成 g。"
+    },
+    {
+      "id": "sugar_free_peanut_butter",
+      "name": "無糖花生醬",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "無糖不等於無鹽；Na312 可能為加鹽版本，未取得同品牌標示，保留。"
+    },
+    {
+      "id": "avocado_mash",
+      "name": "酪梨泥",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "未調味酪梨果肉泥，排除皮籽；若為加鹽商品不適用"
+    },
+    {
+      "id": "avocado_oil",
+      "name": "酪梨油",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "純酪梨油原狀"
+    },
+    {
+      "id": "unsalted_butter",
+      "name": "無鹽奶油",
+      "historicalStatus": "有來源的通用估算",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-10-28",
+      "note": "無鹽奶油原狀"
+    },
+    {
+      "id": "brown_sugar_syrup",
+      "name": "黑糖漿",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "濃度未記錄；不能用純黑糖或任意糖水取代，現有值保留待原標示／配方。"
+    },
+    {
+      "id": "coffee_capsule",
+      "name": "咖啡膠囊",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "原 commit 載有真實每顆 16 ml 標示：20 kcal / P0.3 / F0 / C4.6 / Na18；只新增 perUnit，保護原每份與每百值，不重新捨入標示。包裝影像及品牌仍待追溯。"
+    },
+    {
+      "id": "ing_1787563079531",
+      "name": "義美烏醋",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "義美官網成分含糖、醬油及食鹽，既有五項全零尚無標示支持；TFDA 烏醋 Na1571 不能冒充義美標示，差異大，保留待實際包裝。"
+    },
+    {
+      "id": "black_coffee",
+      "name": "黑咖啡",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "Nespresso／現煮美式混列；按 100 ml 使用，USDA brewed coffee 是每 100 g，沖煮濃度和密度未知，保留。"
+    },
+    {
+      "id": "yuzu_liqueur",
+      "name": "柚子酒",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "160 kcal 不可因 4/9/4 約 87.6 就判錯；酒精另供熱量。梅乃宿現款 8% 約另供 44 kcal／100 ml，但無法解釋自釀或其他濃度；保留，未宣稱 160 已核實。"
+    },
+    {
+      "id": "yuzu_jam",
+      "name": "柚子果醬",
+      "historicalStatus": "來源待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": "2026-10-28",
+      "note": "柚子茶醬的糖濃度和品牌不明；20 g／份換算一致，完整標示未核實，保留。"
+    },
+    {
+      "id": "ing_1788320414881",
+      "name": "起司",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791178416667",
+      "name": "統一肉躁醬",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791259732501",
+      "name": "金芝麻沙拉醬",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791259841726",
+      "name": "炸醬",
+      "historicalStatus": "新增10項待確認",
+      "kind": "missing",
+      "status": "pending",
+      "checkedAt": null,
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    }
+  ],
+  "counts": {
+    "pending": 61,
+    "estimated": 37,
+    "verified": 1
+  },
+  "runtimeEvidence": "web/src/utils/OfficialNutritionEvidence.js"
+}

@@ -1,3 +1,4 @@
+import { isCountUnit } from '../utils/IngredientUnit.js?v=20261104_NUTRITION_V3';
 // Fixed, documented model IDs; no per-calculation model discovery.
 export const CHEF_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash'];
 export const CHEF_TOTAL_MS = 20000;
@@ -100,7 +101,7 @@ export function validateChefResult(result, expected, engine) {
             const original = originals.find(i => i.id === item?.id);
             const ing = original && engine.getIngredientById(original.id);
             if (!ing || seen.has(item.id) || !Number.isFinite(item.amount) || item.amount < 0 ||
-                item.unit !== original.unit || item.amount > (ing.isCount || ing.perUnit ? 20 : 1000)) {
+                item.unit !== original.unit || item.amount > (isCountUnit(item.unit) || ing.isCount || ing.perUnit ? 20 : 1000)) {
                 throw chefFailure('invalid');
             }
             seen.add(item.id);

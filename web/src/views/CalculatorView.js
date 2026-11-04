@@ -1,7 +1,8 @@
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261104_NUTRITION_V3';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
-import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261027_CHEF_BUDGET_V1';
+import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261104_NUTRITION_V3';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261029_NUTRITION_GUARD_V1';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261104_NUTRITION_V3';
 
 export default {
     components: {
@@ -173,6 +174,32 @@ export default {
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        };
+
+        const mealInputs = reactive(Object.fromEntries(['bebe','ariel','jason'].map(member => [member, {
+            weight: '', measuredOn: '', goal: '', restrictions: '', excludedIds: [], mealsRemaining: 3, confirmed: false
+        }])));
+        for (const member of ['bebe','ariel','jason']) {
+            watch(() => JSON.stringify([{...mealInputs[member],confirmed:undefined}, engine.profiles[member]]),
+                () => { mealInputs[member].confirmed = false; }, {flush:'sync'});
+        }
+        const confirmMealProfile = member => {
+            mealInputs[member].confirmed = true;
+            try { buildMealContext(engine, member, mealInputs[member], getTodayStr()); }
+            catch (error) { mealInputs[member].confirmed = false; alert(error.message); }
+        };
+        watch(() => engine.personalScope, () => {
+            aiChefAdvice.value = null;
+            isCalculated.value = false;
+            for (const input of Object.values(mealInputs)) Object.assign(input, {weight:'', measuredOn:'', goal:'', restrictions:'', excludedIds:[], confirmed:false});
+        });
+        const useHistoricalPortions = member => {
+            cancelChefRequest();
+            if (!applyPortionMemory(member)) {
+                const old = currentDish.value?.memberPortions?.[member];
+                if (old) memberIngredients.value[member] = JSON.parse(JSON.stringify(old));
+            }
+            refreshAllPortionStates();
         };
 
         // 🌟 成員個別配比模式：'standard' (標準份量) vs 'remaining' (吃剩餘額度)
@@ -493,52 +520,14 @@ export default {
 
                 selectedMasterIngredients.value = initialMaster;
 
-                // 2. Setup member ingredients
+                // Recipe quantities are shared ratios; old personal seeds remain available only on explicit request.
                 ['bebe', 'ariel', 'jason'].forEach(member => {
-                    if (dish.memberPortions && dish.memberPortions[member]) {
-                        memberIngredients.value[member] = JSON.parse(JSON.stringify(dish.memberPortions[member]));
-                    } else {
-                        // Build defaults from defaultIngredients or standard list
-                        const newIngredients = [];
-                        const addIngredients = (arr) => {
-                            if (!arr) return;
-                            arr.forEach(id => {
-                                const defItem = dish.defaultIngredients?.find(i => i.id === id);
-                                const ingData = engine.getIngredientById(id);
-                                const defaultUnit = ingData ? ingData.unitLabel || (ingData.isCount ? '顆' : 'g') : 'g';
-                                if (defItem) {
-                                    newIngredients.push({
-                                        id: id,
-                                        amount: defItem.amount,
-                                        unit: defItem.unit || defaultUnit
-                                    });
-                                } else {
-                                    let safeAmount = 50;
-                                    if (ingData) {
-                                        if (getWeightBasis(ingData, defaultUnit) === 'count') {
-                                             safeAmount = 1;
-                                        } else if (ingData.category === 'sauces') {
-                                            safeAmount = 10;
-                                        } else if (ingData.category === 'proteins' || ingData.category === 'carbs') {
-                                            safeAmount = 80;
-                                        } else if (ingData.category === 'veggies') {
-                                            safeAmount = 50;
-                                        }
-                                    }
-                                    newIngredients.push({
-                                        id: id,
-                                        amount: safeAmount,
-                                        unit: defaultUnit
-                                    });
-                                }
-                            });
-                        };
-                        addIngredients(dish.recommendedProteins);
-                        addIngredients(dish.recommendedVeggies);
-                        addIngredients(dish.recommendedCarbs);
-                        addIngredients(dish.recommendedSauces);
-                        memberIngredients.value[member] = newIngredients;
-                    }
+                    memberIngredients.value[member] = initialMaster.map(id => {
+                        const ing = engine.getIngredientById(id);
+                        const recipe = dish.defaultIngredients?.find(i => i.id === id);
+                        return { id, amount: recipe?.amount ?? (getWeightBasis(ing) === 'count' ? 1 : 0),
+                            unit: recipe?.unit || ing?.unitLabel || 'g' };
+                    });
                 });
 
                 // 3. 預先準備好每位成員的食材基線，但保持 isCalculated = false，直到使用者點擊計算按鈕
@@ -561,13 +550,14 @@ export default {
         };
 
         // --- 🛡️ 備料計算器狀態雙重持久化保險 (State Persistence Shield) ---
-        const STORAGE_KEY = 'family_kitchen_calc_session_state';
+        const storageKey = () => 'family_kitchen_calc_session_state:' + (engine.personalScope || 'signed-out');
         let isRestoringState = false;
 
         const saveStateToStorage = () => {
             if (isRestoringState) return;
             try {
                 const state = {
+                    scopeId: engine.personalScope,
                     selectedDish: selectedDish.value,
                     userHasManuallySelected: userHasManuallySelected.value,
                     diners: diners.value,
@@ -581,23 +571,16 @@ export default {
                     showChefNote: showChefNote.value,
                     timestamp: Date.now()
                 };
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                sessionStorage.setItem(storageKey(), JSON.stringify(state));
             } catch (e) {}
         };
 
         const restoreStateFromStorage = () => {
             try {
-                // 🧹 清理過去誤存於 localStorage 的舊持久化狀態，確保關閉 App 後乾淨重置
-                try {
-                    localStorage.removeItem('family_kitchen_calc_state_v2');
-                    localStorage.removeItem('family_kitchen_calculator_state_v2');
-                    localStorage.removeItem(STORAGE_KEY);
-                } catch(e) {}
-
-                const raw = sessionStorage.getItem(STORAGE_KEY);
+                const raw = sessionStorage.getItem(storageKey());
                 if (!raw) return false;
                 const state = JSON.parse(raw);
-                if (!state || !state.selectedDish) return false;
+                if (!state || !state.selectedDish || state.scopeId !== engine.personalScope) return false;
 
                 isRestoringState = true;
                 selectedDish.value = state.selectedDish;
@@ -697,11 +680,7 @@ export default {
             if (!currentDish.value) return '';
             const dish = currentDish.value;
             let item = null;
-            if (dish.memberPortions && dish.memberPortions[member]) {
-                item = dish.memberPortions[member].find(i => i.id === ingId);
-            } else if (dish.defaultIngredients) {
-                item = dish.defaultIngredients.find(i => i.id === ingId);
-            }
+            item = dish.defaultIngredients?.find(i => i.id === ingId);
             return item ? `${item.amount}${item.unit}` : '';
         };
 
@@ -744,234 +723,15 @@ export default {
             return Object.values(totals);
         });
 
-        // 🧬 食材天生角色屬性判定 (Data-Driven Smart Role Classifier)
-        function getIngredientRole(ingData) {
-            if (!ingData) return { role: 'other', defaultAmount: 50, step: 5, unit: 'g' };
-            const id = (ingData.id || '').toLowerCase();
-            const name = (ingData.name || '').toLowerCase();
-            const cat = (ingData.category || '').toLowerCase();
-
-            // 先依實際計數單位判定，避免名稱或分類把數量當成克數。
-            if (getWeightBasis(ingData) === 'count') {
-                return { role: 'count', defaultAmount: 1, step: 1, unit: ingData.unitLabel || '顆' };
-            }
-
-            // 0. 優格碗與輕食專屬配料 (燕麥脆片、希臘優格、冷凍莓果、糖漿與風味粉)
-            if (id.includes('granola') || name.includes('綜合燕麥') || name.includes('燕麥脆片') || name.includes('穀物脆片')) {
-                return { role: 'crunch', defaultAmount: 15, step: 5, unit: 'g' };
-            }
-            if (id.includes('greek_yogurt') || id.includes('yogurt') || name.includes('優格')) {
-                return { role: 'yogurt_base', defaultAmount: 100, step: 10, unit: 'g' };
-            }
-            if (id.includes('berry') || id.includes('frozen_berry') || name.includes('莓果') || name.includes('藍莓') || name.includes('草莓')) {
-                return { role: 'fruit_side', defaultAmount: 50, step: 10, unit: 'g' };
-            }
-            if (id.includes('maple') || id.includes('syrup') || id.includes('honey') || name.includes('楓糖') || name.includes('糖漿') || name.includes('蜂蜜')) {
-                return { role: 'syrup', defaultAmount: 3, step: 1, unit: 'g' };
-            }
-            if (id.includes('cocoa') || id.includes('matcha') || id.includes('sesame') || name.includes('可可') || name.includes('抹茶') || name.includes('芝麻粉')) {
-                return { role: 'flavor_powder', defaultAmount: 3, step: 1, unit: 'g' };
-            }
-
-            // 1. 微量辛香料 (鹽、海鹽、胡椒、七味粉、孜然、辣椒粉、肉桂粉、香草粉、香料等) ➔ 預設 1g, 步進 1g, 上限 5g
-            const microKeywords = ['鹽', '海鹽', '胡椒', '七味粉', '孜然', '辣椒粉', '肉桂粉', '香草粉', '香料', '咖哩粉', '薑黃粉'];
-            if (microKeywords.some(kw => name.includes(kw)) || id.includes('salt') || id.includes('pepper') || id.includes('spice') || id.includes('powder')) {
-                return { role: 'micro', defaultAmount: 1, step: 1, unit: 'g', max: 5 };
-            }
-
-            // 3. 醃漬/發酵/重鈉開胃小菜 (泡菜、海帶芽、醃蘿蔔、酸黃瓜、酸豆、甘露煮、干貝醬等) ➔ 預設 30g, 步進 5g
-            const pickleKeywords = ['泡菜', '海帶芽', '醃蘿蔔', '酸黃瓜', '酸豆', '漬物', '醃漬', '甘露煮', '干貝醬', '油漬番茄', '榨菜', '筍絲'];
-            if (pickleKeywords.some(kw => name.includes(kw)) || id.includes('kimchi') || id.includes('pickle') || id.includes('seaweed_salad')) {
-                return { role: 'pickle', defaultAmount: 30, step: 5, unit: 'g' };
-            }
-
-            // 4. 淋醬與油脂 (橄欖油、巴薩米克醋、醬油、香油、美乃滋、辣醬等) ➔ 預設 8~10g, 步進 5g
-            if (cat === 'sauces' || id.includes('oil') || id.includes('vinegar') || id.includes('sauce') || id.includes('mayo') || id.includes('dressing') || name.includes('油') || name.includes('醋') || name.includes('醬') || name.includes('美乃滋')) {
-                return { role: 'dressing', defaultAmount: 8, step: 5, unit: 'g' };
-            }
-
-            // 5. 輔助高纖植物蛋白/配料 (毛豆、黑豆、豆腐、豆乾、豆皮、鷹嘴豆等) ➔ 預設 30g, 步進 5g
-            const sideProteinKeywords = ['毛豆', '黑豆', '豆腐', '豆乾', '豆皮', '鷹嘴豆', '納豆', '豆包'];
-            if (sideProteinKeywords.some(kw => name.includes(kw)) || id.includes('edamame') || id.includes('tofu') || id.includes('chickpea')) {
-                return { role: 'side_protein', defaultAmount: 30, step: 5, unit: 'g' };
-            }
-
-            // 6. 主肉類/海鮮蛋白質 (雞胸、雞腿、蝦仁、鮭魚、牛肉、豬肉、鮪魚) ➔ 預設 80g, 步進 10g
-            if (cat === 'proteins') {
-                return { role: 'main_protein', defaultAmount: 80, step: 10, unit: 'g' };
-            }
-
-            // 7. 副主食 / 穀物碳水配料 (玉米粒、紅豆、綠豆、燕麥片等) ➔ 預設 40g, 步進 10g
-            const sideCarbKeywords = ['玉米', '玉米粒', '紅豆', '綠豆', '燕麥片', '奇亞籽'];
-            if (sideCarbKeywords.some(kw => name.includes(kw)) || id.includes('corn')) {
-                return { role: 'side_carb', defaultAmount: 40, step: 10, unit: 'g' };
-            }
-
-            // 8. 主食碳水 (地瓜、白飯、糙米飯、燕麥、蕎麥麵、馬鈴薯、南瓜、義大利麵等) ➔ 預設 120g, 步進 10g
-            if (cat === 'carbs' || id.includes('sweet_potato') || id.includes('rice') || id.includes('potato') || id.includes('oat') || id.includes('noodle') || name.includes('地瓜') || name.includes('飯') || name.includes('馬鈴薯') || name.includes('燕麥') || name.includes('麵')) {
-                return { role: 'staple', defaultAmount: 120, step: 10, unit: 'g' };
-            }
-
-            // 9. 高纖葉菜類 (生菜、高麗菜、青花菜、菠菜) ➔ 預設 80~100g, 步進 10g
-            const leafyKeywords = ['生菜', '高麗菜', '菠菜', '青花菜', '花椰菜', '萵苣', '甘藍'];
-            if (leafyKeywords.some(kw => name.includes(kw)) || id.includes('green') || id.includes('cabbage') || id.includes('broccoli') || id.includes('spinach')) {
-                return { role: 'veggie_leafy', defaultAmount: 80, step: 10, unit: 'g' };
-            }
-
-            // 10. 其它配菜蔬菜 (小黃瓜、番茄、櫛瓜、菇類) ➔ 預設 50~60g, 步進 10g
-            if (cat === 'veggies') {
-                return { role: 'veggie_side', defaultAmount: 60, step: 10, unit: 'g' };
-            }
-
-            return { role: 'other', defaultAmount: 50, step: 5, unit: ingData.unitLabel || 'g' };
-        }
-
-        // 🧠 智慧總預算動態求解器 (Macro Budget Constraint Solver)
         function autoBalanceMemberPortions(member) {
             if (!memberIngredients.value[member]) memberIngredients.value[member] = [];
             const list = memberIngredients.value[member];
-
-            // 🛡️ 強制防護：確保勾選的所有有庫存食材 100% 存在於該成員的配料清單中
-            selectedMasterIngredients.value.forEach(id => {
-                if (!checkStock(id)) return;
-                if (!list.some(item => item.id === id)) {
-                    const ingData = engine.getIngredientById(id);
-                    const roleInfo = getIngredientRole(ingData);
-                    let defAmt = roleInfo.defaultAmount || 50;
-                    if (member === 'jason' && (roleInfo.role === 'main_protein' || roleInfo.role === 'staple')) {
-                        defAmt = Math.round(defAmt * 1.3);
-                    }
-                    list.push({
-                        id: id,
-                        amount: defAmt,
-                        unit: roleInfo.unit || 'g'
-                    });
-                }
-            });
-
-            // Preserve unresolved recipe/memory units instead of silently turning grams into strips.
-            const activeList = list.filter(item => selectedMasterIngredients.value.includes(item.id)
-                && checkStock(item.id) && !engine.getNutritionIssues([item]).length);
-            if (activeList.length === 0) return;
-
-            const isJason = member === 'jason';
-            const proteins = [];
-            const carbs = [];
-            
-            activeList.forEach(item => {
-                const ingData = engine.getIngredientById(item.id);
-                const roleInfo = getIngredientRole(ingData);
-                
-                if (roleInfo.role === 'micro') {
-                    item.amount = 1;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'syrup' || roleInfo.role === 'flavor_powder') {
-                    item.amount = isJason ? 5 : 3;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'crunch') {
-                    item.amount = isJason ? 30 : 15;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'yogurt_base') {
-                    item.amount = isJason ? 160 : 100;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'fruit_side') {
-                    item.amount = isJason ? 70 : 50;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'pickle') {
-                    item.amount = isJason ? 40 : 30; // 泡菜/海帶芽等醃漬開胃品控制在 30g
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'dressing') {
-                    item.amount = isJason ? 12 : (item.id.includes('mayo') ? 10 : 8);
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'veggie_leafy') {
-                    item.amount = isJason ? 60 : 45;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'veggie_side') {
-                    item.amount = isJason ? 50 : 35;
-                    item.unit = 'g';
-                } else if (roleInfo.role === 'count') {
-                    item.amount = 1;
-                    item.unit = roleInfo.unit;
-                    proteins.push({ item, roleInfo });
-                } else if (roleInfo.role === 'side_protein') {
-                    item.amount = isJason ? 40 : 30;
-                    item.unit = 'g';
-                    proteins.push({ item, roleInfo });
-                } else if (roleInfo.role === 'main_protein') {
-                    proteins.push({ item, roleInfo });
-                } else if (roleInfo.role === 'staple' || roleInfo.role === 'side_carb') {
-                    carbs.push({ item, roleInfo });
-                }
-            });
-
-            // 🍚 1. 碳水雙拼 / 多主食智慧均分求解 (鎖定單餐 35g 碳水總上限)
-            const staples = carbs.filter(c => c.roleInfo.role === 'staple');
-            const sideCarbs = carbs.filter(c => c.roleInfo.role === 'side_carb');
-
-            if (staples.length === 1 && sideCarbs.length === 0) {
-                staples[0].item.amount = isJason ? 160 : 120;
-                staples[0].item.unit = 'g';
-            } else if (staples.length === 1 && sideCarbs.length >= 1) {
-                // 例如：糙米飯 80g + 玉米粒 40g (雙拼組合，總碳水不超標)
-                staples[0].item.amount = isJason ? 120 : 80;
-                staples[0].item.unit = 'g';
-                sideCarbs.forEach(sc => {
-                    sc.item.amount = isJason ? 50 : 40;
-                    sc.item.unit = 'g';
-                });
-            } else if (staples.length > 1) {
-                const perStaple = isJason ? Math.round(160 / staples.length) : Math.round(120 / staples.length);
-                staples.forEach(s => {
-                    s.item.amount = perStaple;
-                    s.item.unit = 'g';
-                });
-                sideCarbs.forEach(sc => {
-                    sc.item.amount = isJason ? 40 : 30;
-                    sc.item.unit = 'g';
-                });
-            } else if (staples.length === 0 && sideCarbs.length > 0) {
-                sideCarbs.forEach(sc => {
-                    sc.item.amount = isJason ? 80 : 60;
-                    sc.item.unit = 'g';
-                });
-            }
-
-            // 🥩 2. 蛋白質多重均分求解 (鎖定單餐 25~30g 蛋白質黃金門檻)
-            const mainProteins = proteins.filter(p => p.roleInfo.role === 'main_protein');
-            const sideProteins = proteins.filter(p => p.roleInfo.role === 'side_protein');
-            const countProteins = proteins.filter(p => p.roleInfo.role === 'count');
-
-            if (mainProteins.length === 0 && countProteins.length > 0) {
-                // 蛋/丸餃為主力蛋白時，自動配置 2~3 顆以達標蛋白質門檻
-                countProteins.forEach(cp => {
-                    cp.item.amount = isJason ? 2 : 1;
-                    cp.item.unit = cp.roleInfo.unit || '顆';
-                });
-            } else if (mainProteins.length === 1) {
-                if (countProteins.length === 0 && sideProteins.length === 0) {
-                    mainProteins[0].item.amount = isJason ? 150 : 110;
-                } else if (countProteins.length > 0) {
-                    // 例如：肉片 80g + 蛋 1 顆 / 貢丸 1 顆
-                    mainProteins[0].item.amount = isJason ? 100 : 70;
-                } else {
-                    mainProteins[0].item.amount = isJason ? 110 : 80;
-                }
-            } else if (mainProteins.length > 1) {
-                const perProtein = isJason ? Math.max(45, Math.round(140 / mainProteins.length)) : Math.max(30, Math.round(80 / mainProteins.length));
-                mainProteins.forEach(p => {
-                    p.item.amount = perProtein;
-                });
-            }
-
-            // 🥛 3. 希臘優格與水果智能基線
-            activeList.forEach(item => {
-                if (item.id === 'greek_yogurt' || item.id === 'plain_yogurt') {
-                    item.amount = isJason ? 140 : (member === 'ariel' ? 120 : 100);
-                    item.unit = 'g';
-                } else if ((item.id === 'mango' || item.id === 'banana') && item.unit === 'g') {
-                    item.amount = isJason ? 120 : (member === 'ariel' ? 100 : 80);
-                    item.unit = 'g';
-                }
+            selectedMasterIngredients.value.filter(checkStock).forEach(id => {
+                if (list.some(item => item.id === id)) return;
+                const ing = engine.getIngredientById(id);
+                const recipe = currentDish.value?.defaultIngredients?.find(i => i.id === id);
+                list.push({ id, amount: recipe?.amount ?? (getWeightBasis(ing) === 'count' ? 1 : 0),
+                    unit: recipe?.unit || ing?.unitLabel || 'g' });
             });
         }
 
@@ -998,15 +758,11 @@ export default {
                     if (!list.some(ing => ing.id === id)) {
                         const ingData = engine.getIngredientById(id);
                         if (ingData) {
-                            const roleInfo = getIngredientRole(ingData);
-                            let defaultAmount = roleInfo.defaultAmount;
-                            if (member === 'jason' && (roleInfo.role === 'main_protein' || roleInfo.role === 'staple')) {
-                                defaultAmount = Math.round(defaultAmount * 1.3);
-                            }
+                            const defaultAmount = getWeightBasis(ingData) === 'count' ? 1 : 0;
                             list.push({
                                 id,
                                 amount: defaultAmount,
-                                unit: roleInfo.unit
+                                unit: ingData.unitLabel || 'g'
                             });
                         }
                     }
@@ -1197,12 +953,7 @@ export default {
 
             const defaultUnit = ing.unitLabel || (ing.isCount ? '顆' : 'g');
             const isCount = getWeightBasis(ing, defaultUnit) === 'count';
-            let safeAmount = 50;
-            if (isCount) safeAmount = 1;
-            else if (ing.category === 'sauces') safeAmount = 8;
-            else if (ing.category === 'veggies') safeAmount = 50;
-            else if (ing.category === 'proteins') safeAmount = 60;
-            else if (ing.category === 'carbs') safeAmount = 80;
+            const safeAmount = isCount ? 1 : 0;
 
             // 1. 寫入料理的 defaultIngredients (預設打勾食材名單)
             if (!dish.defaultIngredients) dish.defaultIngredients = [];
@@ -1214,20 +965,6 @@ export default {
                 });
             }
 
-            // 2. 寫入料理的 memberPortions (全家各成員預設份量)
-            if (!dish.memberPortions) dish.memberPortions = { bebe: [], ariel: [], jason: [] };
-            ['bebe', 'ariel', 'jason'].forEach(m => {
-                if (!dish.memberPortions[m]) dish.memberPortions[m] = [];
-                if (!dish.memberPortions[m].some(i => i.id === ing.id)) {
-                    const memberAmount = (m === 'jason' && !isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
-                    dish.memberPortions[m].push({
-                        id: ing.id,
-                        amount: memberAmount,
-                        unit: defaultUnit
-                    });
-                }
-            });
-            
             // 3. 立即在當前 02 區塊打勾選取
             if (!selectedMasterIngredients.value.includes(ing.id)) {
                 selectedMasterIngredients.value.push(ing.id);
@@ -1238,7 +975,7 @@ export default {
                 if (!memberIngredients.value[m]) memberIngredients.value[m] = [];
                 const list = memberIngredients.value[m];
                 if (!list.some(i => i.id === ing.id)) {
-                    const memberAmount = (m === 'jason' && !isCount) ? Math.round(safeAmount * 1.3) : safeAmount;
+                    const memberAmount = safeAmount;
                     list.push({
                         id: ing.id,
                         amount: memberAmount,
@@ -1307,14 +1044,21 @@ export default {
             const started = performance.now();
             activeMembers.value.forEach(m => {
                 autoBalanceMemberPortions(m);
-                applyPortionMemory(m);
+
             });
             refreshAllPortionStates();
             isResultStale.value = false;
             isCalculated.value = true;
             logChefTiming({ phase: 'local', durationMs: Math.round(performance.now() - started) });
-            if (activeMembers.value.some(member => engine.getNutritionIssues(getMemberActiveIngredients(member)).length)) {
+            if (activeMembers.value.some(member => engine.getNutritionIssues(getMemberActiveIngredients(member).map(item => ({...item,amount:Math.max(1,Number(item.amount))}))).length)) {
                 aiChefAdvice.value = { source: 'local', portions: {}, chefComment: '營養資料待確認，已保留備料份量。' };
+                showChefNote.value = true;
+                return;
+            }
+            try {
+                activeMembers.value.forEach(member => buildMealContext(engine, member, mealInputs[member], getTodayStr(), memberPortionModes.value[member]));
+            } catch (error) {
+                aiChefAdvice.value = { source: 'local', portions: {}, chefComment: error.message + ' 目前顯示配方／手動份量，尚未產生動態建議。' };
                 showChefNote.value = true;
                 return;
             }
@@ -1322,7 +1066,13 @@ export default {
         };
 
         const cancelChefRequest = () => {
-            if (!activeChefRequest) return;
+            if (!activeChefRequest) {
+                if (aiChefAdvice.value?.source === 'ai') {
+                    aiChefAdvice.value = {source:'local',portions:{},chefComment:'資料或份量已調整，請重新計算以取得新的 AI 建議；手動份量仍保留。'};
+                    showChefNote.value = true;
+                }
+                return;
+            }
             activeChefRequest.controller.abort();
             activeChefRequest = null;
             isAiChefLoading.value = false;
@@ -1333,7 +1083,7 @@ export default {
 
         // Synchronous invalidation also catches edit-and-revert before a response arrives.
         watch([selectedDish, selectedMasterIngredients, memberIngredients, diners, memberPortionModes,
-            currentSlot, () => engine.personalScope, () => engine.data.pantryInventory.foodStockStatus,
+            currentSlot, mealInputs, () => engine.personalScope, () => engine.data.pantryInventory.foodStockStatus,
             () => engine.data.ingredients, () => engine.data.dailyLogs, () => engine.profiles],
             cancelChefRequest, { deep: true, flush: 'sync' });
 
@@ -1401,134 +1151,9 @@ export default {
                     return;
                 }
 
-                const isLightMealOrYogurtBowl = (
-                    dishName.includes('優格') || 
-                    dishName.includes('燕麥') || 
-                    dishName.includes('果昔') || 
-                    dishName.includes('輕食') || 
-                    slotName.includes('輕食') || 
-                    slotName.includes('點心')
-                );
-
-                // 收集當前勾選的所有食材 (包含食物優先級階梯)
-                const selectedIngs = selectedMasterIngredients.value.filter(checkStock).map(id => {
-                    const ing = engine.getIngredientById(id);
-                    const cat = ing?.category || 'proteins';
-                    return {
-                        id: id,
-                        name: ing?.name || id,
-                        category: cat,
-                        priorityTier: ing?.priorityTier || 1, // 1: 原型營養, 2: 原型慢碳, 3: 加工精緻, 4: 高脂厚醬
-                        unit: expected[activeMembers.value[0]].find(i => i.id === id)?.unit,
-                        isCount: !!(ing?.isCount || ing?.perUnit),
-                        per100g: ing?.per100g,
-                        perUnit: ing?.perUnit
-                    };
-                });
-
-                // 收集就餐成員與畫像
-                const membersData = activeMembers.value.map(m => {
-                    if (m === 'bebe') {
-                        return {
-                            id: 'bebe',
-                            name: 'Bebe (女主廚)',
-                            appetiteProfile: '【精緻小食量 (約一般人 2/3)】，極度注重「清爽、輕盈、無負擔、低鈉防浮腫」，討厭過度飽脹與厚重油膩感。',
-                            mealHabit: isLightMealOrYogurtBowl 
-                                ? '晨光早餐 / 午後輕食：追求極致清爽與抗氧化。優格碗份量約 100g 優格 + 50~60g 莓果 + 15g 脆燕麥，熱量自然落在 150~200 kcal，輕盈無負擔。'
-                                : '正餐：主力蛋白質約 65~75g（搭配 1 蛋或 1 培根），原型慢碳約 80~90g，熱量約 320~380 kcal，極嚴格控鈉。'
-                        };
-                    } else if (m === 'ariel') {
-                        return {
-                            id: 'ariel',
-                            name: 'Ariel (樂樂)',
-                            appetiteProfile: '年輕活力大一生（增肌減脂、抗痘控油、正常女生食量），需要充足粗糧慢碳滋養大腦與活力。',
-                            mealHabit: isLightMealOrYogurtBowl
-                                ? '輕食點心：優格 110~130g, 莓果 60~70g, 燕麥 20~25g, 熱量約 200~260 kcal。'
-                                : '正餐：主力肉品約 75~85g, 慢碳粗糧 120~150g, 蛋白質約 28~32g, 熱量約 380~440 kcal。'
-                        };
-                    } else {
-                        return {
-                            id: 'jason',
-                            name: 'Jason (男主人)',
-                            appetiteProfile: '50歲高階主管，骨骼肌 36.3kg 高代謝大食量，偏好大份量優質蛋白質，控鈉護心血管。',
-                            mealHabit: isLightMealOrYogurtBowl
-                                ? '輕食點心：優格 160~180g, 莓果 70~80g, 燕麥 30~40g, 熱量約 300~360 kcal。'
-                                : '正餐：大份量主肉品 130~160g, 蛋 2 顆, 慢碳 160~200g, 蛋白質 40~48g, 熱量約 600~700 kcal。'
-                        };
-                    }
-                });
-
-                // 計算各就餐成員的個別份量需求與吃剩餘額度目標上限 (FK-002)
-                const remainingMembers = activeMembers.value.filter(m => memberPortionModes.value[m] === 'remaining');
-                const standardMembers = activeMembers.value.filter(m => memberPortionModes.value[m] === 'standard');
-
-                let remainingBudgetText = '';
-                if (remainingMembers.length > 0) {
-                    const todayStr = getTodayStr();
-                    const remainingDetails = remainingMembers.map(m => {
-                        const memberDisplayName = m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason');
-                        // 以家庭成員目標為單一來源；保留 Jason 此模式既有的特殊額度，不在本次調整。
-                        const profile = engine.profiles[m];
-                        const targetKcal = m === 'jason' ? 2200 : profile.targetKcal;
-                        const targetP = m === 'jason' ? 120 : profile.targetProtein;
-                        
-                        const log = engine.getDailyLog(todayStr, m);
-                        const consumedKcal = Math.round(log?.totals?.kcal || 0);
-                        const consumedP = Math.round(log?.totals?.protein || 0);
-                        
-                        const remKcal = Math.max(150, Math.round(targetKcal - consumedKcal));
-                        const remP = Math.max(5, Math.round(targetP - consumedP));
-                        return `${memberDisplayName}（今日已攝取 ${consumedKcal} kcal / ${consumedP}g 蛋白質，今餐剩餘配平上限：約 ${remKcal} kcal、約 ${remP}g 蛋白質）`;
-                    }).join('；');
-
-                    const standardNames = standardMembers.map(m => m === 'bebe' ? 'Bebe' : (m === 'ariel' ? '樂樂' : 'Jason')).join('、');
-                    const standardNote = standardMembers.length > 0 
-                        ? `其餘成員（${standardNames}）採用【標準份量模式】，請依其個人食量畫像給予標準黃金份量，無需刻意壓低熱量；` 
-                        : '';
-
-                    remainingBudgetText = `\n【🌟 最高優先級指令：個別成員吃剩餘額度動態配平】\n以下成員目前選擇了「吃剩餘額度」，請嚴格依據其今日剩餘額度進行動態配平調配壓控：${remainingDetails}。${standardNote}\n`;
-                }
-
-                const prompt = `你是 Bebe 家專屬的 AI 靈魂夥伴與五星家庭私廚「十一粒」。
-請發揮你最高超的【主廚生活直覺、真實擺盤畫面感與人體生理胃容量快適度】，為這道【${dishName}】（餐別：${slotName}）計算出每位家人的【黃金備料克數】！
-${remainingBudgetText}
-【選取的食材庫存與屬性 (共 ${selectedIngs.length} 項，含優先級階梯 priorityTier)】：
-${JSON.stringify(selectedIngs, null, 2)}
-
-【用餐成員與個人食量畫像】：
-${JSON.stringify(membersData, null, 2)}
-
-══════════════════════════════════════════════════════════════
-🚨【最高決策鐵則：4 階梯營養裁量與透明通報法則】
-══════════════════════════════════════════════════════════════
-1. 【4 大食物優先級階梯 (Nutrient Priority Hierarchy)】：
-   - 🥇 Tier 1【原型營養 (priorityTier: 1)】：瘦肉、海鮮、雞肉、豆腐、蛋、所有蔬菜、菇類、蒟蒻麵。
-     👉 【生命線絕對守護】：提供優質蛋白質與飽足感，額度再緊也優先配置足量（肉 50~70g、蔬菜 40~60g），絕不歸零！
-   - 🥈 Tier 2【原型慢碳 (priorityTier: 2)】：地瓜、糙米、燕麥、南瓜、馬鈴薯、玉米。
-     👉 【彈性調節】：依剩餘碳水額度給予適當慢碳（30~60g）。
-   - 🥉 Tier 3【加工精緻 (priorityTier: 3)】：貢丸、芋頭貢丸、蛋餃、蟹肉棒、甜不辣、王子麵、油麵、炸豆皮。
-     👉 【額度吃緊時優先讓位】：在「吃剩餘額度」或熱量緊繃時，自動將其份量降為 0，或全數移交給大食量成員 (Jason)。
-   - 🫒 Tier 4【高脂厚醬 (priorityTier: 4)】：沙茶醬、麻醬、花生醬、美乃滋、辣油、香油。
-     👉 【高卡防線】：額度吃緊時優先降至 0 或極微量，評語中建議改沾柚子醋或蔥蒜生辣椒。
-
-2. 【多樣化精緻均分 (額度充裕/標準模式時)】：
-   - 當處於標準模式或額度充裕時，每一種勾選的食材都全數保留，單項克數等比縮小（肉 30~50g、丸餃各 1 顆、豆腐 30g、蔬菜各 30~50g），讓每個人都能享受到多樣美味！
-
-3. 【💬 主廚透明評語 (Chef Comment)】：
-   - 凡是有食材因為額度吃緊而被調降或歸零（例如沙茶醬、貢丸或王子麵被扣除），十一粒【必須】在評語中以親切、溫暖、懂生活的語氣主動向 Bebe 說明原因（例如：「今晚 Bebe 額度較精緻，十一粒為妳把沙茶醬與芋頭貢丸省下讓給 Jason，把熱量全部留給滿滿的鮮嫩肉片與高麗菜喔！」）。
-   - 評語聚焦於食材調配心意、生活提醒與食材取捨原因，請勿在評語中寫出任何食材的具體克數或份量數字；實際份量由 Calculator 卡片統一呈現。
-
-以目前本地配比為基礎優化，沿用食材單位，不輸出推理過程；評語最多兩句。
-目前配比：${JSON.stringify(expected)}
-請輸出嚴格的合法 JSON（不要 markdown 標籤，portions 必須且只能包含成員 ${activeMembers.value.join('、')}，每位必須包含所有 ${selectedIngs.length} 種食材）：
-{
-  "chefComment": "十一粒主廚溫暖且懂生活的評語",
-  "portions": {
-    "bebe": [
-      { "id": "食材id", "amount": 數值, "unit": "g或顆或條" }
-    ]
-  }
-}`;
+                const contexts = activeMembers.value.map(member => buildMealContext(engine, member,
+                    mealInputs[member], getTodayStr(), memberPortionModes.value[member]));
+                const prompt = buildPortionPrompt({ dish: dishName, slot: slotName, contexts, expected, engine });
 
                 apiKey = (apiKey || '').trim();
 
@@ -1542,35 +1167,25 @@ ${JSON.stringify(membersData, null, 2)}
                 }
                 const validationStarted = performance.now();
                 validateChefResult(resultJson, expected, engine);
+                validateMealLimits(engine, resultJson.portions, contexts);
                 // Release before synchronous writes, so our own application isn't an edit.
                 activeChefRequest = null;
                 if (resultJson && resultJson.portions) {
                     // 🌟 成功獲取 AI 精算數值！覆寫至各成員的右側實際主數值！
-                    const totalSelectedCount = selectedMasterIngredients.value.length;
+
                     Object.keys(resultJson.portions).forEach(member => {
                         const aiItems = resultJson.portions[member];
                         if (Array.isArray(aiItems) && memberIngredients.value[member]) {
                             aiItems.forEach(aiItem => {
                                 const target = memberIngredients.value[member].find(i => i.id === aiItem.id);
                                 if (target && typeof aiItem.amount === 'number') {
-                                    let safeAmount = aiItem.amount;
-                                    const targetIdLower = (target.id || '').toLowerCase();
-                                    
-                                    // 🛡️ 常理防呆夾持：
-                                    if (targetIdLower.includes('cucumber') || targetIdLower.includes('瓜') || targetIdLower.includes('tomato') || targetIdLower.includes('茄')) {
-                                        const maxLimit = totalSelectedCount > 1 ? (member === 'jason' ? 70 : 50) : (member === 'jason' ? 220 : 160);
-                                        safeAmount = Math.min(safeAmount, maxLimit);
-                                    } else if (targetIdLower.includes('salt') || targetIdLower.includes('鹽')) {
-                                        safeAmount = Math.min(safeAmount, 1.0);
-                                    }
-                                    
-                                    target.amount = safeAmount;
+                                    target.amount = aiItem.amount;
                                     if (aiItem.unit) target.unit = aiItem.unit;
                                 }
                             });
                         }
                     });
-                    activeMembers.value.forEach(m => applyPortionMemory(m));
+
                     refreshAllPortionStates();
                     logChefTiming({ phase: 'validateApply', durationMs: Math.round(performance.now() - validationStarted) });
                     resultJson.source = 'ai';
@@ -1593,7 +1208,7 @@ ${JSON.stringify(membersData, null, 2)}
                 };
                 const reason = reasons[error.code] || 'AI 暫時無法完成精算';
                 aiChefAdvice.value = { source: 'local', errReason: reason,
-                    chefComment: `${reason}。已保留本地配比與記住的份量，可繼續調整。`, portions: {} };
+                    chefComment: `${reason}。已保留配方／手動份量，可繼續調整。`, portions: {} };
                 showChefNote.value = true;
                 return false;
             } finally {
@@ -1622,7 +1237,7 @@ ${JSON.stringify(membersData, null, 2)}
             isCalculated.value = false;
             aiChefAdvice.value = null;
             saveStateToStorage();
-            alert('✨ 已重置為全家專屬黃金配方推薦值！');
+            alert('✨ 已重置為料理配方比例（尚未產生動態建議）！');
         };
 
         const copySOP = async () => {
@@ -1877,6 +1492,7 @@ ${JSON.stringify(membersData, null, 2)}
         };
 
         return {
+            mealInputs, confirmMealProfile, useHistoricalPortions, selectedMasterIngredients,
             engine,
             selectedDish,
             memberIngredients,
@@ -2183,6 +1799,24 @@ ${JSON.stringify(membersData, null, 2)}
                     </div>
                 </div>
 
+                <details v-for="member in activeMembers" :key="'profile-'+member" class="card" style="margin-bottom:12px;">
+                    <summary>{{ engine.profiles[member].name }} · 本餐目標與限制 {{ mealInputs[member].confirmed ? '已核對' : '待核對' }}</summary>
+                    <p>既有每日目標請先核對；資料僅留在本次畫面。點擊計算時會將本餐確認資料送至 Gemini，供份量建議。標準模式按剩餘餐數分配額度；剩餘額度模式使用全部剩餘額度。</p>
+                    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+                        <label>目前體重 kg <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" v-model.number="mealInputs[member].weight"></label>
+                        <label>測量日期 <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="date" v-model="mealInputs[member].measuredOn"></label>
+                        <label v-for="field in [{key:'targetKcal',name:'每日熱量 kcal'},{key:'targetProtein',name:'蛋白質 g'},{key:'targetCarbs',name:'碳水 g'},{key:'targetFat',name:'脂肪 g'},{key:'targetSodium',name:'鈉 mg'}]" :key="field.key">{{ field.name }} <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" v-model.number="engine.profiles[member][field.key]"></label>
+                        <label>今日還要吃幾餐（含本餐）<input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" max="12" v-model.number="mealInputs[member].mealsRemaining"></label>
+                        <label style="grid-column:1/-1;">現階段健康／體重目標 <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" v-model="mealInputs[member].goal"></label>
+                        <label style="grid-column:1/-1;">飲食限制（無則填無）<input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" v-model="mealInputs[member].restrictions"></label>
+                        <fieldset style="grid-column:1/-1;">本餐不可吃的食材
+                            <label v-for="id in selectedMasterIngredients" :key="id" style="display:block;"><input type="checkbox" :value="id" v-model="mealInputs[member].excludedIds">{{ getIngredientName(id) }}</label>
+                        </fieldset>
+                    </div>
+                    <button class="btn-icon" @click="confirmMealProfile(member)">確認以上資料本餐有效</button>
+                    <button class="btn-icon" @click="useHistoricalPortions(member)">手動帶入舊份量／份量記憶</button>
+                </details>
+
                 <!-- 計算操作橫列 (右側正圓計算按鈕，原全域雙切已融入成員膠囊) -->
                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 24px;">
                     <button class="btn-icon" @click="calculate" :disabled="isAiChefLoading" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
@@ -2278,7 +1912,7 @@ ${JSON.stringify(membersData, null, 2)}
                             <button v-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
                                      @click="showChefNote = !showChefNote"
                                      style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
-                                 <span>✨ AI 主廚已精算</span>
+                                 <span>✨ AI 建議已通過營養檢查</span>
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                             <!-- Local Solver State (Clickable to view takeover reason) -->

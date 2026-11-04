@@ -30,12 +30,13 @@ async function mount(component = Calculator) {
     const engine = new KitchenEngine();
     engine.profiles = reactive(engine.profiles);
     engine.data.ingredients = [
-        { id: 'chicken', name: '雞肉', category: 'proteins', unitLabel: 'g', per100g: { kcal: 120, protein: 25 } },
-        { id: 'brown_rice', name: '糙米', category: 'carbs', unitLabel: 'g', per100g: { kcal: 150, carbs: 30 } },
-        { id: 'egg', name: '蛋', category: 'proteins', isCount: true, unitLabel: '顆', perUnit: { kcal: 70, protein: 6 } }
+        { id: 'chicken', name: '雞肉', category: 'proteins', unitLabel: 'g', per100g: { kcal: 120, protein: 25, carbs:0,fat:0,sodium:0 } },
+        { id: 'brown_rice', name: '糙米', category: 'carbs', unitLabel: 'g', per100g: { kcal: 150, carbs: 30,protein:0,fat:0,sodium:0 } },
+        { id: 'egg', name: '蛋', category: 'proteins', isCount: true, unitLabel: '顆', perUnit: { kcal: 70, protein: 6,carbs:0,fat:0,sodium:0 } }
     ];
+    for (const ing of engine.data.ingredients) ing.nutritionEvidence = {kind:'product_label',status:'verified',identity:{name:ing.name,brand:''}};
     engine.data.pantryInventory = { foodStockStatus: { chicken: true, brown_rice: true, egg: true } };
-    const fixtureDishes = ['home_cooking', 'other'].map(id => ({ id, name: id, recommendedProteins: ['chicken', 'egg'], recommendedCarbs: ['brown_rice'] }));
+    const fixtureDishes = ['home_cooking', 'other'].map(id => ({ id, name: id, recommendedProteins: ['chicken', 'egg'], recommendedCarbs: ['brown_rice'],defaultIngredients:[{id:'chicken',amount:60,unit:'g'},{id:'brown_rice',amount:60,unit:'g'},{id:'egg',amount:1,unit:'顆'}] }));
     engine.data.dishes = [];
     engine.personalScope = 'household';
     let view;
@@ -43,6 +44,7 @@ async function mount(component = Calculator) {
     renderer.render(h({ setup() { view = component.setup({ engine }); return () => h('div'); } }), root);
     engine.data.dishes = fixtureDishes;
     await nextTick();
+    if (view.mealInputs) for (const member of ['bebe','ariel','jason']) Object.assign(view.mealInputs[member],{weight:60,measuredOn:'2026-01-01',goal:'測試目標',restrictions:'無',confirmed:true});
     return { view, engine, close: () => renderer.render(null, root) };
 }
 const resultFor = view => ({ chefComment: '配比完成', portions: Object.fromEntries(view.activeMembers.value.map(m =>
@@ -65,12 +67,12 @@ await check('primary success, three members, immediate local result, memory wins
     globalThis.fetch = async () => new Promise(resolve => { release = resolve; });
     const pending = view.calculate();
     assert.equal(view.isCalculated.value, true); assert(!Calculator.template.includes('aiHudState'));
-    assert.equal(view.memberIngredients.value.bebe[0].amount, 77);
+    assert.equal(view.memberIngredients.value.bebe[0].amount, 77, 'Manual amount remains while AI is pending');
     const localJason = view.memberIngredients.value.jason[0].amount;
     assert.notEqual(localJason, 77);
     const result = resultFor(view);
     release(response(result)); await pending;
-    assert.equal(view.memberIngredients.value.bebe[0].amount, 77);
+    assert.equal(view.memberIngredients.value.bebe[0].amount, 60, 'Explicit memory does not override a new dynamic calculation');
     assert.equal(view.memberIngredients.value.ariel[0].amount, 60);
     assert.equal(view.memberIngredients.value.jason[0].amount, 60);
     assert.deepEqual(view.getMemberNutrition('jason'), engine.calculateNutritionForMember(result.portions.jason, 'jason'));

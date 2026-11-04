@@ -76,6 +76,10 @@ const {readPersonalKitchenState, writePersonalKitchenState, emptyPersonalKitchen
 const engine = new KitchenEngine();
 authorizeTestEngine(engine);
 engine.data.ingredients = all;
+// Historical numeric/unit audit; production trust gating is exercised in test_nutrition_evidence.mjs.
+const lookup = engine.getIngredientById.bind(engine);
+engine.getIngredientById = id => { const ing = lookup(id); return ing && {...ing, nutritionEvidence:undefined}; };
+
 const single = (id,amount,unit) => [{id,amount,unit}];
 for (const member of ['bebe','ariel','jason']) {
     assert.equal(engine.calculateNutritionForMember(single('coffee_capsule',1,'顆'),member).kcal,20);

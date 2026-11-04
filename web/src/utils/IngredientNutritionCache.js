@@ -1,3 +1,4 @@
+import { nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261104_NUTRITION_V3';
 // Historical nutrition shapes from ingredients.json at 4b6f0d0; recognition only, never calculation.
 const legacyNutrition = {
     "sous_vide_chicken": {"unitLabel":"g","per100g":{"kcal":115,"protein":23,"fat":1.5,"carbs":0,"sodium":180}},
@@ -86,5 +87,11 @@ export function mergeIngredientNutrition(official, local, custom) {
         // The official citation cannot certify locally different values.
         merged.weightBasisSource = '';
     }
+    // An official citation cannot certify a locally changed nutrition shape or identity.
+    const verifiedLocalEvidence = local.nutritionEvidence && !nutritionEvidenceIssue({...merged,nutritionEvidence:local.nutritionEvidence});
+    if (verifiedLocalEvidence) merged.nutritionEvidence = local.nutritionEvidence;
+    else merged.nutritionEvidence = refresh || (sameIdentity && sameNutrition(local, official) && !record?.edited)
+        ? official.nutritionEvidence
+        : local.nutritionEvidence || { kind: 'missing', status: 'pending', note: '舊自訂營養，請核對來源。' };
     return JSON.parse(JSON.stringify(merged));
 }
