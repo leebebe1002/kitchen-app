@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { reviewNutritionLabelOCR } from '../web/src/utils/NutritionLabelOCR.js';
+import { reviewNutritionLabelOCR, productSpecificationFromOCR } from '../web/src/utils/NutritionLabelOCR.js';
 import { labelConsistencyIssue } from '../web/src/utils/NutritionEvidence.js';
 
 const example = {
     name: '是拉差美乃滋',
     brand: 'J-Lek',
-    specification: '測試版，非真實商品核實',
+    specification: '45 Serving Per Container, 1 tsp (5 mL)',
     weightBasis: 'as_sold',
     servingSize: 5,
     servingUnit: 'mL',
@@ -24,6 +24,12 @@ const original = {
 const review = reviewNutritionLabelOCR(example, original);
 assert.equal(review.unit, 'ml');
 assert.equal(review.servingUnit, 'ml');
+assert.equal(review.specification, '', 'nutrition serving metadata is not product specification');
+assert(review.notices.some(s => s.includes('誤當商品規格')));
+assert.equal(productSpecificationFromOCR('原味 450 mL').value,'原味 450 mL');
+assert.equal(productSpecificationFromOCR('每包裝含 45 份，每份量 5 mL').value,'');
+assert.equal(productSpecificationFromOCR('Serving Size 1 tbsp').value,'');
+assert.equal(productSpecificationFromOCR(null).value,'');
 assert.equal(review.per100g.kcal, 300);
 assert.equal(review.per100g.fat, 20);
 assert.equal(review.per100g.sodium, 0);
@@ -118,6 +124,12 @@ assert.equal(calls.length,2,'one existing photo fetch and one Gemini OCR request
 assert.equal(view.form.per100g.kcal,300);
 assert.equal(view.form.perServing.kcal,15);
 assert.equal(view.form.servingSize,5);
+assert.equal(view.evidenceSpec.value,'', 'editor must not prefill false product specifications');
+view.evidenceConfirmed.value=true;
+await assert.rejects(view.handleSave(),/Unexpected alert/,
+    'a serving-size label must not satisfy the product-specification verification gate');
+view.evidenceConfirmed.value=false;
+assert(view.photo.notices.some(s=>s.includes('誤當商品規格')));
 assert.equal(view.form.servingUnit,'ml');
 assert.equal(view.evidenceUnit.value,'ml');
 assert.equal(view.evidenceConfirmed.value,false);

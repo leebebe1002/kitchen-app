@@ -1,6 +1,6 @@
 const { ref, computed, watch } = Vue;
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261105_LABEL_OCR_BLOB_V2';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261105_LABEL_OCR_SPEC_V3';
 
 export default {
     components: {

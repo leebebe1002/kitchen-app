@@ -1,5 +1,5 @@
 import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261105_LABEL_OCR_V1';
+import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261105_LABEL_OCR_SPEC_V3';
 const { ref, reactive, computed, watch, onMounted } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -399,7 +399,7 @@ const IngredientDetailModal = {
 {
   "name": "食材或商品名稱 (繁體中文)",
   "brand": "品牌名稱 (若無可留空)",
-  "specification": "照片可讀的品項、容量與口味；不清楚則空字串",
+  "specification": "實際商品的淨容量、口味或版本；每包裝份數、每份容量、茶匙等營養標示資訊不可填入商品規格；照片沒有則空字串",
   "weightBasis": "as_sold",
   "servingSize": 每一份量數值 (純數字，例如 10 或 30),
   "servingUnit": "g" 或 "mL"（沒有印出每份則為 null）,
@@ -512,7 +512,7 @@ const IngredientDetailModal = {
                 nutritionChanged.value = true;
                 evidenceConfirmed.value = false;
                 showLabelReview.value = true;
-                evidenceSpec.value = resData.specification || '';
+                evidenceSpec.value = reviewed.specification;
                 evidenceBasis.value = ['raw','cooked','dry','as_sold'].includes(resData.weightBasis) ? resData.weightBasis : 'unknown';
                 evidenceUnit.value = reviewed.unit || evidenceUnit.value;
                 if (props.mode === 'create' || !form.name) {
@@ -936,7 +936,7 @@ const IngredientDetailModal = {
                     <button type="button" class="btn-icon" @click="showLabelReview = !showLabelReview">{{ showLabelReview ? '收起產品核對' : '有產品營養標示？點此修改／核對' }}</button>
                     <template v-if="showLabelReview">
                     <label style="display:block;">品牌 <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="form.brand"></label>
-                    <label style="display:block;">商品規格（容量／口味／版本）<input style="width:100%;" v-model="evidenceSpec"></label>
+                    <label style="display:block;">商品規格（瓶身淨容量／口味／版本，非每份容量）<input style="width:100%;" v-model="evidenceSpec" placeholder="例：原味 450 mL；無法從照片確認請留空"></label>
                     <label style="display:block;">來源備註 <input style="width:100%;" v-model="evidenceSource"></label>
                     <label>重量基準 <select v-model="evidenceBasis"><option value="unknown">待確認</option><option value="raw">生重／可食部</option><option value="cooked">熟重／可食部</option><option value="dry">乾重</option><option value="as_sold">販售／即食狀態</option></select></label>
                     <label v-if="!hasUnitNutrition">計量單位 <select v-model="evidenceUnit"><option value="g">g</option><option value="ml">ml</option><option v-if="!['g','ml'].includes(evidenceUnit)" :value="evidenceUnit">{{ evidenceUnit }}</option></select></label>
