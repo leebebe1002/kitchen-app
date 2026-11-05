@@ -1,4 +1,4 @@
-import { SUPABASE_CONFIG } from './services/SupabaseService.js?v=20261102_FK22_MEALS_V1';
+import { SUPABASE_CONFIG } from './services/SupabaseService.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 
 const GOOGLE_RETURN_RELOAD_KEY = 'family_kitchen_google_return_reload';
 

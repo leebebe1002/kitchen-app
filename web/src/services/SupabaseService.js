@@ -72,6 +72,29 @@ class SupabaseService {
         try {
             const access = await this.getMealAccess();
             this.requireMealMember(access, member);
+            return await this.uploadPhoto(base64Data, access.identity, 'meals', member);
+        } catch (err) {
+            console.error('❌ [Supabase] 餐點照片未上傳:', err);
+            return null;
+        }
+    }
+
+    async uploadIngredientPhoto(base64Data) {
+        if (!base64Data) return null;
+        const identity = authService.getPersonalContext();
+        if (!identity) return null;
+        try {
+            // Shared ingredient photos are not a family member's meal record.
+            return await this.uploadPhoto(base64Data, identity, 'ingredients', identity.scopeId);
+        } catch (err) {
+            console.warn('食材照片未上傳，登入狀態保留:', err.message);
+            return null;
+        }
+    }
+
+    async uploadPhoto(base64Data, identity, folder, label) {
+        this.assertIdentity(identity);
+        try {
             console.log('☁️ [Supabase] 正在上傳食物照片至雲端圖床...');
             
             let mimeType = 'image/jpeg';
@@ -86,7 +109,7 @@ class SupabaseService {
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             const timeStr = Date.now();
             const ext = mimeType.includes('png') ? 'png' : 'jpg';
-            const filename = `meals/${member}_${dateStr}_${timeStr}.${ext}`;
+            const filename = `${folder}/${label}_${dateStr}_${timeStr}.${ext}`;
 
             // 2. Client-side 直傳模式
             const byteCharacters = atob(pureB64);
@@ -102,13 +125,13 @@ class SupabaseService {
                 method: 'POST',
                 headers: {
                     'apikey': this.anonKey,
-                    'Authorization': `Bearer ${access.identity.token}`,
+                    'Authorization': `Bearer ${identity.token}`,
                     'Content-Type': mimeType
                 },
                 body: blob
             });
 
-            this.assertIdentity(access.identity);
+            this.assertIdentity(identity);
             if (resp.ok) {
                 const publicUrl = `${this.url}/storage/v1/object/public/${this.bucket}/${filename}`;
                 console.log('✅ [Supabase] 直傳雲端圖床成功！公開網址:', publicUrl);

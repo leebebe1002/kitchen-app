@@ -1,5 +1,5 @@
 import authService from './FamilyAuthService.js';
-import { SUPABASE_CONFIG } from './SupabaseService.js?v=20261102_FK22_MEALS_V1';
+import { SUPABASE_CONFIG } from './SupabaseService.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 
 class PersonalKitchenSyncService {
     get enabled() {

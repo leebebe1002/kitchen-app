@@ -1,4 +1,4 @@
-import SupabaseService from '../services/SupabaseService.js?v=20261102_FK22_MEALS_V1';
+import SupabaseService from '../services/SupabaseService.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 
 const { ref, computed, onMounted, onUnmounted, nextTick, watch } = Vue;
 

@@ -64,7 +64,7 @@ for(const scope of ['household','ariel']) {
     assert(f.events.some(x=>x[0]==='saved'&&x[1].id==='cocoa'));assert(confirmations.at(-1).includes('[cocoa]'));
     renderer.render(null,f.root);
 }
-function engineUpload(engine,uploadMealPhoto){engine.supabase={uploadMealPhoto};}
+function engineUpload(engine,uploadIngredientPhoto){engine.supabase={uploadIngredientPhoto};}
 // Ordinary save keeps the similar-item confirmation and makes its own ID.
 {
  const f=fixture();await open(f);fill(f.view);f.view.photo.url=null;answer=false;await f.view.handleSave();assert.equal(f.events.length,0);

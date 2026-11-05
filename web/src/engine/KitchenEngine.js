@@ -2,7 +2,7 @@ import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
 import CloudSyncEngine from './CloudSyncEngine.js';
-import supabaseService from '../services/SupabaseService.js?v=20261102_FK22_MEALS_V1';
+import supabaseService from '../services/SupabaseService.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import {
     PERSONAL_SCOPES,
     emptyPersonalKitchenState,
@@ -926,7 +926,7 @@ export default class KitchenEngine {
             let uploadedUrl = null;
             if (this.supabase) {
                 try {
-                    uploadedUrl = await this.supabase.uploadMealPhoto(ingData.photoUrl, 'ingredient');
+                    uploadedUrl = await this.supabase.uploadIngredientPhoto(ingData.photoUrl);
                 } catch (e) {}
             }
             ingData.photoUrl = uploadedUrl || null;

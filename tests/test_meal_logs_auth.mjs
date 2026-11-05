@@ -4,7 +4,7 @@ const values=new Map();
 globalThis.localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k)};
 globalThis.sessionStorage=localStorage;globalThis.Vue={reactive:v=>v};globalThis.window={location:{hostname:'test.invalid'},addEventListener(){}};
 const {default:auth}=await import('../web/src/services/FamilyAuthService.js');
-const {default:service}=await import('../web/src/services/SupabaseService.js?v=20261102_FK22_MEALS_V1');
+const {default:service}=await import('../web/src/services/SupabaseService.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1');
 const {default:Engine}=await import('../web/src/engine/KitchenEngine.js');
 const {readMealState}=await import('../web/src/services/MealLogState.js?v=20261102_FK22_MEALS_V1');
 const copy=x=>JSON.parse(JSON.stringify(x));const defer=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
