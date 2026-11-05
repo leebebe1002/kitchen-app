@@ -1,6 +1,6 @@
 import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261105_LABEL_OCR_SPEC_V3';
-const { ref, reactive, computed, watch, onMounted } = Vue;
+const { ref, reactive, computed, watch, onMounted, nextTick } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 
@@ -91,6 +91,15 @@ const IngredientDetailModal = {
         const apiKeyInput = ref('');
         const cameraInputRef = ref(null);
         const albumInputRef = ref(null);
+        const drawerContentRef = ref(null);
+
+        // The drawer, not the page, owns scrolling on iPhone/PWA.
+        // Wait for Vue to render photo/OCR results before resetting its position.
+        const scrollReviewToTop = async (revision) => {
+            await nextTick();
+            if (revision !== photoRevision || !props.isOpen) return;
+            if (drawerContentRef.value) drawerContentRef.value.scrollTop = 0;
+        };
 
         const initForm = () => {
             photoRevision++;
@@ -539,6 +548,7 @@ const IngredientDetailModal = {
 
                 photo.status = 'success';
                 photo.message = 'AI 已填入照片的候選營養值；尚未核實或儲存，請對照照片確認。';
+                await scrollReviewToTop(revision);
             } else {
                 photo.status = 'error';
                 photo.notices = [];
@@ -624,6 +634,7 @@ const IngredientDetailModal = {
                     const compressedDataUrl = await compressImage(event.target.result, 800, 800, 0.8);
                     if (revision !== photoRevision || !props.isOpen) return;
                     photo.url = compressedDataUrl;
+                    await scrollReviewToTop(revision);
                     const apiKey = refreshSavedApiKey();
                     const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
                     await analyzePhotoDirectly(compressedDataUrl, apiKey, fileName, revision);
@@ -811,6 +822,7 @@ const IngredientDetailModal = {
             saveCustomApiKey,
             cameraInputRef,
             albumInputRef,
+            drawerContentRef,
             triggerCamera,
             triggerAlbum,
             analyzeSavedPhoto,
@@ -832,7 +844,7 @@ const IngredientDetailModal = {
     },
     template: `
         <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
-            <div class="drawer-content" style="max-height: 90vh; padding: 20px 20px 28px 20px; position: relative; overflow-y: auto; display: flex; flex-direction: column;">
+            <div ref="drawerContentRef" class="drawer-content" style="max-height: 90vh; padding: 20px 20px 28px 20px; position: relative; overflow-y: auto; display: flex; flex-direction: column;">
                 
                 <!-- 隱藏的拍照 / 相簿 input -->
                 <input type="file" ref="cameraInputRef" accept="image/*" capture="environment" style="display: none;" @change="onFilePicked">

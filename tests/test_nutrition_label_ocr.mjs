@@ -89,7 +89,7 @@ globalThis.Image=class {
     set src(value) {assert(value.startsWith('data:image/')); queueMicrotask(()=>this.onload());}
 };
 globalThis.FileReader=class {
-    readAsDataURL() {this.result='data:image/jpeg;base64,ZmFrZQ==';queueMicrotask(()=>this.onload());}
+    readAsDataURL() {this.result='data:image/jpeg;base64,ZmFrZQ==';queueMicrotask(()=>this.onload({target:this}));}
 };
 const calls=[];
 globalThis.fetch=async (url,options) => {
@@ -119,7 +119,9 @@ renderer.render(Vue.h({setup(){view=Modal.setup(props,{emit(){}});return ()=>Vue
 props.isOpen=true;await Vue.nextTick();
 assert.equal(calls.length,0,'stored image must not be sent to AI on open');
 assert.equal(view.photo.url,original.photoUrl);
+view.drawerContentRef.value = {scrollTop: 680};
 await view.analyzeSavedPhoto();
+assert.equal(view.drawerContentRef.value.scrollTop, 0, 'completed OCR resets the drawer, not the page, to the result header');
 assert.equal(calls.length,2,'one existing photo fetch and one Gemini OCR request');
 assert.equal(view.form.per100g.kcal,300);
 assert.equal(view.form.perServing.kcal,15);
@@ -178,6 +180,7 @@ globalThis.fetch = async (url, options) => url === original.photoUrl
     ? new Promise(resolve => { finishPendingPhotoFetch = resolve; })
     : networkBefore(url, options);
 view.photo.url = original.photoUrl;
+view.drawerContentRef.value.scrollTop = 740;
 const lateRead = view.analyzeSavedPhoto();
 assert.equal(view.photo.isAnalyzing, true);
 view.removePhoto();
@@ -187,8 +190,17 @@ assert.equal(view.photo.url, null);
 assert.equal(view.photo.status, 'idle');
 assert.equal(view.photo.message, '');
 assert.equal(view.form.per100g.kcal, 300, 'stale photo must not overwrite accepted candidate');
+assert.equal(view.drawerContentRef.value.scrollTop, 740, 'cancelled recognition must not steal the scroll position');
 globalThis.fetch = networkBefore;
+// Returning from the iPhone camera starts at the previous scroll position;
+// selecting a new photo must move to its preview and remain at the top after OCR.
+view.drawerContentRef.value.scrollTop = 720;
+await view.onFilePicked({target:{files:[{name:'IMG_1001.jpeg'}],value:'picked'}});
+await new Promise(resolve=>setTimeout(resolve, 0));
+assert.equal(view.photo.status, 'success');
+assert.equal(view.drawerContentRef.value.scrollTop, 0, 'new camera/album photo restores top of drawer');
 Vue.compile(Modal.template,{decodeEntities:text=>text});
+assert(Modal.template.includes('ref="drawerContentRef" class="drawer-content"'));
 assert(Modal.template.includes('用 AI 辨識／重新核對這張照片'));
 assert(Modal.template.includes('v-for="notice in photo.notices"'));
 
