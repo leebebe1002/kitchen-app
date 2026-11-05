@@ -2,23 +2,27 @@ import { authorizeTestEngine } from './personal_scope_fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { execFileSync } from 'node:child_process';
 
 const read = path => JSON.parse(fs.readFileSync(path, 'utf8'));
 const official = read('src/data/ingredients.json');
+const historical = JSON.parse(execFileSync('git',['show','origin/main:src/data/ingredients.json'],{encoding:'utf8'}));
 const audit = read('docs/audits/nutrition-2026-10-28.json');
 const all = Object.values(official).flat();
 const byId = new Map(all.map(i => [i.id, i]));
 const keys = ['kcal', 'protein', 'fat', 'carbs', 'sodium'];
 const countUnits = new Set(['顆', '個', '條', '包', '根']);
-assert.equal(all.length, 99);
-assert.equal(byId.size, 99);
+assert.equal(all.length, 101);
+assert.equal(byId.size, 101);
+const historicalById = new Map(Object.values(historical).flat().map(i => [i.id,i]));
+assert.equal(historicalById.size,99,'Approved 99 baseline remains available for 89 historical checks');
 const auditedIds = new Set(audit.ingredients.map(i => i.id));
 assert.equal(auditedIds.size, 89, 'The historical audit still covers the original 89 ingredients');
 assert.deepEqual(audit.ingredients.map(i => i.id), all.filter(i => auditedIds.has(i.id)).map(i => i.id));
 const counts = {};
 for (const row of audit.ingredients) {
     counts[row.status] = (counts[row.status] || 0) + 1;
-    const ing = byId.get(row.id);
+    const ing = historicalById.get(row.id);
     assert(row.decision.length > 0, row.id);
     for (const field of ['per100g', 'perServing', 'perUnit']) {
         if (row.id !== 'steamed_noodle') assert.deepEqual(ing[field], row.after[field], row.id + ':' + field);
@@ -43,7 +47,8 @@ for (const row of audit.ingredients) {
     }
 }
 assert.deepEqual(counts, audit.counts);
-assert.deepEqual(all.filter(i => i.per100g && keys.every((k, j) => i.per100g[k] === [100, 10, 5, 10, 100][j])).map(i => i.id), ['shrimp_paste', 'prince_noodles']);
+assert.deepEqual(all.filter(i => i.per100g && keys.every((k, j) => i.per100g[k] === [100, 10, 5, 10, 100][j])).map(i => i.id), []);
+for (const id of ['shrimp_paste','prince_noodles']) assert(keys.every(k=>byId.get(id).per100g[k]===null),'Unverified placeholders must remain null');
 assert.equal(audit.ingredients.filter(i => i.originalPlaceholder).length, 15);
 assert.deepEqual(byId.get('steamed_noodle').per100g,{kcal:362.2,protein:9.1,fat:1,carbs:79.2,sodium:712});
 assert.equal(byId.get('steamed_noodle').gramsPerPack,65);
@@ -93,7 +98,7 @@ for (const member of ['bebe','ariel','jason']) {
 }
 const dishes = read('src/data/dishes.json').dishes;
 const home = dishes.find(d => d.id === 'home_cooking');
-assert.equal(engine.calculateNutritionForMember(home.memberPortions.bebe,'bebe').kcal,464.2);
+assert.equal(engine.calculateNutritionForMember(home.memberPortions.bebe,'bebe').kcal,489.9,'Sourced cooked brown rice and pork shoulder change the historical meal total');
 const recipeRisks = [];
 for (const dish of dishes) {
     const sets = {default:dish.defaultIngredients || [], ...dish.memberPortions};
@@ -113,7 +118,7 @@ for (const dish of dishes) {
         assert.equal(JSON.stringify(portions), snapshot);
     }
 }
-assert(recipeRisks.some(r => r.id === 'bacon' && r.recipeUnit === 'g'), 'Known unresolved bacon grams/strip conflict must stay visible');
+assert(engine.getNutritionIssues([{id:'bacon',amount:20,unit:'g'}]).length,'Bacon stays unresolved until per-gram nutrition is sourced');
 assert(!recipeRisks.some(r => r.id === 'steamed_noodle'), 'Verified 65g pack must no longer be a conversion risk');
 const unresolvedCounts = all.filter(i => countUnits.has(i.unitLabel) && !i.isCount && !i.perUnit).map(i => i.id);
 assert.deepEqual(unresolvedCounts,['century_egg','mushroom_meatball','egg_dumpling','taro_meatball','potato_ramen']);
@@ -193,5 +198,5 @@ for (const scope of ['household','ariel']) {
 }
 assert.equal(readPersonalKitchenState('household').pantryInventory.shoppingList[0].id,'household_remote');
 assert.equal(readPersonalKitchenState('ariel').pantryInventory.shoppingList[0].id,'ariel_remote');
-console.log('PASS: 89 audit records, primary-source arithmetic, protected labels, count calculations, 10 recipes/all members, cache compatibility, duplicates and isolated scope/sync fakes.');
+console.log('PASS: historical 89 audit records, updated 101 catalog, primary-source arithmetic, protected labels, count calculations, 10 recipes/all members, cache compatibility, duplicates and isolated scope/sync fakes.');
 console.log('PENDING SOURCE CONFIRMATION (guarded, no guessed conversion):',JSON.stringify({unresolvedCounts,recipeUnitConflicts:recipeRisks.length,oldCacheOverrides:false}));

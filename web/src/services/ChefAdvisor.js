@@ -1,4 +1,4 @@
-import { isCountUnit } from '../utils/IngredientUnit.js?v=20261104_NUTRITION_V3';
+import { isCountUnit } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
 // Fixed, documented model IDs; no per-calculation model discovery.
 export const CHEF_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash'];
 export const CHEF_TOTAL_MS = 20000;

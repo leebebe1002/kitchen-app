@@ -1,4 +1,4 @@
-import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261104_NUTRITION_V3';
+import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 const { ref, reactive, computed, watch, onMounted } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -35,6 +35,7 @@ const IngredientDetailModal = {
     setup(props, { emit }) {
         const nutritionChanged = ref(false);
         const evidenceConfirmed = ref(false);
+        const showLabelReview = ref(false);
         const evidenceSpec = ref('');
         const evidenceBasis = ref('unknown');
         const evidenceUnit = ref('g');
@@ -87,6 +88,7 @@ const IngredientDetailModal = {
         const initForm = () => {
             nutritionChanged.value = false;
             evidenceConfirmed.value = false;
+            showLabelReview.value = false;
             evidenceSpec.value = props.initialIngredient?.nutritionEvidence?.specification || '';
             evidenceBasis.value = props.initialIngredient?.weightBasis || 'unknown';
             evidenceUnit.value = props.initialIngredient?.unitLabel || 'g';
@@ -497,6 +499,7 @@ const IngredientDetailModal = {
                 const resData = data.result;
                 nutritionChanged.value = true;
                 evidenceConfirmed.value = false;
+                showLabelReview.value = true;
                 evidenceSpec.value = resData.specification || '';
                 evidenceBasis.value = ['raw','cooked','dry','as_sold'].includes(resData.weightBasis) ? resData.weightBasis : 'unknown';
                 evidenceUnit.value = String(resData.servingUnit || '').toLowerCase() === 'ml' ? 'ml' : 'g';
@@ -718,7 +721,7 @@ const IngredientDetailModal = {
         };
 
         return {
-            evidenceConfirmed, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
+            evidenceConfirmed, showLabelReview, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
             hasUnitNutrition,
             modalMode,
             duplicateMatch,
@@ -841,9 +844,14 @@ const IngredientDetailModal = {
 
                 <div class="card" style="margin-bottom:12px;flex-shrink:0;display:grid;gap:8px;font-size:0.85rem;line-height:1.5;">
                     <p role="status">{{ sourceText }}</p>
-                    <p>產品標示僅用於此品牌與規格；空白值不會當成 0。修改營養後需重新核對。</p>
+                    <p>一般食材優先使用有依據的官方估算；有實際產品標示時再展開核對。空白不是 0。</p>
                     <p v-if="sourceEvidence">{{ sourceEvidence.note }} · {{ sourceEvidence.checkedAt || '日期待確認' }}</p>
-                    <p style="overflow-wrap:anywhere;" v-for="source in (sourceEvidence && sourceEvidence.sources || [])" :key="source.ref || source.url">{{ source.ref }} {{ source.title }} {{ source.url }}</p>
+                    <details v-if="sourceEvidence && sourceEvidence.sources && sourceEvidence.sources.length">
+                      <summary style="cursor:pointer;">查看資料來源</summary>
+                      <p style="overflow-wrap:anywhere;" v-for="source in sourceEvidence.sources" :key="source.ref || source.url">{{ source.ref }} {{ source.title }} {{ source.url }}</p>
+                    </details>
+                    <button type="button" class="btn-icon" @click="showLabelReview = !showLabelReview">{{ showLabelReview ? '收起產品核對' : '有產品營養標示？點此修改／核對' }}</button>
+                    <template v-if="showLabelReview">
                     <label style="display:block;">品牌 <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="form.brand"></label>
                     <label style="display:block;">商品規格（容量／口味／版本）<input style="width:100%;" v-model="evidenceSpec"></label>
                     <label style="display:block;">來源備註 <input style="width:100%;" v-model="evidenceSource"></label>
@@ -851,6 +859,7 @@ const IngredientDetailModal = {
                     <label v-if="!hasUnitNutrition">計量單位 <select v-model="evidenceUnit"><option value="g">g</option><option value="ml">ml</option><option v-if="!['g','ml'].includes(evidenceUnit)" :value="evidenceUnit">{{ evidenceUnit }}</option></select></label>
                     <label v-if="!hasUnitNutrition && !['g','ml'].includes(evidenceUnit)" style="display:block;">每 {{ evidenceUnit }} 可食重量 g（依包裝或實測）<input type="number" min="0" v-model.number="gramsPerUnit"></label>
                     <label style="display:block;"><input type="checkbox" v-model="evidenceConfirmed">我已核對此品牌／規格、重量單位、五項數值與照片標示一致</label>
+                    </template>
                 </div>
 
                 <!-- 3. 營養成份規格：純文字俐落排版 + 雙軌自動換算 -->

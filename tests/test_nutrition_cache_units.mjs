@@ -220,7 +220,7 @@ for (const dish of dishes) for (const list of Object.values({default:dish.defaul
     if (!list) continue;
     for (const req of list) if (engine.getNutritionIssues([req]).length) conflicts.push({dish:dish.id,...req,issues:engine.getNutritionIssues([req])});
 }
-assert.equal(conflicts.filter(r => r.id !== 'sugar_free_soymilk').length,7,JSON.stringify(conflicts));
+assert.equal(conflicts.filter(r => r.id !== 'sugar_free_soymilk').length,11,JSON.stringify(conflicts));
 assert.equal(conflicts.filter(r => r.id === 'sugar_free_soymilk').length,1,'Additional missing unitLabel: recipe ml versus servingUnit g');
 for (const member of ['bebe','jason','ariel']) {
     for (const id of unresolved) {
@@ -236,7 +236,7 @@ for (const member of ['bebe','jason','ariel']) {
         assert.equal(engine.calculateNutritionForMember([{id:'steamed_noodle',amount,unit}],member).kcal,expected);
     }
     assert.equal(engine.calculateNutritionForMember([{id:'steamed_noodle',amount:1,unit:'包'}],member).sodium,462.8);
-    assert.equal(engine.calculateNutritionForMember([{id:'bacon',amount:2,unit:'條'}],member).kcal,86);
+    assert(Number.isNaN(engine.calculateNutritionForMember([{id:'bacon',amount:2,unit:'條'}],member).kcal),'An old strip cannot be converted to grams without verified weight');
     assert.equal(engine.calculateNutritionForMember([{id:'century_egg',amount:0,unit:'顆'}],member).kcal,0);
     const valid = [{id:'salmon',amount:150,unit:'g'},{id:'angel_hair_pasta',amount:100,unit:'g'},{id:'coffee_capsule',amount:2,unit:'顆'}];
     assert.equal(engine.calculateNutritionForMember(valid,member).kcal,427.4);

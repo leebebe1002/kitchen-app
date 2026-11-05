@@ -1,4 +1,4 @@
-import { completeNutrients, nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261104_NUTRITION_V3';
+import { completeNutrients, nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 const countUnits = new Set(['顆', '個', '條', '包', '根', '片', '盒', '罐', '袋']);
 
 export const isCountUnit = unit => countUnits.has(unit);

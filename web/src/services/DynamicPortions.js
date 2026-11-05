@@ -1,4 +1,4 @@
-import { ingredientNutritionBasis } from '../utils/IngredientUnit.js?v=20261104_NUTRITION_V3';
+import { ingredientNutritionBasis } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
 
 export function buildMealContext(engine, member, input, date, mode = 'standard') {
     const profile = engine.profiles[member];

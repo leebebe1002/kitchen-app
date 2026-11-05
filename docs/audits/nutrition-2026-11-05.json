@@ -1,0 +1,434 @@
+{
+  "date": "2026-11-05",
+  "baselineCommit": "71beb38709c85390a85744297ea2b24ecd1abf99",
+  "policy": "TFDA then USDA per compatible food state and edible basis; exact verified product label has priority; unresolved items remain pending; never guess count weight.",
+  "counts": {
+    "pending": 48,
+    "estimated": 52,
+    "verified": 1
+  },
+  "catalogSize": 101,
+  "retainedHistory": {
+    "2026-10-28": 89,
+    "2026-11-04": 99
+  },
+  "newBaselineChanges": [
+    {
+      "id": "shrimp",
+      "name": "蝦仁",
+      "previousName": "蝦仁",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:J21009"
+      ]
+    },
+    {
+      "id": "pork_shoulder",
+      "name": "豬梅花肉片",
+      "previousName": "豬梅花肉片",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:I0300502"
+      ]
+    },
+    {
+      "id": "tofu",
+      "name": "板豆腐",
+      "previousName": "板豆腐",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:R4700902"
+      ]
+    },
+    {
+      "id": "bacon",
+      "name": "培根",
+      "previousName": "培根",
+      "changeType": "changed",
+      "status": "pending",
+      "sourceReferences": []
+    },
+    {
+      "id": "chicken_thigh",
+      "name": "雞腿肉",
+      "previousName": "雞腿肉",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:172385"
+      ]
+    },
+    {
+      "id": "beef_slice",
+      "name": "牛肉片",
+      "previousName": "牛肉片",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:I0110104"
+      ]
+    },
+    {
+      "id": "shrimp_paste",
+      "name": "蝦仁漿",
+      "previousName": "蝦仁漿",
+      "changeType": "changed",
+      "status": "pending",
+      "sourceReferences": []
+    },
+    {
+      "id": "greek_yogurt",
+      "name": "希臘優格",
+      "previousName": "希臘優格",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:171304"
+      ]
+    },
+    {
+      "id": "mango",
+      "name": "芒果",
+      "previousName": "芒果",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:D21002"
+      ]
+    },
+    {
+      "id": "banana",
+      "name": "香蕉",
+      "previousName": "香蕉",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:173944"
+      ]
+    },
+    {
+      "id": "greens",
+      "name": "綜合生菜",
+      "previousName": "綜合生菜",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:169249"
+      ]
+    },
+    {
+      "id": "beech_mushroom",
+      "name": "鴻喜菇",
+      "previousName": "鴻喜菇/雪白菇",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "CCH:20260320",
+        "UDN:FOOD4180"
+      ]
+    },
+    {
+      "id": "snow_white_mushroom",
+      "name": "雪白菇",
+      "previousName": null,
+      "changeType": "new",
+      "status": "estimated",
+      "sourceReferences": [
+        "TFDA:G0600101"
+      ]
+    },
+    {
+      "id": "bagel",
+      "name": "原味貝果",
+      "previousName": "原味貝果",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:174899"
+      ]
+    },
+    {
+      "id": "brown_rice",
+      "name": "糙米飯",
+      "previousName": "現煮米飯/糙米飯",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:169704"
+      ]
+    },
+    {
+      "id": "prince_noodles",
+      "name": "王子麵",
+      "previousName": "王子麵",
+      "changeType": "changed",
+      "status": "pending",
+      "sourceReferences": []
+    },
+    {
+      "id": "white_rice",
+      "name": "白飯（熟重）",
+      "previousName": null,
+      "changeType": "new",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:169757"
+      ]
+    },
+    {
+      "id": "truffle_olive_oil",
+      "name": "松露橄欖油",
+      "previousName": "松露橄欖油",
+      "changeType": "changed",
+      "status": "estimated",
+      "sourceReferences": [
+        "USDA:171413"
+      ]
+    }
+  ],
+  "remainingPending": [
+    {
+      "id": "whey_protein",
+      "name": "乳清蛋白粉",
+      "note": "未指定品牌、口味、濃縮或分離型；保留既有值，不能用另一款乳清標示覆蓋。"
+    },
+    {
+      "id": "tuna",
+      "name": "水煮鮪魚",
+      "note": "Kirkland 罐頭規格、地區版本及瀝乾重量未留存；既有數字未取得同版標示，保留。"
+    },
+    {
+      "id": "egg",
+      "name": "蛋",
+      "note": "既有每顆值保留；蛋種、大小及單顆去殼重量未記錄，不能把每 100 g 當一顆。"
+    },
+    {
+      "id": "bacon",
+      "name": "培根",
+      "note": "舊條／個營養不能轉換每100g；缺可靠來源，保留待確認。"
+    },
+    {
+      "id": "boneless_short_rib",
+      "name": "無骨牛小排",
+      "note": "Costco 無骨牛小排的油花等級與包裝標示未留存；不同牛肋部位不可互換，保留。"
+    },
+    {
+      "id": "shrimp_paste",
+      "name": "蝦仁漿",
+      "note": "原五項為佔位值，已停用；尚無對應產品可靠標示。"
+    },
+    {
+      "id": "century_egg",
+      "name": "皮蛋",
+      "note": "UI 計顆，但只有 per100g，isCount／perUnit 未設；1 顆目前誤按 1 g 計算，缺單顆可食重量，保留並阻擋發布。"
+    },
+    {
+      "id": "mushroom_meatball",
+      "name": "香菇貢丸",
+      "note": "UI 計顆、只有 per100g；缺品牌與單顆 g 重，會少算，不能猜單顆份量。"
+    },
+    {
+      "id": "egg_dumpling",
+      "name": "蛋餃",
+      "note": "UI 計顆、只有 per100g；缺品牌與單顆 g 重，會少算，不能猜單顆份量。"
+    },
+    {
+      "id": "taro_meatball",
+      "name": "芋頭貢丸",
+      "note": "UI 計顆但 isCount=false，只有 per100g；50 kcal / P1 / F0.2 與名稱可疑，未有產品標示，不能改成任意芋圓／貢丸。"
+    },
+    {
+      "id": "sugar_free_soymilk",
+      "name": "無糖豆漿",
+      "note": "無糖豆漿濃度不明；100 g／份換算一致，但尚無對應產品標示，保留。"
+    },
+    {
+      "id": "whey_protein_cocoa",
+      "name": "乳清蛋白（法式可可）",
+      "note": "多個品牌混列，30 g／份換算誤差在原值捨入範圍；沒有單一可驗證 SKU，不當作品牌標示。"
+    },
+    {
+      "id": "pea_protein_sesame",
+      "name": "豌豆蛋白（芝麻歐蕾）",
+      "note": "多個品牌混列，30 g／份換算誤差在原值捨入範圍；沒有單一可驗證 SKU，不當作品牌標示。"
+    },
+    {
+      "id": "low_sugar_soymilk",
+      "name": "低糖豆漿",
+      "note": "義美／光泉混列；per100g 欄實際按 100 ml 使用，密度與品牌標示未查明，不宣稱 100 g=100 ml。"
+    },
+    {
+      "id": "ing_1789703581239",
+      "name": "豆腐麵",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790221450416",
+      "name": "蛤蜊",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790393110939",
+      "name": "韓式燒烤牛肉",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1790571924504",
+      "name": "無糖豆漿（義美）",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "baby_cabbage",
+      "name": "娃娃菜",
+      "note": "娃娃菜品種未明；不可用小白菜 pak-choi 或任意大白菜樣本冒充標示，保留。"
+    },
+    {
+      "id": "kimchi",
+      "name": "韓式泡菜",
+      "note": "韓式泡菜的糖、發酵與鹽度依品牌配方不同，既有 Na800 未取得對應來源，保留。"
+    },
+    {
+      "id": "frozen_berry",
+      "name": "冷凍莓果",
+      "note": "莓果種類、混合比例及有無加糖不明；不採單一藍莓或草莓作已核實值。"
+    },
+    {
+      "id": "ing_1787714321224",
+      "name": "洋菇",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "green_pepper_noodle",
+      "name": "青花椒乾拌麵",
+      "note": "只補 perUnit=既有每包 perServing，修正一包算成全零；未取得同一 SKU 原標示，五項本身仍待確認。"
+    },
+    {
+      "id": "corn",
+      "name": "金黃玉米粒(無加糖)",
+      "note": "好市多／綠巨人混列；罐頭液、瀝乾或含液基準未知，保留待包裝。"
+    },
+    {
+      "id": "granola",
+      "name": "綜合燕麥",
+      "note": "綜合燕麥可能含糖油與堅果，不可套生燕麥資料；配方或品牌未知，保留。"
+    },
+    {
+      "id": "prince_noodles",
+      "name": "王子麵",
+      "note": "依使用者選擇以乾麵本體（不含調味包）計；原值是佔位值，缺此版本完整標示，不能精算。"
+    },
+    {
+      "id": "steamed_noodle",
+      "name": "維力蒸煮麵",
+      "note": "通路標示已交叉核對 65g／包；仍待本人核對實際產品與規格。"
+    },
+    {
+      "id": "shin_ramen",
+      "name": "辛拉麵",
+      "note": "366 kcal / F3.5 類似非油炸型，但名稱只有辛拉麵；未確認油炸／非油炸與地區配方，保留。"
+    },
+    {
+      "id": "potato_ramen",
+      "name": "馬鈴薯泡麵",
+      "note": "UI 計包、只有 per100g；未留單包 g 重與品牌，1 包目前按 1 g 計算，阻擋發布。"
+    },
+    {
+      "id": "ing_1788172010738",
+      "name": "奇美鮮肉包",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "bibimbap_secret",
+      "name": "韓式辣醬",
+      "note": "可能為韓式辣醬或自製拌飯醬；配方不明，不能用純 gochujang 或任意配方替換。"
+    },
+    {
+      "id": "balsamic",
+      "name": "巴薩米克醋",
+      "note": "巴薩米克醋依濃縮程度／加糖不同；未對應品牌，保留。"
+    },
+    {
+      "id": "matcha_powder",
+      "name": "抹茶粉",
+      "note": "未註明純抹茶／調糖粉與品牌；未能核對現有完整五項，不單靠三大營養素回算。"
+    },
+    {
+      "id": "italian_herbs",
+      "name": "義大利綜合香料",
+      "note": "香料種類與混合比例未知，無可重現同品配方；目前無法查證完整五項。"
+    },
+    {
+      "id": "yuzu_vinegar",
+      "name": "和風柚子醋/果醋",
+      "note": "和風柚子醋醬與果醋混為同項，鈉糖可能差很大，無法選擇對應通用樣本；需明確產品。"
+    },
+    {
+      "id": "horseradish_mayo",
+      "name": "辣根蛋黃醬",
+      "note": "150 kcal / P10 / F5 對蛋黃醬名稱可疑；未知配方或原標示，無法查證，不用 4/9/4 直接定錯。"
+    },
+    {
+      "id": "sriracha_mayo",
+      "name": "J-Lek是拉差美乃滋",
+      "note": "J-Lek 地區版本及每 100 ml／g 標示可能不同，未取得與 FK 同款官網完整營養表；保留，不能把 ml 值寫成 g。"
+    },
+    {
+      "id": "sugar_free_peanut_butter",
+      "name": "無糖花生醬",
+      "note": "無糖不等於無鹽；Na312 可能為加鹽版本，未取得同品牌標示，保留。"
+    },
+    {
+      "id": "brown_sugar_syrup",
+      "name": "黑糖漿",
+      "note": "濃度未記錄；不能用純黑糖或任意糖水取代，現有值保留待原標示／配方。"
+    },
+    {
+      "id": "coffee_capsule",
+      "name": "咖啡膠囊",
+      "note": "原 commit 載有真實每顆 16 ml 標示：20 kcal / P0.3 / F0 / C4.6 / Na18；只新增 perUnit，保護原每份與每百值，不重新捨入標示。包裝影像及品牌仍待追溯。"
+    },
+    {
+      "id": "ing_1787563079531",
+      "name": "義美烏醋",
+      "note": "義美官網成分含糖、醬油及食鹽，既有五項全零尚無標示支持；TFDA 烏醋 Na1571 不能冒充義美標示，差異大，保留待實際包裝。"
+    },
+    {
+      "id": "black_coffee",
+      "name": "黑咖啡",
+      "note": "Nespresso／現煮美式混列；按 100 ml 使用，USDA brewed coffee 是每 100 g，沖煮濃度和密度未知，保留。"
+    },
+    {
+      "id": "yuzu_liqueur",
+      "name": "柚子酒",
+      "note": "160 kcal 不可因 4/9/4 約 87.6 就判錯；酒精另供熱量。梅乃宿現款 8% 約另供 44 kcal／100 ml，但無法解釋自釀或其他濃度；保留，未宣稱 160 已核實。"
+    },
+    {
+      "id": "yuzu_jam",
+      "name": "柚子果醬",
+      "note": "柚子茶醬的糖濃度和品牌不明；20 g／份換算一致，完整標示未核實，保留。"
+    },
+    {
+      "id": "ing_1788320414881",
+      "name": "起司",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791178416667",
+      "name": "統一肉躁醬",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791259732501",
+      "name": "金芝麻沙拉醬",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    },
+    {
+      "id": "ing_1791259841726",
+      "name": "炸醬",
+      "note": "新增基準項目，尚未取得可核對的產品標示或官方對應樣本。"
+    }
+  ]
+}

@@ -55,21 +55,33 @@ export const officialNutritionEvidence = {
     "brand": "Kirkland 科克蘭"
   },
   "shrimp": {
+    "name": "蝦仁",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "生蝦仁的物種、泡水及保水處理會影響蛋白與鈉；既有 Na280 未找到對應標示，保留。",
+      "note": "生去殼蝦仁；保水或加鹽產品不適用。",
       "sources": [
         {
-          "ref": "TFDA:J21009",
           "title": "白對蝦平均值",
           "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
           "dataset": "TFDA_20",
           "recordId": "J21009",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生; 前處理描述:去殼,去頭尾及腸泥,混合均勻打碎"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；樣品狀態:生; 前處理描述:去殼,去頭尾及腸泥,混合均勻打碎",
+          "nutrients": {
+            "kcal": 99.0,
+            "protein": 21.3,
+            "fat": 0.9,
+            "carbs": 0.0,
+            "sodium": 210.0
+          },
+          "fiber": 0.0,
+          "correctedEnergy": 99.0,
+          "ref": "TFDA:J21009"
         }
       ],
       "identity": {
@@ -79,17 +91,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 83,
-          "protein": 19.6,
+          "kcal": 99,
+          "protein": 21.3,
           "carbs": 0,
-          "fat": 0.5,
-          "sodium": 280
+          "fat": 0.9,
+          "sodium": 210
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "蝦仁",
-    "brand": ""
+    }
   },
   "sous_vide_chicken": {
     "evidence": {
@@ -129,30 +139,33 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "pork_shoulder": {
+    "name": "豬梅花肉片",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "生梅花肉的修脂比例不明；TFDA 豬肩胛肉／排差異大，不能挑一筆當原品項標示。",
+      "note": "以生去骨肩胛肉近似梅花肉；修脂比例不同會影響脂肪。",
       "sources": [
         {
-          "ref": "TFDA:I0300401",
-          "title": "豬肩胛肉",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "I0300401",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,豬肩胛部位; 前處理描述:去皮,混合均勻打碎"
-        },
-        {
-          "ref": "TFDA:I0300502",
           "title": "豬肩胛排(2021年取樣)",
           "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
           "dataset": "TFDA_20",
           "recordId": "I0300502",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,豬肩胛部位; 前處理描述:去骨,混合均勻打碎"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；樣品狀態:生,豬肩胛部位; 前處理描述:去骨,混合均勻打碎",
+          "nutrients": {
+            "kcal": 244.0,
+            "protein": 17.8,
+            "fat": 18.7,
+            "carbs": 0.0,
+            "sodium": 64.0
+          },
+          "fiber": 0.0,
+          "correctedEnergy": 244.0,
+          "ref": "TFDA:I0300502"
         }
       ],
       "identity": {
@@ -162,17 +175,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 207,
-          "protein": 18.9,
-          "carbs": 0.4,
-          "fat": 14.2,
-          "sodium": 56
+          "kcal": 244,
+          "protein": 17.8,
+          "carbs": 0,
+          "fat": 18.7,
+          "sodium": 64
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "豬梅花肉片",
-    "brand": ""
+    }
   },
   "egg": {
     "evidence": {
@@ -202,30 +213,33 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "tofu": {
+    "name": "板豆腐",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "as_sold",
-      "note": "板豆腐含水率與凝固劑差異大；TFDA 傳統豆腐不同年度 88／96 kcal，現有五項不是任一筆完整記錄；保留待品牌確認。",
+      "note": "用傳統板豆腐代表值；含水率依商品而異。",
       "sources": [
         {
-          "ref": "TFDA:R4700901",
-          "title": "傳統豆腐",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "R4700901",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；前處理描述:混合均勻打碎"
-        },
-        {
-          "ref": "TFDA:R4700902",
           "title": "傳統豆腐(2022年取樣)",
           "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
           "dataset": "TFDA_20",
           "recordId": "R4700902",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；前處理描述:混合均勻打碎"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；前處理描述:混合均勻打碎",
+          "nutrients": {
+            "kcal": 96.0,
+            "protein": 9.6,
+            "fat": 5.5,
+            "carbs": 1.9,
+            "sodium": 7.0
+          },
+          "fiber": 1.6,
+          "correctedEnergy": 93.0,
+          "ref": "TFDA:R4700902"
         }
       ],
       "identity": {
@@ -235,17 +249,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 88,
-          "protein": 9,
+          "kcal": 96,
+          "protein": 9.6,
           "carbs": 1.9,
-          "fat": 5.3,
+          "fat": 5.5,
           "sodium": 7
         },
         "weightBasis": "as_sold"
       }
-    },
-    "name": "板豆腐",
-    "brand": ""
+    }
   },
   "plain_yogurt": {
     "evidence": {
@@ -285,64 +297,52 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "bacon": {
+    "name": "培根",
+    "brand": "",
     "evidence": {
       "kind": "missing",
       "status": "pending",
-      "checkedAt": "2026-10-28",
-      "weightBasis": "unknown",
-      "note": "每條值保留；per100g 與 perServing 是 perUnit × 約 1.8 的舊轉換，未有單條 g 重證據；不可拿其顯示值視為實際每 100 g 標示。",
+      "checkedAt": "2026-11-05",
+      "weightBasis": "as_sold",
+      "note": "舊條／個營養不能轉換每100g；缺可靠來源，保留待確認。",
       "sources": [],
       "identity": {
         "name": "培根",
         "brand": ""
       },
       "snapshot": {
-        "unitLabel": "條",
-        "isCount": true,
+        "unitLabel": "g",
         "per100g": {
-          "kcal": 77,
-          "protein": 6.3,
-          "carbs": 0.4,
-          "fat": 5.9,
-          "sodium": 342
-        },
-        "perServing": {
-          "kcal": 77,
-          "protein": 6.3,
-          "carbs": 0.4,
-          "fat": 5.9,
-          "sodium": 342
-        },
-        "perUnit": {
-          "kcal": 43,
-          "protein": 3.5,
-          "carbs": 0.2,
-          "fat": 3.3,
-          "sodium": 190
+          "kcal": null,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "sodium": null
         },
         "servingSize": 100,
-        "servingUnit": "g"
+        "servingUnit": "g",
+        "weightBasis": "as_sold"
       }
-    },
-    "name": "培根",
-    "brand": ""
+    }
   },
   "chicken_thigh": {
+    "name": "雞腿肉",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "生雞腿是否含皮、修脂未定；TFDA 去皮去骨值不能代表含皮，保留待確認。",
+      "note": "生、去骨含皮雞腿可食部；含皮比例因修切而異。",
       "sources": [
         {
-          "ref": "TFDA:I0404501",
-          "title": "去皮去骨雞腿(肉雞)",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "I0404501",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,雞腿部位; 前處理描述:混合均勻打碎"
+          "ref": "USDA:172385",
+          "title": "Chicken thigh, meat and skin, raw",
+          "url": "https://fdc.nal.usda.gov/food-details/172385/nutrients",
+          "dataset": "USDA_SR_LEGACY",
+          "recordId": 172385,
+          "checkedAt": "2026-11-05",
+          "basis": "每100 g 可食部"
         }
       ],
       "identity": {
@@ -352,52 +352,44 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 172,
-          "protein": 18.5,
-          "carbs": 0,
-          "fat": 10.5,
-          "sodium": 75
+          "kcal": 221,
+          "protein": 16.52,
+          "carbs": 0.25,
+          "fat": 16.61,
+          "sodium": 81
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "雞腿肉",
-    "brand": ""
+    }
   },
   "beef_slice": {
+    "name": "牛肉片",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "已確認生重，但部位／修脂不明；現有 P26 有熟肉可能，不能僅據此判錯；TFDA 生牛肉片 120–430 kcal，保留待指定部位。",
+      "note": "以生里肌火鍋片代表，不適用牛五花。",
       "sources": [
         {
-          "ref": "TFDA:I0110101",
-          "title": "牛五花肉火鍋片",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "I0110101",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,冷凍產品; 前處理描述:混合均勻打碎"
-        },
-        {
-          "ref": "TFDA:I0110103",
-          "title": "牛梅花肉火鍋片",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "I0110103",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,冷凍產品; 前處理描述:混合均勻打碎"
-        },
-        {
-          "ref": "TFDA:I0110104",
           "title": "牛嫩肩里肌火鍋片",
           "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
           "dataset": "TFDA_20",
           "recordId": "I0110104",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,冷凍產品; 前處理描述:混合均勻打碎"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；樣品狀態:生,冷凍產品; 前處理描述:混合均勻打碎",
+          "nutrients": {
+            "kcal": 188.0,
+            "protein": 20.0,
+            "fat": 11.4,
+            "carbs": 1.8,
+            "sodium": 56.0
+          },
+          "fiber": null,
+          "correctedEnergy": 188.0,
+          "ref": "TFDA:I0110104"
         }
       ],
       "identity": {
@@ -407,17 +399,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 250,
-          "protein": 26,
-          "carbs": 0,
-          "fat": 15,
-          "sodium": 60
+          "kcal": 188,
+          "protein": 20,
+          "carbs": 1.8,
+          "fat": 11.4,
+          "sodium": 56
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "牛肉片",
-    "brand": ""
+    }
   },
   "boneless_short_rib": {
     "evidence": {
@@ -466,20 +456,15 @@ export const officialNutritionEvidence = {
     "brand": "Costco 好市多"
   },
   "shrimp_paste": {
+    "name": "蝦仁漿",
+    "brand": "",
     "evidence": {
       "kind": "missing",
       "status": "pending",
-      "checkedAt": "2026-10-28",
+      "checkedAt": "2026-11-05",
       "weightBasis": "as_sold",
-      "note": "確認是 FK 預設佔位，仍未修。老四川同名品 219.1 kcal 且含豬背脂／花枝，與 FK 未知配方可能差很大，不擅採該品牌值。",
-      "sources": [
-        {
-          "ref": "BRAND:SHRIMP_PASTE",
-          "title": "老四川蝦仁漿官方標示，僅供候選比較",
-          "url": "https://shop.oldsichuan.com.tw/noticeShow/46",
-          "checkedAt": "2026-10-28"
-        }
-      ],
+      "note": "原五項為佔位值，已停用；尚無對應產品可靠標示。",
+      "sources": [],
       "identity": {
         "name": "蝦仁漿",
         "brand": ""
@@ -487,17 +472,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 100,
-          "protein": 10,
-          "carbs": 10,
-          "fat": 5,
-          "sodium": 100
+          "kcal": null,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "sodium": null
         },
         "weightBasis": "as_sold"
       }
-    },
-    "name": "蝦仁漿",
-    "brand": ""
+    }
   },
   "frozen_tofu": {
     "evidence": {
@@ -853,21 +836,23 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "greek_yogurt": {
+    "name": "希臘優格",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "as_sold",
-      "note": "59 kcal 很接近 USDA 無脂希臘優格，但名稱沒註明無脂；原品牌／脂肪類型未確認，保留，避免誤套全脂。",
+      "note": "全脂原味未額外加糖，販售可食部，非特定品牌標示。",
       "sources": [
         {
-          "ref": "USDA:170894",
-          "title": "Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)",
-          "url": "https://fdc.nal.usda.gov/food-details/170894/nutrients",
+          "ref": "USDA:171304",
+          "title": "Yogurt, Greek, plain, whole milk",
+          "url": "https://fdc.nal.usda.gov/food-details/171304/nutrients",
           "dataset": "USDA_SR_LEGACY",
-          "recordId": 170894,
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；狀態依原始品名"
+          "recordId": 171304,
+          "checkedAt": "2026-11-05",
+          "basis": "每100 g 可食部"
         }
       ],
       "identity": {
@@ -875,27 +860,26 @@ export const officialNutritionEvidence = {
         "brand": ""
       },
       "snapshot": {
+        "unitLabel": "g",
         "per100g": {
-          "kcal": 59,
-          "protein": 10,
-          "carbs": 3.6,
-          "fat": 0.4,
-          "sodium": 36
+          "kcal": 97,
+          "protein": 9,
+          "carbs": 3.98,
+          "fat": 5,
+          "sodium": 35
         },
         "perServing": {
-          "kcal": 59,
-          "protein": 10,
-          "carbs": 3.6,
-          "fat": 0.4,
-          "sodium": 36
+          "kcal": 97,
+          "protein": 9,
+          "carbs": 3.98,
+          "fat": 5,
+          "sodium": 35
         },
         "servingSize": 100,
         "servingUnit": "g",
         "weightBasis": "as_sold"
       }
-    },
-    "name": "希臘優格",
-    "brand": ""
+    }
   },
   "sugar_free_soymilk": {
     "evidence": {
@@ -1153,21 +1137,33 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "mango": {
+    "name": "芒果",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "原新增 commit 明列現有值，但無原始來源；TFDA 西洋種平均熱量相同、C13.0／Na5 不同，不因同熱量就宣稱核實，保留。",
+      "note": "去皮去籽生芒果可食部。",
       "sources": [
         {
-          "ref": "TFDA:D21002",
           "title": "芒果平均值(西洋種)",
           "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
           "dataset": "TFDA_20",
           "recordId": "D21002",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:西洋種; 前處理描述:去皮及籽,混合均勻打碎"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；樣品狀態:西洋種; 前處理描述:去皮及籽,混合均勻打碎",
+          "nutrients": {
+            "kcal": 50.0,
+            "protein": 0.6,
+            "fat": 0.2,
+            "carbs": 13.0,
+            "sodium": 5.0
+          },
+          "fiber": 1.2,
+          "correctedEnergy": 48.0,
+          "ref": "TFDA:D21002"
         }
       ],
       "identity": {
@@ -1179,15 +1175,13 @@ export const officialNutritionEvidence = {
         "per100g": {
           "kcal": 50,
           "protein": 0.6,
-          "carbs": 12.8,
-          "fat": 0.3,
-          "sodium": 1
+          "carbs": 13,
+          "fat": 0.2,
+          "sodium": 5
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "芒果",
-    "brand": ""
+    }
   },
   "cabbage": {
     "evidence": {
@@ -1392,31 +1386,41 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "banana": {
+    "name": "香蕉",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
-      "weightBasis": "unknown",
-      "note": "每根值保留；缺單根去皮重量，不能以 USDA 的 medium 或任意 100 g 當固定一根。",
-      "sources": [],
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
+      "weightBasis": "raw",
+      "note": "生香蕉去皮可食部，改用 g 秤重而非估每根重量。",
+      "sources": [
+        {
+          "ref": "USDA:173944",
+          "title": "Bananas, raw",
+          "url": "https://fdc.nal.usda.gov/food-details/173944/nutrients",
+          "dataset": "USDA_SR_LEGACY",
+          "recordId": 173944,
+          "checkedAt": "2026-11-05",
+          "basis": "每100 g 可食部"
+        }
+      ],
       "identity": {
         "name": "香蕉",
         "brand": ""
       },
       "snapshot": {
-        "unitLabel": "根",
-        "isCount": true,
-        "perUnit": {
-          "kcal": 88,
-          "protein": 1.2,
-          "carbs": 22,
-          "fat": 0.2,
+        "unitLabel": "g",
+        "per100g": {
+          "kcal": 89,
+          "protein": 1.09,
+          "carbs": 22.84,
+          "fat": 0.33,
           "sodium": 1
-        }
+        },
+        "weightBasis": "raw"
       }
-    },
-    "name": "香蕉",
-    "brand": ""
+    }
   },
   "spinach": {
     "evidence": {
@@ -1576,21 +1580,44 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "greens": {
+    "name": "綜合生菜",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "綜合生菜比例未記；數值近似 USDA 綠葉萵苣，但不可把單一萵苣當已知混合比例。",
+      "note": "無混合比例時暫以生綠葉萵苣近似，不代表混合生菜檢測值。",
       "sources": [
         {
-          "ref": "USDA:169249",
           "title": "Lettuce, green leaf, raw",
           "url": "https://fdc.nal.usda.gov/food-details/169249/nutrients",
           "dataset": "USDA_SR_LEGACY",
           "recordId": 169249,
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；狀態依原始品名"
+          "checkedAt": "2026-11-05",
+          "basis": "每 100 g 可食部；狀態依原始品名",
+          "nutrients": {
+            "carbs": 2.87,
+            "kcal": 15.0,
+            "protein": 1.36,
+            "sodium": 28.0,
+            "fat": 0.15
+          },
+          "conversionFactors": [
+            {
+              "type": ".CalorieConversionFactor",
+              "proteinValue": 2.44,
+              "fatValue": 8.37,
+              "carbohydrateValue": 3.57
+            },
+            {
+              "type": ".ProteinConversionFactor",
+              "value": 6.25
+            }
+          ],
+          "fiber": 1.3,
+          "scientificName": "Lactuca sativa var. crispa",
+          "ref": "USDA:169249"
         }
       ],
       "identity": {
@@ -1601,16 +1628,14 @@ export const officialNutritionEvidence = {
         "unitLabel": "g",
         "per100g": {
           "kcal": 15,
-          "protein": 1.4,
-          "carbs": 2.9,
-          "fat": 0.2,
+          "protein": 1.36,
+          "carbs": 2.87,
+          "fat": 0.15,
           "sodium": 28
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "綜合生菜",
-    "brand": ""
+    }
   },
   "carrot": {
     "evidence": {
@@ -1724,50 +1749,46 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "beech_mushroom": {
+    "name": "鴻喜菇",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "raw",
-      "note": "鴻喜菇／雪白菇混列，TFDA 兩者五項不同；未指定比例，不為省事另造等權平均。",
+      "note": "鴻喜菇生重代表值；雪白菇另列。",
       "sources": [
         {
-          "ref": "TFDA:G1900101",
-          "title": "鴻喜菇",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "G1900101",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生; 前處理描述:去菌柄基部,混合均勻打碎"
+          "ref": "CCH:20260320",
+          "title": "彰化基督教醫院營養部：菇類營養（援引 TFDA）",
+          "url": "https://dpt.cch.org.tw/layout/layout_5/knowledge_detail.aspx?ID=7600&Key=238&cID=300",
+          "checkedAt": "2026-11-05",
+          "basis": "每100g生重可食部"
         },
         {
-          "ref": "TFDA:G1900201",
-          "title": "雪白菇",
-          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
-          "dataset": "TFDA_20",
-          "recordId": "G1900201",
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；樣品狀態:生,鴻喜菇的白變種; 前處理描述:去菌柄基部,混合均勻打碎"
+          "ref": "UDN:FOOD4180",
+          "title": "元氣網食品營養：鴻喜菇（轉載台灣食品成分資料）",
+          "url": "https://health.udn.com/health/food/4180",
+          "checkedAt": "2026-11-05",
+          "basis": "每100g生鮮去菌柄可食部；含脂肪0.1g與鈉2mg"
         }
       ],
       "identity": {
-        "name": "鴻喜菇/雪白菇",
+        "name": "鴻喜菇",
         "brand": ""
       },
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 32,
-          "protein": 2.6,
-          "carbs": 6.2,
-          "fat": 0.3,
-          "sodium": 3
+          "kcal": 30,
+          "protein": 2.9,
+          "carbs": 5.3,
+          "fat": 0.1,
+          "sodium": 2
         },
         "weightBasis": "raw"
       }
-    },
-    "name": "鴻喜菇/雪白菇",
-    "brand": ""
+    }
   },
   "frozen_berry": {
     "evidence": {
@@ -2043,31 +2064,41 @@ export const officialNutritionEvidence = {
     "brand": "賈以食日"
   },
   "bagel": {
+    "name": "原味貝果",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
-      "weightBasis": "unknown",
-      "note": "每個值保留；品牌、尺寸、每個重量未知，不能硬換成每 100 g。",
-      "sources": [],
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
+      "weightBasis": "as_sold",
+      "note": "一般原味貝果每100g，未核對特定品牌或每個重量，料理需 g。",
+      "sources": [
+        {
+          "ref": "USDA:174899",
+          "title": "Bagels, plain, enriched",
+          "url": "https://fdc.nal.usda.gov/food-details/174899/nutrients",
+          "dataset": "USDA_SR_LEGACY",
+          "recordId": 174899,
+          "checkedAt": "2026-11-05",
+          "basis": "每100g販售狀態可食部"
+        }
+      ],
       "identity": {
         "name": "原味貝果",
         "brand": ""
       },
       "snapshot": {
-        "unitLabel": "個",
-        "isCount": true,
-        "perUnit": {
-          "kcal": 250,
-          "protein": 9,
-          "carbs": 48,
-          "fat": 1.5,
-          "sodium": 380
-        }
+        "unitLabel": "g",
+        "per100g": {
+          "kcal": 264,
+          "protein": 10.56,
+          "carbs": 52.38,
+          "fat": 1.32,
+          "sodium": 422
+        },
+        "weightBasis": "as_sold"
       }
-    },
-    "name": "原味貝果",
-    "brand": ""
+    }
   },
   "corn": {
     "evidence": {
@@ -2097,31 +2128,41 @@ export const officialNutritionEvidence = {
     "brand": "好市多/綠巨人"
   },
   "brown_rice": {
+    "name": "糙米飯",
+    "brand": "",
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "cooked",
-      "note": "熟重已標，但白飯／糙米飯混列；米種、含水率、比例未知，111 kcal 不能代表所有飯，保留。",
-      "sources": [],
+      "note": "熟糙米飯無加鹽；單獨於白飯，含水率依煮法改變。",
+      "sources": [
+        {
+          "ref": "USDA:169704",
+          "title": "Rice, brown, long-grain, cooked",
+          "url": "https://fdc.nal.usda.gov/food-details/169704/nutrients",
+          "dataset": "USDA_SR_LEGACY",
+          "recordId": 169704,
+          "checkedAt": "2026-11-05",
+          "basis": "每100 g 可食部"
+        }
+      ],
       "identity": {
-        "name": "現煮米飯/糙米飯",
+        "name": "糙米飯",
         "brand": ""
       },
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 111,
-          "protein": 2.6,
-          "carbs": 23,
-          "fat": 0.9,
-          "sodium": 5
+          "kcal": 123,
+          "protein": 2.74,
+          "carbs": 25.58,
+          "fat": 0.97,
+          "sodium": 4
         },
         "weightBasis": "cooked"
       }
-    },
-    "name": "現煮米飯/糙米飯",
-    "brand": ""
+    }
   },
   "potato": {
     "evidence": {
@@ -2188,20 +2229,15 @@ export const officialNutritionEvidence = {
     "brand": ""
   },
   "prince_noodles": {
+    "name": "王子麵",
+    "brand": "",
     "evidence": {
       "kind": "missing",
       "status": "pending",
-      "checkedAt": "2026-10-28",
+      "checkedAt": "2026-11-05",
       "weightBasis": "dry",
-      "note": "確認是 FK 預設佔位，仍未修。原味 40 g 含調味包、50 g 滷味無調味包版本不同；原資料沒 SKU。需確認是否連調味包使用，不強套不相符版本。",
-      "sources": [
-        {
-          "ref": "BRAND:PRINCE",
-          "title": "味王王子麵原味 40 g 官網",
-          "url": "https://www.vewong.com/ec99/ushop20069/goodsdescr.asp?category_id=61&parent_id=57&prod_id=pro11",
-          "checkedAt": "2026-10-28"
-        }
-      ],
+      "note": "依使用者選擇以乾麵本體（不含調味包）計；原值是佔位值，缺此版本完整標示，不能精算。",
+      "sources": [],
       "identity": {
         "name": "王子麵",
         "brand": ""
@@ -2209,17 +2245,15 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "g",
         "per100g": {
-          "kcal": 100,
-          "protein": 10,
-          "carbs": 10,
-          "fat": 5,
-          "sodium": 100
+          "kcal": null,
+          "protein": null,
+          "carbs": null,
+          "fat": null,
+          "sodium": null
         },
         "weightBasis": "dry"
       }
-    },
-    "name": "王子麵",
-    "brand": ""
+    }
   },
   "sweet_potato": {
     "evidence": {
@@ -2911,11 +2945,11 @@ export const officialNutritionEvidence = {
   },
   "truffle_olive_oil": {
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
       "weightBasis": "as_sold",
-      "note": "若純油可近似橄欖油，但含松露顆粒／調味物的商品不同；未取得配方，保留。",
+      "note": "以純橄欖油近似未額外加糖／鹽的松露風味油；若有其他配料則改以產品標示。",
       "sources": [
         {
           "ref": "USDA:171413",
@@ -2923,8 +2957,8 @@ export const officialNutritionEvidence = {
           "url": "https://fdc.nal.usda.gov/food-details/171413/nutrients",
           "dataset": "USDA_SR_LEGACY",
           "recordId": 171413,
-          "checkedAt": "2026-10-28",
-          "basis": "每 100 g 可食部；狀態依原始品名"
+          "checkedAt": "2026-11-05",
+          "basis": "每100g販售狀態可食部"
         }
       ],
       "identity": {
@@ -2938,7 +2972,7 @@ export const officialNutritionEvidence = {
           "protein": 0,
           "carbs": 0,
           "fat": 100,
-          "sodium": 0
+          "sodium": 2
         },
         "weightBasis": "as_sold"
       }
@@ -3506,5 +3540,80 @@ export const officialNutritionEvidence = {
     },
     "name": "炸醬",
     "brand": "維力"
+  },
+  "white_rice": {
+    "name": "白飯（熟重）",
+    "brand": "",
+    "evidence": {
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
+      "weightBasis": "cooked",
+      "note": "無加鹽熟白飯；與糙米飯分開。",
+      "sources": [
+        {
+          "ref": "USDA:169757",
+          "title": "Rice, white, long-grain, unenriched, cooked without salt",
+          "url": "https://fdc.nal.usda.gov/food-details/169757/nutrients",
+          "dataset": "USDA_SR_LEGACY",
+          "recordId": 169757,
+          "checkedAt": "2026-11-05",
+          "basis": "每100g熟白米飯可食部、無加鹽"
+        }
+      ],
+      "identity": {
+        "name": "白飯（熟重）",
+        "brand": ""
+      },
+      "snapshot": {
+        "unitLabel": "g",
+        "per100g": {
+          "kcal": 130,
+          "protein": 2.69,
+          "carbs": 28.17,
+          "fat": 0.28,
+          "sodium": 1
+        },
+        "weightBasis": "cooked"
+      }
+    }
+  },
+  "snow_white_mushroom": {
+    "name": "雪白菇",
+    "brand": "",
+    "evidence": {
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-05",
+      "weightBasis": "raw",
+      "note": "生雪白菇，與鴻喜菇分開。",
+      "sources": [
+        {
+          "ref": "TFDA:G0600101",
+          "title": "雪白菇(長)",
+          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
+          "dataset": "TFDA_20",
+          "recordId": "G0600101",
+          "checkedAt": "2026-11-05",
+          "basis": "每100g生雪白菇可食部"
+        }
+      ],
+      "identity": {
+        "name": "雪白菇",
+        "brand": ""
+      },
+      "snapshot": {
+        "unitLabel": "g",
+        "per100g": {
+          "kcal": 36,
+          "protein": 2.1,
+          "carbs": 6.9,
+          "fat": 0.4,
+          "sodium": 1
+        },
+        "weightBasis": "raw"
+      }
+    }
   }
 };

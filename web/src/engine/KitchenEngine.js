@@ -1,4 +1,4 @@
-import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261104_NUTRITION_V3';
+import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
 import CloudSyncEngine from './CloudSyncEngine.js';
@@ -13,10 +13,10 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261104_NUTRITION_V3';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261104_NUTRITION_V3';
+import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
-import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261104_NUTRITION_V3';
+import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
 
 export default class KitchenEngine {
     constructor({ auth = authService, cloudSync, photoStore = ingredientPhotoStore } = {}) {
@@ -472,7 +472,17 @@ export default class KitchenEngine {
             try { customList = JSON.parse(localStorage.getItem('kitchen_v2_custom_ingredients') || '[]'); } catch (e) {}
             const customMap = new Map((Array.isArray(customList) ? customList : []).map(i => [i.id, i]));
             ['proteins', 'veggies', 'carbs', 'sauces'].forEach(cat => {
-                const serverList = serverData[cat] || [];
+                const incoming = serverData[cat] || [];
+                const customCollides = base => [...customMap.values()].some(custom => custom.id !== base.id
+                    && normalizeIngredientName(custom.name || '') === normalizeIngredientName(base.name || ''));
+                // A renamed official item must not silently absorb a previously distinct
+                // custom food with its new name. Keep the legacy title until the user resolves it.
+                const priorNames = { brown_rice: '現煮米飯/糙米飯', beech_mushroom: '鴻喜菇/雪白菇' };
+                const safeIncoming = incoming.map(base => priorNames[base.id] && customCollides(base)
+                    ? { ...base, name: priorNames[base.id] } : base);
+                const protectedNewIds = new Set(['white_rice', 'snow_white_mushroom']);
+                const serverList = safeIncoming.filter(base => !protectedNewIds.has(base.id)
+                    || !customCollides(base));
                 const localList = localData?.[cat] || [];
                 const localMap = new Map(localList.map(i => [i.id, i]));
                 merged[cat] = serverList.map(sIng => {

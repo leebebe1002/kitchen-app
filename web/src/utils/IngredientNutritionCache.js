@@ -1,4 +1,4 @@
-import { nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261104_NUTRITION_V3';
+import { nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 // Historical nutrition shapes from ingredients.json at 4b6f0d0; recognition only, never calculation.
 const legacyNutrition = {
     "sous_vide_chicken": {"unitLabel":"g","per100g":{"kcal":115,"protein":23,"fat":1.5,"carbs":0,"sodium":180}},
@@ -27,6 +27,23 @@ const legacyNutrition = {
     "shacha_sauce": {"unitLabel":"g","per100g":{"kcal":100,"protein":10,"fat":5,"carbs":10,"sodium":100}},
     "olive_oil": {"unitLabel":"g","per100g":{"kcal":884,"protein":0,"fat":100,"carbs":0,"sodium":0}},
     "coffee_capsule": {"unitLabel":"顆","per100g":{"kcal":124,"protein":1.9,"fat":0.0,"carbs":28.7,"sodium":110},"perServing":{"kcal":20,"protein":0.3,"fat":0.0,"carbs":4.6,"sodium":18},"servingSize":16,"servingUnit":"ml"}
+,
+    "truffle_olive_oil": {"unitLabel":"g","per100g":{"kcal":884,"protein":0,"fat":100,"carbs":0,"sodium":0}},
+    "greek_yogurt": {"per100g":{"kcal":59,"protein":10,"carbs":3.6,"fat":0.4,"sodium":36},"perServing":{"kcal":59,"protein":10,"carbs":3.6,"fat":0.4,"sodium":36},"servingSize":100,"servingUnit":"g"},
+    "chicken_thigh": {"unitLabel":"g","per100g":{"kcal":172,"protein":18.5,"fat":10.5,"carbs":0,"sodium":75}},
+    "shrimp": {"unitLabel":"g","per100g":{"kcal":83,"protein":19.6,"fat":0.5,"carbs":0,"sodium":280}},
+    "tofu": {"unitLabel":"g","per100g":{"kcal":88,"protein":9,"fat":5.3,"carbs":1.9,"sodium":7}},
+    "mango": {"unitLabel":"g","per100g":{"kcal":50,"protein":0.6,"fat":0.3,"carbs":12.8,"sodium":1}},
+    "beef_slice": {"unitLabel":"g","per100g":{"kcal":250,"protein":26,"fat":15,"carbs":0,"sodium":60}},
+    "pork_shoulder": {"unitLabel":"g","per100g":{"kcal":207,"protein":18.9,"fat":14.2,"carbs":0.4,"sodium":56}},
+    "greens": {"unitLabel":"g","per100g":{"kcal":15,"protein":1.4,"fat":0.2,"carbs":2.9,"sodium":28}},
+    "banana": {"unitLabel":"根","isCount":true,"perUnit":{"kcal":88,"protein":1.2,"fat":0.2,"carbs":22,"sodium":1}},
+    "brown_rice": {"unitLabel":"g","per100g":{"kcal":111,"protein":2.6,"fat":0.9,"carbs":23,"sodium":5}},
+    "beech_mushroom": {"unitLabel":"g","per100g":{"kcal":32,"protein":2.6,"fat":0.3,"carbs":6.2,"sodium":3}},
+    "bacon": {"unitLabel":"條","isCount":true,"per100g":{"kcal":77,"protein":6.3,"carbs":0.4,"fat":5.9,"sodium":342},"perServing":{"kcal":77,"protein":6.3,"carbs":0.4,"fat":5.9,"sodium":342},"perUnit":{"kcal":43,"protein":3.5,"fat":3.3,"carbs":0.2,"sodium":190},"servingSize":100,"servingUnit":"g"},
+    "bagel": {"unitLabel":"個","isCount":true,"perUnit":{"kcal":250,"protein":9,"fat":1.5,"carbs":48,"sodium":380}},
+    "prince_noodles": {"unitLabel":"g","per100g":{"kcal":100,"protein":10,"fat":5,"carbs":10,"sodium":100}},
+    "shrimp_paste": {"unitLabel":"g","per100g":{"kcal":100,"protein":10,"fat":5,"carbs":10,"sodium":100}}
 };
 
 const nutritionFields = ['unitLabel', 'isCount', 'per100g', 'perServing', 'perUnit', 'servingSize', 'servingUnit', 'gramsPerPack'];
@@ -53,18 +70,24 @@ export function mergeIngredientNutrition(official, local, custom) {
     // Old custom-list entries are evidence of an explicit save, even if equal to an old default.
     const edited = record?.edited === true || (!record && !!custom);
     // Only the confirmed canonical noodle is renamed; do not generalize brand/identity overrides.
+    const namedDefaultUpgrade = (
+        (official.id === 'brown_rice' && official.name === '糙米飯' && local.name === '現煮米飯/糙米飯')
+        || (official.id === 'beech_mushroom' && official.name === '鴻喜菇' && local.name === '鴻喜菇/雪白菇')
+    ) && !custom;
     const canonicalNoodleUpgrade = official.id === 'steamed_noodle'
         && official.name === '維力蒸煮麵' && official.brand === '維力'
         && local.name === '蒸煮麵' && !local.brand && !custom;
-    const sameIdentity = canonicalNoodleUpgrade ||
+    const sameIdentity = canonicalNoodleUpgrade || namedDefaultUpgrade ||
         ['name', 'brand'].every(key => (local[key] || '') === (official[key] || ''));
     const sameBasis = !local.weightBasis || local.weightBasis === 'unknown' || local.weightBasis === official.weightBasis;
     const knownDefault = (sameIdentity || record?.acceptedBaseline === '20261103') && sameBasis && (sameNutrition(local, official)
         || (record?.edited === false && sameNutrition(local, record.base))
         || (!record && legacyNutrition[official.id] && sameNutrition(local, legacyNutrition[official.id])));
-    const refresh = !edited && knownDefault;
+    // Verified product-label values take precedence over generic estimates.
+    const hasProductLabel = local.nutritionEvidence?.kind === 'product_label';
+    const refresh = !edited && knownDefault && !hasProductLabel;
     const merged = { ...official, ...local };
-    if (refresh && canonicalNoodleUpgrade) {
+    if (refresh && (canonicalNoodleUpgrade || namedDefaultUpgrade)) {
         merged.name = official.name;
         merged.brand = official.brand;
     }
@@ -75,7 +98,13 @@ export function mergeIngredientNutrition(official, local, custom) {
     }
     merged.nutritionCache = { base, edited: edited || !knownDefault };
     if (record?.acceptedBaseline === '20261103') merged.nutritionCache.acceptedBaseline = '20261103';
-    merged.nutritionReviewRequired = refresh ? !!official.nutritionReviewRequired
+    // An independently verified, unchanged product label is more authoritative
+    // than a generic database estimate, even when the canonical baseline advances.
+    const validUserLabel = local.nutritionEvidence?.kind === 'product_label'
+        && local.nutritionEvidence.status === 'verified'
+        && !local.nutritionReviewRequired
+        && !nutritionEvidenceIssue({ ...merged, nutritionReviewRequired: false, nutritionEvidence: local.nutritionEvidence });
+    merged.nutritionReviewRequired = validUserLabel ? false : refresh ? !!official.nutritionReviewRequired
         : (!!local.nutritionReviewRequired || (!edited && (!sameBasis || !sameNutrition(local, official))));
     if (refresh) {
         if (!local.weightBasis || local.weightBasis === 'unknown' || local.weightBasis === official.weightBasis) {

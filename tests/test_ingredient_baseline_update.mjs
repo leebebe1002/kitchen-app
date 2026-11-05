@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { execFileSync } from 'node:child_process';
 import {
     BASELINE_UPDATE_KEY, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY,
     approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline
@@ -10,6 +11,8 @@ import { ingredientNutritionBasis } from '../web/src/utils/IngredientUnit.js';
 
 const text = fs.readFileSync('src/data/ingredients.json', 'utf8');
 const official = await approvedIngredientBaseline(text);
+const previousApproved = await approvedIngredientBaseline(execFileSync('git',['show','origin/main:src/data/ingredients.json'],{encoding:'utf8'}));
+assert.equal(Object.values(previousApproved).flat().length,99);
 const flatten = value => Object.values(value).flat();
 const find = (value, id) => flatten(value).find(item => item.id === id);
 const zero = { kcal: 0, protein: 0, fat: 0, carbs: 0, sodium: 0 };
@@ -51,11 +54,11 @@ const storage = {
 const reset = () => { values = new Map(seeded); fail = () => false; writes = []; };
 const unchanged = () => { for (const [key, value] of seeded) assert.equal(values.get(key), value, key); };
 reset();
-await assert.rejects(approvedIngredientBaseline(text + ' '), /99 項/);
+await assert.rejects(approvedIngredientBaseline(text + ' '), /99／101 項/);
 assert.equal(writes.length, 0);
 const updated = applyIngredientBaseline(official, storage);
-assert.equal(flatten(updated).length, 100, '99 canonical plus the custom-only private item');
-assert.equal(new Set(flatten(updated).map(item => item.id)).size, 100);
+assert.equal(flatten(updated).length, 102, '101 canonical plus the custom-only private item');
+assert.equal(new Set(flatten(updated).map(item => item.id)).size, 102);
 assert.deepEqual(find(updated, privateItem.id), privateItem);
 const adoptedNoodle = find(updated, noodle.id);
 for (const key of ['name', 'price', 'preferredStores', 'storageZones', 'priorityTier']) assert.deepEqual(adoptedNoodle[key], noodle[key]);
@@ -135,7 +138,7 @@ for (const [key, value] of [[CUSTOM_INGREDIENT_KEY, '{bad JSON'], [INGREDIENT_CA
     assert.deepEqual(values, original); assert.equal(writes.length, 0);
 }
 reset(); values.delete(INGREDIENT_CACHE_KEY); values.delete(CUSTOM_INGREDIENT_KEY);
-assert.equal(flatten(applyIngredientBaseline(official, storage)).length, 99);
+assert.equal(flatten(applyIngredientBaseline(official, storage)).length, 101);
 assert.equal(values.has(CUSTOM_INGREDIENT_KEY), false);
 
 // Exercise the real Engine entry point, loader and edit path with no real browser or network.
@@ -172,7 +175,7 @@ for (const scope of [null, 'household', 'ariel']) {
 reset();
 const engine = new Engine();
 globalThis.fetch = async () => ({ ok: true, text: async () => '{}' });
-await assert.rejects(engine.adoptIngredientBaseline(), /99 項/); unchanged();
+await assert.rejects(engine.adoptIngredientBaseline(), /99／101 項/); unchanged();
 globalThis.fetch = async () => { throw Error('offline'); };
 await assert.rejects(engine.adoptIngredientBaseline(), /offline/); unchanged();
 
@@ -216,4 +219,4 @@ accepted = true;
 await view.adoptIngredientBaseline(); assert.equal(calls, 1);
 await view.adoptIngredientBaseline(); assert.equal(calls, 1);
 assert(view.baselineMessage.value.includes('仍待補營養'));
-console.log('PASS: pinned 99-item baseline; opt-in/cancel/once; exact backups, quota failures and crash recovery; custom-only and private metadata; both scopes/logged-out unchanged; three missing nutrients; actual Engine save/reload retains later edits; no real network.');
+console.log('PASS: pinned 99/101-item baseline; opt-in/cancel/once; exact backups, quota failures and crash recovery; custom-only and private metadata; both scopes/logged-out unchanged; three missing nutrients; actual Engine save/reload retains later edits; no real network.');

@@ -18,6 +18,8 @@ const { default: Calculator } = await import('../web/src/views/CalculatorView.js
 const official = JSON.parse(fs.readFileSync('src/data/ingredients.json'));
 const before = JSON.parse(execFileSync('git', ['show','HEAD:src/data/ingredients.json'], {encoding:'utf8'}));
 const audit = JSON.parse(fs.readFileSync('docs/audits/nutrition-2026-10-28.json'));
+const revised = new Set(['greek_yogurt','chicken_thigh','shrimp','tofu','mango','beef_slice',
+ 'pork_shoulder','greens','banana','brown_rice','beech_mushroom','bacon','bagel','prince_noodles','shrimp_paste','truffle_olive_oil']);
 const stripped = JSON.parse(JSON.stringify(official));
 for (const list of Object.values(stripped)) for (const ing of list) { delete ing.weightBasis; delete ing.weightBasisSource; }
 const baseline = JSON.parse(JSON.stringify(before));
@@ -36,7 +38,7 @@ for (const row of audit.ingredients) {
  const current = Object.values(stripped).flat().find(i=>i.id===id);
  const original = Object.values(baseline).flat().find(i=>i.id===id);
  for (const field of ['per100g','perServing','perUnit']) {
-  if (id !== 'steamed_noodle') assert.deepEqual(current[field],row.after[field],id + ': historical audited nutrition');
+  if (id !== 'steamed_noodle' && !revised.has(id)) assert.deepEqual(current[field],row.after[field],id + ': historical audited nutrition');
   if (original[field]) current[field] = original[field]; else delete current[field];
  }
 }
@@ -47,17 +49,22 @@ for (const field of ['brand', 'gramsPerPack']) {
  if (Object.hasOwn(originalNoodle, field)) noodleCurrent[field] = originalNoodle[field];
  else delete noodleCurrent[field];
 }
-assert.deepEqual(stripped, baseline, 'Only audited changes plus verified steamed noodle update are allowed');
-assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 88, 'Original 78 plus ten imported ingredient bases should be explicitly tagged');
+// Preserve archived approved fields while separately checking the documented updates.
+for (const [cat, list] of Object.entries(stripped)) {
+ const oldById = new Map(baseline[cat].map(i=>[i.id,i]));
+ stripped[cat] = list.filter(i=>oldById.has(i.id)).map(i=>revised.has(i.id) ? structuredClone(oldById.get(i.id)) : i);
+}
+assert.deepEqual(stripped, baseline, 'All unchanged fields must remain equivalent after explicit upgrades');
+assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 93, 'New gram-based and added ingredients must declare their basis');
 const allIngredients = Object.values(official).flat();
 const expectedUserBases = {sous_vide_chicken:'raw',beef_slice:'raw',salmon:'raw',black_fungus:'as_sold',sweet_potato:'raw',steamed_noodle:'dry',angel_hair_pasta:'dry',edamame:'as_sold'};
 for (const [id,basis] of Object.entries(expectedUserBases)) assert.equal(allIngredients.find(i => i.id === id).weightBasis,basis, id);
 assert.equal(allIngredients.find(i=>i.id==='angel_hair_pasta').per100g.kcal,160,'Preserve user-provided dry pasta nutrition label');
 const countUnits = new Set(['顆', '個', '條', '包', '根']);
-assert.equal(allIngredients.filter(i => countUnits.has(i.unitLabel)).length, 11);
+assert.equal(allIngredients.filter(i => countUnits.has(i.unitLabel)).length, 8);
 for (const item of allIngredients.filter(i => countUnits.has(i.unitLabel))) assert.equal(getWeightBasis(item), 'count', item.name);
 const placeholder = allIngredients.filter(i => ['kcal','protein','fat','carbs'].every((k,j) => i.per100g?.[k] === [100,10,5,10][j]));
-assert.equal(placeholder.length, 2, 'Only shrimp paste and unidentified Prince noodles placeholders remain');
+assert.equal(placeholder.length, 0, 'Known placeholder patterns must not remain');
 for (const item of placeholder) assert(!item.weightBasisSource || item.weightBasisSource.includes('尚未核實'), item.name + ': placeholder nutrition must not be marked verified');
 assert.equal(allIngredients.filter(i => !i.weightBasis && !countUnits.has(i.unitLabel)).length, 0, 'All gram/ml ingredient weight bases should be explicit');
 // Unit-aware calculation is covered by test_nutrition_cache_units.mjs; basis labels must remain read-only.

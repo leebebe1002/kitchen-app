@@ -19,7 +19,7 @@ const {default:Engine} = await import('../web/src/engine/KitchenEngine.js');
 const {default:Modal} = await import('../web/src/components/IngredientDetailModal.js');
 const {default:Calculator} = await import('../web/src/views/CalculatorView.js');
 const catalog = Object.values(JSON.parse(fs.readFileSync('src/data/ingredients.json'))).flat();
-assert.equal(Object.keys(officialNutritionEvidence).length,99);
+assert.equal(Object.keys(officialNutritionEvidence).length,101);
 const audit = JSON.parse(fs.readFileSync('docs/audits/nutrition-2026-10-28.json'));
 const report = JSON.parse(fs.readFileSync('docs/audits/nutrition-2026-11-04.json'));
 assert.equal(report.ingredients.length,99);
@@ -127,4 +127,4 @@ assert.equal(engine.getIngredientById('label').nutritionEvidence.status,'verifie
 await engine.saveIngredient({...engine.getIngredientById('label'),per100g:{...engine.getIngredientById('label').per100g,kcal:999}});
 assert(engine.getNutritionIssues([{id:'label',amount:100,unit:'g'}]).length);
 Vue.compile(Calculator.template,{decodeEntities:text=>text});Vue.compile(Modal.template,{decodeEntities:text=>text});
-console.log('PASS: 99 evidence records, 89 audit reuse, three source classes, pending counts/placeholders, identity/snapshot guards, missing values, g/ml/count, changing targets/intake, exclusions, AI shape/limits, manual edits/history and isolated scope cache.');
+console.log('PASS: 101 evidence records, 89 audit reuse, three source classes, pending counts/placeholders, identity/snapshot guards, missing values, g/ml/count, changing targets/intake, exclusions, AI shape/limits, manual edits/history and isolated scope cache.');

@@ -1,4 +1,4 @@
-import { officialNutritionEvidence } from './OfficialNutritionEvidence.js?v=20261104_NUTRITION_V3';
+import { officialNutritionEvidence } from './OfficialNutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 export const nutrientKeys = ['kcal', 'protein', 'carbs', 'fat', 'sodium'];
 export const nutrientNumber = value => value === null || value === undefined || value === ''
     || typeof value === 'boolean' || !Number.isFinite(Number(value)) || Number(value) < 0 ? null : Number(value);

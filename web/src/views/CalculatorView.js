@@ -1,8 +1,8 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261104_NUTRITION_V3';
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261105_DEFAULT_ESTIMATES_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
-import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261104_NUTRITION_V3';
+import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261104_NUTRITION_V3';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261105_DEFAULT_ESTIMATES_V1';
 
 export default {
     components: {
