@@ -34,6 +34,12 @@ const IngredientDetailModal = {
     },
     emits: ['close', 'saved', 'deleted', 'removeFromDish'],
     setup(props, { emit }) {
+        const modalMode = ref(props.mode);
+        const previewIngredient = ref(null);
+        const selectedTargetId = ref('');
+        const isSaving = ref(false);
+        const previewNutritionText = computed(() => nutritionEvidenceText(withNutritionEvidence(previewIngredient.value)));
+        let draftScrollTop = 0;
         const nutritionChanged = ref(false);
         const evidenceConfirmed = ref(false);
         const showLabelReview = ref(false);
@@ -98,11 +104,15 @@ const IngredientDetailModal = {
         const scrollReviewToTop = async (revision) => {
             await nextTick();
             if (revision !== photoRevision || !props.isOpen) return;
-            if (drawerContentRef.value) drawerContentRef.value.scrollTop = 0;
+            if (!previewIngredient.value && drawerContentRef.value) drawerContentRef.value.scrollTop = 0;
         };
 
         const initForm = () => {
             photoRevision++;
+            previewIngredient.value = null;
+            selectedTargetId.value = '';
+            modalMode.value = props.mode;
+            photo.url = null;
             nutritionChanged.value = false;
             evidenceConfirmed.value = false;
             showLabelReview.value = false;
@@ -191,7 +201,7 @@ const IngredientDetailModal = {
 
         watch(() => props.isOpen, (newVal) => {
             if (newVal) initForm();
-            else photoRevision++;
+            else { photoRevision++; previewIngredient.value = null; photo.url = null; photo.isAnalyzing = false; }
         }, { immediate: true });
 
         watch(() => props.initialIngredient, () => {
@@ -286,7 +296,6 @@ const IngredientDetailModal = {
             return saved;
         };
 
-        const modalMode = ref(props.mode);
         watch(() => props.mode, (newVal) => {
             modalMode.value = newVal;
         });
@@ -303,63 +312,24 @@ const IngredientDetailModal = {
         const duplicateMatch = computed(() => matchingResults.value.exactMatch);
         const similarMatches = computed(() => matchingResults.value.similarMatches);
 
-        const switchToExisting = (existingIng) => {
-            if (!existingIng) return;
-            // A prior photo's OCR acceptance must never verify a different ingredient.
-            photoRevision++;
-            photo.isAnalyzing = false;
-            photo.status = 'idle';
-            photo.message = '';
-            photo.notices = [];
-            showLabelReview.value = false;
-            nutritionChanged.value = false;
-            form.id = existingIng.id;
-            form.name = existingIng.name;
-            form.brand = existingIng.brand || '';
-            form.category = existingIng.category || 'proteins';
-            form.priorityTier = existingIng.priorityTier || 1;
-            const isSauceOrOil = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category);
-            form.servingSize = Number(existingIng.servingSize) || (isSauceOrOil ? 10 : 100);
-            form.servingUnit = existingIng.servingUnit || 'g';
-            form.stock = props.engine?.checkStock ? props.engine.checkStock(existingIng.id) : true;
-            form.storageZones = Array.isArray(existingIng.storageZones) ? [...existingIng.storageZones] : ['fridge'];
-            const rawExistingStores = Array.isArray(existingIng.preferredStores) 
-                ? existingIng.preferredStores 
-                : (existingIng.preferredStore ? [existingIng.preferredStore] : ['全聯']);
-            form.preferredStores = normalizeStoreList(rawExistingStores);
-            if (form.preferredStores.length === 0) form.preferredStores = ['全聯'];
-            form.price = existingIng.price || 0;
-            form.priceUnit = existingIng.priceUnit || '包';
-            if (existingIng.per100g) {
-                form.per100g = {
-                    kcal: nutrientNumber(existingIng.per100g.kcal),
-                    protein: nutrientNumber(existingIng.per100g.protein),
-                    carbs: nutrientNumber(existingIng.per100g.carbs),
-                    fat: nutrientNumber(existingIng.per100g.fat),
-                    sodium: nutrientNumber(existingIng.per100g.sodium)
-                };
-            }
-            if (existingIng.perServing) {
-                form.perServing = {
-                    kcal: nutrientNumber(existingIng.perServing.kcal),
-                    protein: nutrientNumber(existingIng.perServing.protein),
-                    carbs: nutrientNumber(existingIng.perServing.carbs),
-                    fat: nutrientNumber(existingIng.perServing.fat),
-                    sodium: nutrientNumber(existingIng.perServing.sodium)
-                };
-            }
-            if (existingIng.perUnit) {
-                form.perServing = { ...existingIng.perUnit };
-                form.servingSize = 1;
-                form.servingUnit = existingIng.unitLabel;
-                form.displayBasis = 'serving';
-            }
-            photo.url = existingIng.photoUrl || null;
-            evidenceConfirmed.value = false;
-            evidenceSpec.value = existingIng.nutritionEvidence?.specification || '';
-            evidenceUnit.value = existingIng.unitLabel || 'g';
-            evidenceBasis.value = existingIng.weightBasis || 'unknown';
-            modalMode.value = 'edit';
+        const matchCandidates = computed(() => duplicateMatch.value ? [duplicateMatch.value]
+            : similarMatches.value.map(match => match.ingredient));
+        const replacementTarget = computed(() => matchCandidates.value.find(item => item.id === selectedTargetId.value)
+            || (matchCandidates.value.length === 1 ? matchCandidates.value[0] : null));
+        watch(() => form.name, () => { selectedTargetId.value = ''; });
+
+        // Preview never mutates the draft; even in-flight OCR belongs to that same draft.
+        const switchToExisting = async (existingIng) => {
+            if (!existingIng || isSaving.value) return;
+            draftScrollTop = drawerContentRef.value?.scrollTop || 0;
+            previewIngredient.value = existingIng;
+            await nextTick();
+            if (drawerContentRef.value) drawerContentRef.value.scrollTop = 0;
+        };
+        const returnToDraft = async () => {
+            previewIngredient.value = null;
+            await nextTick();
+            if (drawerContentRef.value) drawerContentRef.value.scrollTop = draftScrollTop;
         };
 
         const saveCustomApiKey = () => {
@@ -661,7 +631,14 @@ const IngredientDetailModal = {
         };
 
         // 提交處理
-        const handleSave = async () => {
+        const handleSave = async (replaceTarget = null) => {
+            if (isSaving.value || photo.isAnalyzing || previewIngredient.value) return;
+            // Click handlers pass DOM events; replacement must be an explicit candidate ID.
+            const replaceId = typeof replaceTarget === 'string' ? replaceTarget : null;
+            if (replaceId && !matchCandidates.value.some(item => item.id === replaceId)) return;
+            const saveRevision = photoRevision;
+            const saveScope = props.engine.personalScope;
+            const saveContext = props.engine.personalContext;
             const cleanName = (form.name || '').trim();
             if (!cleanName) {
                 alert('請輸入食材名稱');
@@ -669,12 +646,12 @@ const IngredientDetailModal = {
             }
 
             // 🚨 守門員 1：防呆重複與模糊比對檢查 (僅在建立模式守門)
-            if (modalMode.value === 'create') {
+            if (modalMode.value === 'create' && !replaceId) {
                 const allIngs = props.engine?.data?.ingredients || [];
                 const { exactMatch, similarMatches: topSimilar } = findSimilarIngredients(cleanName, allIngs, form.id || null);
 
                 if (exactMatch) {
-                    alert(`🚫 總庫中已有完全同名的食材【${exactMatch.name}】！\n已為您切換至該食材進行檢視/編輯，避免重複建立雙胞胎。`);
+                    alert(`🚫 總庫中已有完全同名的食材【${exactMatch.name}】！\n已為您切換至該食材進行檢視，返回後可選擇取代，避免重複建立雙胞胎。`);
                     switchToExisting(exactMatch);
                     return;
                 }
@@ -689,7 +666,7 @@ const IngredientDetailModal = {
                 }
             }
 
-            const targetId = form.id || 'ing_' + Date.now();
+            const targetId = replaceId || form.id || 'ing_' + Date.now();
             const ingData = {
                 id: targetId,
                 name: cleanName,
@@ -721,7 +698,7 @@ const IngredientDetailModal = {
             };
 
             const previous = props.engine.getIngredientById(targetId);
-            if (previous) {
+            if (previous && !replaceId) {
                 for (const key of ['unitLabel', 'isCount', 'perUnit', 'gramsPerPack', 'weightBasis', 'weightBasisSource', 'nutritionCache', 'nutritionReviewRequired']) {
                     if (previous[key] !== undefined) ingData[key] = previous[key];
                 }
@@ -740,9 +717,9 @@ const IngredientDetailModal = {
                 }
             }
 
-            const nutritionEdited = nutritionChanged.value || photo.status === 'success' || !previous;
+            const nutritionEdited = !!replaceId || nutritionChanged.value || photo.status === 'success' || !previous;
             if (nutritionEdited || evidenceConfirmed.value) {
-                const perCount = hasUnitNutrition.value;
+                const perCount = !replaceId && hasUnitNutrition.value;
                 ingData.unitLabel = perCount ? previous.unitLabel : evidenceUnit.value;
                 ingData.weightBasis = evidenceBasis.value;
                 if (perCount) ingData.perUnit = Object.fromEntries(nutrientKeys.map(key => [key, nutrientNumber(form.perServing[key])]));
@@ -773,37 +750,62 @@ const IngredientDetailModal = {
                 ingData.nutritionReviewRequired = !valid;
             }
 
-            // 儲存至總庫
-            if (props.engine?.saveIngredient) {
-                try { await props.engine.saveIngredient(ingData); }
-                catch (error) { alert(error.message || '尚未儲存，請保留畫面後重試。'); return; }
-            }
-
-            // 同步更新採買清單中已存在的該品項通路
-            if (props.engine?.data?.pantryInventory?.shoppingList) {
-                let shoppingUpdated = false;
-                props.engine.data.pantryInventory.shoppingList.forEach(item => {
-                    if (item.targetId === targetId || item.name === cleanName) {
-                        item.preferredStores = normalizeStoreList(form.preferredStores);
-                        item.store = item.preferredStores?.[0] || '全聯';
-                        shoppingUpdated = true;
-                    }
-                });
-                if (shoppingUpdated && props.engine.saveJson) {
-                    await props.engine.saveJson('pantry_inventory.json', props.engine.data.pantryInventory);
+            if (replaceId) {
+                for (const key of ['perUnit', 'isCount', 'gramsPerUnit', 'gramsPerPack']) {
+                    if (ingData[key] === undefined) ingData[key] = null;
                 }
+                ingData.photo = null;
+                ingData.localPhotoRefs = {};
             }
 
-            // 更新庫存狀態
-            if (props.engine?.toggleStock) {
-                await props.engine.toggleStock(targetId, form.stock);
-            } else if (props.engine?.updateStock) {
-                await props.engine.updateStock(targetId, form.stock);
-            }
+            isSaving.value = true;
+            try {
+                // 儲存至食材快取
+                if (props.engine?.saveIngredient) {
+                    try {
+                        const saved = await props.engine.saveIngredient(ingData, replaceId ? { replaceId } : undefined);
+                        if (saved) Object.assign(ingData, saved);
+                    }
+                    catch (error) { alert(error.message || '尚未儲存，請保留畫面後重試。'); return; }
+                }
 
-            const autoAddToDish = (props.context === 'calculator_create');
-            emit('saved', ingData, autoAddToDish);
-            emit('close');
+                if (!props.isOpen || photoRevision !== saveRevision || props.engine.personalScope !== saveScope || props.engine.personalContext !== saveContext) return;
+                // 同步更新採買清單中已存在的該品項通路
+                if (props.engine?.data?.pantryInventory?.shoppingList) {
+                    let shoppingUpdated = false;
+                    props.engine.data.pantryInventory.shoppingList.forEach(item => {
+                        if (item.targetId === ingData.id) {
+                            item.preferredStores = normalizeStoreList(form.preferredStores);
+                            item.store = item.preferredStores?.[0] || '全聯';
+                            shoppingUpdated = true;
+                        }
+                    });
+                    if (shoppingUpdated && props.engine.saveJson) {
+                        await props.engine.saveJson('pantry_inventory.json', props.engine.data.pantryInventory);
+                    }
+                }
+
+                if (photoRevision !== saveRevision || props.engine.personalScope !== saveScope || props.engine.personalContext !== saveContext) return;
+                // 更新庫存狀態
+                if (props.engine?.toggleStock) {
+                    await props.engine.toggleStock(ingData.id, form.stock);
+                } else if (props.engine?.updateStock) {
+                    await props.engine.updateStock(ingData.id, form.stock);
+                }
+
+                const autoAddToDish = (props.context === 'calculator_create');
+                if (replaceId) alert('已取代既有食材，原食材 ID 與引用保留。原資料已保留在此裝置的最近一次營養編輯備份；如需回復，請先勿再次編輯並聯絡協助。');
+                emit('saved', ingData, autoAddToDish);
+                emit('close');
+            } catch (error) { alert(error.message || '食材已儲存，庫存更新未完成，請確認後重試。'); }
+            finally { isSaving.value = false; }
+        };
+
+        const replaceExisting = async () => {
+            const target = replacementTarget.value;
+            if (!target || isSaving.value || photo.isAnalyzing) return;
+            if (!confirm(`取代「${target.name}」${target.brand ? '（' + target.brand + '）' : ''} [${target.id}]？\n將以目前照片、營養值與商品資料更新此食材，保留原 ID 與引用。庫存只更新目前資料空間；其他資料空間不變。若重量單位改變，原有料理份量需重新核對。\n原資料會保留於此裝置的最近一次營養編輯備份。取消不會變更資料。`)) return;
+            await handleSave(target.id);
         };
 
         const handleDelete = async () => {
@@ -822,7 +824,7 @@ const IngredientDetailModal = {
         return {
             evidenceConfirmed, showLabelReview, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
             hasUnitNutrition, photoUnitChanged, completeNutrients,
-            modalMode,
+            modalMode, previewNutritionText, previewIngredient, returnToDraft, matchCandidates, selectedTargetId, replacementTarget, replaceExisting, isSaving,
             duplicateMatch,
             similarMatches,
             switchToExisting,
@@ -854,15 +856,35 @@ const IngredientDetailModal = {
         };
     },
     template: `
-        <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
+        <div v-if="isOpen" class="modal-overlay" @click.self="!isSaving && $emit('close')">
             <div ref="drawerContentRef" class="drawer-content" style="max-height: 90vh; padding: 20px 20px 28px 20px; position: relative; overflow-y: auto; display: flex; flex-direction: column;">
                 
+                <section v-if="previewIngredient" aria-label="既有食材檢視">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                        <button class="btn-icon" aria-label="返回新增食材" @click="returnToDraft" style="min-width:44px; min-height:44px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+                        </button>
+                        <h2 style="flex:1; font-size:1.1rem;">{{ previewIngredient.name }}</h2>
+                        <button class="btn-icon" aria-label="關閉" @click="$emit('close')">✕</button>
+                    </div>
+                    <img v-if="previewIngredient.photoUrl || previewIngredient.photo" :src="previewIngredient.photoUrl || previewIngredient.photo" alt="既有食材照片" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;">
+                    <p>品牌：{{ previewIngredient.brand || '未填寫' }}</p>
+                    <p>分類：{{ ({proteins:'蛋白質',veggies:'蔬菜水果',carbs:'碳水主食',sauces:'油脂／調味／其他'})[previewIngredient.category] || '其他' }} · {{ engine.checkStock(previewIngredient.id) ? '有庫存' : '無庫存' }}</p>
+                    <p>通路：{{ (previewIngredient.preferredStores || [previewIngredient.preferredStore || '全聯']).join('、') }}</p>
+                    <p>{{ previewIngredient.perUnit ? '每 ' + (previewIngredient.unitLabel || '單位') : '每 100 ' + (previewIngredient.unitLabel || 'g') }}</p>
+                    <dl v-for="(value, key) in (previewIngredient.perUnit || previewIngredient.per100g || {})" :key="key" style="display:flex; justify-content:space-between;">
+                        <dt>{{ ({kcal:'熱量 (kcal)',protein:'蛋白質 (g)',carbs:'碳水 (g)',fat:'脂肪 (g)',sodium:'鈉 (mg)'})[key] || key }}</dt><dd>{{ value ?? '待確認' }}</dd>
+                    </dl>
+                    <p>{{ previewNutritionText }}</p>
+                    <p style="color:var(--color-text-muted);">僅供檢視；返回箭頭可回到原照片與新增內容。</p>
+                </section>
+                <div v-show="!previewIngredient" :inert="isSaving" style="display:contents;">
                 <!-- 隱藏的拍照 / 相簿 input -->
                 <input type="file" ref="cameraInputRef" accept="image/*" capture="environment" style="display: none;" @change="onFilePicked">
                 <input type="file" ref="albumInputRef" accept="image/*" style="display: none;" @change="onFilePicked">
 
                 <!-- 🤖 AI 辨識中遮罩 -->
-                <div v-if="photo.isAnalyzing" 
+                <div v-if="photo.isAnalyzing && !previewIngredient"
                      style="position: absolute; inset: 0; background: rgba(255, 255, 255, 0.85); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); border-radius: inherit;">
                     <div style="width: 48px; height: 48px; border: 4px solid #E5E7EB; border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px;"></div>
                     <div style="font-size: 0.95rem; font-weight: 700; color: var(--color-text-main);">AI 正在辨識營養標示...</div>
@@ -889,33 +911,20 @@ const IngredientDetailModal = {
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
                 </div>
 
-                <!-- 🚨 名稱去重防呆與相似食材即時提示 -->
-                <div v-if="modalMode === 'create' && duplicateMatch" 
-                     style="margin-top: -4px; margin-bottom: 14px; padding: 8px 12px; background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #991B1B;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span>🚫</span>
-                        <span>已有同名食材：<b>{{ duplicateMatch.name }}</b> ({{ duplicateMatch.preferredStore || '全聯' }})</span>
+                <div v-if="modalMode === 'create' && matchCandidates.length" style="margin-bottom:14px; padding:12px; background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; font-size:0.8rem;">
+                    <strong>{{ duplicateMatch ? '已有同名食材' : '發現相似食材' }}</strong>
+                    <label v-if="matchCandidates.length > 1" style="display:block; margin-top:8px;">選擇查看／取代目標
+                        <select v-model="selectedTargetId" style="width:100%; margin-top:6px; padding:8px;">
+                            <option disabled value="">請選擇既有食材</option>
+                            <option v-for="item in matchCandidates" :key="item.id" :value="item.id">{{ item.name }} · {{ item.brand || '未填品牌' }} [{{ item.id }}]</option>
+                        </select>
+                    </label>
+                    <p v-if="replacementTarget">目標：<b>{{ replacementTarget.name }}</b> · {{ replacementTarget.brand || '未填品牌' }} [{{ replacementTarget.id }}]</p>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                        <button class="capsule" :disabled="!replacementTarget || isSaving" @click="switchToExisting(replacementTarget)">切換查看既有食材</button>
+                        <button class="capsule" :disabled="!replacementTarget || photo.isAnalyzing || isSaving" @click="replaceExisting">取代原有食材</button>
                     </div>
-                    <button class="capsule" style="background: #EF4444; color: #FFFFFF; font-size: 0.75rem; padding: 3px 8px; border: none; cursor: pointer; font-weight: 600;" @click="switchToExisting(duplicateMatch)">
-                        切換查看
-                    </button>
-                </div>
-                <div v-else-if="modalMode === 'create' && similarMatches.length > 0" 
-                     style="margin-top: -4px; margin-bottom: 14px; padding: 8px 12px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 0.8rem; color: #92400E;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                        <span style="font-weight: 700;">💡 發現相似食材：</span>
-                        <span style="font-size: 0.72rem; color: #B45309;">若為同品項點擊可直接切換</span>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        <span v-for="sim in similarMatches" :key="sim.ingredient.id" 
-                              class="capsule" 
-                              style="background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; font-size: 0.75rem; padding: 3px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600;"
-                              @click="switchToExisting(sim.ingredient)"
-                              :title="'點擊切換至既有食材：' + sim.ingredient.name">
-                            <span>{{ sim.ingredient.name }}</span>
-                            <span style="font-size: 0.68rem; opacity: 0.85; font-weight: 400;">({{ sim.reason }})</span>
-                        </span>
-                    </div>
+                    <p style="margin-bottom:0; color:var(--color-text-muted);">查看後可返回，照片與填寫內容會保留。不同規格可按下方儲存。</p>
                 </div>
 
                 <!-- 2. 食材實拍照片滿版卡片 (加入 flex-shrink: 0 嚴禁 flex 壓縮，保持 240px 壯觀高視野) -->
@@ -1197,6 +1206,7 @@ const IngredientDetailModal = {
                         </svg>
                         <span>{{ (context === 'calculator_create') ? '加入料理' : '儲存' }}</span>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

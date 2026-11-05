@@ -862,8 +862,13 @@ export default class KitchenEngine {
         return this.data.pantryInventory.shoppingList.some(s => s.targetId === targetId && !s.isPurchased);
     }
 
-    async saveIngredient(ingData) {
+    async saveIngredient(ingData, { replaceId = null } = {}) {
         if (!ingData || !ingData.id) return;
+        const scope = this.personalScope;
+        const context = this.personalContext;
+        if (replaceId && (ingData.id !== replaceId || !this.data.ingredients.some(item => item.id === replaceId))) {
+            throw new Error('取代目標不存在或 ID 不符，原資料保留。');
+        }
         const category = ingData.category || 'proteins';
 
         // 🛡️ 防呆：檢查是否已有完全同名之食材 (防止重複建立雙胞胎 ID)
@@ -877,6 +882,8 @@ export default class KitchenEngine {
             if (found) existingSameName = found;
         });
 
+        if (existingSameName && replaceId) throw new Error('新名稱與其他食材完全同名，為避免誤覆寫，請先修改名稱或重新選擇目標。');
+
         if (existingSameName) {
             console.log(`[saveIngredient] 發現已有完全同名食材【${existingSameName.name}】(${existingSameName.id})，更新既有食材而非建立雙胞胎。`);
             ingData.id = existingSameName.id;
@@ -887,6 +894,9 @@ export default class KitchenEngine {
         const backup = await prepareIngredientPhotoBackup(before, this.ingredientPhotoStore);
         if ([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])) {
             throw new Error('備份期間食材已變更，原資料保留，請重開編輯。');
+        }
+        if (replaceId) for (const key of [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY]) {
+            if (backup.before[key] !== null) backup.before[key] = serializeIngredientPhotos(JSON.parse(backup.before[key]));
         }
         localStorage.setItem('kitchen_v2_nutrition_edit_backup', JSON.stringify({before:backup.before, savedAt:new Date().toISOString()}));
         ingData = { ...previous, ...ingData };
@@ -905,7 +915,7 @@ export default class KitchenEngine {
         }
         if (previous && (!sameNutrition(previous, ingData) || previous.name !== ingData.name || (previous.brand || '') !== (ingData.brand || ''))) {
             if (ingData.nutritionEvidence === previous.nutritionEvidence) ingData.nutritionEvidence = { kind: 'missing', status: 'pending' };
-            ingData.nutritionReviewRequired = false;
+            ingData.nutritionReviewRequired = replaceId ? ingData.nutritionEvidence?.status !== 'verified' : false;
             ingData.weightBasisSource = '';
         }
 
@@ -920,6 +930,43 @@ export default class KitchenEngine {
                 } catch (e) {}
             }
             ingData.photoUrl = uploadedUrl || null;
+        }
+
+        if (replaceId && (this.personalScope !== scope || this.personalContext !== context
+            || [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])
+            || !this.data.ingredients.some(item => item.id === replaceId))) {
+            throw new Error('儲存期間資料或資料空間已變更，原食材保留，請重新確認。');
+        }
+
+        if (replaceId) {
+            // Stage both local ingredient records before publishing the replacement in memory.
+            const nextRaw = Object.fromEntries(Object.entries(this.data.rawIngredients).map(([key, list]) =>
+                [key, list.filter(item => item.id !== replaceId)]));
+            (nextRaw[category] ||= []).push(ingData);
+            const custom = JSON.parse(before[CUSTOM_INGREDIENT_KEY] || '[]');
+            if (!Array.isArray(custom)) throw new Error('本機私房食材格式不正確，原資料保留。');
+            const nextCustom = [...custom.filter(item => item.id !== replaceId), ingData];
+            const staged = await prepareIngredientPhotoBackup({
+                [INGREDIENT_CACHE_KEY]: JSON.stringify(nextRaw),
+                [CUSTOM_INGREDIENT_KEY]: JSON.stringify(nextCustom)
+            }, this.ingredientPhotoStore);
+            if (this.personalScope !== scope || this.personalContext !== context
+                || [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])) {
+                throw new Error('備份期間資料已變更，原食材保留，請重新確認。');
+            }
+            const cache = serializeIngredientPhotos(JSON.parse(staged.before[INGREDIENT_CACHE_KEY]));
+            const customCache = serializeIngredientPhotos(JSON.parse(staged.before[CUSTOM_INGREDIENT_KEY]));
+            localStorage.setItem(INGREDIENT_CACHE_KEY, cache);
+            try { localStorage.setItem(CUSTOM_INGREDIENT_KEY, customCache); }
+            catch (error) {
+                // Restore photo-safe records; historical encoded photos remain in binary backup.
+                if (backup.before[INGREDIENT_CACHE_KEY] === null) localStorage.removeItem(INGREDIENT_CACHE_KEY);
+                else localStorage.setItem(INGREDIENT_CACHE_KEY, backup.before[INGREDIENT_CACHE_KEY]);
+                throw new Error('無法儲存私房食材，已保留原食材與備份。請釋出儲存空間後重試。');
+            }
+            this.data.rawIngredients = nextRaw;
+            this.data.ingredients = [...this.data.ingredients.filter(item => item.id !== replaceId), ingData];
+            return ingData;
         }
 
         // 1. Ensure rawIngredients has the category array
@@ -951,7 +998,7 @@ export default class KitchenEngine {
         if (this.data.pantryInventory?.shoppingList) {
             let shoppingUpdated = false;
             this.data.pantryInventory.shoppingList.forEach(s => {
-                if (s.targetId === ingData.id || s.name === ingData.name) {
+                if (s.targetId === ingData.id) {
                     s.preferredStores = [...(ingData.preferredStores || [ingData.preferredStore || '全聯'])];
                     s.store = ingData.preferredStore || s.preferredStores[0] || '全聯';
                     shoppingUpdated = true;

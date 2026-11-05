@@ -256,13 +256,13 @@ createView.form.perServing.sodium=null;
 await createView.handleSave();
 assert.equal(created.nutritionEvidence.status,'pending','incomplete photo values may save but cannot masquerade as verified');
 assert.equal(created.nutritionReviewRequired,true);
-// Selecting a similar existing ingredient must cancel the old photo's
-// success status; otherwise Save might verify unrelated nutrition values.
-createView.switchToExisting({id:'existing-cocoa',name:'可可粉',category:'sauces',unitLabel:'g',
+// Preview keeps the new ingredient's OCR candidates and confirmation isolated.
+const draftBeforePreview=JSON.stringify([createView.form,createView.photo,createView.evidenceConfirmed.value,createView.showLabelReview.value]);
+await createView.switchToExisting({id:'existing-cocoa',name:'可可粉',category:'sauces',unitLabel:'g',
     weightBasis:'unknown',per100g:{kcal:100,protein:1,carbs:2,fat:1,sodium:0}});
-assert.equal(createView.photo.status,'idle');
-assert.equal(createView.photo.message,'');
-assert.equal(createView.showLabelReview.value,false);
+assert.equal(createView.previewIngredient.value.id,'existing-cocoa');
+await createView.returnToDraft();
+assert.equal(JSON.stringify([createView.form,createView.photo,createView.evidenceConfirmed.value,createView.showLabelReview.value]),draftBeforePreview);
 renderer.render(null,createRoot);
 Vue.compile(Modal.template,{decodeEntities:text=>text});
 assert(Modal.template.includes('ref="drawerContentRef" class="drawer-content"'));
