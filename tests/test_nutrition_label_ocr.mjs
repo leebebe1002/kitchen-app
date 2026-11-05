@@ -67,7 +67,7 @@ assert.equal(printed100.perServing.kcal,null);
 const store=new Map([['gemini_api_key','test-only-key']]);
 globalThis.localStorage = {getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
 globalThis.sessionStorage=localStorage;
-globalThis.window={location:{hostname:'unit-tests.invalid'},addEventListener(){},removeEventListener(){}};
+globalThis.window={location:{hostname:'unit-tests.invalid',origin:'https://unit-tests.invalid'},addEventListener(){},removeEventListener(){}};
 globalThis.alert=()=>{throw Error('Unexpected alert')};
 globalThis.confirm=()=>true;
 globalThis.document={
@@ -130,6 +130,34 @@ await view.analyzeSavedPhoto();
 assert.equal(calls.length,2,'never fetch non-HTTPS existing photo');
 assert.equal(view.photo.status,'error');
 assert(view.photo.message.includes('相簿重新選取'));
+// FK's older IndexedDB photos are hydrated to same-origin blob: object
+// URLs, not HTTPS. Verify the actual customer failure is now supported.
+const localBlobUrl='blob:https://unit-tests.invalid/fk-photo-1';
+const crossOriginBlobUrl='blob:https://outside.invalid/foreign-photo';
+const fetchBeforeBlob=globalThis.fetch;
+const callsBeforeBlob=calls.length;
+globalThis.fetch=async (url,options)=>{
+    if (url===localBlobUrl) {
+        calls.push({url,options});
+        assert.equal(options.mode,'same-origin');
+        return {ok:true,blob:async()=>new Blob(['local-ingredient-photo'],{type:'image/jpeg'})};
+    }
+    return fetchBeforeBlob(url,options);
+};
+view.photo.url=localBlobUrl;
+await view.analyzeSavedPhoto();
+assert.equal(view.photo.status,'success');
+assert.equal(view.photo.url,localBlobUrl,'hydrated photo URL must remain unchanged');
+assert.equal(view.form.perServing.kcal,15);
+assert.equal(view.form.per100g.kcal,300);
+assert.equal(calls.length,callsBeforeBlob+2,'same-origin blob read and Gemini OCR');
+const callsBeforeForeign=calls.length;
+view.photo.url=crossOriginBlobUrl;
+await view.analyzeSavedPhoto();
+assert.equal(view.photo.status,'error');
+assert.equal(calls.length,callsBeforeForeign,'foreign blob URLs must not be fetched');
+globalThis.fetch=fetchBeforeBlob;
+
 // Closing or removing a photo invalidates an in-flight read; it cannot
 // quietly overwrite a different ingredient's fields or resurrect the photo.
 let finishPendingPhotoFetch;

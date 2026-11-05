@@ -558,8 +558,18 @@ const IngredientDetailModal = {
             try {
                 let dataUrl = photo.url;
                 if (!dataUrl.startsWith('data:image/')) {
-                    if (!dataUrl.startsWith('https://')) throw Error('照片來源不是 HTTPS');
-                    const response = await fetch(dataUrl, { credentials: 'omit', mode: 'cors', cache: 'no-store' });
+                    // FK hydrates IndexedDB photo backups into same-origin blob: URLs.
+                    // Browser object URLs are readable while the app is open, but
+                    // never persist them or permit cross-origin blobs/HTTP URLs.
+                    const photoAddress = new URL(dataUrl);
+                    const localBlob = photoAddress.protocol === 'blob:'
+                        && photoAddress.origin === window.location.origin;
+                    if (!localBlob && photoAddress.protocol !== 'https:') {
+                        throw Error('照片來源不是安全的 HTTPS 或本機備份');
+                    }
+                    const response = await fetch(dataUrl, {
+                        credentials: 'omit', mode: localBlob ? 'same-origin' : 'cors', cache: 'no-store'
+                    });
                     if (!response.ok) throw Error('無法取得原照片');
                     const blob = await response.blob();
                     if (!blob.type.startsWith('image/') || blob.size > 10 * 1024 * 1024) throw Error('照片格式或大小不支援');
