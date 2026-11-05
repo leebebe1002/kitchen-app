@@ -17,6 +17,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
+        const appVersion = '2026.11.05.3';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -130,11 +131,10 @@ const App = {
 
         const refreshData = async () => {
             isLoading.value = true;
-            try {
-                sessionStorage.removeItem('family_kitchen_calc_session_state');
-                sessionStorage.removeItem('family_kitchen_calc_state_v2');
-            } catch (e) {}
-            window.location.reload();
+            // A unique document URL revalidates the entry without clearing device data.
+            const latest = new URL(window.location.href);
+            latest.searchParams.set('fk_update', Date.now().toString());
+            window.location.replace(latest.href);
         };
 
         const loadAuthorizedKitchen = async () => {
@@ -211,6 +211,7 @@ const App = {
         };
 
         return {
+            appVersion,
             adoptIngredientBaseline,
             baselineUpdating,
             baselineMessage,
@@ -245,7 +246,10 @@ const App = {
         <div class="app-container">
             <!-- 頂部精緻 Header (已移除沉重 Tabs) -->
             <header class="header">
-                <h1>FAMILY KITCHEN 2.0</h1>
+                <div>
+                    <h1>FAMILY KITCHEN 2.0</h1>
+                    <small style="display:block; margin-top:4px; font-size:10px; color:var(--color-text-muted);">版本 {{ appVersion }}</small>
+                </div>
                 <div class="header-actions">
                     <button class="btn-icon header-refresh" @click="refreshData" title="刷新資料" aria-label="刷新資料">
                         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
