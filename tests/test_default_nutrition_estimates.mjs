@@ -6,8 +6,9 @@ import { officialNutritionEvidence as evidence } from '../web/src/utils/Official
 import { evidenceSnapshot, nutritionEvidenceIssue, nutritionEvidenceText } from '../web/src/utils/NutritionEvidence.js';
 import { approvedIngredientBaseline } from '../web/src/utils/IngredientBaselineUpdate.js';
 
+// Historical 99-item catalog is pinned to its released commit; origin/main now carries 101 items.
 const currentText = fs.readFileSync('src/data/ingredients.json','utf8');
-const priorText = execFileSync('git',['show','origin/main:src/data/ingredients.json'],{encoding:'utf8'});
+const priorText = execFileSync('git',['show','71beb38709c85390a85744297ea2b24ecd1abf99:src/data/ingredients.json'],{encoding:'utf8'});
 const current = JSON.parse(currentText);
 const prior = JSON.parse(priorText);
 const rows = value => Object.values(value).flat();

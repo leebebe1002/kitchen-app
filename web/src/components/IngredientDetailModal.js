@@ -1,4 +1,5 @@
 import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261105_LABEL_OCR_V1';
 const { ref, reactive, computed, watch, onMounted } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -77,15 +78,18 @@ const IngredientDetailModal = {
             url: null,
             isAnalyzing: false,
             status: 'idle', // 'idle' | 'analyzing' | 'success' | 'error'
-            message: ''
+            message: '',
+            notices: []
         });
 
+        let photoRevision = 0;
         const showApiKeyInput = ref(false);
         const apiKeyInput = ref('');
         const cameraInputRef = ref(null);
         const albumInputRef = ref(null);
 
         const initForm = () => {
+            photoRevision++;
             nutritionChanged.value = false;
             evidenceConfirmed.value = false;
             showLabelReview.value = false;
@@ -169,10 +173,12 @@ const IngredientDetailModal = {
             photo.isAnalyzing = false;
             photo.status = 'idle';
             photo.message = '';
+            photo.notices = [];
         };
 
         watch(() => props.isOpen, (newVal) => {
             if (newVal) initForm();
+            else photoRevision++;
         }, { immediate: true });
 
         watch(() => props.initialIngredient, () => {
@@ -388,13 +394,16 @@ const IngredientDetailModal = {
             const cleanB64 = b64Data.replace(/[\n\r\s]/g, '');
 
             const prompt = `你是一個專業的食品營養標示 OCR 與食材萃取專家。
-缺漏或無法辨識欄位必須輸出 null，禁止猜測或補 0。請另回傳 specification（商品規格）及 weightBasis（raw/cooked/dry/as_sold/unknown）。每100g 不得混用每100mL，servingUnit 必須如實辨識。
+缺漏或無法辨識欄位必須輸出 null，禁止猜測或補 0。請另回傳 specification（商品規格）及 weightBasis（raw/cooked/dry/as_sold/unknown）。每100g 不得混用每100mL，servingUnit 必須如實辨識。僅轉錄照片清楚印出的數字，不自行換算或補 0；若圖片只標每份，per100g 五項必須全為 null。
 請仔細辨識這張食品外包裝或營養標示照片，萃取以下資訊並輸出純 JSON 格式（不要有 markdown 標記或其他文字）：
 {
   "name": "食材或商品名稱 (繁體中文)",
   "brand": "品牌名稱 (若無可留空)",
+  "specification": "照片可讀的品項、容量與口味；不清楚則空字串",
+  "weightBasis": "as_sold",
   "servingSize": 每一份量數值 (純數字，例如 10 或 30),
-  "servingUnit": "g" 或 "mL",
+  "servingUnit": "g" 或 "mL"（沒有印出每份則為 null）,
+  "per100Unit": "g" 或 "mL"（只有照片清楚印出每100g或每100mL時才填，否則 null）,
   "perServing": {
     "kcal": 每一份量熱量(大卡，數字),
     "protein": 每一份量蛋白質(g，數字),
@@ -403,11 +412,11 @@ const IngredientDetailModal = {
     "sodium": 每一份量鈉(mg，數字)
   },
   "per100g": {
-    "kcal": 每100g熱量(大卡，數字),
-    "protein": 每100g蛋白質(g，數字),
-    "carbs": 每100g碳水化合物(g，數字),
-    "fat": 每100g脂肪(g，數字),
-    "sodium": 每100g鈉(mg，數字)
+    "kcal": 包裝上每100g或100mL的熱量(大卡，無印刷則 null),
+    "protein": 包裝上每100g或100mL的蛋白質(g，無印刷則 null),
+    "carbs": 包裝上每100g或100mL的碳水(g，無印刷則 null),
+    "fat": 包裝上每100g或100mL的脂肪(g，無印刷則 null),
+    "sodium": 包裝上每100g或100mL的鈉(mg，無印刷則 null)
   }
 }`;
 
@@ -473,7 +482,8 @@ const IngredientDetailModal = {
             return { status: 'error', message: `Gemini API 連線未完成 (${lastError})` };
         };
 
-        const analyzePhotoDirectly = async (compressedDataUrl, apiKey, fileName = '') => {
+        const analyzePhotoDirectly = async (compressedDataUrl, apiKey, fileName = '', revision = photoRevision) => {
+            if (revision !== photoRevision || !props.isOpen) return;
             photo.isAnalyzing = true;
             photo.status = 'analyzing';
             photo.message = '正在辨識營養標示與自動換算數據，請稍候 3~5 秒...';
@@ -488,6 +498,7 @@ const IngredientDetailModal = {
                 data = await callClientGeminiNutritionOCR(compressedDataUrl, apiKey);
             }
 
+            if (revision !== photoRevision || !props.isOpen) return;
             photo.isAnalyzing = false;
 
             if (data && data.status === 'success' && data.result) {
@@ -497,26 +508,22 @@ const IngredientDetailModal = {
                     return;
                 }
                 const resData = data.result;
+                const reviewed = reviewNutritionLabelOCR(resData, props.initialIngredient);
                 nutritionChanged.value = true;
                 evidenceConfirmed.value = false;
                 showLabelReview.value = true;
                 evidenceSpec.value = resData.specification || '';
                 evidenceBasis.value = ['raw','cooked','dry','as_sold'].includes(resData.weightBasis) ? resData.weightBasis : 'unknown';
-                evidenceUnit.value = String(resData.servingUnit || '').toLowerCase() === 'ml' ? 'ml' : 'g';
+                evidenceUnit.value = reviewed.unit || evidenceUnit.value;
                 if (props.mode === 'create' || !form.name) {
                     if (resData.name) form.name = resData.name;
                 }
                 if (resData.brand && !form.brand) form.brand = resData.brand;
-                form.servingSize = nutrientNumber(resData.servingSize);
-                if (resData.servingUnit) form.servingUnit = resData.servingUnit || 'g';
-
-                for (const field of ['per100g','perServing']) {
-                    form[field] = Object.fromEntries(nutrientKeys.map(key => [key, nutrientNumber(resData[field]?.[key])]));
-                }
-
-                // Derive only within the same declared mass/volume unit, retaining unknown fields.
-                if (!completeNutrients(form.per100g) && completeNutrients(form.perServing)) calc100gFromServing();
-                else if (!completeNutrients(form.perServing) && completeNutrients(form.per100g)) calcServingFrom100g();
+                form.servingSize = reviewed.servingSize;
+                if (reviewed.servingUnit) form.servingUnit = reviewed.servingUnit;
+                form.per100g = reviewed.per100g;
+                form.perServing = reviewed.perServing;
+                photo.notices = reviewed.notices;
 
                 // 自動分類判定
                 const autoCategory = props.engine.detectNutrientCategory(
@@ -524,12 +531,13 @@ const IngredientDetailModal = {
                     form.per100g || form.perServing
                 );
                 form.category = autoCategory || resData.category || 'sauces';
-                form.displayBasis = ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category) ? 'serving' : '100g';
+                form.displayBasis = completeNutrients(form.perServing) && ['sauces', 'oils', 'seasonings', 'fats'].includes(form.category) ? 'serving' : '100g';
 
                 photo.status = 'success';
-                photo.message = `✨ 已成功帶入【${resData.name || form.name || '食材'}】的辨識結果；請逐欄核對，空白表示待確認。`;
+                photo.message = 'AI 已填入照片的候選營養值；尚未核實或儲存，請對照照片確認。';
             } else {
                 photo.status = 'error';
+                photo.notices = [];
                 photo.message = `${data?.message || 'AI 辨識未完成'}，請在下方直接手動填寫。`;
                 if (data?.status === 'need_api_key' || data?.status === 'invalid_key') {
                     showApiKeyInput.value = true;
@@ -537,6 +545,41 @@ const IngredientDetailModal = {
                 if (fileName && !['image', 'photo', 'camera', 'IMG', 'DCIM'].some(k => fileName.includes(k))) {
                     if (!form.name) form.name = fileName;
                 }
+            }
+        };
+
+        // Re-analysis is explicit: never automatically send stored photos to Gemini.
+        const analyzeSavedPhoto = async () => {
+            if (!photo.url || photo.isAnalyzing) return;
+            const revision = ++photoRevision;
+            photo.isAnalyzing = true;
+            photo.status = 'analyzing';
+            photo.message = '正在讀取並核對這張照片…';
+            try {
+                let dataUrl = photo.url;
+                if (!dataUrl.startsWith('data:image/')) {
+                    if (!dataUrl.startsWith('https://')) throw Error('照片來源不是 HTTPS');
+                    const response = await fetch(dataUrl, { credentials: 'omit', mode: 'cors', cache: 'no-store' });
+                    if (!response.ok) throw Error('無法取得原照片');
+                    const blob = await response.blob();
+                    if (!blob.type.startsWith('image/') || blob.size > 10 * 1024 * 1024) throw Error('照片格式或大小不支援');
+                    dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = () => reject(Error('無法讀取照片'));
+                        reader.readAsDataURL(blob);
+                    });
+                }
+                const compressed = await compressImage(dataUrl, 800, 800, 0.8);
+                if (revision !== photoRevision || !props.isOpen) return;
+                await analyzePhotoDirectly(compressed, refreshSavedApiKey(), '', revision);
+            } catch (error) {
+                if (revision !== photoRevision || !props.isOpen) return;
+                photo.isAnalyzing = false;
+                photo.status = 'error';
+                photo.notices = [];
+                photo.message = '無法重新讀取舊照片（' + (error.message || '來源無法存取')
+                    + '）；請從相簿重新選取照片辨識。';
             }
         };
 
@@ -550,19 +593,39 @@ const IngredientDetailModal = {
 
         const onFilePicked = async (event) => {
             const file = event.target.files && event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const rawDataUrl = e.target.result;
-                    const compressedDataUrl = await compressImage(rawDataUrl, 800, 800, 0.8);
+            if (!file) return;
+            const revision = ++photoRevision;
+            photo.isAnalyzing = true;
+            photo.status = 'analyzing';
+            photo.message = '正在讀取新照片…';
+            const fail = error => {
+                if (revision !== photoRevision || !props.isOpen) return;
+                photo.isAnalyzing = false;
+                photo.status = 'error';
+                photo.message = '無法讀取照片（' + (error?.message || '格式錯誤') + '），請重新選取。';
+            };
+            const reader = new FileReader();
+            reader.onload = async event => {
+                try {
+                    const compressedDataUrl = await compressImage(event.target.result, 800, 800, 0.8);
+                    if (revision !== photoRevision || !props.isOpen) return;
                     photo.url = compressedDataUrl;
                     const apiKey = refreshSavedApiKey();
                     const fileName = file.name ? file.name.split('.')[0].replace(/[-_]/g, ' ') : '';
-                    await analyzePhotoDirectly(compressedDataUrl, apiKey, fileName);
-                };
-                reader.readAsDataURL(file);
-                event.target.value = '';
-            }
+                    await analyzePhotoDirectly(compressedDataUrl, apiKey, fileName, revision);
+                } catch (error) { fail(error); }
+            };
+            reader.onerror = fail;
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        };
+
+        const removePhoto = () => {
+            photoRevision++;
+            photo.url = null;
+            photo.status = 'idle';
+            photo.message = '';
+            photo.notices = [];
         };
 
         // 提交處理
@@ -736,7 +799,9 @@ const IngredientDetailModal = {
             albumInputRef,
             triggerCamera,
             triggerAlbum,
+            analyzeSavedPhoto,
             onFilePicked,
+            removePhoto,
             on100gInput,
             onServingInput,
             onServingSizeChange,
@@ -821,7 +886,7 @@ const IngredientDetailModal = {
                     <img :src="photo.url" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
                     
                     <!-- 頂部右上角：刪除/移除照片按鈕 (38px 圓形，系統標準 20px 垃圾桶 SVG) -->
-                    <button class="btn-icon" @click="photo.url = null; photo.message = ''" 
+                    <button class="btn-icon" @click="removePhoto"
                             style="position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.68); color: #FFFFFF; border: 1.5px solid rgba(255, 255, 255, 0.45); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 3px 10px rgba(0,0,0,0.35); padding: 0;" 
                             title="移除此照片">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -831,6 +896,14 @@ const IngredientDetailModal = {
                             <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
                     </button>
+                </div>
+
+                <button v-if="photo.url && !photo.isAnalyzing" type="button" class="btn-icon"
+                        style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:10px;padding:9px 12px;width:100%;"
+                        @click="analyzeSavedPhoto">用 AI 辨識／重新核對這張照片</button>
+                <div v-if="photo.message" role="status" style="margin-bottom:10px;font-size:0.82rem;line-height:1.5;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;">
+                    {{ photo.message }}
+                    <p v-for="notice in photo.notices" :key="notice" style="margin:5px 0 0;color:#92400E;">⚠️ {{ notice }}</p>
                 </div>
 
                 <!-- API Key 輸入列 (折疊) -->
@@ -872,11 +945,11 @@ const IngredientDetailModal = {
                         <div style="display: flex; background: #E5E7EB; padding: 2px; border-radius: 8px; gap: 2px;">
                             <button v-if="!hasUnitNutrition" @click="form.displayBasis = '100g'"
                                     :style="{ background: form.displayBasis === '100g' ? 'var(--color-primary)' : 'transparent', color: form.displayBasis === '100g' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
-                                每 100g/mL
+                                {{ evidenceUnit === 'ml' ? '每 100 mL' : '每 100 g' }}
                             </button>
                             <button @click="form.displayBasis = 'serving'" 
                                     :style="{ background: form.displayBasis === 'serving' ? 'var(--color-primary)' : 'transparent', color: form.displayBasis === 'serving' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
-                                {{ hasUnitNutrition ? '每' + form.servingUnit : '按單份' }}
+                                {{ hasUnitNutrition ? '每' + form.servingUnit : '每份 ' + (form.servingSize || '?') + ' ' + (form.servingUnit || '') }}
                             </button>
                         </div>
                     </div>

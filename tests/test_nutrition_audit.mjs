@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 
+// Historical 99-item catalog is pinned to its released commit; origin/main now carries 101 items.
 const read = path => JSON.parse(fs.readFileSync(path, 'utf8'));
 const official = read('src/data/ingredients.json');
-const historical = JSON.parse(execFileSync('git',['show','origin/main:src/data/ingredients.json'],{encoding:'utf8'}));
+const historical = JSON.parse(execFileSync('git',['show','71beb38709c85390a85744297ea2b24ecd1abf99:src/data/ingredients.json'],{encoding:'utf8'}));
 const audit = read('docs/audits/nutrition-2026-10-28.json');
 const all = Object.values(official).flat();
 const byId = new Map(all.map(i => [i.id, i]));

@@ -9,9 +9,10 @@ import {
 import { mergeIngredientNutrition } from '../web/src/utils/IngredientNutritionCache.js';
 import { ingredientNutritionBasis } from '../web/src/utils/IngredientUnit.js';
 
+// Historical 99-item catalog is pinned to its released commit; origin/main now carries 101 items.
 const text = fs.readFileSync('src/data/ingredients.json', 'utf8');
 const official = await approvedIngredientBaseline(text);
-const previousApproved = await approvedIngredientBaseline(execFileSync('git',['show','origin/main:src/data/ingredients.json'],{encoding:'utf8'}));
+const previousApproved = await approvedIngredientBaseline(execFileSync('git',['show','71beb38709c85390a85744297ea2b24ecd1abf99:src/data/ingredients.json'],{encoding:'utf8'}));
 assert.equal(Object.values(previousApproved).flat().length,99);
 const flatten = value => Object.values(value).flat();
 const find = (value, id) => flatten(value).find(item => item.id === id);
