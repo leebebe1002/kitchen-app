@@ -44,6 +44,10 @@ const IngredientDetailModal = {
         const gramsPerUnit = ref(null);
         const sourceEvidence = computed(() => withNutritionEvidence(props.initialIngredient)?.nutritionEvidence);
         const sourceText = computed(() => nutritionEvidenceText(withNutritionEvidence(props.initialIngredient)));
+        const photoUnitChanged = computed(() => photo.status === 'success'
+            && ['g', 'ml'].includes(props.initialIngredient?.unitLabel)
+            && ['g', 'ml'].includes(evidenceUnit.value)
+            && props.initialIngredient.unitLabel !== evidenceUnit.value);
         const hasUnitNutrition = computed(() => !!props.engine.getIngredientById(form.id)?.perUnit);
         const form = reactive({
             id: '',
@@ -795,7 +799,7 @@ const IngredientDetailModal = {
 
         return {
             evidenceConfirmed, showLabelReview, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
-            hasUnitNutrition,
+            hasUnitNutrition, photoUnitChanged,
             modalMode,
             duplicateMatch,
             similarMatches,
@@ -911,9 +915,15 @@ const IngredientDetailModal = {
                 <button v-if="photo.url && !photo.isAnalyzing" type="button" class="btn-icon"
                         style="margin-bottom:10px;border:1px solid var(--color-border);border-radius:10px;padding:9px 12px;width:100%;"
                         @click="analyzeSavedPhoto">用 AI 辨識／重新核對這張照片</button>
-                <div v-if="photo.message" role="status" style="margin-bottom:10px;font-size:0.82rem;line-height:1.5;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;">
-                    {{ photo.message }}
-                    <p v-for="notice in photo.notices" :key="notice" style="margin:5px 0 0;color:#92400E;">⚠️ {{ notice }}</p>
+                <div v-if="photo.message" role="status" style="margin-bottom:10px;font-size:0.84rem;line-height:1.5;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;">
+                    {{ photo.status === 'success' ? '辨識完成，請核對商品與下方營養數字。' : photo.message }}
+                    <p v-if="photoUnitChanged" style="margin:6px 0 0;color:#92400E;font-weight:600;">
+                        ⚠️ 舊資料使用 {{ initialIngredient.unitLabel }}，照片使用 {{ evidenceUnit }}；不能直接換算，原有料理份量需重新核對。
+                    </p>
+                    <details v-if="photo.notices.length" style="margin-top:6px;">
+                        <summary style="cursor:pointer;color:var(--color-text-muted);">查看 {{ photo.notices.length }} 項辨識提醒</summary>
+                        <p v-for="notice in photo.notices" :key="notice" style="margin:6px 0 0;color:#92400E;">{{ notice }}</p>
+                    </details>
                 </div>
 
                 <!-- API Key 輸入列 (折疊) -->
@@ -925,33 +935,60 @@ const IngredientDetailModal = {
                     </div>
                 </div>
 
-                <div class="card" style="margin-bottom:12px;flex-shrink:0;display:grid;gap:8px;font-size:0.85rem;line-height:1.5;">
-                    <p role="status">{{ sourceText }}</p>
-                    <p>一般食材優先使用有依據的官方估算；有實際產品標示時再展開核對。空白不是 0。</p>
-                    <p v-if="sourceEvidence">{{ sourceEvidence.note }} · {{ sourceEvidence.checkedAt || '日期待確認' }}</p>
-                    <details v-if="sourceEvidence && sourceEvidence.sources && sourceEvidence.sources.length">
-                      <summary style="cursor:pointer;">查看資料來源</summary>
-                      <p style="overflow-wrap:anywhere;" v-for="source in sourceEvidence.sources" :key="source.ref || source.url">{{ source.ref }} {{ source.title }} {{ source.url }}</p>
+                <!-- Show the source status, but keep audit prose out of the primary task. -->
+                <div class="card" style="margin-bottom:12px;flex-shrink:0;display:grid;gap:10px;font-size:0.85rem;line-height:1.5;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                        <span style="color:var(--color-text-muted);">營養來源</span>
+                        <strong role="status" style="font-size:0.85rem;color:var(--color-text-main);">{{ sourceText }}</strong>
+                    </div>
+                    <details style="border-top:1px solid var(--color-border);padding-top:8px;">
+                        <summary style="cursor:pointer;color:var(--color-text-muted);">查看來源與計算說明</summary>
+                        <div style="display:grid;gap:8px;margin-top:10px;color:var(--color-text-muted);font-size:0.8rem;">
+                            <p>一般食材採官方估算；有產品標示時可用照片核對。空白不代表 0。</p>
+                            <p v-if="sourceEvidence">{{ sourceEvidence.note }} · {{ sourceEvidence.checkedAt || '日期待確認' }}</p>
+                            <p v-if="modalMode === 'edit' && engine.getNutritionIssues([{ id: form.id, amount: 1 }]).length">
+                                {{ engine.getNutritionIssues([{ id: form.id, amount: 1 }]).join('；') }}
+                            </p>
+                            <div v-if="sourceEvidence && sourceEvidence.sources && sourceEvidence.sources.length">
+                                <p v-for="source in sourceEvidence.sources" :key="source.ref || source.url" style="overflow-wrap:anywhere;">
+                                    {{ source.ref }} {{ source.title }} {{ source.url }}
+                                </p>
+                            </div>
+                        </div>
                     </details>
-                    <button type="button" class="btn-icon" @click="showLabelReview = !showLabelReview">{{ showLabelReview ? '收起產品核對' : '有產品營養標示？點此修改／核對' }}</button>
+                    <button type="button" class="btn-icon" style="border:1px solid var(--color-border);border-radius:10px;padding:9px 10px;"
+                            @click="showLabelReview = !showLabelReview">
+                        {{ showLabelReview ? '收起商品資訊' : '有產品營養標示？核對商品' }}
+                    </button>
                     <template v-if="showLabelReview">
-                    <label style="display:block;">品牌 <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="form.brand"></label>
-                    <label style="display:block;">商品規格（瓶身淨容量／口味／版本，非每份容量）<input style="width:100%;" v-model="evidenceSpec" placeholder="例：原味 450 mL；無法從照片確認請留空"></label>
-                    <label style="display:block;">來源備註 <input style="width:100%;" v-model="evidenceSource"></label>
-                    <label>重量基準 <select v-model="evidenceBasis"><option value="unknown">待確認</option><option value="raw">生重／可食部</option><option value="cooked">熟重／可食部</option><option value="dry">乾重</option><option value="as_sold">販售／即食狀態</option></select></label>
-                    <label v-if="!hasUnitNutrition">計量單位 <select v-model="evidenceUnit"><option value="g">g</option><option value="ml">ml</option><option v-if="!['g','ml'].includes(evidenceUnit)" :value="evidenceUnit">{{ evidenceUnit }}</option></select></label>
-                    <label v-if="!hasUnitNutrition && !['g','ml'].includes(evidenceUnit)" style="display:block;">每 {{ evidenceUnit }} 可食重量 g（依包裝或實測）<input type="number" min="0" v-model.number="gramsPerUnit"></label>
-                    <label style="display:block;"><input type="checkbox" v-model="evidenceConfirmed">我已核對此品牌／規格、重量單位、五項數值與照片標示一致</label>
+                        <strong style="font-size:0.9rem;">1. 核對商品資訊</strong>
+                        <label style="display:block;">品牌
+                            <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="form.brand">
+                        </label>
+                        <label style="display:block;">商品規格（口味／版本／淨容量，不是每份容量）
+                            <input style="width:100%;min-width:0;box-sizing:border-box;" v-model="evidenceSpec"
+                                   placeholder="例：地獄版；看不清請留空">
+                        </label>
+                        <div style="color:var(--color-text-muted);font-size:0.8rem;">
+                            計量：{{ hasUnitNutrition ? form.servingUnit : (form.servingSize || '?') + ' ' + (form.servingUnit || '') }}
+                            · {{ evidenceBasis === 'as_sold' ? '販售狀態' : evidenceBasis === 'raw' ? '生重' : evidenceBasis === 'cooked' ? '熟重' : evidenceBasis === 'dry' ? '乾重' : '重量基準待確認' }}
+                        </div>
+                        <details style="border-top:1px solid var(--color-border);padding-top:8px;">
+                            <summary style="cursor:pointer;color:var(--color-text-muted);">進階核對設定（通常不用改）</summary>
+                            <div style="display:grid;gap:8px;margin-top:10px;">
+                                <label style="display:block;">來源備註 <input style="width:100%;" v-model="evidenceSource"></label>
+                                <label>重量基準 <select v-model="evidenceBasis"><option value="unknown">待確認</option><option value="raw">生重／可食部</option><option value="cooked">熟重／可食部</option><option value="dry">乾重</option><option value="as_sold">販售／即食狀態</option></select></label>
+                                <label v-if="!hasUnitNutrition">計量單位 <select v-model="evidenceUnit"><option value="g">g</option><option value="ml">ml</option><option v-if="!['g','ml'].includes(evidenceUnit)" :value="evidenceUnit">{{ evidenceUnit }}</option></select></label>
+                                <label v-if="!hasUnitNutrition && !['g','ml'].includes(evidenceUnit)" style="display:block;">每 {{ evidenceUnit }} 可食重量 g（依包裝或實測）<input type="number" min="0" v-model.number="gramsPerUnit"></label>
+                            </div>
+                        </details>
                     </template>
                 </div>
 
                 <!-- 3. 營養成份規格：純文字俐落排版 + 雙軌自動換算 -->
-                <p v-if="modalMode === 'edit' && engine.getNutritionIssues([{ id: form.id, amount: 1 }]).length" role="status" style="font-size: 0.8rem; color: var(--color-text-muted);">
-                    {{ engine.getNutritionIssues([{ id: form.id, amount: 1 }]).join('；') }}
-                </p>
                 <div style="background: #FAF8F5; border: 1px solid var(--color-border); border-radius: 14px; padding: 14px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-weight: 700; font-size: 0.9rem; color: var(--color-text-main);">營養成份規格：</span>
+                        <span style="font-weight: 700; font-size: 0.9rem; color: var(--color-text-main);">{{ showLabelReview ? '2. 核對營養數字' : '營養成分' }}</span>
                         <div style="display: flex; background: #E5E7EB; padding: 2px; border-radius: 8px; gap: 2px;">
                             <button v-if="!hasUnitNutrition" @click="form.displayBasis = '100g'"
                                     :style="{ background: form.displayBasis === '100g' ? 'var(--color-primary)' : 'transparent', color: form.displayBasis === '100g' ? '#FFF' : '#4B5563', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', border: 'none', cursor: 'pointer' }">
@@ -980,6 +1017,18 @@ const IngredientDetailModal = {
                     </div>
                 </div>
 
+                <div v-if="showLabelReview" style="margin-bottom:16px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-card,#fff);">
+                    <strong style="display:block;margin-bottom:8px;font-size:0.88rem;">3. 確認後儲存</strong>
+                    <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.84rem;line-height:1.5;">
+                        <input type="checkbox" v-model="evidenceConfirmed" style="margin-top:3px;flex-shrink:0;">
+                        <span>我已核對商品資訊、重量單位及五項營養數字與照片一致</span>
+                    </label>
+                </div>
+
+                <!-- Less-frequent controls remain accessible without dominating nutrition review. -->
+                <details :open="modalMode === 'create'" style="border:1px solid var(--color-border);border-radius:14px;padding:12px;margin-bottom:16px;background:#fff;">
+                    <summary style="cursor:pointer;font-weight:700;font-size:0.86rem;color:var(--color-text-main);">其他設定：分類、存放與採買</summary>
+                    <div style="margin-top:14px;">
                 <!-- 4. 食材分類下拉選單 -->
                 <div style="background: #FFF; border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
                     <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 6px;">
@@ -1060,6 +1109,9 @@ const IngredientDetailModal = {
                         </button>
                     </div>
                 </div>
+
+                    </div>
+                </details>
 
                 <!-- 🟠 第 1 頁專屬：右下角系統黃浮動正圓鈕【從料理移除】(FAB: 碗 ✕ 往右弧度箭頭 款式 1，純平無光暈) -->
                 <div v-if="context === 'calculator' && mode === 'edit'"

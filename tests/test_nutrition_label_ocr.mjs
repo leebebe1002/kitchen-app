@@ -191,5 +191,23 @@ globalThis.fetch = networkBefore;
 Vue.compile(Modal.template,{decodeEntities:text=>text});
 assert(Modal.template.includes('用 AI 辨識／重新核對這張照片'));
 assert(Modal.template.includes('v-for="notice in photo.notices"'));
+
+// The dense source log and housekeeping controls must not obscure the
+// ordinary task: compare product, compare nutrients, then verify/save.
+const ui=Modal.template;
+assert(ui.includes('查看來源與計算說明'));
+assert(ui.includes('查看 {{ photo.notices.length }} 項辨識提醒'));
+assert(ui.includes('進階核對設定（通常不用改）'));
+assert(ui.includes('<details :open="modalMode === \'create\'"'),'existing item opens with housekeeping collapsed');
+assert(ui.includes('其他設定：分類、存放與採買'));
+assert(ui.indexOf('1. 核對商品資訊') < ui.indexOf('2. 核對營養數字'));
+assert(ui.indexOf('2. 核對營養數字') < ui.indexOf('3. 確認後儲存'));
+const verification=ui.indexOf('v-model="evidenceConfirmed"');
+assert(verification > ui.indexOf('營養成分') && verification < ui.indexOf('其他設定：分類、存放與採買'));
+assert(ui.indexOf('來源備註') > ui.indexOf('進階核對設定（通常不用改）'));
+assert(ui.indexOf('{{ sourceEvidence.note }}') > ui.indexOf('查看來源與計算說明'));
+assert(ui.includes('原有料理份量需重新核對'), 'unit incompatibility is not hidden in audit details');
+assert(!ui.includes('<p>一般食材優先使用有依據的官方估算；有實際產品標示時再展開核對。空白不是 0。</p>'),'repeated uncollapsed explanatory paragraphs removed');
+
 renderer.render(null,root);
 console.log('PASS: label OCR g/mL, mismatched photo vs old values, partial blanks, verified-by-user boundary, old-photo reanalysis, no automatic transmission/storage, friendly fallback');
