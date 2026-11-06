@@ -110,14 +110,19 @@ export async function prepareIngredientPhotoBackup(source, store = ingredientPho
     return { source, before };
 }
 
-export async function hydrateIngredientPhotos(value, store = ingredientPhotoStore) {
+export async function hydrateIngredientPhotos(value, store = ingredientPhotoStore, { allowMissing = false } = {}) {
     if (!value || typeof value !== 'object') return value;
     if (!Array.isArray(value)) for (const [field, id] of Object.entries(value.localPhotoRefs || {})) {
         if (!imageFields.includes(field) || (value[field] && !value[field].startsWith('blob:'))) continue;
-        const blob = await verifiedPhoto(id, store);
-        if (!urls.has(id)) urls.set(id, URL.createObjectURL(blob));
-        value[field] = urls.get(id);
+        try {
+            const blob = await verifiedPhoto(id, store);
+            if (!urls.has(id)) urls.set(id, URL.createObjectURL(blob));
+            value[field] = urls.get(id);
+        } catch (error) {
+            if (!allowMissing) throw error;
+            value[field] = null;
+        }
     }
-    for (const item of Object.values(value)) if (item && typeof item === 'object') await hydrateIngredientPhotos(item, store);
+    for (const item of Object.values(value)) if (item && typeof item === 'object') await hydrateIngredientPhotos(item, store, { allowMissing });
     return value;
 }

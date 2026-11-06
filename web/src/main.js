@@ -1,9 +1,9 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
-import CalculatorView from './views/CalculatorView.js?v=20261105_SIMILAR_DRAFT_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import CalculatorView from './views/CalculatorView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
-import PantryView from './views/PantryView.js?v=20261105_SIMILAR_DRAFT_V1';
+import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
@@ -17,7 +17,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.05.3';
+        const appVersion = '2026.11.06.1';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);

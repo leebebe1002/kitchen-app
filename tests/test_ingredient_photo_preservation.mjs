@@ -143,7 +143,10 @@ const renderer = Vue.createRenderer({ createElement: () => ({}), insert() {}, re
     createText: () => ({}), createComment: () => ({}), setText() {}, setComment() {}, parentNode: () => null, nextSibling: () => null });
 let modal; const root = {};
 renderer.render(Vue.h({ setup() { modal = Modal.setup(props, { emit() {} }); return () => Vue.h('div'); } }), root);
-props.isOpen = true; await Vue.nextTick(); modal.form.price = 88; await modal.handleSave();
+props.isOpen = true; await Vue.nextTick();
+assert.equal(modal.photo.url, reboot.getIngredientById(privateItem.id).photo);
+assert.deepEqual(Buffer.from(await (await fetchBlob(modal.photo.url)).arrayBuffer()), imageBytes);
+modal.form.price = 88; await modal.handleSave();
 assert.equal(reboot.getIngredientById(privateItem.id).price, 88);
 assert.equal(reboot.getIngredientById(privateItem.id).localPhotoRefs.photoUrl, reboot.getIngredientById(privateItem.id).localPhotoRefs.photo);
 renderer.render(null, root);
@@ -151,3 +154,27 @@ await reboot.saveIngredient({ ...reboot.getIngredientById(tofuId), photoUrl: 'ht
 const nextReboot = new Engine({ photoStore: store }); await nextReboot.fetchJson('ingredients.json', 'rawIngredients', {});
 assert.equal(all(nextReboot.data.rawIngredients).find(item => item.id === tofuId).photoUrl, 'https://example.invalid/replacement.jpg');
 console.log('PASS: exact binary photos, no new Base64/Blob URL persistence, duplicate-image backup, quota/read/corruption failures, rollback/crash/concurrent edits, both scopes unchanged, real Engine opt-in and later edits/reload; in-memory photos only.');
+
+// Old catalog copy lacks a photo, but the same ID has a verified device backup.
+const olderCache = JSON.parse(values.get(INGREDIENT_CACHE_KEY));
+const olderItem = all(olderCache).find(item => item.id === privateItem.id);
+delete olderItem.localPhotoRefs;
+values.set(INGREDIENT_CACHE_KEY, JSON.stringify(olderCache));
+globalThis.fetch = async () => { throw Error('offline'); };
+const offlineReboot = new Engine({ photoStore: store });
+await offlineReboot.initialize();
+const restoredPhoto = offlineReboot.getIngredientById(privateItem.id).photoUrl;
+assert(restoredPhoto.startsWith('blob:'));
+assert.deepEqual(Buffer.from(await (await fetchBlob(restoredPhoto)).arrayBuffer()), imageBytes);
+assert.equal(values.get(INGREDIENT_CACHE_KEY), JSON.stringify(olderCache));
+
+// One unavailable backup cannot block startup or the other saved photos.
+const customWithMissing = JSON.parse(values.get(CUSTOM_INGREDIENT_KEY));
+customWithMissing.push({ id: 'missing-photo', name: '缺少備份', category: 'veggies',
+    photoUrl: null, localPhotoRefs: { photoUrl: 'image/png:missing' } });
+values.set(CUSTOM_INGREDIENT_KEY, JSON.stringify(customWithMissing));
+const partialReboot = new Engine({ photoStore: store });
+await partialReboot.initialize();
+assert.equal(partialReboot.getIngredientById('missing-photo').photoUrl, null);
+assert.equal(partialReboot.getIngredientById('missing-photo').localPhotoRefs.photoUrl, 'image/png:missing');
+assert(partialReboot.getIngredientById(privateItem.id).photoUrl.startsWith('blob:'));

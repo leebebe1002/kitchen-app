@@ -42,8 +42,22 @@ assert.equal(dialogs.length,2,dialogs);assert.match(dialogs[1],/已取代/);asse
 assert.equal(app.engine.value.getIngredientById('cocoa').brand,'新品牌');
 console.log('PASS actual App reactive Engine -> Modal replace -> real upload+personal sync -> two dialogs -> session still ready',requests.length);
 // A document refresh must preserve every stored ingredient, photo reference, scope and session.
-assert.equal(app.appVersion,'2026.11.05.3');
+assert.equal(app.appVersion,'2026.11.06.1');
 const storedBefore=JSON.stringify([...values]);await app.refreshData();
 assert.equal(new URL(refreshedURL).origin,'https://fixture.invalid');assert(new URL(refreshedURL).searchParams.has('fk_update'));
 assert.equal(JSON.stringify([...values]),storedBefore);
 renderer.render(null,root);clearTimeout(auth.expiryTimer);
+
+const tag='20261106_INGREDIENT_PHOTO_REOPEN_V1';
+for(const [file, imports] of [
+ ['web/index.html',['main.js']],
+ ['web/src/main.js',['KitchenEngine.js','PantryView.js','CalculatorView.js']],
+ ['web/src/engine/KitchenEngine.js',['IngredientPhotoStore.js','IngredientBaselineUpdate.js']],
+ ['web/src/utils/IngredientBaselineUpdate.js',['IngredientPhotoStore.js']],
+ ['web/src/views/PantryView.js',['IngredientDetailModal.js']],
+ ['web/src/views/CalculatorView.js',['IngredientDetailModal.js']],
+ ['web/weight-basis-preview.html',['KitchenEngine.js','CalculatorView.js']]
+]){
+ const source=fs.readFileSync(file,'utf8');
+ for(const name of imports)assert(source.includes(name+'?v='+tag),file+' must load the updated '+name);
+}

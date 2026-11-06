@@ -1,6 +1,6 @@
 import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { normalizeIngredientName } from './IngredientMatcher.js?v=20260918_FIX_STATE_V2';
-import { hasEmbeddedIngredientPhoto } from './IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
+import { hasEmbeddedIngredientPhoto } from './IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 
 export const BASELINE_UPDATE_KEY = 'kitchen_v2_ingredient_baseline_20261103';
 export const INGREDIENT_CACHE_KEY = 'kitchen_v2_ingredients.json';

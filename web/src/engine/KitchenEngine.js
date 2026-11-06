@@ -14,8 +14,8 @@ import personalKitchenSyncService from '../services/PersonalKitchenSyncService.j
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261103_FK14_KEEP_PHOTOS_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
 
 export default class KitchenEngine {
@@ -82,7 +82,7 @@ export default class KitchenEngine {
 
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
-        await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore);
+        await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore, { allowMissing: true });
 
         // 2. 攤平食材列表並正規化舊版通路名稱
         this.data.ingredients = [];
@@ -364,7 +364,7 @@ export default class KitchenEngine {
                 this.data[key] = defaultValue;
             }
         }
-        if (filename === 'ingredients.json') await hydrateIngredientPhotos(this.data[key], this.ingredientPhotoStore);
+        if (filename === 'ingredients.json') await hydrateIngredientPhotos(this.data[key], this.ingredientPhotoStore, { allowMissing: true });
     }
 
     async adoptIngredientBaseline() {
@@ -699,9 +699,19 @@ export default class KitchenEngine {
                     }
 
                     // 正常自訂食材：檢查自身 ID 是否已在 rawIngredients
-                    const exists = this.data.rawIngredients[cat].some(i => i.id === customIng.id);
-                    if (!exists) {
+                    const existing = this.data.rawIngredients[cat].find(i => i.id === customIng.id);
+                    if (!existing) {
                         this.data.rawIngredients[cat].push(customIng);
+                    } else if (!existing.photoUrl && !existing.photo && !existing.localPhotoRefs?.photoUrl
+                        && !existing.localPhotoRefs?.photo) {
+                        // A stale catalog cache can have the same ID without its saved photo.
+                        for (const field of ['photoUrl', 'photo']) {
+                            const url = customIng[field];
+                            if (typeof url === 'string' && /^https?:\/\//i.test(url)) existing[field] = url;
+                            else if (customIng.localPhotoRefs?.[field]) {
+                                existing.localPhotoRefs = { ...existing.localPhotoRefs, [field]: customIng.localPhotoRefs[field] };
+                            }
+                        }
                     }
                     filteredCustomList.push(customIng);
                 });
@@ -1021,6 +1031,7 @@ export default class KitchenEngine {
             customList.push(ingData);
             this.safeSetLocalStorage(customKey, customList);
         } catch (e) {}
+        return ingData;
     }
 
     async updateStock(id, hasStock) {

@@ -32,8 +32,8 @@ window.fetch = (url, options = {}) => {
     return readOnlyFetch(url, options);
 };
 const [{default: Calculator}, {default: Engine}, ingredients] = await Promise.all([
-    import('./src/views/CalculatorView.js?v=20261028_WEIGHT_BASIS_V2'),
-    import('./src/engine/KitchenEngine.js?v=20261028_WEIGHT_BASIS_V2'),
+    import('./src/views/CalculatorView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1'),
+    import('./src/engine/KitchenEngine.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1'),
     fetch('../src/data/ingredients.json').then(r => r.json())
 ]);
 const engine = new Engine(); // 不呼叫 initialize 或同步。

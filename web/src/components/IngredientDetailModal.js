@@ -758,6 +758,7 @@ const IngredientDetailModal = {
                 ingData.localPhotoRefs = {};
             }
 
+            const uploadingPhoto = ingData.photoUrl?.startsWith('data:');
             isSaving.value = true;
             try {
                 // 儲存至食材快取
@@ -794,7 +795,9 @@ const IngredientDetailModal = {
                 }
 
                 const autoAddToDish = (props.context === 'calculator_create');
-                if (replaceId) alert('已取代既有食材，原食材 ID 與引用保留。原資料已保留在此裝置的最近一次營養編輯備份；如需回復，請先勿再次編輯並聯絡協助。');
+                const photoNotice = uploadingPhoto && !ingData.photoUrl ? '食材已儲存，但照片上傳失敗。' : '';
+                const replaceNotice = replaceId ? '已取代既有食材，原食材 ID 與引用保留。原資料已保留在此裝置的最近一次營養編輯備份；如需回復，請先勿再次編輯並聯絡協助。' : '';
+                if (photoNotice || replaceNotice) alert([replaceNotice, photoNotice].filter(Boolean).join('\n'));
                 emit('saved', ingData, autoAddToDish);
                 emit('close');
             } catch (error) { alert(error.message || '食材已儲存，庫存更新未完成，請確認後重試。'); }
@@ -929,7 +932,7 @@ const IngredientDetailModal = {
 
                 <!-- 2. 食材實拍照片滿版卡片 (加入 flex-shrink: 0 嚴禁 flex 壓縮，保持 240px 壯觀高視野) -->
                 <div v-if="photo.url" style="margin-bottom: 16px; position: relative; border-radius: 14px; overflow: hidden; border: 1.5px solid var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #111827; height: 240px; min-height: 240px; width: 100%; flex-shrink: 0;">
-                    <img :src="photo.url" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+                    <img :src="photo.url" alt="食材照片" style="width: 100%; height: 100%; object-fit: contain; display: block;" />
                     
                     <!-- 頂部右上角：刪除/移除照片按鈕 (38px 圓形，系統標準 20px 垃圾桶 SVG) -->
                     <button class="btn-icon" @click="removePhoto"
