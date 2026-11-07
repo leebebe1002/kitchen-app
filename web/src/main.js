@@ -7,7 +7,7 @@ import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
-import { inspectIngredientPhotos } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_V1';
+import { inspectIngredientPhotos, formatIngredientPhotoAudit } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1';
 
 const App = {
     components: {
@@ -18,7 +18,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.07.1';
+        const appVersion = '2026.11.07.2';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -217,7 +217,7 @@ const App = {
             photoAudit.value = { busy: true, text: '', message: '正在讀取這台裝置的照片紀錄…' };
             try {
                 const report = await inspectIngredientPhotos({ ingredients: engine.value?.data.ingredients, appVersion });
-                photoAudit.value.text = JSON.stringify(report, null, 2);
+                photoAudit.value.text = formatIngredientPhotoAudit(report);
                 photoAudit.value.message = `目前 ${report.summary.currentWithPhotoRecord} 項食材有照片紀錄，另有 ${report.summary.storedElsewhere} 項在快取或舊備份有紀錄。請複製結果貼回對話。`;
             } catch {
                 photoAudit.value.message = '目前無法完成檢查，請稍後重試。';

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { inspectIngredientPhotos } from '../web/src/utils/IngredientPhotoAudit.js';
+import { inspectIngredientPhotos, formatIngredientPhotoAudit } from '../web/src/utils/IngredientPhotoAudit.js';
 import { prepareIngredientPhotoBackup, INGREDIENT_PHOTO_DB } from '../web/src/utils/IngredientPhotoStore.js';
 
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
@@ -114,3 +114,22 @@ const olderSafari = await inspectIngredientPhotos({
 assert(aborted);
 assert.equal(olderSafari.devicePhotos.status, '沒有照片資料庫');
 console.log('PASS readonly photo audit: current+cache+all backups, verified/missing/corrupt/orphan blobs, legacy photos, no network/writes/credentials/image-data, absent/denied/older Safari database');
+
+const text = formatIngredientPhotoAudit(report);
+assert(text.includes('有機可可粉 [cocoa]'));
+assert(text.includes('裝置備份可讀'));
+assert(text.includes('裝置備份遺失或損壞'));
+assert(text.includes('舊內嵌照片'));
+assert(text.includes('S1/S3/S6 photo=裝置備份可讀'));
+assert(!text.includes('data:image'));
+assert(!text.includes('/private/image'));
+const largeReport = structuredClone(report);
+largeReport.ingredients = [
+ ...Array.from({length:94},(_,index)=>({ id:'food_'+index, name:'無照片食材'+index, current:true, records:[] })),
+ ...Array.from({length:6},(_,index)=>({ id:'photo_'+index, name:'有照片食材'+index, current:true, records:byId('jlek').records }))
+];
+const compact = formatIngredientPhotoAudit(largeReport);
+assert(compact.length < 9000, 'The 100-item, 6-photo report must fit the 10k paste limit');
+assert(compact.includes('無照片食材93[food_93]'));
+assert(compact.includes('有照片食材5 [photo_5]'));
+console.log('PASS compact report preserves all names, IDs, sources and photo states within the paste limit');

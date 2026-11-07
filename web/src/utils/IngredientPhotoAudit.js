@@ -135,7 +135,7 @@ export async function inspectIngredientPhotos({
             storedElsewhere: items.filter(item => item.records.length && !hasCurrentPhoto(item)).length
         },
         checkedAt: new Date().toISOString(),
-        note: 'records 空白表示未找到照片紀錄。圖片連結尚未檢查遠端內容。備份紀錄不會自動還原到目前食材。',
+        note: '檢查範圍為這台裝置目前可讀的食材紀錄與備份。圖片連結尚未檢查遠端內容。',
         devicePhotos: {
             status: device.status,
             count: device.status === '無法讀取' ? null : device.photos.size,
@@ -144,4 +144,36 @@ export async function inspectIngredientPhotos({
         sources,
         ingredients: items
     };
+}
+
+export function formatIngredientPhotoAudit(report) {
+    const sourceNumbers = new Map(report.sources.map((source, index) => [source.source, index + 1]));
+    const lines = [
+        'FK 食材照片檢查 ' + report.appVersion,
+        '檢查時間 ' + report.checkedAt,
+        '目前有照片紀錄 ' + report.summary.currentWithPhotoRecord + ' 項，其他快取或備份 ' + report.summary.storedElsewhere + ' 項',
+        '裝置備份 ' + report.devicePhotos.status + '，照片 ' + (report.devicePhotos.count ?? '未知') + ' 張，未被紀錄引用 ' + (report.devicePhotos.unreferencedCount ?? '未知') + ' 張',
+        '來源'
+    ];
+    report.sources.forEach((source, index) => {
+        lines.push('S' + (index + 1) + ' ' + source.source + ' ' + (source.error || source.count + ' 項'));
+    });
+    lines.push('有照片紀錄的食材');
+    for (const item of report.ingredients.filter(item => item.records.length)) {
+        lines.push(item.name + ' [' + item.id + ']' + (item.current ? '' : '（舊紀錄）'));
+        const groups = new Map();
+        for (const record of item.records) {
+            const status = Object.entries(record.photos)
+                .filter(([, value]) => value !== '沒有照片紀錄')
+                .map(([field, value]) => field + '=' + value).join('，');
+            if (!groups.has(status)) groups.set(status, []);
+            groups.get(status).push('S' + sourceNumbers.get(record.source));
+        }
+        for (const [status, sources] of groups) lines.push(sources.join('/') + ' ' + status);
+    }
+    const missing = report.ingredients.filter(item => !item.records.length);
+    lines.push('未找到照片紀錄 ' + missing.length + ' 項');
+    lines.push(missing.map(item => item.name + '[' + item.id + ']').join('、'));
+    lines.push(report.note);
+    return lines.join('\n');
 }
