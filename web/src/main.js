@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261107_FK16_ARIEL_EMPTY_START_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -18,7 +18,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.07.2';
+        const appVersion = '2026.11.07.3';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -38,6 +38,8 @@ const App = {
         const loginMessage = ref('');
         const loginSending = ref(false);
         const currentUser = ref(null);
+        const arielResetting = ref(false);
+        const arielResetMessage = ref('');
         const baselineUpdating = ref(false);
         const baselineMessage = ref('');
         const photoAudit = ref({ busy: false, text: '', message: '' });
@@ -196,6 +198,24 @@ const App = {
             loginMessage.value = '';
         };
 
+        const resetArielKitchen = async () => {
+            const target = engine.value;
+            if (arielResetting.value || !personalReady.value || target?.personalScope !== 'ariel') return;
+            if (!confirm('將這台裝置樂樂原有的庫存、採買、家用品改為空白，原本的本機資料會先備份。食材、照片、餐點、登入與 Bebe／Jason 的資料不受影響。確定從空白開始？')) return;
+            arielResetting.value = true;
+            arielResetMessage.value = '';
+            try {
+                await target.adoptEmptyArielKitchen();
+                if (engine.value !== target || !target.hasPersonalAccess()) throw new Error('登入狀態已變更，請重開檢查。');
+                identityVersion.value += 1;
+                arielResetMessage.value = '已保留原本機備份，樂樂的庫存、採買與家用品已從空白開始。新增或修改後會依現有版本保護同步。';
+            } catch (resetError) {
+                arielResetMessage.value = resetError.message || '無法安全重設，原資料已保留。';
+            } finally {
+                arielResetting.value = false;
+            }
+        };
+
         const adoptIngredientBaseline = async () => {
             if (!engine.value || baselineUpdating.value || engine.value.data.ingredientBaselineApplied) return;
             if (!confirm('請先關閉其他 FK 分頁。這次會備份本機食材，再採用 99 項食材的營養與換算基準；價格、通路、額外私房食材、庫存、採買及飲食紀錄都保留。三項缺失營養仍待補。確定更新這台裝置？')) return;
@@ -241,6 +261,9 @@ const App = {
             copyPhotoAudit,
             appVersion,
             adoptIngredientBaseline,
+            arielResetting,
+            arielResetMessage,
+            resetArielKitchen,
             baselineUpdating,
             baselineMessage,
             currentTab,
@@ -414,6 +437,14 @@ const App = {
                     <p v-if="!personalReady" class="account-message" role="status">{{ personalMessage }}</p>
                     <button v-if="!personalReady" class="action-sheet-row" @click="signOut">登出此裝置</button>
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
+                    <details v-if="personalReady && engine?.personalScope === 'ariel'">
+                        <summary class="account-email-label">樂樂庫存重新開始</summary>
+                        <p class="account-copy">只處理這台裝置的樂樂庫存、採買與家用品。執行前會再次確認雲端仍為空白，並保留原本機備份；不會更動 Bebe／Jason、食材、照片或餐點資料。</p>
+                        <button class="action-sheet-row" @click="resetArielKitchen" :disabled="arielResetting">
+                            {{ arielResetting ? '正在核對空白雲端與備份…' : '備份並從空白開始' }}
+                        </button>
+                        <p v-if="arielResetMessage" class="account-message" role="status">{{ arielResetMessage }}</p>
+                    </details>
                     <details>
                         <summary class="account-email-label">食材照片檢查</summary>
                         <p class="account-copy">檢查這台裝置的食材照片、舊快取與備份。結果包含食材名稱與保存狀態，可複製給十一粒協助查找。</p>

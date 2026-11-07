@@ -262,6 +262,42 @@ export default class KitchenEngine {
         return true;
     }
 
+
+    // Explicitly adopt the currently EMPTY cloud state on Ariel's original device.
+    // This is a local-only choice: it never PATCHes Supabase or touches household keys.
+    async adoptEmptyArielKitchen() {
+        if (!this.hasPersonalAccess() || this.personalScope !== 'ariel'
+            || this.personalContext?.scopeId !== 'ariel' || !this.personalKitchenSync?.enabled) {
+            throw new Error('只有已登入樂樂帳號，才能從空白庫存開始。');
+        }
+        const context = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        const sequence = ++this.personalSyncSequence;
+        const before = JSON.stringify(this.getPersonalKitchenSnapshot());
+        const stillCurrent = () => this.hasPersonalAccess() && this.personalContext === context
+            && this.personalScope === 'ariel' && this.personalScopeGeneration === generation
+            && this.personalSyncSequence === sequence
+            && JSON.stringify(this.getPersonalKitchenSnapshot()) === before;
+        const cloud = await this.personalKitchenSync.getState('ariel');
+        if (!stillCurrent()) throw new Error('登入或本機庫存已變更，沒有清空任何資料，請重新確認。');
+        // Never discard local data when cloud has already become active, changed, or ambiguous.
+        if (!cloud || cloud.revision !== 0 || cloud.syncStatus !== 'legacy'
+            || hasPersonalKitchenData(cloud)) {
+            throw new Error('樂樂的雲端庫存已變更，已保留原資料，請重新確認。');
+        }
+        // Keep an additional dedicated local snapshot: the ordinary rolling backup
+        // is replaced after the next edit. Fail closed if either backup write fails.
+        const oldBytes = localStorage.getItem('kitchen_v2_personal_state_ariel');
+        if (oldBytes !== null) {
+            localStorage.setItem('kitchen_v2_personal_state_ariel_reset_backup', oldBytes);
+        }
+        // Existing write method validates scope, rotates its normal backup,
+        // then writes primary. If storage fails, do not alter the visible state.
+        const saved = writePersonalKitchenState('ariel', cloud, { preserveUpdatedAt: true });
+        this.applyPersonalKitchenState(saved);
+        return true;
+    }
+
     setPersonalScope(scopeId) {
         const context = this.auth.getPersonalContext();
         if (!context || context.scopeId !== scopeId || !PERSONAL_SCOPES[scopeId]) return;
