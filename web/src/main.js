@@ -166,7 +166,7 @@ const App = {
                 await authService.requestEmailCode(loginEmail.value);
                 loginCode.value = '';
                 loginStep.value = 'code';
-                loginMessage.value = '驗證碼已寄出。請回到 FK 輸入信中的 8 位數字。';
+                loginMessage.value = '驗證碼已寄出。請回到 FK 輸入 Email 中的數字驗證碼。';
             } catch (error) {
                 loginMessage.value = error.message || '無法寄送驗證碼。';
             } finally {
