@@ -7,6 +7,7 @@ import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
+import { inspectIngredientPhotos } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_V1';
 
 const App = {
     components: {
@@ -17,7 +18,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.06.1';
+        const appVersion = '2026.11.07.1';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -39,6 +40,7 @@ const App = {
         const currentUser = ref(null);
         const baselineUpdating = ref(false);
         const baselineMessage = ref('');
+        const photoAudit = ref({ busy: false, text: '', message: '' });
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -210,7 +212,33 @@ const App = {
             }
         };
 
+        const checkIngredientPhotos = async () => {
+            if (photoAudit.value.busy) return;
+            photoAudit.value = { busy: true, text: '', message: '正在讀取這台裝置的照片紀錄…' };
+            try {
+                const report = await inspectIngredientPhotos({ ingredients: engine.value?.data.ingredients, appVersion });
+                photoAudit.value.text = JSON.stringify(report, null, 2);
+                photoAudit.value.message = `目前 ${report.summary.currentWithPhotoRecord} 項食材有照片紀錄，另有 ${report.summary.storedElsewhere} 項在快取或舊備份有紀錄。請複製結果貼回對話。`;
+            } catch {
+                photoAudit.value.message = '目前無法完成檢查，請稍後重試。';
+            } finally {
+                photoAudit.value.busy = false;
+            }
+        };
+
+        const copyPhotoAudit = async () => {
+            try {
+                await navigator.clipboard.writeText(photoAudit.value.text);
+                photoAudit.value.message = '已複製，請貼回對話。';
+            } catch {
+                photoAudit.value.message = '請長按下方文字，全選後複製。';
+            }
+        };
+
         return {
+            photoAudit,
+            checkIngredientPhotos,
+            copyPhotoAudit,
             appVersion,
             adoptIngredientBaseline,
             baselineUpdating,
@@ -386,6 +414,18 @@ const App = {
                     <p v-if="!personalReady" class="account-message" role="status">{{ personalMessage }}</p>
                     <button v-if="!personalReady" class="action-sheet-row" @click="signOut">登出此裝置</button>
                     <p v-if="loginMessage" class="account-message">{{ loginMessage }}</p>
+                    <details>
+                        <summary class="account-email-label">食材照片檢查</summary>
+                        <p class="account-copy">檢查這台裝置的食材照片、舊快取與備份。結果包含食材名稱與保存狀態，可複製給十一粒協助查找。</p>
+                        <button class="action-sheet-row" @click="checkIngredientPhotos" :disabled="photoAudit.busy">
+                            {{ photoAudit.busy ? '檢查中…' : '檢查食材照片' }}
+                        </button>
+                        <p v-if="photoAudit.message" class="account-message" role="status">{{ photoAudit.message }}</p>
+                        <template v-if="photoAudit.text">
+                            <button class="action-sheet-row" @click="copyPhotoAudit">複製檢查結果</button>
+                            <textarea class="account-email-input" aria-label="食材照片檢查結果" readonly :value="photoAudit.text" rows="8" style="font-size:12px;max-height:220px;"></textarea>
+                        </template>
+                    </details>
                     <details v-if="engine">
                         <summary class="account-email-label">食材資料更新</summary>
                         <p class="account-copy">一次採用 99 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。手機日後補值仍只存本機。</p>
