@@ -105,7 +105,11 @@ export class OfficialIngredientCatalogService {
 
     async request(path, options, identity) {
         if (!this.auth.isCurrentContext(identity)) throw Error('登入身分已變更，沒有更動雲端食材。');
-        const response = await this.fetcher(`${SUPABASE_CONFIG.url}/rest/v1/${path}`, {
+        // Vue wraps the Engine's service in a reactive Proxy. Native Window.fetch
+        // rejects a Proxy service as its receiver (Safari: Illegal Invocation).
+        // Always call it with the real Window, including in proxied instances.
+        const response = await this.fetcher.call(globalThis.window ?? globalThis,
+            `${SUPABASE_CONFIG.url}/rest/v1/${path}`, {
             ...options, signal: AbortSignal.timeout(10000),
             headers: { apikey: SUPABASE_CONFIG.anonKey,
                 Authorization: `Bearer ${identity.token}`,

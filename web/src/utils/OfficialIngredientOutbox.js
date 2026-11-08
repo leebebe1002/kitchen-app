@@ -2,7 +2,7 @@
  * No pantry, shopping, household supplies, meals, photos or private foods here.
  * Every operation is retryable; conflicts never silently overwrite a newer row.
  */
-import { canonicalNutritionItem } from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_SSOT_V1';
+import { canonicalNutritionItem } from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
 
 export const OFFICIAL_OUTBOX_KEY = 'kitchen_v2_official_catalog_pending_v1';
 export const OFFICIAL_CATALOG_JOURNAL_KEY = 'kitchen_v2_official_catalog_save_journal_v1';

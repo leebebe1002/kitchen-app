@@ -119,3 +119,34 @@ assert(sql.includes('enable row level security'));
 assert(!sql.includes('delete from public.fk_personal_kitchen_state'));
 assert(!sql.includes('delete from public.fk_shared_ingredient_nutrition'));
 console.log('PASS: draft migration seed exact 100-item field/order match, RLS/CAS/legacy guard, no data deletion');
+
+// Regression for iOS Safari Window.fetch Illegal Invocation when Vue makes
+// KitchenEngine and its service reactive. The real native fetch REQUIRES the
+// original Window as its receiver; Vue's service Proxy is not a Window.
+const {default: vm} = await import('node:vm');
+const vue = vm.runInNewContext(fs.readFileSync('web/vue.global.js','utf8') + ';Vue', {console,setTimeout,clearTimeout});
+const actualWindow = {};
+const formerWindow = globalThis.window;
+globalThis.window = actualWindow;
+try {
+  let calls = 0;
+  const windowOnlyFetch = async function (url,options) {
+    assert.equal(this,actualWindow,'Native Window.fetch receiver must be the actual Window');
+    assert.match(url,/fk_ingredient_catalog/);
+    assert.match(options.headers.Authorization,/^Bearer fake-test-token$/);
+    calls++;
+    return {ok:true,status:200,json:async()=>clone(rows)};
+  };
+  context={userId:owner,scopeId:'household',token:'fake-test-token'};
+  const proxyService=vue.reactive(new OfficialIngredientCatalogService({auth,fetcher:windowOnlyFetch}));
+  assert.equal((await proxyService.list()).length,100);
+  context={userId:other,scopeId:'ariel',token:'fake-test-token'};
+  assert.equal((await proxyService.list()).length,100);
+  assert.equal(calls,2);
+  context=null;
+  await assert.rejects(()=>proxyService.list(),/登入/);
+  assert.equal(calls,2,'Anonymous context must not send a fetch');
+  console.log('PASS: Vue reactive Proxy uses true Window receiver for native fetch, both household/ariel and logged-out');
+} finally {
+  globalThis.window=formerWindow;
+}

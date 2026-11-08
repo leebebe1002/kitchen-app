@@ -1,4 +1,4 @@
-import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_SUPABASE_SSOT_V1';
+import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_WINDOW_FETCH_V1';
 import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
@@ -14,10 +14,10 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
-    from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_SSOT_V1';
+    from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
 import { readOfficialOutbox, stageOfficialEdit, persistOfficialCatalogEdit,
     recoverOfficialCatalogEdit, clearPublishedEntry, OFFICIAL_OUTBOX_KEY }
-    from '../utils/OfficialIngredientOutbox.js?v=20261108_FK14_SSOT_V1';
+    from '../utils/OfficialIngredientOutbox.js?v=20261108_FK14_WINDOW_FETCH_V1';
 
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_COCOA_RETIRED_V1';
