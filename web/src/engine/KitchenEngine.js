@@ -1,3 +1,4 @@
+import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_READONLY_AUDIT_V1';
 import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
@@ -14,7 +15,7 @@ import personalKitchenSyncService from '../services/PersonalKitchenSyncService.j
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
-import { recoverFk14OfficialRepair, applyFk14OfficialRepair } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_TWO_ITEMS_V1';
+import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_CHECK_CONFIRM_V1';
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -530,17 +531,22 @@ export default class KitchenEngine {
         const current = () => this.hasPersonalAccess() && this.personalContext === context
             && this.personalScopeGeneration === generation && this.personalScope === 'household';
         try {
+            const source = [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => localStorage.getItem(key));
+            const active = JSON.stringify(this.data.ingredients);
+            if (!isFk14KnownNutritionDifference(await auditIngredientNutrition(this)))
+                throw Error('食材差異已改變，不符合這次兩項修復；請重新檢查。');
             const url = new URL('../../../src/data/ingredients.json', import.meta.url);
             const response = await fetch(url, {cache:'no-store', signal:AbortSignal.timeout(10000)});
             if (!response.ok) throw Error('無法下載官方食材，原資料保留。');
             const official = await approvedIngredientBaseline(await response.text());
             if (!current()) throw Error('登入狀態已改變，原資料保留。');
             const rows = await this.sharedNutritionService.list();
-            if (!current() || !Array.isArray(rows) || rows.some(row =>
-                ['cocoa_powder','snow_white_mushroom'].includes(row.ingredient_id)))
+            if (!current() || !Array.isArray(rows) || rows.length !== 0)
                 throw Error('共用營養狀態已變更，請先重新檢查。');
             const updated = await applyFk14OfficialRepair(official, {
-                photoStore:this.ingredientPhotoStore, isCurrent:current
+                photoStore:this.ingredientPhotoStore, isCurrent:() => current()
+                    && JSON.stringify(this.data.ingredients) === active
+                    && [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].every((key,index) => localStorage.getItem(key) === source[index])
             });
             if (!current()) throw Error('修復完成但登入已變更，請重新開啟。');
             return updated !== null;

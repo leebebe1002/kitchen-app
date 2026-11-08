@@ -12,6 +12,36 @@ const nutritionFields = ['unitLabel', 'isCount', 'per100g', 'perServing', 'perUn
     'servingSize', 'servingUnit', 'gramsPerPack', 'gramsPerUnit', 'weightBasis',
     'weightBasisSource', 'nutritionReviewRequired', 'nutritionEvidence', 'nutritionCache'];
 
+// Only the exact observed legacy values qualify for this targeted repair.
+export function isFk14KnownNutritionDifference(report) {
+    if (report?.scope !== 'household' || report.officialCount !== 101
+        || report.matched !== 99 || report.different !== 2 || report.missing !== 1
+        || report.duplicates !== 0 || report.privateCount !== 0 || report.sharedCount !== 0
+        || !Array.isArray(report.differences) || report.differences.length !== 2) return false;
+    const snow = report.differences.find(item => item.id === 'snow_white_mushroom');
+    const cocoa = report.differences.find(item => item.id === 'cocoa_powder');
+    if (snow?.reason !== '手機計算清單缺少這項官方食材' || snow.fields?.length !== 0
+        || cocoa?.reason !== '與 GitHub 官方基準不同' || !Array.isArray(cocoa.fields)) return false;
+    const required = {
+        'per100g.kcal': ['416.67','228'], 'per100g.protein': ['33.33','19.6'],
+        'per100g.carbs': ['50','57.9'], 'per100g.fat': ['8.33','13.7'],
+        'per100g.sodium': ['0','21'], 'perServing.kcal': ['25','未設定'],
+        'perServing.protein': ['2','未設定'], 'perServing.carbs': ['3','未設定'],
+        'perServing.fat': ['0.5','未設定'], 'perServing.sodium': ['0','未設定'],
+        servingSize: ['6','未設定'], servingUnit: ['g','未設定'], weightBasis: ['as_sold','dry']
+    };
+    const nullable = new Set(['isCount','perUnit','gramsPerPack','gramsPerUnit']);
+    const seen = new Set();
+    for (const diff of cocoa.fields) {
+        if (seen.has(diff.field)) return false;
+        seen.add(diff.field);
+        const pair = required[diff.field];
+        if (pair ? diff.actual !== pair[0] || diff.expected !== pair[1]
+            : !nullable.has(diff.field) || diff.actual !== 'null' || diff.expected !== '未設定') return false;
+    }
+    return Object.keys(required).every(field => seen.has(field));
+}
+
 const readJournal = storage => {
     const raw = storage.getItem(FK14_OFFICIAL_REPAIR_KEY);
     if (raw === null) return null;
