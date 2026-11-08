@@ -14,6 +14,7 @@ import personalKitchenSyncService from '../services/PersonalKitchenSyncService.j
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
+import { recoverFk14OfficialRepair, applyFk14OfficialRepair } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_TWO_ITEMS_V1';
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -77,6 +78,7 @@ export default class KitchenEngine {
         // Recover an interrupted GLOBAL ingredient cache write before reading either key.
         // Scope-based inventory data remains untouched and initializes separately.
         recoverArielOfficialReset();
+        recoverFk14OfficialRepair();
         await Promise.all([
             this.fetchJson('ingredients.json', 'rawIngredients', {}),
             this.fetchJson('dishes.json', 'rawDishes', {dishes:[]}),
@@ -515,6 +517,35 @@ export default class KitchenEngine {
         } catch (error) {
             this.sharedNutritionMessage = '共用營養暫時無法確認；目前使用此裝置的食材資料。請連網刷新。';
             console.warn('Shared nutrition read unavailable:', error.message);
+        }
+    }
+
+    async repairFk14OfficialNutrition() {
+        if (this.ingredientBaselineUpdating) throw Error('食材更新進行中。');
+        if (!this.hasPersonalAccess() || this.personalScope !== 'household'
+            || this.personalContext?.scopeId !== 'household')
+            throw Error('此修復僅適用 Bebe 家庭裝置，請先確認登入。');
+        this.ingredientBaselineUpdating = true;
+        const context = this.personalContext, generation = this.personalScopeGeneration;
+        const current = () => this.hasPersonalAccess() && this.personalContext === context
+            && this.personalScopeGeneration === generation && this.personalScope === 'household';
+        try {
+            const url = new URL('../../../src/data/ingredients.json', import.meta.url);
+            const response = await fetch(url, {cache:'no-store', signal:AbortSignal.timeout(10000)});
+            if (!response.ok) throw Error('無法下載官方食材，原資料保留。');
+            const official = await approvedIngredientBaseline(await response.text());
+            if (!current()) throw Error('登入狀態已改變，原資料保留。');
+            const rows = await this.sharedNutritionService.list();
+            if (!current() || !Array.isArray(rows) || rows.some(row =>
+                ['cocoa_powder','snow_white_mushroom'].includes(row.ingredient_id)))
+                throw Error('共用營養狀態已變更，請先重新檢查。');
+            const updated = await applyFk14OfficialRepair(official, {
+                photoStore:this.ingredientPhotoStore, isCurrent:current
+            });
+            if (!current()) throw Error('修復完成但登入已變更，請重新開啟。');
+            return updated !== null;
+        } finally {
+            this.ingredientBaselineUpdating = false;
         }
     }
 

@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_TWO_ITEMS_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261108_HEADER_CLEANUP_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -19,7 +19,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.5';
+        const appVersion = '2026.11.08.6';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -45,6 +45,7 @@ const App = {
         const baselineMessage = ref('');
         const photoAudit = ref({ busy: false, text: '', message: '' });
         const nutritionAudit = ref({ busy: false, text: '', message: '' });
+        const fk14Repairing = ref(false);
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -242,7 +243,7 @@ const App = {
                 const report = await auditIngredientNutrition(target);
                 if (target !== engine.value || !target.hasPersonalAccess()) throw Error('登入狀態已變更，請重新比對。');
                 nutritionAudit.value = {
-                    busy: false, text: formatIngredientNutritionAudit(report, appVersion),
+                    busy: false, report, text: formatIngredientNutritionAudit(report, appVersion),
                     message: report.different
                         ? `比對完成：${report.matched} 項一致，${report.different} 項不同／缺少。請複製結果貼給十一粒。`
                         : `比對完成：官方 ${report.officialCount} 項營養與重量基準全數一致；另有 ${report.privateCount} 項私房食材。`
@@ -250,6 +251,28 @@ const App = {
             } catch (error) {
                 nutritionAudit.value = { busy: false, text: '', message: error.message || '比對失敗，沒有修改任何資料。' };
             }
+        };
+
+        const repairFk14Nutrition = async () => {
+            const target = engine.value;
+            const report = nutritionAudit.value.report;
+            if (!target || fk14Repairing.value || !personalReady.value
+                || target.personalScope !== 'household' || !report
+                || report.matched !== 99 || report.different !== 2
+                || report.missing !== 1 || report.duplicates || report.privateCount
+                || report.sharedCount
+                || report.differences.map(item=>item.id).sort().join(',')
+                    !== 'cocoa_powder,snow_white_mushroom') return;
+            if (!confirm('這次只修復雪白菇與可可粉。可可粉將採用 GitHub 通用估算 228 kcal／100 g（不是已核實的品牌標示），原手機數值和照片會先備份。其他 99 項食材、庫存、採買與料理不變。請關閉其他 FK 分頁，確定修復？')) return;
+            fk14Repairing.value = true;
+            try {
+                await target.repairFk14OfficialNutrition();
+                nutritionAudit.value = {busy:false,text:'',message:'已備份並修復，正在重新載入以確認計算資料。'};
+                window.location.reload();
+            } catch (repairError) {
+                nutritionAudit.value.message = repairError.message || '修復失敗，原食材資料保留。';
+                if (repairError.requiresReload) error.value = nutritionAudit.value.message;
+            } finally { fk14Repairing.value = false; }
         };
 
         const copyIngredientNutritionAudit = async () => {
@@ -287,6 +310,8 @@ const App = {
         return {
             nutritionAudit,
             checkIngredientNutrition,
+            fk14Repairing,
+            repairFk14Nutrition,
             copyIngredientNutritionAudit,
             photoAudit,
             checkIngredientPhotos,
@@ -486,6 +511,14 @@ const App = {
                             {{ nutritionAudit.busy ? '比對中…' : '檢查 101 項營養是否一致' }}
                         </button>
                         <p v-if="nutritionAudit.message" class="account-message" role="status">{{ nutritionAudit.message }}</p>
+                        <button v-if="engine?.personalScope === 'household' && nutritionAudit.report?.matched === 99
+                            && nutritionAudit.report?.different === 2 && nutritionAudit.report?.missing === 1
+                            && !nutritionAudit.report?.duplicates && !nutritionAudit.report?.privateCount
+                            && !nutritionAudit.report?.sharedCount
+                            && nutritionAudit.report.differences.map(item=>item.id).sort().join(',') === 'cocoa_powder,snow_white_mushroom'"
+                            class="action-sheet-row" @click="repairFk14Nutrition" :disabled="fk14Repairing || nutritionAudit.busy">
+                            {{ fk14Repairing ? '正在備份與修復…' : '備份並修復這 2 項差異' }}
+                        </button>
                         <template v-if="nutritionAudit.text">
                             <button class="action-sheet-row" @click="copyIngredientNutritionAudit">複製比對結果</button>
                             <textarea class="account-email-input" aria-label="食材營養比對結果" readonly :value="nutritionAudit.text" rows="8" style="font-size:12px;max-height:220px;"></textarea>
@@ -505,7 +538,7 @@ const App = {
                     </details>
                     <details v-if="engine">
                         <summary class="account-email-label">食材資料更新</summary>
-                        <p class="account-copy">一次採用 GitHub 官方 101 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。手機日後補值仍只存本機。</p>
+                        <p class="account-copy">一次採用 GitHub 官方 101 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。符合條件且經核實的營養修改可與家人共享，其餘本機資料不會自動共享。</p>
                         <button class="action-sheet-row" @click="adoptIngredientBaseline" :disabled="baselineUpdating || engine.data.ingredientBaselineApplied">
                             {{ baselineUpdating ? '備份與更新中…' : engine.data.ingredientBaselineApplied ? '此裝置已採用官方基準' : '備份並更新這台裝置的食材' }}
                         </button>
