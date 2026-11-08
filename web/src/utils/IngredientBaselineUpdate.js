@@ -10,12 +10,13 @@ const fields = ['unitLabel', 'isCount', 'per100g', 'perServing', 'perUnit', 'ser
     'gramsPerPack', 'weightBasis', 'weightBasisSource', 'nutritionReviewRequired'];
 
 export async function approvedIngredientBaseline(text) {
-    // Accept only the pinned historical 99-item or newer 101-item baseline.
+    // Historical baselines remain pinned for recovery; the current catalog has 100 items.
     const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     const hex = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
     if (!new Set(['f811fcb2bd58330a0bc58ad13ce0e095a17b5a54a7d6ab56fd972599c75ebfe0',
-        '58be5cb2d13ca65a14468ccb9782aaaffdbf0405994c21686570d68a4e407e20']).has(hex)) {
-        throw new Error('食材基準未經版本核准（99／101 項），原資料未更動。');
+        '58be5cb2d13ca65a14468ccb9782aaaffdbf0405994c21686570d68a4e407e20',
+        '6f6f96caaf61a12f3d216806052ff86b408dd1c05ed04d4ee4e972563048add5']).has(hex)) {
+        throw new Error('食材基準未經版本核准（99／100／101 項），原資料未更動。');
     }
     return JSON.parse(text);
 }

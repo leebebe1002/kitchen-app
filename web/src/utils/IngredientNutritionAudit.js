@@ -1,4 +1,5 @@
-import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 
@@ -76,8 +77,8 @@ export async function auditIngredientNutrition(engine, { fetcher = fetch } = {})
     if (!response?.ok) throw Error('無法讀取最新 GitHub 食材基準，未產生比對結論。');
     const official = await approvedIngredientBaseline(await response.text());
     const expectedRows = flatten(official);
-    if (expectedRows.length !== 101 || new Set(expectedRows.map(i => i.id)).size !== 101)
-        throw Error('GitHub 官方食材不是預期的 101 項，未產生比對結論。');
+    if (expectedRows.length !== 100 || new Set(expectedRows.map(i => i.id)).size !== 100)
+        throw Error('GitHub 官方食材不是預期的 100 項，未產生比對結論。');
     assertCurrent();
     const sharedRows = await engine.sharedNutritionService.list();
     if (!Array.isArray(sharedRows)) throw Error('共用營養修正沒有讀取成功，未產生比對結論。');
@@ -86,6 +87,7 @@ export async function auditIngredientNutrition(engine, { fetcher = fetch } = {})
     const officialById = new Map(expectedRows.map(item => [item.id, item]));
     const overridden = new Set();
     for (const row of sharedRows) {
+        if (isRetiredOfficialIngredient(row.ingredient_id)) continue;
         const item = expected.get(row.ingredient_id);
         if (!item || overridden.has(row.ingredient_id)
             || !applySharedNutrition(item, row, officialById.get(row.ingredient_id)))
@@ -138,7 +140,7 @@ export function formatIngredientNutritionAudit(report, appVersion = '') {
         `官方食材：${report.officialCount} 項；共用修正：${report.sharedCount} 項`,
         `營養與重量基準一致：${report.matched} 項；有差異／缺少／重複：${report.different} 項`,
         `其中官方食材缺少：${report.missing} 項；同 ID 重複：${report.duplicates} 項`,
-        `額外本機私房食材：${report.privateCount} 項（不計入官方 101 項一致率）`,
+        `額外本機私房食材：${report.privateCount} 項（不計入官方 ${report.officialCount} 項一致率）`,
         '此檢查只比對實際計算使用的營養與份量基準，不代表來源數據已完成科學正確性稽核。',
         '此檢查完全唯讀，沒有修改食材、照片、庫存或採買。'
     ];
@@ -148,7 +150,7 @@ export function formatIngredientNutritionAudit(report, appVersion = '') {
             lines.push(`  ${diff.field.split('.').map(x=>labels[x]||x).join('／')}：手機 ${diff.actual}；基準 ${diff.expected}`);
     }
     if(report.privateCount) {
-        lines.push('', '裝置額外的私房食材（不屬於官方 101 項）：');
+        lines.push('', `裝置額外的私房食材（不屬於官方 ${report.officialCount} 項）：`);
         for(const item of report.privateIngredients) lines.push(`- ${item.name} [${item.id}]`);
     }
     return lines.join('\n');

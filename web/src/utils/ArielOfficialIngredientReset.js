@@ -1,4 +1,4 @@
-import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { prepareIngredientPhotoBackup, serializeIngredientPhotos } from './IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 
 // A one-time, device-local adoption for Ariel's explicitly discarded OLD ingredient data.
@@ -35,7 +35,7 @@ export async function applyArielOfficialReset(official, {
     if (recoverArielOfficialReset(storage)) return null;
     const entries = ['proteins', 'veggies', 'carbs', 'sauces']
         .flatMap(cat => Array.isArray(official?.[cat]) ? official[cat] : []);
-    if (entries.length !== 101 || new Set(entries.map(item => item.id)).size !== 101)
+    if (entries.length !== 100 || new Set(entries.map(item => item.id)).size !== 100)
         throw Error('GitHub 食材基準不完整，未覆寫樂樂資料。');
     // Official content is hash-approved by the caller. Durable source must not contain photos as data URLs.
     const nextCache = serializeIngredientPhotos(official);

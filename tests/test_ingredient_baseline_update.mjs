@@ -55,11 +55,11 @@ const storage = {
 const reset = () => { values = new Map(seeded); fail = () => false; writes = []; };
 const unchanged = () => { for (const [key, value] of seeded) assert.equal(values.get(key), value, key); };
 reset();
-await assert.rejects(approvedIngredientBaseline(text + ' '), /99／101 項/);
+await assert.rejects(approvedIngredientBaseline(text + ' '), /99／100／101 項/);
 assert.equal(writes.length, 0);
 const updated = applyIngredientBaseline(official, storage);
-assert.equal(flatten(updated).length, 102, '101 canonical plus the custom-only private item');
-assert.equal(new Set(flatten(updated).map(item => item.id)).size, 102);
+assert.equal(flatten(updated).length, 101, '100 canonical plus the custom-only private item');
+assert.equal(new Set(flatten(updated).map(item => item.id)).size, 101);
 assert.deepEqual(find(updated, privateItem.id), privateItem);
 const adoptedNoodle = find(updated, noodle.id);
 for (const key of ['name', 'price', 'preferredStores', 'storageZones', 'priorityTier']) assert.deepEqual(adoptedNoodle[key], noodle[key]);
@@ -139,7 +139,7 @@ for (const [key, value] of [[CUSTOM_INGREDIENT_KEY, '{bad JSON'], [INGREDIENT_CA
     assert.deepEqual(values, original); assert.equal(writes.length, 0);
 }
 reset(); values.delete(INGREDIENT_CACHE_KEY); values.delete(CUSTOM_INGREDIENT_KEY);
-assert.equal(flatten(applyIngredientBaseline(official, storage)).length, 101);
+assert.equal(flatten(applyIngredientBaseline(official, storage)).length, 100);
 assert.equal(values.has(CUSTOM_INGREDIENT_KEY), false);
 
 // Exercise the real Engine entry point, loader and edit path with no real browser or network.
@@ -176,7 +176,7 @@ for (const scope of [null, 'household', 'ariel']) {
 reset();
 const engine = new Engine();
 globalThis.fetch = async () => ({ ok: true, text: async () => '{}' });
-await assert.rejects(engine.adoptIngredientBaseline(), /99／101 項/); unchanged();
+await assert.rejects(engine.adoptIngredientBaseline(), /99／100／101 項/); unchanged();
 globalThis.fetch = async () => { throw Error('offline'); };
 await assert.rejects(engine.adoptIngredientBaseline(), /offline/); unchanged();
 

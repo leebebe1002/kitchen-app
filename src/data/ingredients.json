@@ -1919,31 +1919,6 @@
             "priorityTier": 1
         },
         {
-            "id": "cocoa_powder",
-            "weightBasis": "dry",
-            "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；無糖未鹼化乾可可粉；含纖維 37 g；採來源 228 kcal 與特定 Atwater 係數，不用 4/9/4 回算；USDA:169593；詳見 docs/audits/nutrition-2026-10-28.json",
-            "name": "可可粉",
-            "category": "sauces",
-            "unitLabel": "g",
-            "per100g": {
-                "kcal": 228,
-                "protein": 19.6,
-                "fat": 13.7,
-                "carbs": 57.9,
-                "sodium": 21
-            },
-            "storageZone": "pantry",
-            "preferredStore": "Costco",
-            "preferredStores": [
-                "Costco",
-                "全聯"
-            ],
-            "storageZones": [
-                "pantry"
-            ],
-            "priorityTier": 1
-        },
-        {
             "id": "chia_seeds",
             "weightBasis": "dry",
             "weightBasisSource": "2026-10-28 有來源的通用估算，非品牌標示；乾奇亞籽，可食部；USDA:170554；詳見 docs/audits/nutrition-2026-10-28.json",

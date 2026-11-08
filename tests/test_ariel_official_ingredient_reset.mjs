@@ -9,7 +9,7 @@ import { authorizeTestEngine } from './personal_scope_fixture.mjs';
 const officialText = fs.readFileSync('src/data/ingredients.json', 'utf8');
 const official = await approvedIngredientBaseline(officialText);
 const all = Object.values(official).flat();
-assert.equal(all.length, 101);
+assert.equal(all.length, 100);
 const find = id => all.find(item => item.id === id);
 const old = structuredClone(official);
 old.proteins.find(item => item.id === 'egg').perUnit.kcal = 999;
@@ -133,8 +133,8 @@ for(const scope of ['ariel','household']){
     assert.equal(JSON.stringify(e.data.householdSupplies),supplies);
     if(scope==='ariel'){
         assert.equal(e.data.rawIngredients.proteins.find(i=>i.id==='egg').perUnit.kcal,find('egg').perUnit.kcal);
-        assert.equal(Object.values(e.data.rawIngredients).flat().length,101);
-        assert.match(e.arielOfficialResetMessage,/101 項/);
+        assert.equal(Object.values(e.data.rawIngredients).flat().length,100);
+        assert.match(e.arielOfficialResetMessage,/100 項/);
         assert(recoverArielOfficialReset());
     } else{
         unchanged();

@@ -23,6 +23,8 @@ const revised = new Set(['greek_yogurt','chicken_thigh','shrimp','tofu','mango',
 const stripped = JSON.parse(JSON.stringify(official));
 for (const list of Object.values(stripped)) for (const ing of list) { delete ing.weightBasis; delete ing.weightBasisSource; }
 const baseline = JSON.parse(JSON.stringify(before));
+assert(!official.sauces.some(i=>i.id==='cocoa_powder'),'Cocoa was explicitly retired from the active catalog');
+baseline.sauces = baseline.sauces.filter(i=>i.id!=='cocoa_powder');
 for (const list of Object.values(baseline)) for (const ing of list) { delete ing.weightBasis; delete ing.weightBasisSource; }
 const noodleCurrent = stripped.carbs.find(i=>i.id==='steamed_noodle');
 assert.equal(noodleCurrent.name,'維力蒸煮麵');
@@ -35,6 +37,7 @@ assert.deepEqual(pastaCurrent.per100g,pastaBefore.per100g,'Original user-provide
 pastaCurrent.per100g = pastaBefore.per100g;
 for (const row of audit.ingredients) {
  const id = row.id;
+ if (id === 'cocoa_powder') continue; // Historical audit retained; no longer in the active catalog.
  const current = Object.values(stripped).flat().find(i=>i.id===id);
  const original = Object.values(baseline).flat().find(i=>i.id===id);
  for (const field of ['per100g','perServing','perUnit']) {
@@ -55,7 +58,7 @@ for (const [cat, list] of Object.entries(stripped)) {
  stripped[cat] = list.filter(i=>oldById.has(i.id)).map(i=>revised.has(i.id) ? structuredClone(oldById.get(i.id)) : i);
 }
 assert.deepEqual(stripped, baseline, 'All unchanged fields must remain equivalent after explicit upgrades');
-assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 93, 'New gram-based and added ingredients must declare their basis');
+assert.equal(Object.values(official).flat().filter(i => i.weightBasis).length, 92, 'New gram-based and added ingredients must declare their basis');
 const allIngredients = Object.values(official).flat();
 const expectedUserBases = {sous_vide_chicken:'raw',beef_slice:'raw',salmon:'raw',black_fungus:'as_sold',sweet_potato:'raw',steamed_noodle:'dry',angel_hair_pasta:'dry',edamame:'as_sold'};
 for (const [id,basis] of Object.entries(expectedUserBases)) assert.equal(allIngredients.find(i => i.id === id).weightBasis,basis, id);

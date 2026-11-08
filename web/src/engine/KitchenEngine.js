@@ -1,4 +1,4 @@
-import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_READONLY_AUDIT_V1';
+import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
@@ -14,13 +14,13 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
-import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
-import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_CHECK_CONFIRM_V1';
+import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference, retireFk14Cocoa, isRetiredOfficialIngredient, withoutRetiredRecipeIngredients } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
 
@@ -98,6 +98,13 @@ export default class KitchenEngine {
         // duplicate cleanup / custom merge, so no stale custom overrides survive.
         await this.maybeAdoptOfficialArielIngredients();
 
+        if (this.hasPersonalAccess()) {
+            const context = this.personalContext, generation = this.personalScopeGeneration;
+            const retired = await retireFk14Cocoa({photoStore:this.ingredientPhotoStore,
+                isCurrent:() => this.hasPersonalAccess() && this.personalContext === context && this.personalScopeGeneration === generation});
+            if (retired) this.data.rawIngredients = retired;
+        }
+
         // 🛡️【第 2 優先守門】：食材名稱去重與清洗 (徹底消除歷史雙胞胎如重複洋蔥)
         if (this.hasPersonalAccess()) this.cleanDuplicateIngredients();
 
@@ -117,13 +124,14 @@ export default class KitchenEngine {
                             ing.preferredStores = normalizeStoreList(ing.preferredStores);
                         }
                     });
-                    this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat]);
+                    this.data.ingredients = this.data.ingredients.concat(this.data.rawIngredients[cat].filter(item => !isRetiredOfficialIngredient(item.id)));
                 }
             });
         }
         
         // 3. 攤平料理列表
-        this.data.dishes = this.data.rawDishes?.dishes || [];
+        this.data.rawDishes = {...this.data.rawDishes, dishes:(this.data.rawDishes?.dishes || []).map(withoutRetiredRecipeIngredients)};
+        this.data.dishes = this.data.rawDishes.dishes;
         
         // 4. 常用料理
         this.data.favoriteFoods = this.data.rawFavoriteFoods?.favorites || [];
@@ -398,7 +406,7 @@ export default class KitchenEngine {
                     this.officialIngredientById = new Map(
                         ['proteins','veggies','carbs','sauces']
                             .flatMap(cat => Array.isArray(serverData?.[cat]) ? serverData[cat] : [])
-                            .filter(item => typeof item?.id === 'string')
+                            .filter(item => typeof item?.id === 'string' && !isRetiredOfficialIngredient(item.id))
                             .map(item => [item.id,item])
                     );
                 }
@@ -477,7 +485,7 @@ export default class KitchenEngine {
                         .map(item => [item.id, item])
                 );
             }
-            this.arielOfficialResetMessage = '樂樂食材已採用 GitHub 官方 101 項基準，舊資料已備份。';
+            this.arielOfficialResetMessage = '樂樂食材已採用 GitHub 官方 100 項基準，舊資料已備份。';
         } catch (error) {
             this.arielOfficialResetMessage = '樂樂食材尚未更新，原資料保留。請連網後重新開啟 FK。';
             if (error.requiresReload) throw error;
@@ -502,6 +510,7 @@ export default class KitchenEngine {
                 || this.personalScopeGeneration !== generation) return;
             let applied = 0, skipped = 0;
             for (const row of rows) {
+                if (isRetiredOfficialIngredient(row.ingredient_id)) continue;
                 const official = this.officialIngredientById.get(row.ingredient_id);
                 const local = ['proteins','veggies','carbs','sauces']
                     .flatMap(cat => this.data.rawIngredients?.[cat] || [])
@@ -534,7 +543,7 @@ export default class KitchenEngine {
             const source = [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => localStorage.getItem(key));
             const active = JSON.stringify(this.data.ingredients);
             if (!isFk14KnownNutritionDifference(await auditIngredientNutrition(this)))
-                throw Error('食材差異已改變，不符合這次兩項修復；請重新檢查。');
+                throw Error('食材差異已改變，不符合這次雪白菇修復；請重新檢查。');
             const url = new URL('../../../src/data/ingredients.json', import.meta.url);
             const response = await fetch(url, {cache:'no-store', signal:AbortSignal.timeout(10000)});
             if (!response.ok) throw Error('無法下載官方食材，原資料保留。');
@@ -567,7 +576,15 @@ export default class KitchenEngine {
             const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
             if (!response.ok) throw new Error('無法取得食材基準，原資料未更動。');
             const official = await approvedIngredientBaseline(await response.text());
+            const entries = ['proteins','veggies','carbs','sauces'].flatMap(cat => official[cat] || []);
+            if (entries.length !== 100 || entries.some(item => isRetiredOfficialIngredient(item.id)))
+                throw Error('官方清單仍是舊版，未重新加入已移除的可可粉；請稍後刷新。');
             const source = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, localStorage.getItem(key)]));
+            const cached = JSON.parse(source[INGREDIENT_CACHE_KEY] || '{}');
+            const custom = JSON.parse(source[CUSTOM_INGREDIENT_KEY] || '[]');
+            if (['proteins','veggies','carbs','sauces'].flatMap(cat => cached[cat] || []).concat(custom)
+                .some(item => isRetiredOfficialIngredient(item?.id)))
+                throw Error('舊可可粉資料再次出現，請重新開啟 FK 先完成備份停用。');
             const prepared = await prepareIngredientPhotoBackup(source, this.ingredientPhotoStore);
             const updated = applyIngredientBaseline(official, localStorage, prepared);
             this.data.ingredientBaselineApplied = true;
@@ -1067,6 +1084,7 @@ export default class KitchenEngine {
         if (replaceId && (ingData.id !== replaceId || !this.data.ingredients.some(item => item.id === replaceId))) {
             throw new Error('取代目標不存在或 ID 不符，原資料保留。');
         }
+        if (isRetiredOfficialIngredient(ingData.id || replaceId)) throw Error('可可粉已由全家共用食材庫移除，不能再儲存此舊項目。');
         const category = ingData.category || 'proteins';
 
         // 🛡️ 防呆：檢查是否已有完全同名之食材 (防止重複建立雙胞胎 ID)

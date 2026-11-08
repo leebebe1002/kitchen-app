@@ -19,7 +19,6 @@
             "recommendedSauces": [
                 "maple_syrup",
                 "matcha_powder",
-                "cocoa_powder",
                 "sesame_powder",
                 "chia_seeds",
                 "brown_sugar_syrup"
@@ -79,11 +78,6 @@
                         "unit": "g"
                     },
                     {
-                        "id": "cocoa_powder",
-                        "amount": 3,
-                        "unit": "g"
-                    },
-                    {
                         "id": "sesame_powder",
                         "amount": 3,
                         "unit": "g"
@@ -121,11 +115,6 @@
                         "unit": "g"
                     },
                     {
-                        "id": "cocoa_powder",
-                        "amount": 5,
-                        "unit": "g"
-                    },
-                    {
                         "id": "sesame_powder",
                         "amount": 5,
                         "unit": "g"
@@ -160,11 +149,6 @@
                     {
                         "id": "matcha_powder",
                         "amount": 2,
-                        "unit": "g"
-                    },
-                    {
-                        "id": "cocoa_powder",
-                        "amount": 3,
                         "unit": "g"
                     },
                     {
@@ -1340,7 +1324,6 @@
             "recommendedSauces": [
                 "coffee_capsule",
                 "black_coffee",
-                "cocoa_powder",
                 "sesame_powder",
                 "matcha_powder",
                 "yuzu_jam",
