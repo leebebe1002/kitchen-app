@@ -88,6 +88,7 @@ html {
     height: 100%;
     margin: 0;
     padding: 0;
+    background-color: var(--color-base);
     overflow-x: hidden !important;
     overscroll-behavior: none; /* 全域禁用彈簧回彈露底 */
     -webkit-text-size-adjust: 100%;
@@ -109,6 +110,19 @@ body {
     user-select: none;
     -webkit-touch-callout: none;
     touch-action: pan-y; /* 嚴格限制僅允許垂直滾動，防止左右晃動 */
+}
+
+/* iOS 27 主畫面 PWA：頂部固定同色表面，避免系統對 Header 取樣產生模糊漸層。 */
+@media (display-mode: standalone) {
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0 0 auto;
+        height: 11px;
+        background-color: var(--color-base);
+        pointer-events: none;
+        z-index: 1;
+    }
 }
 
 /* 僅允許輸入框與可編輯區選取 */
