@@ -8,6 +8,7 @@ import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
 import { inspectIngredientPhotos, formatIngredientPhotoAudit } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1';
+import { auditIngredientNutrition, formatIngredientNutritionAudit } from './utils/IngredientNutritionAudit.js?v=20261108_FK14_READONLY_AUDIT_V1';
 
 const App = {
     components: {
@@ -18,7 +19,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.2';
+        const appVersion = '2026.11.08.3';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -43,6 +44,7 @@ const App = {
         const baselineUpdating = ref(false);
         const baselineMessage = ref('');
         const photoAudit = ref({ busy: false, text: '', message: '' });
+        const nutritionAudit = ref({ busy: false, text: '', message: '' });
         let viewport = null;
         let removeKeyboardListeners = () => {};
 
@@ -232,6 +234,33 @@ const App = {
             }
         };
 
+        const checkIngredientNutrition = async () => {
+            if (nutritionAudit.value.busy || !personalReady.value || !engine.value) return;
+            const target = engine.value;
+            nutritionAudit.value = { busy: true, text: '', message: '正在唯讀比對官方食材與手機實際計算數值…' };
+            try {
+                const report = await auditIngredientNutrition(target);
+                if (target !== engine.value || !target.hasPersonalAccess()) throw Error('登入狀態已變更，請重新比對。');
+                nutritionAudit.value = {
+                    busy: false, text: formatIngredientNutritionAudit(report, appVersion),
+                    message: report.different
+                        ? `比對完成：${report.matched} 項一致，${report.different} 項不同／缺少。請複製結果貼給十一粒。`
+                        : `比對完成：官方 ${report.officialCount} 項營養與重量基準全數一致；另有 ${report.privateCount} 項私房食材。`
+                };
+            } catch (error) {
+                nutritionAudit.value = { busy: false, text: '', message: error.message || '比對失敗，沒有修改任何資料。' };
+            }
+        };
+
+        const copyIngredientNutritionAudit = async () => {
+            try {
+                await navigator.clipboard.writeText(nutritionAudit.value.text);
+                nutritionAudit.value.message = '已複製，請貼回對話。';
+            } catch {
+                nutritionAudit.value.message = '請長按下方結果文字，全選後複製。';
+            }
+        };
+
         const checkIngredientPhotos = async () => {
             if (photoAudit.value.busy) return;
             photoAudit.value = { busy: true, text: '', message: '正在讀取這台裝置的照片紀錄…' };
@@ -256,6 +285,9 @@ const App = {
         };
 
         return {
+            nutritionAudit,
+            checkIngredientNutrition,
+            copyIngredientNutritionAudit,
             photoAudit,
             checkIngredientPhotos,
             copyPhotoAudit,
@@ -446,6 +478,18 @@ const App = {
                             {{ arielResetting ? '正在核對空白雲端與備份…' : '備份並從空白開始' }}
                         </button>
                         <p v-if="arielResetMessage" class="account-message" role="status">{{ arielResetMessage }}</p>
+                    </details>
+                    <details v-if="personalReady && engine">
+                        <summary class="account-email-label">食材營養一致性檢查</summary>
+                        <p class="account-copy">唯讀比對 GitHub 官方 101 項、已核對的共用修正與這台手機實際計算的營養數字。不修改任何資料。</p>
+                        <button class="action-sheet-row" @click="checkIngredientNutrition" :disabled="nutritionAudit.busy">
+                            {{ nutritionAudit.busy ? '比對中…' : '檢查 101 項營養是否一致' }}
+                        </button>
+                        <p v-if="nutritionAudit.message" class="account-message" role="status">{{ nutritionAudit.message }}</p>
+                        <template v-if="nutritionAudit.text">
+                            <button class="action-sheet-row" @click="copyIngredientNutritionAudit">複製比對結果</button>
+                            <textarea class="account-email-input" aria-label="食材營養比對結果" readonly :value="nutritionAudit.text" rows="8" style="font-size:12px;max-height:220px;"></textarea>
+                        </template>
                     </details>
                     <details>
                         <summary class="account-email-label">食材照片檢查</summary>
