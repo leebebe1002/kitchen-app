@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import { nutritionSnapshot } from '../web/src/utils/IngredientNutritionCache.js';
 
+
 const read = path => JSON.parse(fs.readFileSync(path, 'utf8'));
 const official = read('src/data/ingredients.json');
 const legacy = JSON.parse(execFileSync('git', ['show', '4b6f0d0:src/data/ingredients.json'], {encoding:'utf8'}));
@@ -163,6 +164,23 @@ function mount(component, props) {
     return {view,close:()=>renderer.render(null,root)};
 }
 
+// Exercise the real modal and saveIngredient under the new Supabase SSOT.
+// GitHub-only fixtures no longer permit unsafe canonical nutrient writes.
+const officialRows=flatten(official).map((ingredient,position)=>({
+    ingredient_id:ingredient.id,position,ingredient:structuredClone(ingredient),revision:1
+}));
+engine.officialCatalogService={
+    list:async()=>structuredClone(officialRows),
+    publish:async({item,expectedRevision})=>{
+        const found=officialRows.find(x=>x.ingredient_id===item.id);
+        assert.equal(found.revision,expectedRevision);
+        found.revision++;
+        found.ingredient=structuredClone(item);
+        return structuredClone(found);
+    }
+};
+assert(await engine.loadOfficialIngredientCatalog());
+engine.data.ingredients=flatten(engine.data.rawIngredients);
 // Exercise the real modal and saveIngredient: metadata-only save is lossless; a nutrition edit is sticky.
 for (const id of ['egg','coffee_capsule','salmon','angel_hair_pasta']) {
     const previous = engine.getIngredientById(id);
@@ -173,11 +191,12 @@ for (const id of ['egg','coffee_capsule','salmon','angel_hair_pasta']) {
     view.form.price = 123;
     await view.handleSave();
     assert.deepEqual(nutritionSnapshot(engine.getIngredientById(id)),before,id+': metadata save preserves nutrition');
-    assert.equal(engine.getIngredientById(id).nutritionCache.edited,false,id+': metadata is not a nutrition override');
+    assert.equal(engine.getIngredientById(id).nutritionCache?.edited ?? false,false,id+': metadata is not a nutrition override');
     if (id === 'egg') {
         assert.equal(view.form.displayBasis,'serving');
         view.form.perServing.kcal = 90;view.onServingInput();await view.handleSave();
         const saved = engine.getIngredientById(id);
+
         assert.equal(saved.perUnit.kcal,90);assert.equal(saved.per100g,undefined);
         assert.equal(find(merge(engine.data.rawIngredients),'egg').perUnit.kcal,90);
     }
@@ -197,7 +216,7 @@ globalThis.fetch = async (url, options) => {
     return {ok:true};
 };
 await engine.saveJson('ingredients.json',engine.data.rawIngredients);
-assert(localStorage.getItem(key).includes('nutritionCache'));
+assert(localStorage.getItem('kitchen_v2_official_catalog_snapshot_v1'), 'The verified Supabase revision remains durable on device');
 window.location.hostname = 'test.invalid';globalThis.fetch = offline;
 
 // All five missing count bases and nine saved recipe conflicts fail closed, for every member.

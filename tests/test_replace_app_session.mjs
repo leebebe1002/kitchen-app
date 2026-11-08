@@ -27,6 +27,9 @@ globalThis.fetch=async(url,o={})=>{
 };
 function session(){const token='test.'+Buffer.from(JSON.stringify({exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fake';values.set('family_kitchen_auth_session',JSON.stringify({access_token:token}));}
 session();await import('../web/src/main.js');const app=App.setup();await mounted[0]();app.setTab('pantry');
+// This synthetic "cocoa" is a private test ingredient, not the retired canonical cocoa_powder.
+// The new SSOT must block unverified official edits, while private replacements remain local.
+app.engine.value.officialIngredientById.delete('cocoa');
 await new Promise(r=>setTimeout(r,0));assert(app.personalReady.value);
 // Main stores Engine through ref(), reproducing production's reactive service wrappers.
 const {default:Modal}=await import('../web/src/components/IngredientDetailModal.js');
@@ -42,7 +45,7 @@ assert.equal(dialogs.length,2,dialogs);assert.match(dialogs[1],/已取代/);asse
 assert.equal(app.engine.value.getIngredientById('cocoa').brand,'新品牌');
 console.log('PASS actual App reactive Engine -> Modal replace -> real upload+personal sync -> two dialogs -> session still ready',requests.length);
 // A document refresh must preserve every stored ingredient, photo reference, scope and session.
-assert.equal(app.appVersion,'2026.11.08.9');
+assert.equal(app.appVersion,'2026.11.08.10');
 const storedBefore=JSON.stringify([...values]);await app.refreshData();
 assert.equal(new URL(refreshedURL).origin,'https://fixture.invalid');assert(new URL(refreshedURL).searchParams.has('fk_update'));
 assert.equal(JSON.stringify([...values]),storedBefore);
@@ -59,18 +62,20 @@ for(const [file, imports] of [
 ]){
  const source=fs.readFileSync(file,'utf8');
  for(const name of imports){
-  const expected = ['KitchenEngine.js','IngredientBaselineUpdate.js'].includes(name)
-   ? '20261108_FK14_COCOA_RETIRED_V1'
-   : (file==='web/src/main.js' && name==='CalculatorView.js' ? '20261108_HEADER_CLEANUP_V1' : tag);
+  const expected = name==='KitchenEngine.js' && file==='web/src/main.js'
+   ? '20261108_FK14_SUPABASE_SSOT_V1'
+   : (['KitchenEngine.js','IngredientBaselineUpdate.js'].includes(name)
+     ? '20261108_FK14_COCOA_RETIRED_V1'
+     : (file==='web/src/main.js' && name==='CalculatorView.js' ? '20261108_HEADER_CLEANUP_V1' : tag));
   assert(source.includes(name+'?v='+expected),file+' must load the updated '+name);
  }
 }
 
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261108_FK14_COCOA_RETIRED_V1'));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261108_FK14_SUPABASE_SSOT_V1'));
 assert(fs.readFileSync('web/src/main.js','utf8').includes('IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1'));
 const photoAuditBefore=JSON.stringify([...values]);
 await app.checkIngredientPhotos();
 assert.equal(app.photoAudit.value.busy,false);
-assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.08.9'));
+assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.08.10'));
 assert.equal(JSON.stringify([...values]),photoAuditBefore);
 vue.compile(App.template,{decodeEntities:text=>text});

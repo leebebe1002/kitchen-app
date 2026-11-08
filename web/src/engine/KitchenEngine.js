@@ -1,4 +1,4 @@
-import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_SUPABASE_SSOT_V1';
 import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
@@ -13,9 +13,35 @@ import {
 } from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
+import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
+    from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_SSOT_V1';
+import { readOfficialOutbox, stageOfficialEdit, persistOfficialCatalogEdit,
+    recoverOfficialCatalogEdit, clearPublishedEntry, OFFICIAL_OUTBOX_KEY }
+    from '../utils/OfficialIngredientOutbox.js?v=20261108_FK14_SSOT_V1';
+
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference, retireFk14Cocoa, isRetiredOfficialIngredient, withoutRetiredRecipeIngredients } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
+
+export const OFFICIAL_CATALOG_SNAPSHOT_KEY = 'kitchen_v2_official_catalog_snapshot_v1';
+const sessionCatalogOwner = auth => {
+    try {
+        const token = auth.readSession?.()?.access_token;
+        if (!token || typeof atob !== 'function') return null;
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+        return typeof payload.sub === 'string' ? payload.sub : null;
+    } catch { return null; }
+};
+const verifiedCatalogSnapshot = (owner, storage = localStorage) => {
+    try {
+        const json = storage.getItem(OFFICIAL_CATALOG_SNAPSHOT_KEY);
+        if (!json) return null;
+        const snapshot = JSON.parse(json);
+        if (!owner || snapshot?.ownerUserId !== owner) return null;
+        groupOfficialCatalogRows(snapshot.rows);
+        return snapshot;
+    } catch { return null; }
+};
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -31,6 +57,14 @@ export default class KitchenEngine {
         this.supabase = supabaseService;
         this.personalKitchenSync = personalKitchenSyncService;
         this.sharedNutritionService = sharedIngredientNutritionService;
+        this.officialCatalogService = officialIngredientCatalogService;
+        this.officialCatalogRows = new Map();
+        this.officialCatalogActive = false;
+        this.officialCatalogOffline = false;
+        this.officialCatalogOwner = null;
+        this.officialCatalogStatus = '尚未啟用 Supabase 官方食材資料庫';
+        this.officialCatalogSyncing = false;
+
         this.officialIngredientById = new Map();
         this.sharedNutritionRevision = new Map();
         this.sharedNutritionLoaded = false;
@@ -80,6 +114,8 @@ export default class KitchenEngine {
         // Scope-based inventory data remains untouched and initializes separately.
         recoverArielOfficialReset();
         recoverFk14OfficialRepair();
+        recoverOfficialCatalogEdit();
+
         await Promise.all([
             this.fetchJson('ingredients.json', 'rawIngredients', {}),
             this.fetchJson('dishes.json', 'rawDishes', {dishes:[]}),
@@ -111,6 +147,7 @@ export default class KitchenEngine {
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
         await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore, { allowMissing: true });
+        await this.loadOfficialIngredientCatalog();
         await this.loadSharedIngredientNutrition();
 
         // 2. 攤平食材列表並正規化舊版通路名稱
@@ -165,6 +202,12 @@ export default class KitchenEngine {
     clearPersonalScope() {
         this.clearMealLogs();
         this.personalScopeGeneration += 1;
+        // Catalog data and queued edits must never retain another account's
+        // authentication context after logout/scope switch.
+        this.officialCatalogActive = false;
+        this.officialCatalogOffline = false;
+        this.officialCatalogOwner = null;
+        this.officialCatalogRows.clear();
         this.personalScope = null;
         this.personalRevision = null;
         this.personalContext = null;
@@ -495,7 +538,189 @@ export default class KitchenEngine {
 
     // Read only the sparse verified overrides, after local custom/duplicate merging
     // and before building calculator ingredient lists. Do not rewrite device caches.
+    // Supabase catalog is the only effective authority after successful verified load.
+    // GitHub JSON remains a frozen bootstrap for offline/legacy recovery, not a
+    // second nutrition value source. Never trust empty/partial server responses.
+    async loadOfficialIngredientCatalog() {
+        const context = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        const owner = this.hasPersonalAccess() ? context?.userId : sessionCatalogOwner(this.auth);
+        const current = () => this.personalScopeGeneration === generation
+            && (context ? this.hasPersonalAccess() && this.personalContext === context
+                : !this.hasPersonalAccess() && sessionCatalogOwner(this.auth) === owner);
+        let rows, verifiedOnline = false, errorDetail = '';
+        if (this.hasPersonalAccess()) {
+            try {
+                rows = await this.officialCatalogService.list();
+                if (!current()) return false;
+                verifiedOnline = true;
+            } catch (error) { errorDetail = error.message; }
+        } else errorDetail = '目前離線或未完成登入';
+        if (!rows) {
+            const snapshot = verifiedCatalogSnapshot(owner);
+            if (!snapshot) {
+                this.officialCatalogStatus = 'Supabase 官方食材尚未載入（' + errorDetail
+                    + '）；保留舊快取而不覆寫。';
+                return false;
+            }
+            rows = snapshot.rows;
+        }
+        try {
+            const cloud = groupOfficialCatalogRows(rows);
+            // Preserve ONLY device-local convenience metadata. Nutrition and identity
+            // always come from the verified Supabase rows (or an explicit pending edit).
+            const old = new Map(['proteins','veggies','carbs','sauces']
+                .flatMap(cat => this.data.rawIngredients?.[cat] || []).map(i => [i.id,i]));
+            const localFields = ['photoUrl','photo','localPhotoRefs','preferredStore',
+                'preferredStores','price','priceUnit','storageZone','storageZones',
+                'priorityTier','stock'];
+            for (const category of ['proteins','veggies','carbs','sauces']) {
+                cloud[category] = cloud[category].map(base => {
+                    const oldItem = old.get(base.id), value = {...base};
+                    if (oldItem) for (const key of localFields) {
+                        if (Object.hasOwn(oldItem,key)) value[key] =
+                            oldItem[key] === undefined ? undefined : JSON.parse(JSON.stringify(oldItem[key]));
+                    }
+                    return value;
+                });
+            }
+            const rowMap = new Map(rows.map(r => [r.ingredient_id,r]));
+            const queued = readOfficialOutbox();
+            if (queued.ownerUserId && queued.ownerUserId !== owner) {
+                throw Error('這台裝置有另一個帳號未同步的食材，已保留，不會混入目前帳號。');
+            }
+            let conflict = 0;
+            const acknowledged = [];
+            for (const [id, pending] of Object.entries(queued.entries)) {
+                const latest = rowMap.get(id);
+                if (!latest) throw Error('待同步食材已從官方庫消失；原資料保留，請核對。');
+                if (latest.revision !== pending.revision) {
+                    const nutrientFields = ['unitLabel','isCount','per100g','perServing',
+                        'perUnit','servingSize','servingUnit','gramsPerPack','gramsPerUnit',
+                        'weightBasis','weightBasisSource','nutritionEvidence',
+                        'nutritionReviewRequired'];
+                    // A previous PATCH may have succeeded but the acknowledgement
+                    // failed to persist. Reconcile only when current cloud values
+                    // already equal the complete desired nutrition snapshot.
+                    const desired = canonicalNutritionItem(latest.ingredient,pending.item);
+                    if (nutrientFields.every(key =>
+                        JSON.stringify(latest.ingredient[key]) === JSON.stringify(desired[key]))) {
+                        acknowledged.push({id,pending,latest});
+                        continue;
+                    }
+                    conflict++;
+                }
+                const category = latest.ingredient.category;
+                const index = cloud[category].findIndex(i => i.id === id);
+                if (index < 0) throw Error('官方食材分類不符，未套用手機編輯。');
+                // Only pending nutrition is allowed over cloud; local metadata stays.
+                const changed = canonicalNutritionItem(latest.ingredient,pending.item);
+                cloud[category][index] = {...cloud[category][index],
+                    ...Object.fromEntries(['unitLabel','isCount','per100g','perServing',
+                        'perUnit','servingSize','servingUnit','gramsPerPack','gramsPerUnit',
+                        'weightBasis','weightBasisSource','nutritionEvidence',
+                        'nutritionReviewRequired'].filter(k => Object.hasOwn(changed,k))
+                        .map(k => [k,structuredClone(changed[k])]))};
+            }
+            // Strict data isolation: no Pantry/Shopping/Meals/Household State is read
+            // or written here. Old custom ingredients are kept by the existing merge.
+            const preserved = ['proteins','veggies','carbs','sauces'];
+            for (const cat of preserved) for (const item of this.data.rawIngredients?.[cat] || []) {
+                if (!rowMap.has(item.id) && !isRetiredOfficialIngredient(item.id)
+                    && !preserved.some(other => cloud[other].some(base =>
+                        base.id === item.id || normalizeIngredientName(base.name) === normalizeIngredientName(item.name)))) {
+                    cloud[cat].push(item);
+                }
+            }
+            // The browser gets a device-local backup BEFORE the authoritative
+            // snapshot replaces the legacy merged cache.
+            const original = localStorage.getItem(INGREDIENT_CACHE_KEY);
+            if (original !== null && localStorage.getItem('kitchen_v2_official_catalog_precutover_backup') === null)
+                localStorage.setItem('kitchen_v2_official_catalog_precutover_backup',original);
+            if (verifiedOnline) localStorage.setItem(OFFICIAL_CATALOG_SNAPSHOT_KEY,
+                JSON.stringify({ownerUserId:owner,rows}));
+            localStorage.setItem(INGREDIENT_CACHE_KEY,serializeIngredientPhotos(cloud));
+            // Acknowledge only after fresh cloud snapshot AND calculator cache
+            // were both successfully stored.
+            for (const record of acknowledged) {
+                if (current() && verifiedOnline)
+                    clearPublishedEntry(localStorage,owner,record.id,record.pending,record.latest);
+            }
+            if (!current()) return false;
+            this.data.rawIngredients = cloud;
+            this.officialIngredientById = new Map(rows.map(r => [r.ingredient_id,JSON.parse(JSON.stringify(r.ingredient))]));
+            this.officialCatalogRows = rowMap;
+            this.officialCatalogOwner = owner;
+            this.officialCatalogActive = true;
+            this.officialCatalogOffline = !verifiedOnline;
+            this.officialCatalogStatus = conflict
+                ? `Supabase 官方 100 項已載入；${conflict} 項本機修改有版本衝突，未覆寫雲端。`
+                : `Supabase 官方 100 項已載入；${Object.keys(queued.entries).length} 項修改待同步。`;
+            if (!verifiedOnline && !conflict)
+                this.officialCatalogStatus = '離線使用曾驗證的 Supabase 100 項快取；'
+                    + Object.keys(queued.entries).length + ' 項修改待同步。';
+            // Do not block immediate calculator availability on queued PATCH.
+            if (verifiedOnline && !conflict && Object.keys(queued.entries).length)
+                this.syncOfficialIngredientEdits().catch(e => console.warn('Catalog queued sync unavailable:', e.message));
+            return true;
+        } catch (error) {
+            this.officialCatalogActive = false;
+            this.officialCatalogOffline = false;
+            this.officialCatalogStatus = `無法確認 Supabase 官方資料（${error.message}），保留原手機食材；不會覆寫空白雲端。`;
+            console.warn('Official catalog read unavailable:', error.message);
+            return false;
+        }
+    }
+
+    async syncOfficialIngredientEdits() {
+        if (!this.officialCatalogActive || this.officialCatalogSyncing || !this.hasPersonalAccess()
+            || this.personalContext?.userId !== this.officialCatalogOwner) return false;
+        const identity = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        this.officialCatalogSyncing = true;
+        try {
+            for (const [id,pending] of Object.entries(readOfficialOutbox().entries)) {
+                if (!this.hasPersonalAccess() || this.personalContext !== identity
+                    || this.personalScopeGeneration !== generation) return false;
+                const row = this.officialCatalogRows.get(id);
+                if (!row || row.revision !== pending.revision) {
+                    this.officialCatalogStatus = '官方食材版本衝突，本機修改保留待人工核對，沒有覆寫雲端。';
+                    return false;
+                }
+                try {
+                    const published = await this.officialCatalogService.publish({
+                        item:pending.item,expectedRevision:pending.revision
+                    });
+                    // Persist the confirmed cloud revision BEFORE clearing the outbox.
+                    // If writing the snapshot fails, keep the outbox for safe retry.
+                    const nextRows = [...this.officialCatalogRows.values()]
+                        .map(r => r.ingredient_id === id ? published : r);
+                    groupOfficialCatalogRows(nextRows);
+                    localStorage.setItem(OFFICIAL_CATALOG_SNAPSHOT_KEY,
+                        JSON.stringify({ownerUserId:identity.userId,rows:nextRows}));
+                    const change=clearPublishedEntry(localStorage,identity.userId,id,pending,published);
+                    this.officialCatalogRows.set(id,published);
+                    if (change === 'rebase') {
+                        this.officialCatalogStatus = '同一食材有新編輯，仍待同步。';
+                        return false;
+                    }
+                } catch (error) {
+                    this.officialCatalogStatus = `已在手機生效，但雲端尚未同步：${error.message}`;
+                    return false;
+                }
+            }
+            this.officialCatalogStatus = '已同步 Supabase 全家共用營養資料。';
+            return true;
+        } finally { this.officialCatalogSyncing = false; }
+    }
+
     async loadSharedIngredientNutrition() {
+        if (this.officialCatalogActive) {
+            this.sharedNutritionRevision.clear();
+            this.sharedNutritionLoaded = true;
+            this.sharedNutritionMessage = this.officialCatalogStatus;
+            return;
+        }
         this.sharedNutritionRevision.clear();
         this.sharedNutritionLoaded = false;
         if (!this.hasPersonalAccess() || !this.officialIngredientById.size) {
@@ -1081,6 +1306,10 @@ export default class KitchenEngine {
         if (!ingData || !ingData.id) return;
         const scope = this.personalScope;
         const context = this.personalContext;
+        const currentOwner = this.hasPersonalAccess() ? context?.userId
+            : this.officialCatalogOffline && this.officialCatalogActive
+                ? sessionCatalogOwner(this.auth) : null;
+        const pendingOwner = readOfficialOutbox().ownerUserId;
         if (replaceId && (ingData.id !== replaceId || !this.data.ingredients.some(item => item.id === replaceId))) {
             throw new Error('取代目標不存在或 ID 不符，原資料保留。');
         }
@@ -1106,6 +1335,13 @@ export default class KitchenEngine {
         }
 
         const previous = this.getIngredientById(ingData.id);
+        // The outbox is owner-specific, but private ingredients and photo/price
+        // edits are not part of it. Never block unrelated local-only metadata.
+        if (pendingOwner && pendingOwner !== currentOwner
+            && (this.officialCatalogRows.has(ingData.id) || this.officialIngredientById.has(ingData.id))
+            && (!previous || !sameNutrition(previous,ingData))) {
+            throw Error('這台裝置有其他登入者尚未同步的官方食材，不能混合兩個帳號的營養修改。');
+        }
         const before = Object.fromEntries([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].map(key => [key, localStorage.getItem(key)]));
         const backup = await prepareIngredientPhotoBackup(before, this.ingredientPhotoStore);
         if ([INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])) {
@@ -1154,28 +1390,73 @@ export default class KitchenEngine {
             throw new Error('儲存期間資料或資料空間已變更，原食材保留，請重新確認。');
         }
 
-        // A verified edit to a canonical ingredient is shared BEFORE local commit:
-        // failed or conflicting cloud writes keep the form open and the old active data.
-        // Changes to photo, store, price, stock and personal custom ingredients stay local.
-        if (previous && !sameNutrition(previous, ingData)
-            && this.officialIngredientById.has(ingData.id)) {
-            const payload = sharedNutritionPayload(ingData, this.officialIngredientById.get(ingData.id));
-            if (payload) {
-                if (!this.sharedNutritionLoaded || !this.hasPersonalAccess())
-                    throw new Error('無法確認家人共用的營養版本，尚未儲存；請連網刷新後重試。');
-                const row = await this.sharedNutritionService.publish(
-                    payload, this.sharedNutritionRevision.get(ingData.id) || 0
-                );
+        if (this.officialCatalogActive && this.officialCatalogRows.has(ingData.id)) {
+            const cloudRow = this.officialCatalogRows.get(ingData.id);
+            const canonicalBefore = cloudRow.ingredient; // Some 100-item seeds still lack nutrition panels.
+            const canonicalNext = canonicalNutritionItem(cloudRow.ingredient, ingData);
+            const nutrientFields = ['unitLabel','isCount','per100g','perServing','perUnit',
+                'servingSize','servingUnit','gramsPerPack','gramsPerUnit','weightBasis',
+                'weightBasisSource','nutritionEvidence','nutritionReviewRequired'];
+            const changed = nutrientFields.some(key =>
+                JSON.stringify(canonicalBefore[key]) !== JSON.stringify(canonicalNext[key]));
+            if (changed) {
+                // Explicitly stage a LOCAL durable edit first. Network is never a
+                // prerequisite for the user's updated calculator value.
+                if (this.officialCatalogOwner !== currentOwner
+                    || !(this.hasPersonalAccess() || this.officialCatalogOffline))
+                    throw Error('請先確認目前登入身分再儲存官方營養，避免把修改寫到別人的共用資料。');
+                const queued = stageOfficialEdit(localStorage,{
+                    ownerUserId:currentOwner,baseRevision:cloudRow.revision,
+                    baseItem:cloudRow.ingredient,editedItem:ingData
+                });
+                const categories=['proteins','veggies','carbs','sauces'];
+                const nextRaw = Object.fromEntries(categories.map(cat => [
+                    cat,(this.data.rawIngredients?.[cat] || [])
+                        .filter(i => i.id !== ingData.id).map(i => JSON.parse(JSON.stringify(i)))
+                ]));
+                nextRaw[category].push(JSON.parse(JSON.stringify(ingData)));
+                const allCustom = JSON.parse(before[CUSTOM_INGREDIENT_KEY] || '[]');
+                if (!Array.isArray(allCustom))
+                    throw Error('私房食材記錄異常，官方營養未儲存。');
+                const nextCustom = allCustom.filter(i => i.id !== ingData.id);
+                const prepared = await prepareIngredientPhotoBackup({
+                    [INGREDIENT_CACHE_KEY]:JSON.stringify(nextRaw),
+                    [CUSTOM_INGREDIENT_KEY]:JSON.stringify(nextCustom)
+                },this.ingredientPhotoStore);
                 if (this.personalScope !== scope || this.personalContext !== context
-                    || [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY]
-                        .some(key => localStorage.getItem(key) !== before[key]))
-                    throw new Error('存檔期間帳號或食材已變更。共用值已儲存，請刷新確認後再編輯。');
-                this.sharedNutritionRevision.set(ingData.id,Number(row.revision));
-                this.sharedNutritionMessage = '這項食材的營養已同步給家人，下次刷新會使用相同數值。';
-            } else {
-                this.sharedNutritionMessage = '此項營養尚未完成同品牌／同規格核對，僅保留在本機，沒有共享。';
+                    || (this.hasPersonalAccess() ? context?.userId !== currentOwner
+                        : !this.officialCatalogOffline || sessionCatalogOwner(this.auth) !== currentOwner)
+                    || [INGREDIENT_CACHE_KEY,CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key)!==before[key]))
+                    throw Error('備份時登入或食材已變更，尚未儲存。');
+                persistOfficialCatalogEdit(localStorage,{
+                    newCatalogBytes:serializeIngredientPhotos(JSON.parse(prepared.before[INGREDIENT_CACHE_KEY])),
+                    newCustomBytes:serializeIngredientPhotos(JSON.parse(prepared.before[CUSTOM_INGREDIENT_KEY])),
+                    newQueue:queued.bytes
+                });
+                this.data.rawIngredients = nextRaw;
+                this.data.ingredients = this.data.ingredients.filter(i => i.id !== ingData.id);
+                this.data.ingredients.push(ingData);
+                this.officialCatalogStatus = '手機已立即使用新營養值，等待 Supabase 同步。';
+                this.sharedNutritionMessage = this.officialCatalogStatus;
+                this.syncOfficialIngredientEdits().catch(e => {
+                    this.officialCatalogStatus = `本機已儲存，雲端待同步：${e.message}`;
+                    this.sharedNutritionMessage = this.officialCatalogStatus;
+                });
+                return ingData;
             }
+            // Identity is canonical even for metadata-only edits. A renamed or
+            // rebranded food must have a distinct, user-approved private ID.
         }
+
+        // No second writable authority: a canonical ingredient can only be
+        // edited against a previously verified Supabase catalog revision.
+        // The GitHub seed and old sparse override table are historical/readonly.
+        if (!this.officialCatalogActive && this.officialIngredientById.has(ingData.id)
+            && (!previous || !sameNutrition(previous,ingData))) {
+            throw Error('Supabase 官方食材尚未載入，這次營養修改不能安全共享。請先連線載入一次官方食材，之後可離線編輯。');
+        }
+        // Metadata-only edits remain local. Private IDs are not promoted to
+        // the family catalog without a separate explicit product decision.
 
         if (replaceId) {
             // Stage both local ingredient records before publishing the replacement in memory.

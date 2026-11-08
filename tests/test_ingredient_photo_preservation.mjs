@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { prepareIngredientPhotoBackup, hydrateIngredientPhotos, serializeIngredientPhotos } from '../web/src/utils/IngredientPhotoStore.js';
 import { applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY, BASELINE_UPDATE_KEY } from '../web/src/utils/IngredientBaselineUpdate.js';
+import {authorizeTestEngine} from './personal_scope_fixture.mjs';
 
 const officialText = fs.readFileSync('src/data/ingredients.json', 'utf8');
 const fetchBlob = globalThis.fetch;
@@ -124,6 +125,22 @@ globalThis.fetch = async (_url, options) => { assert(!options?.method); return {
 assert.equal(await engine.adoptIngredientBaseline(), true);
 let savedTofu = engine.getIngredientById(tofuId);
 assert(savedTofu.photoUrl.startsWith('blob:'));
+// A canonical nutrition edit needs a verified Supabase snapshot; legacy
+// GitHub-only values cannot silently become another shared authority.
+authorizeTestEngine(engine);
+const remoteRows = Object.values(official).flat().map((ingredient, position) => ({
+    ingredient_id:ingredient.id,position,ingredient:structuredClone(ingredient),revision:1
+}));
+engine.officialCatalogService={
+    list:async()=>structuredClone(remoteRows),
+    publish:async({item,expectedRevision})=>({
+        ...remoteRows.find(row=>row.ingredient_id===item.id),
+        ingredient:structuredClone(item),revision:expectedRevision+1
+    })
+};
+assert.equal(await engine.loadOfficialIngredientCatalog(),true);
+engine.data.ingredients=Object.values(engine.data.rawIngredients).flat();
+savedTofu=engine.getIngredientById(tofuId);
 await engine.saveIngredient({ ...savedTofu, price: 99, per100g: { kcal: 77 } });
 globalThis.fetch = async () => ({ ok: true, json: async () => structuredClone(official) });
 const reboot = new Engine({ photoStore: store });

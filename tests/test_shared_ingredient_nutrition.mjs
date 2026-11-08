@@ -138,7 +138,8 @@ pass('both scopes use one effective value, pantry and supply scopes unchanged');
 }
 pass('offline remote read cannot imply synchronized nutrition');
 
-// Save use: CAS revision is required. Cloud error must leave local unchanged.
+// The v10 cutover removes this previous writable sparse-overrides path.
+ // Archived service behavior is covered by the isolated transport tests.
 for (const scope of ['household','ariel']) {
   values.clear();
   const e=engine(scope);e.sharedNutritionLoaded=true;
@@ -146,28 +147,14 @@ for (const scope of ['household','ariel']) {
   localStorage.setItem('kitchen_v2_ingredients.json',JSON.stringify(e.data.rawIngredients));
   localStorage.setItem('kitchen_v2_custom_ingredients','[]');
   let writes=0;
-  e.sharedNutritionService={publish:async (p,rev)=>{writes++;assert.equal(rev,2);assert.equal(p.ingredient_id,original.id);return {...p,revision:3};}};
-  e.saveJson=async()=>{};
-  const saved=await e.saveIngredient(copy(change));
-  assert.equal(saved.per100g.kcal,81);assert.equal(writes,1);
-  assert.equal(e.sharedNutritionRevision.get('family_milk'),3);
-  assert.equal(e.getIngredientById('family_milk').per100g.kcal,81);
-  assert.equal(e.data.pantryInventory.shoppingList[0].targetId,'family_milk');
-}
-pass('verified edits publish before local commit for Bebe and Ariel');
-
-for (const scenario of ['conflict','offline','not-loaded']) {
-  values.clear();const e=engine();
-  e.sharedNutritionLoaded=scenario!=='not-loaded';
-  e.sharedNutritionService={publish:async()=>{throw Error(scenario)}};
-  localStorage.setItem('kitchen_v2_ingredients.json',JSON.stringify(e.data.rawIngredients));
-  localStorage.setItem('kitchen_v2_custom_ingredients','[]');
+  e.sharedNutritionService={publish:async()=>{writes++;throw Error('Legacy sparse writes must be forbidden');}};
   const primary=localStorage.getItem('kitchen_v2_ingredients.json');
-  await assert.rejects(e.saveIngredient(copy(change)),scenario==='not-loaded'?/無法確認/:new RegExp(scenario));
+  await assert.rejects(e.saveIngredient(copy(change)),/Supabase 官方食材尚未載入/);
+  assert.equal(writes,0,'No legacy sparse nutrient writes in v10');
   assert.equal(localStorage.getItem('kitchen_v2_ingredients.json'),primary);
   assert.equal(e.getIngredientById('family_milk').per100g.kcal,44);
 }
-pass('network conflicts/offline/unknown version fail closed, no local nutrition commit');
+pass('legacy sparse-write path sealed; new catalog required for shared nutrition');
 
 // Pure prices never publish; private items never share.
 {

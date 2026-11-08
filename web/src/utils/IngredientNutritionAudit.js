@@ -2,6 +2,8 @@ import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=
 import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
 import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
+import { groupOfficialCatalogRows } from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_SSOT_V1';
+
 
 const categories = ['proteins', 'veggies', 'carbs', 'sauces'];
 const fields = ['unitLabel', 'isCount', 'per100g', 'perServing', 'perUnit',
@@ -72,16 +74,26 @@ export async function auditIngredientNutrition(engine, { fetcher = fetch } = {})
             || !validIdentity(engine) || JSON.stringify(activeRows(engine)) !== before)
             throw Error('檢查期間登入或食材資料已變更，未產生結論；請重新檢查。');
     };
-    const url = new URL('../../../src/data/ingredients.json', import.meta.url);
-    const response = await fetcher(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
-    if (!response?.ok) throw Error('無法讀取最新 GitHub 食材基準，未產生比對結論。');
-    const official = await approvedIngredientBaseline(await response.text());
+    const cloudMode = engine.officialCatalogActive === true;
+    let official, sharedRows;
+    if (cloudMode) {
+        // Fresh authoritative rows, not cached local data or GitHub's seed.
+        const rows = await engine.officialCatalogService.list();
+        assertCurrent();
+        official = groupOfficialCatalogRows(rows);
+        sharedRows = []; // Historical sparse overrides are read-only after cutover.
+    } else {
+        const url = new URL('../../../src/data/ingredients.json', import.meta.url);
+        const response = await fetcher(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+        if (!response?.ok) throw Error('無法讀取目前的舊版 GitHub 食材基準，未產生比對結論。');
+        official = await approvedIngredientBaseline(await response.text());
+        assertCurrent();
+        sharedRows = await engine.sharedNutritionService.list();
+        if (!Array.isArray(sharedRows)) throw Error('共用營養修正沒有讀取成功，未產生比對結論。');
+    }
     const expectedRows = flatten(official);
     if (expectedRows.length !== 100 || new Set(expectedRows.map(i => i.id)).size !== 100)
-        throw Error('GitHub 官方食材不是預期的 100 項，未產生比對結論。');
-    assertCurrent();
-    const sharedRows = await engine.sharedNutritionService.list();
-    if (!Array.isArray(sharedRows)) throw Error('共用營養修正沒有讀取成功，未產生比對結論。');
+        throw Error('官方食材不是預期的 100 項，未產生比對結論。');
     assertCurrent();
     const expected = new Map(expectedRows.map(item => [item.id, {...item}]));
     const officialById = new Map(expectedRows.map(item => [item.id, item]));
@@ -118,7 +130,8 @@ export async function auditIngredientNutrition(engine, { fetcher = fetch } = {})
         const fieldDiff = differences(evidenceSnapshot(expected.get(item.id)),local[0].nutrition);
         if (fieldDiff.length) mismatch.push({
             id:item.id,name:item.name,
-            reason:overridden.has(item.id) ? '與已核對的共用營養修正不同' : '與 GitHub 官方基準不同',
+            reason:cloudMode ? '與 Supabase 唯一官方基準不同'
+                : overridden.has(item.id) ? '與已核對的共用營養修正不同' : '與 GitHub 舊官方基準不同',
             fields:fieldDiff
         });
         else same++;
@@ -129,14 +142,16 @@ export async function auditIngredientNutrition(engine, { fetcher = fetch } = {})
         officialCount:expectedRows.length, sharedCount:overridden.size,
         matched:same, different:mismatch.length, missing, duplicates,
         privateCount:extras.length, differences:mismatch, privateIngredients:extras,
-        scope:engine.personalScope
+        scope:engine.personalScope, authority:cloudMode ? 'supabase' : 'legacy-github'
     };
 }
 export function formatIngredientNutritionAudit(report, appVersion = '') {
     const title = `FK 食材營養唯讀比對｜App ${appVersion}`;
     const lines = [
         title,
-        '基準：重新下載且通過 SHA-256 驗證的 GitHub 官方食材，加上最新 Supabase 已核對共用修正',
+        report.authority === 'supabase'
+            ? '基準：最新 Supabase 唯一官方食材資料（不依賴 GitHub JSON 或歷史共用修正）'
+            : '基準：舊版 GitHub 官方食材，加上 Supabase 已核對共用修正（目前非新 SSOT 模式）',
         `官方食材：${report.officialCount} 項；共用修正：${report.sharedCount} 項`,
         `營養與重量基準一致：${report.matched} 項；有差異／缺少／重複：${report.different} 項`,
         `其中官方食材缺少：${report.missing} 項；同 ID 重複：${report.duplicates} 項`,

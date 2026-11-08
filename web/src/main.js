@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_SUPABASE_SSOT_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261108_HEADER_CLEANUP_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -8,7 +8,7 @@ import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
 import { inspectIngredientPhotos, formatIngredientPhotoAudit } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1';
-import { auditIngredientNutrition, formatIngredientNutritionAudit } from './utils/IngredientNutritionAudit.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { auditIngredientNutrition, formatIngredientNutritionAudit } from './utils/IngredientNutritionAudit.js?v=20261108_FK14_SUPABASE_SSOT_V1';
 
 import { isFk14KnownNutritionDifference } from './utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
 
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.9';
+        const appVersion = '2026.11.08.10';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -52,7 +52,7 @@ const App = {
             const report = nutritionAudit.value.report;
             return personalReady.value && engine.value?.personalScope === 'household'
                 && currentUser.value && engine.value.hasPersonalAccess()
-                && !nutritionAudit.value.busy && isFk14KnownNutritionDifference(report);
+                && !engine.value?.officialCatalogActive && !nutritionAudit.value.busy && isFk14KnownNutritionDifference(report);
         });
 
         let viewport = null;
@@ -85,7 +85,20 @@ const App = {
                 });
                 await confirmIdentity();
                 const resume = () => { if (!document.hidden) return confirmIdentity(); };
-                const offline = () => authService.invalidate('目前離線。連線後會重新確認庫存權限，本機資料仍保留。');
+                const offline = () => {
+                    const current = engine.value;
+                    authService.invalidate('目前離線。連線後會重新確認庫存權限，本機資料仍保留。');
+                    // Auth invalidation intentionally clears scope access. Restore
+                    // ONLY a user-bound, previously verified Supabase catalog from
+                    // the device snapshot so nutrition edits may still be queued.
+                    // Never grant offline access to pantry/shopping or claim sync.
+                    if (typeof current?.loadOfficialIngredientCatalog !== 'function') return;
+                    current.loadOfficialIngredientCatalog().then(restored => {
+                        if (!restored || engine.value !== current) return;
+                        current.data.ingredients = ['proteins','veggies','carbs','sauces']
+                            .flatMap(cat => current.data.rawIngredients?.[cat] || []);
+                    }).catch(error => console.warn('Offline ingredient snapshot unavailable:',error.message));
+                };
                 const storage = event => {
                     if (event.key === 'family_kitchen_auth_session' || event.key === null) return confirmIdentity();
                 };
@@ -410,6 +423,14 @@ const App = {
                     </button>
                 </div>
             </header>
+            <p v-if="engine?.officialCatalogActive && (engine.officialCatalogOffline
+                || engine.officialCatalogStatus?.includes('待同步')
+                || engine.officialCatalogStatus?.includes('未同步')
+                || engine.officialCatalogStatus?.includes('等待')
+                || engine.officialCatalogStatus?.includes('衝突'))"
+                class="account-message" role="status" style="margin:4px 16px 0;">
+                {{ engine.officialCatalogStatus }}
+            </p>
 
             <div v-if="isLoading" class="view-content" style="align-items: center; justify-content: center;">
                 <p>載入中...</p>
@@ -543,7 +564,11 @@ const App = {
                     </details>
                     <details v-if="personalReady && engine" :open="!!nutritionAudit.message">
                         <summary class="account-email-label">食材營養一致性檢查</summary>
-                        <p class="account-copy">可可粉已依全家決定移除，舊資料先備份再停用。此處比對 GitHub 官方 100 項、已核對的共用修正與手機實際計算值。發現已知的雪白菇缺少時會詢問是否備份並修復；只有確認後才修改手機食材。</p>
+                        <p class="account-copy">可可粉已依全家決定移除。{{ engine?.officialCatalogActive ? '此處直接比對 Supabase 唯一官方食材資料與手機計算值；手機修改會先立即生效，再顯示同步狀態。' : '目前仍以舊版 GitHub 100 項基準比對；Supabase 食材 SSOT 尚未載入，不會用空白雲端覆蓋手機。' }}</p>
+                        <p v-if="engine?.officialCatalogStatus" class="account-message" role="status">{{ engine.officialCatalogStatus }}</p>
+                        <button v-if="engine?.officialCatalogActive" class="action-sheet-row" @click="engine.syncOfficialIngredientEdits()" :disabled="engine.officialCatalogSyncing">
+                            {{ engine.officialCatalogSyncing ? '正在同步食材營養…' : '重試同步待處理的營養修改' }}
+                        </button>
                         <template v-if="canRepairFk14Nutrition">
                             <p class="account-message" role="status">已找出雪白菇 1 項缺少，現在尚未修復。可用下面的備援修復按鈕，備份並更新手機食材。</p>
                             <button class="action-sheet-row" @click="repairFk14Nutrition" :disabled="fk14Repairing">
