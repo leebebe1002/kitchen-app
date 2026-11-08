@@ -106,7 +106,7 @@ console.log('PASS: REST list, optimistic CAS, authenticated scope, conflict, no 
 
 // Validate the prepared production DDL's embedded seed against the exact
 // current reviewed 100-item archive. No database write is performed here.
-const sql=fs.readFileSync('supabase/migrations/20261108202900_fk14_ingredient_catalog_ssot.sql','utf8');
+const sql=fs.readFileSync('supabase/migrations/20261108135259_fk14_ingredient_catalog_ssot.sql','utf8');
 const seed=sql.match(/from jsonb_array_elements\('([\s\S]+)'::jsonb\) with ordinality as seed\(item,ordinality\);/);
 assert(seed,'Migration must contain a single seeded JSON array');
 const seeded=JSON.parse(seed[1].replaceAll("''","'"));
