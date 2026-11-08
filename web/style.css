@@ -112,6 +112,27 @@ body {
     touch-action: pan-y; /* 嚴格限制僅允許垂直滾動，防止左右晃動 */
 }
 
+/* iOS 27 standalone PWA: WebKit 的頂緣背景取樣需要真實 fixed 元素，偽元素或只改 Header 底色無效。
+   空文字裁切讓取樣器看到純色，但不在畫面上繪製色帶，也不攔截操作。 */
+.ios-pwa-top-surface { display: none; }
+@supports (-webkit-touch-callout: none) and (-webkit-background-clip: text) {
+    @media (display-mode: standalone) {
+        .ios-pwa-top-surface {
+            display: block;
+            position: fixed;
+            inset: 0 0 auto 0;
+            width: 100%;
+            height: 11px;
+            z-index: 2147483647;
+            pointer-events: none;
+            background-color: var(--color-base);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    }
+}
+
 /* 僅允許輸入框與可編輯區選取 */
 input, textarea, select, [contenteditable="true"] {
     -webkit-user-select: auto;

@@ -19,7 +19,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.4';
+        const appVersion = '2026.11.08.5';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
