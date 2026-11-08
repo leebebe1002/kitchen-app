@@ -22,3 +22,12 @@ Bebe 要求：同一個有效食材的營養修正，在 Bebe 與 Ariel 的 FK �
 - 新增的表若出現問題，可先回退本次前端 Commit，原本的 GitHub 官方食材與裝置 localStorage 仍在；這不會自行移除表內日後新增的共用值。
 - 正式表／政策如需移除或刪除任何修正資料，必須另行評估已有資料、備份與取得明確授權。
 - 發布後技術驗收不等於兩台 iPhone 真實資料驗收；須由 Bebe 核對一筆已確認修正，Ariel 刷新並比對料理計算結果。
+
+## 2026-11-08｜Ariel 一次性採用 GitHub 官方食材基準
+
+Bebe 明確同意：Ariel 現在沒有需要保留的舊手機食材資料，可以覆寫**樂樂原手機的食材快取**，免再進行完整差異盤點。本項不代表授權清除其他家人的裝置／庫存／採買／家用品／餐點。
+
+- Ariel 已驗證登入、裝置沒有 household Scope 快取、且 active 採買／庫存沒有引用官方母庫以外的食材時，下一次 App 初始化可自動採用經 SHA-256 驗證的 GitHub 官方 101 項食材。
+- 只替換本機 kitchen_v2_ingredients.json 與 kitchen_v2_custom_ingredients，事先建立單次有效的持久 journal 備份；原本個別裝置自訂食材／舊營養覆寫由官方基準取代，不向 Supabase 批次寫入 101 項。
+- 操作需在裝置下次開啟 FK 時執行，不能遠端覆寫未啟動的 iPhone。斷線、登入切換、舊照片備份失敗、並行編輯或裝置可能混用時保留原狀；中途失敗重新開啟後先安全復原，成功過一次後不重設使用者的新修改。
+- 仍依既有 sparse verified overrides 套用額外共用營養修正；不影響 Bebe iPhone。本次不直接讀取／驗證 Bebe iPhone 的 localStorage，不能宣稱 Bebe 手機已與 GitHub 逐筆相同。

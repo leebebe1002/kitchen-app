@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_SHARED_NUTRITION_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -18,7 +18,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.1';
+        const appVersion = '2026.11.08.2';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -218,12 +218,12 @@ const App = {
 
         const adoptIngredientBaseline = async () => {
             if (!engine.value || baselineUpdating.value || engine.value.data.ingredientBaselineApplied) return;
-            if (!confirm('請先關閉其他 FK 分頁。這次會備份本機食材，再採用 99 項食材的營養與換算基準；價格、通路、額外私房食材、庫存、採買及飲食紀錄都保留。三項缺失營養仍待補。確定更新這台裝置？')) return;
+            if (!confirm('請先關閉其他 FK 分頁。這次會備份本機食材，再採用 GitHub 官方 101 項食材的營養與換算基準；價格、通路、額外私房食材、庫存、採買及飲食紀錄都保留。三項缺失營養仍待補。確定更新這台裝置？')) return;
             baselineUpdating.value = true;
             baselineMessage.value = '';
             try {
                 await engine.value.adoptIngredientBaseline();
-                baselineMessage.value = '已保留照片並備份、採用 99 項食材基準。豆腐麵、蛤蜊、洋菇仍待補營養；你之後的編輯會保留在這台裝置。';
+                baselineMessage.value = '已保留照片並備份、採用 GitHub 官方 101 項食材基準。豆腐麵、蛤蜊、洋菇仍待補營養；符合條件的已核實營養修正可供家人共用。';
             } catch (updateError) {
                 baselineMessage.value = updateError.message || '無法完成食材更新，請保留原資料並稍後重試。';
                 if (updateError.requiresReload) error.value = baselineMessage.value;
@@ -422,6 +422,7 @@ const App = {
                     <template v-if="currentUser">
                         <p class="account-copy">已登入 {{ currentUser.email }}。庫存與採買會在你有權限的資料空間內同步。</p>
                         <p v-if="engine?.sharedNutritionMessage" class="account-message" role="status">{{ engine.sharedNutritionMessage }}</p>
+                        <p v-if="engine?.personalScope === 'ariel' && engine?.arielOfficialResetMessage" class="account-message" role="status">{{ engine.arielOfficialResetMessage }}</p>
                         <button class="action-sheet-row" @click="signOut">登出此裝置</button>
                     </template>
                     <template v-else>
@@ -460,9 +461,9 @@ const App = {
                     </details>
                     <details v-if="engine">
                         <summary class="account-email-label">食材資料更新</summary>
-                        <p class="account-copy">一次採用 99 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。手機日後補值仍只存本機。</p>
+                        <p class="account-copy">一次採用 GitHub 官方 101 項食材的營養與換算基準，更新前先備份，舊照片保留在這台裝置。手機日後補值仍只存本機。</p>
                         <button class="action-sheet-row" @click="adoptIngredientBaseline" :disabled="baselineUpdating || engine.data.ingredientBaselineApplied">
-                            {{ baselineUpdating ? '備份與更新中…' : engine.data.ingredientBaselineApplied ? '此裝置已採用 99 項基準' : '備份並更新這台裝置的食材' }}
+                            {{ baselineUpdating ? '備份與更新中…' : engine.data.ingredientBaselineApplied ? '此裝置已採用官方基準' : '備份並更新這台裝置的食材' }}
                         </button>
                         <p v-if="baselineMessage" class="account-message" role="status">{{ baselineMessage }}</p>
                     </details>

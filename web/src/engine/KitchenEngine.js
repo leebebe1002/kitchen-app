@@ -13,6 +13,7 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
+import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_ARIEL_CANONICAL_V1';
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
@@ -32,6 +33,7 @@ export default class KitchenEngine {
         this.sharedNutritionRevision = new Map();
         this.sharedNutritionLoaded = false;
         this.sharedNutritionMessage = '';
+        this.arielOfficialResetMessage = '';
 
         this.auth = auth;
         this.ingredientPhotoStore = photoStore;
@@ -72,6 +74,9 @@ export default class KitchenEngine {
     }
 
     async initialize() {
+        // Recover an interrupted GLOBAL ingredient cache write before reading either key.
+        // Scope-based inventory data remains untouched and initializes separately.
+        recoverArielOfficialReset();
         await Promise.all([
             this.fetchJson('ingredients.json', 'rawIngredients', {}),
             this.fetchJson('dishes.json', 'rawDishes', {dishes:[]}),
@@ -85,6 +90,10 @@ export default class KitchenEngine {
         // 必須在任何食材清洗或業務邏輯執行前完成，確保 this.data.pantryInventory 100% 是使用者真實最新的庫存資料！
         await this.initializePersonalKitchenState();
         await this.initializeMealLogs();
+        // Ariel has authorized replacing her unused old device ingredient cache.
+        // Run only once per device after verified Scope initialization and before
+        // duplicate cleanup / custom merge, so no stale custom overrides survive.
+        await this.maybeAdoptOfficialArielIngredients();
 
         // 🛡️【第 2 優先守門】：食材名稱去重與清洗 (徹底消除歷史雙胞胎如重複洋蔥)
         if (this.hasPersonalAccess()) this.cleanDuplicateIngredients();
@@ -421,6 +430,58 @@ export default class KitchenEngine {
         if (filename === 'ingredients.json') await hydrateIngredientPhotos(this.data[key], this.ingredientPhotoStore, { allowMissing: true });
     }
 
+    async maybeAdoptOfficialArielIngredients() {
+        if (!this.hasPersonalAccess() || this.personalScope !== 'ariel'
+            || this.personalContext?.scopeId !== 'ariel') return;
+        if (recoverArielOfficialReset()) {
+            this.arielOfficialResetMessage = '樂樂食材已採用 GitHub 官方基準。';
+            return;
+        }
+        // Ingredient caches are device-global, not scoped. Never silently reset
+        // a device that also contains Bebe/Jason's household kitchen.
+        if (localStorage.getItem('kitchen_v2_personal_state_household') !== null) {
+            this.arielOfficialResetMessage = '這台裝置也有家庭資料，未自動覆寫共用食材快取。';
+            return;
+        }
+        const pantry = this.data.pantryInventory || {};
+        const usedIds = [
+            ...Object.keys(pantry.foodStockStatus || {}),
+            ...(pantry.shoppingList || []).map(item => item.targetId),
+            ...(pantry.foodCart || []).map(item => item.targetId)
+        ].filter(Boolean);
+        if (usedIds.some(id => !this.officialIngredientById.has(id))) {
+            this.arielOfficialResetMessage = '採買或庫存仍引用私房食材，為避免遺失關聯，未自動覆寫。';
+            return;
+        }
+        const context = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        const current = () => this.hasPersonalAccess() && this.personalContext === context
+            && this.personalScope === 'ariel' && this.personalScopeGeneration === generation;
+        try {
+            const url = new URL('../../../src/data/ingredients.json', import.meta.url);
+            const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+            if (!response.ok) throw Error('無法讀取 GitHub 食材基準。');
+            const official = await approvedIngredientBaseline(await response.text());
+            if (!current()) return;
+            const next = await applyArielOfficialReset(official, {
+                photoStore: this.ingredientPhotoStore, isCurrent: current
+            });
+            if (!current()) return;
+            if (next) {
+                this.data.rawIngredients = next;
+                this.officialIngredientById = new Map(
+                    ['proteins','veggies','carbs','sauces'].flatMap(cat => next[cat])
+                        .map(item => [item.id, item])
+                );
+            }
+            this.arielOfficialResetMessage = '樂樂食材已採用 GitHub 官方 101 項基準，舊資料已備份。';
+        } catch (error) {
+            this.arielOfficialResetMessage = '樂樂食材尚未更新，原資料保留。請連網後重新開啟 FK。';
+            if (error.requiresReload) throw error;
+            console.warn('Ariel official ingredient update deferred:', error.message);
+        }
+    }
+
     // Read only the sparse verified overrides, after local custom/duplicate merging
     // and before building calculator ingredient lists. Do not rewrite device caches.
     async loadSharedIngredientNutrition() {
@@ -449,8 +510,8 @@ export default class KitchenEngine {
             }
             this.sharedNutritionLoaded = true;
             this.sharedNutritionMessage = skipped
-                ? `共用營養有 ${skipped} 項品牌或資料不一致，未套用，請核對。`
-                : `共用營養已更新（${applied} 項），以目前共用數值計算。`;
+                ? `GitHub 官方食材 ${this.officialIngredientById.size} 項已載入；有 ${skipped} 項共用修正不相容，未套用。`
+                : `GitHub 官方食材 ${this.officialIngredientById.size} 項已載入；另套用 ${applied} 項共用營養修正。`;
         } catch (error) {
             this.sharedNutritionMessage = '共用營養暫時無法確認；目前使用此裝置的食材資料。請連網刷新。';
             console.warn('Shared nutrition read unavailable:', error.message);
