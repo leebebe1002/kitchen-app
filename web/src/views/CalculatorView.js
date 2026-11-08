@@ -1582,11 +1582,8 @@ export default {
     template: `
         <div class="view-calculator">
             <!-- 01 DISH -->
-            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="section-title">
                 <span>01 DISH 選擇料理</span>
-                <span style="font-size: 0.8rem; font-weight: 500; color: var(--color-primary); background: rgba(59, 130, 246, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.25);">
-                    {{ currentSlot ? currentSlot.name : '熱門' }}推薦
-                </span>
             </div>
             <select v-model="selectedDish" @change="userHasManuallySelected = true; onDishChange();" class="select-box" style="margin-bottom: 24px;">
                 <optgroup :label="(currentSlot ? currentSlot.name : '時段') + '推薦料理'">

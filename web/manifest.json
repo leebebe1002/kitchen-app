@@ -4,8 +4,8 @@
   "description": "Family Kitchen 2.0 廚房料理備料計算器、飲食記錄與智慧冰箱",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FAF8F5",
-  "theme_color": "#FAF8F5",
+  "background_color": "#F5F5F5",
+  "theme_color": "#F5F5F5",
   "icons": [
     {
       "src": "./icon-192.png",

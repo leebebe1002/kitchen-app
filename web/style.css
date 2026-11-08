@@ -112,19 +112,6 @@ body {
     touch-action: pan-y; /* 嚴格限制僅允許垂直滾動，防止左右晃動 */
 }
 
-/* iOS 27 主畫面 PWA：頂部固定同色表面，避免系統對 Header 取樣產生模糊漸層。 */
-@media (display-mode: standalone) {
-    body::before {
-        content: '';
-        position: fixed;
-        inset: 0 0 auto;
-        height: 11px;
-        background-color: var(--color-base);
-        pointer-events: none;
-        z-index: 1;
-    }
-}
-
 /* 僅允許輸入框與可編輯區選取 */
 input, textarea, select, [contenteditable="true"] {
     -webkit-user-select: auto;
@@ -142,6 +129,7 @@ input, textarea, select, [contenteditable="true"] {
     box-sizing: border-box;
     padding-bottom: 0;
     touch-action: pan-y;
+    background-color: var(--color-base);
 }
 
 /* Header */
@@ -150,6 +138,7 @@ input, textarea, select, [contenteditable="true"] {
     justify-content: space-between;
     align-items: center;
     padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 8px 16px;
+    background-color: var(--color-base);
 }
 
 .header h1 {
