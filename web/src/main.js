@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_WINDOW_FETCH_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261108_HEADER_CLEANUP_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.11';
+        const appVersion = '2026.11.08.12';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -98,6 +98,8 @@ const App = {
                         current.data.ingredients = ['proteins','veggies','carbs','sauces']
                             .flatMap(cat => current.data.rawIngredients?.[cat] || []);
                     }).catch(error => console.warn('Offline ingredient snapshot unavailable:',error.message));
+                    current.recipeSync?.load().catch(error =>
+                        console.warn('Offline recipe snapshot unavailable:',error.message));
                 };
                 const storage = event => {
                     if (event.key === 'family_kitchen_auth_session' || event.key === null) return confirmIdentity();
@@ -261,6 +263,28 @@ const App = {
             }
         };
 
+        const approveLegacyRecipes = async () => {
+            const target=engine.value;
+            const count=target?.recipeSync?.legacyIds?.length || 0;
+            if (!count || !personalReady.value) return;
+            if (!confirm('這台手機有 '+count+' 項尚未同步的舊料理修改。確認後會備份並加入全家共用料理，樂樂重新載入也能看到。既有庫存、採買及照片不會共享。確定上傳？')) return;
+            try {
+                await target.recipeSync.approveLegacy();
+            } catch (error) {
+                target.recipeSync.message='上傳未完成，原料理保留：'+error.message;
+            }
+        };
+
+        const retryRecipeSync = async () => {
+            const target=engine.value;
+            if (!target?.recipeSync || !personalReady.value) return;
+            try {
+                await target.recipeSync.sync();
+            } catch (error) {
+                target.recipeSync.message='料理同步未完成，原資料保留：'+error.message;
+            }
+        };
+
         const adoptIngredientBaseline = async () => {
             if (!engine.value || baselineUpdating.value || engine.value.data.ingredientBaselineApplied) return;
             if (!confirm('請先關閉其他 FK 分頁。這次會備份本機食材，再採用 GitHub 官方 100 項食材的營養與換算基準；價格、通路、額外私房食材、庫存、採買及飲食紀錄都保留。三項缺失營養仍待補。確定更新這台裝置？')) return;
@@ -371,6 +395,8 @@ const App = {
             arielResetting,
             arielResetMessage,
             resetArielKitchen,
+            approveLegacyRecipes,
+            retryRecipeSync,
             baselineUpdating,
             baselineMessage,
             currentTab,
@@ -583,6 +609,19 @@ const App = {
                             <button class="action-sheet-row" @click="copyIngredientNutritionAudit">複製比對結果</button>
                             <textarea class="account-email-input" aria-label="食材營養比對結果" readonly :value="nutritionAudit.text" rows="8" style="font-size:12px;max-height:220px;"></textarea>
                         </template>
+                    </details>
+                    <details v-if="personalReady && engine?.recipeSync">
+                        <summary class="account-email-label">共用料理同步</summary>
+                        <p class="account-copy">你在手機新增或修改的料理可與家人使用同一份配方；不會同步個人庫存、採買或家用品。原本手機的舊配方先保留，確認後才分享。</p>
+                        <p class="account-message" role="status">{{ engine.recipeSync.message }}</p>
+                        <button v-if="engine.recipeSync.legacyIds.length" class="action-sheet-row"
+                            @click="approveLegacyRecipes" :disabled="engine.recipeSync.busy">
+                            確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改
+                        </button>
+                        <button v-if="engine.recipeSync.active" class="action-sheet-row"
+                            @click="retryRecipeSync" :disabled="engine.recipeSync.busy || engine.recipeSync.offline">
+                            {{ engine.recipeSync.busy ? '正在同步料理…' : '重試同步待處理料理' }}
+                        </button>
                     </details>
                     <details>
                         <summary class="account-email-label">食材照片檢查</summary>

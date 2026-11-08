@@ -13,6 +13,8 @@ import {
 } from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
+import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261108_FK14_RECIPE_SYNC_V1';
+import { recoverRecipeJournal } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
     from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
 import { readOfficialOutbox, stageOfficialEdit, persistOfficialCatalogEdit,
@@ -64,6 +66,9 @@ export default class KitchenEngine {
         this.officialCatalogOwner = null;
         this.officialCatalogStatus = '尚未啟用 Supabase 官方食材資料庫';
         this.officialCatalogSyncing = false;
+        this.recipeStaticBaseline = [];
+        this.recipeSync = new SharedRecipeCoordinator(this);
+
 
         this.officialIngredientById = new Map();
         this.sharedNutritionRevision = new Map();
@@ -115,6 +120,7 @@ export default class KitchenEngine {
         recoverArielOfficialReset();
         recoverFk14OfficialRepair();
         recoverOfficialCatalogEdit();
+        recoverRecipeJournal();
 
         await Promise.all([
             this.fetchJson('ingredients.json', 'rawIngredients', {}),
@@ -149,6 +155,7 @@ export default class KitchenEngine {
         await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore, { allowMissing: true });
         await this.loadOfficialIngredientCatalog();
         await this.loadSharedIngredientNutrition();
+        await this.recipeSync.load();
 
         // 2. 攤平食材列表並正規化舊版通路名稱
         this.data.ingredients = [];
@@ -208,6 +215,7 @@ export default class KitchenEngine {
         this.officialCatalogOffline = false;
         this.officialCatalogOwner = null;
         this.officialCatalogRows.clear();
+        this.recipeSync.reset();
         this.personalScope = null;
         this.personalRevision = null;
         this.personalContext = null;
@@ -445,6 +453,11 @@ export default class KitchenEngine {
 
             if (response && response.ok) {
                 const serverData = await response.json();
+                if (filename === 'dishes.json') {
+                    if (!Array.isArray(serverData?.dishes))
+                        throw Error('料理母庫格式異常，保留手機資料。');
+                    this.recipeStaticBaseline = JSON.parse(JSON.stringify(serverData.dishes));
+                }
                 if (filename === 'ingredients.json') {
                     this.officialIngredientById = new Map(
                         ['proteins','veggies','carbs','sauces']
@@ -1216,6 +1229,9 @@ export default class KitchenEngine {
             this.syncPersonalKitchenState().catch(error => console.warn('Personal kitchen sync unavailable:', error.message));
             return true;
         }
+
+        // Recipe edits are globally shared and journaled separately from Pantry.
+        if (filename === 'dishes.json') return this.recipeSync.save(dataObj);
 
         // 1. 本地即時存檔 (0 秒離線優先)
         this.safeSetLocalStorage(localKey, dataObj);

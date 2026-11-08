@@ -192,9 +192,9 @@ for(const outcome of ['different','offline']){
 }
 console.log('PASS: full Vue render/click/cancel/error/double-click/reload/background-auth control flow');
 // Entry and modified import chain have one exact URL per module.
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261108_FK14_WINDOW_FETCH_V1'));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261108_FK14_RECIPE_SYNC_V1'));
 const engineSource=fs.readFileSync('web/src/engine/KitchenEngine.js','utf8');
-assert(fs.readFileSync('web/src/main.js','utf8').includes('KitchenEngine.js?v=20261108_FK14_WINDOW_FETCH_V1'));
+assert(fs.readFileSync('web/src/main.js','utf8').includes('KitchenEngine.js?v=20261108_FK14_RECIPE_SYNC_V1'));
 for(const path of ['web/src/main.js','web/src/engine/KitchenEngine.js'])
  assert(fs.readFileSync(path,'utf8').includes('Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1'));
 assert(engineSource.includes('IngredientNutritionAudit.js?v=20261108_FK14_WINDOW_FETCH_V1'));
