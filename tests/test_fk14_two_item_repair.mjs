@@ -78,5 +78,38 @@ let App;const uiVue={...Vue,onMounted(){},onBeforeUnmount(){},createApp:a=>{App=
 const source=fs.readFileSync('web/src/main.js','utf8').replace(/^import .*;$/gm,'');
 vm.runInNewContext(source,{Vue:uiVue,KitchenEngine:Engine,CalculatorView:{},TrackerView:{},PantryView:{},ShoppingView:{},authService:{message:'offline'}});
 Vue.compile(App.template,{decodeEntities:t=>t,onError:e=>{throw e;}});
-assert(App.template.includes('備份並修復這 2 項差異'));
+assert(App.template.includes('備份並修復雪白菇、可可粉（2 項）'));
 console.log('PASS: Vue template compiles and gated UI exists');
+const liveUi=App.setup();
+liveUi.personalReady.value=true;
+liveUi.showAccount.value=true;
+liveUi.currentUser.value={email:'test@example.invalid'};
+liveUi.engine.value={personalScope:'household',data:{ingredientBaselineApplied:true},sharedNutritionMessage:'101 official',personalScopeGeneration:0};
+const report={matched:99,different:2,missing:1,duplicates:0,privateCount:0,sharedCount:0,
+ differences:[{id:'snow_white_mushroom'},{id:'cocoa_powder'}]};
+liveUi.nutritionAudit.value={busy:false,message:'只完成檢查，尚未修復',text:'報告',report};
+assert.equal(liveUi.canRepairFk14Nutrition.value,true);
+const appRender=Vue.compile(App.template,{decodeEntities:text=>text});
+const vnode=appRender(Vue.proxyRefs(liveUi),[]);
+const buttons=[];
+function findButtons(node){
+ if(!node)return;
+ if(Array.isArray(node)){node.forEach(findButtons);return;}
+ if(typeof node!=='object')return;
+ if(node.type==='button' && typeof node.children==='string')buttons.push(node.children);
+ findButtons(node.children);
+}
+findButtons(vnode);
+const repairIndex=buttons.findIndex(t=>t.includes('備份並修復雪白菇'));
+const checkIndex=buttons.findIndex(t=>t.includes('重新檢查 101 項'));
+assert(repairIndex>=0 && checkIndex>=0 && repairIndex<checkIndex,
+ 'Real rendered Vue action must show REPAIR BEFORE the read-only CHECK button');
+liveUi.nutritionAudit.value={...liveUi.nutritionAudit.value,report:{...report,privateCount:1}};
+assert.equal(liveUi.canRepairFk14Nutrition.value,false,'No repair for unknown private ingredients');
+liveUi.nutritionAudit.value={...liveUi.nutritionAudit.value,report};
+liveUi.engine.value.personalScope='ariel';
+assert.equal(liveUi.canRepairFk14Nutrition.value,false,'Never offer this fix in Ariel scope');
+assert(App.template.includes('修復後自動驗證')===false,'Post-repair message comes from logic, not an inert template string');
+assert(source.includes("sessionStorage.setItem('fk14_two_item_recheck', 'pending')"));
+assert(source.includes('await checkIngredientNutrition()'));
+console.log('PASS: actual Vue rendered repair button first, scope gate, and post-reload automatic recheck path');
