@@ -11,6 +11,9 @@ import {
     writePersonalKitchenState
 } from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
+import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
+import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
+
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
 import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
@@ -24,6 +27,12 @@ export default class KitchenEngine {
         this.cloudSync = cloudSync || new CloudSyncEngine();
         this.supabase = supabaseService;
         this.personalKitchenSync = personalKitchenSyncService;
+        this.sharedNutritionService = sharedIngredientNutritionService;
+        this.officialIngredientById = new Map();
+        this.sharedNutritionRevision = new Map();
+        this.sharedNutritionLoaded = false;
+        this.sharedNutritionMessage = '';
+
         this.auth = auth;
         this.ingredientPhotoStore = photoStore;
         this.personalContext = null;
@@ -83,6 +92,7 @@ export default class KitchenEngine {
         // 1. 合併使用者在本地自訂新增的私人食材 (防止 Git 更新時沖掉自建食材)
         this.mergeCustomUserIngredients();
         await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore, { allowMissing: true });
+        await this.loadSharedIngredientNutrition();
 
         // 2. 攤平食材列表並正規化舊版通路名稱
         this.data.ingredients = [];
@@ -372,7 +382,15 @@ export default class KitchenEngine {
 
             if (response && response.ok) {
                 const serverData = await response.json();
-                
+                if (filename === 'ingredients.json') {
+                    this.officialIngredientById = new Map(
+                        ['proteins','veggies','carbs','sauces']
+                            .flatMap(cat => Array.isArray(serverData?.[cat]) ? serverData[cat] : [])
+                            .filter(item => typeof item?.id === 'string')
+                            .map(item => [item.id,item])
+                    );
+                }
+
                 if (filename === 'ingredients.json' || (isUserState && cachedData)) {
                     // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/自訂通路/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
@@ -401,6 +419,42 @@ export default class KitchenEngine {
             }
         }
         if (filename === 'ingredients.json') await hydrateIngredientPhotos(this.data[key], this.ingredientPhotoStore, { allowMissing: true });
+    }
+
+    // Read only the sparse verified overrides, after local custom/duplicate merging
+    // and before building calculator ingredient lists. Do not rewrite device caches.
+    async loadSharedIngredientNutrition() {
+        this.sharedNutritionRevision.clear();
+        this.sharedNutritionLoaded = false;
+        if (!this.hasPersonalAccess() || !this.officialIngredientById.size) {
+            this.sharedNutritionMessage = '目前使用此裝置的食材資料；共用營養尚未確認。';
+            return;
+        }
+        const context = this.personalContext;
+        const generation = this.personalScopeGeneration;
+        try {
+            const rows = await this.sharedNutritionService.list();
+            if (!this.hasPersonalAccess() || this.personalContext !== context
+                || this.personalScopeGeneration !== generation) return;
+            let applied = 0, skipped = 0;
+            for (const row of rows) {
+                const official = this.officialIngredientById.get(row.ingredient_id);
+                const local = ['proteins','veggies','carbs','sauces']
+                    .flatMap(cat => this.data.rawIngredients?.[cat] || [])
+                    .find(item => item.id === row.ingredient_id);
+                if (local && applySharedNutrition(local,row,official)) {
+                    this.sharedNutritionRevision.set(row.ingredient_id,Number(row.revision));
+                    applied++;
+                } else skipped++;
+            }
+            this.sharedNutritionLoaded = true;
+            this.sharedNutritionMessage = skipped
+                ? `共用營養有 ${skipped} 項品牌或資料不一致，未套用，請核對。`
+                : `共用營養已更新（${applied} 項），以目前共用數值計算。`;
+        } catch (error) {
+            this.sharedNutritionMessage = '共用營養暫時無法確認；目前使用此裝置的食材資料。請連網刷新。';
+            console.warn('Shared nutrition read unavailable:', error.message);
+        }
     }
 
     async adoptIngredientBaseline() {
@@ -982,6 +1036,29 @@ export default class KitchenEngine {
             || [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY].some(key => localStorage.getItem(key) !== before[key])
             || !this.data.ingredients.some(item => item.id === replaceId))) {
             throw new Error('儲存期間資料或資料空間已變更，原食材保留，請重新確認。');
+        }
+
+        // A verified edit to a canonical ingredient is shared BEFORE local commit:
+        // failed or conflicting cloud writes keep the form open and the old active data.
+        // Changes to photo, store, price, stock and personal custom ingredients stay local.
+        if (previous && !sameNutrition(previous, ingData)
+            && this.officialIngredientById.has(ingData.id)) {
+            const payload = sharedNutritionPayload(ingData, this.officialIngredientById.get(ingData.id));
+            if (payload) {
+                if (!this.sharedNutritionLoaded || !this.hasPersonalAccess())
+                    throw new Error('無法確認家人共用的營養版本，尚未儲存；請連網刷新後重試。');
+                const row = await this.sharedNutritionService.publish(
+                    payload, this.sharedNutritionRevision.get(ingData.id) || 0
+                );
+                if (this.personalScope !== scope || this.personalContext !== context
+                    || [INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY]
+                        .some(key => localStorage.getItem(key) !== before[key]))
+                    throw new Error('存檔期間帳號或食材已變更。共用值已儲存，請刷新確認後再編輯。');
+                this.sharedNutritionRevision.set(ingData.id,Number(row.revision));
+                this.sharedNutritionMessage = '這項食材的營養已同步給家人，下次刷新會使用相同數值。';
+            } else {
+                this.sharedNutritionMessage = '此項營養尚未完成同品牌／同規格核對，僅保留在本機，沒有共享。';
+            }
         }
 
         if (replaceId) {

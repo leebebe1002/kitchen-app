@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261107_FK16_ARIEL_EMPTY_START_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_SHARED_NUTRITION_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -18,7 +18,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.07.3';
+        const appVersion = '2026.11.08.1';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -421,6 +421,7 @@ const App = {
                     <h2 id="family-account-title" class="action-sheet-title">家庭同步</h2>
                     <template v-if="currentUser">
                         <p class="account-copy">已登入 {{ currentUser.email }}。庫存與採買會在你有權限的資料空間內同步。</p>
+                        <p v-if="engine?.sharedNutritionMessage" class="account-message" role="status">{{ engine.sharedNutritionMessage }}</p>
                         <button class="action-sheet-row" @click="signOut">登出此裝置</button>
                     </template>
                     <template v-else>

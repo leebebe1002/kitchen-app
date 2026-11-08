@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+const values=new Map();
+globalThis.localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,String(v)),removeItem:k=>values.delete(k)};
+globalThis.sessionStorage=localStorage;
+globalThis.window={ location:{hostname:'test.invalid'},addEventListener(){},removeEventListener(){} };
+const {default:auth}=await import('../web/src/services/FamilyAuthService.js');
+const {default:service}=await import('../web/src/services/SharedIngredientNutritionService.js');
+const response=(value,status=200)=>({ok:status>=200&&status<300,status,json:async()=>value});
+let pending=null;const requests=[];
+globalThis.fetch=async(url,options={})=>{requests.push({url:String(url),options});if(pending){const p=pending;pending=null;return p(options)}return response([])};
+const login=(userId,scopeId)=>{
+ const token='example-token-'+userId;
+ localStorage.setItem('family_kitchen_auth_session',JSON.stringify({access_token:token}));
+ auth.session={access_token:token};
+ auth.context=Object.freeze({token,userId,scopeId,expiresAt:Date.now()+3_600_000});
+ return auth.context;
+};
+login('bebe','household');
+const input={ingredient_id:'milk',identity:{name:'milk',brand:'brand',specification:''},nutrition:{unitLabel:'ml',weightBasis:'as_sold',per100g:{kcal:100,protein:3,carbs:5,fat:1,sodium:10}},evidence:{kind:'product_label',status:'verified'}};
+const rows=await service.list();
+assert.deepEqual(rows,[]);
+assert(requests.at(-1).url.endsWith('/fk_shared_ingredient_nutrition?select=ingredient_id,identity,nutrition,evidence,revision'));
+assert.equal(requests.at(-1).options.headers.Authorization,'Bearer example-token-bebe');
+pending=async options=>response([{...JSON.parse(options.body),revision:1}]);
+assert.equal((await service.publish(input,0)).revision,1);
+assert.equal(requests.at(-1).options.method,'POST');
+assert.equal(JSON.parse(requests.at(-1).options.body).updated_by,'bebe');
+pending=async options=>response([{...JSON.parse(options.body),revision:2}]);
+assert.equal((await service.publish(input,1)).revision,2);
+assert.equal(requests.at(-1).options.method,'PATCH');
+assert(requests.at(-1).url.includes('ingredient_id=eq.milk&revision=eq.1'));
+assert.equal(JSON.parse(requests.at(-1).options.body).revision,2);
+console.log('PASS: authenticated GET/POST/PATCH and exact compare-and-swap transport');
+pending=async()=>response({code:'23505'},409);
+await assert.rejects(service.publish(input,0),{code:'FK_SHARED_CONFLICT'});
+pending=async()=>response([],200);
+await assert.rejects(service.publish(input,1),{code:'FK_SHARED_CONFLICT'});
+pending=async()=>response({message:'restricted'},403);
+await assert.rejects(service.publish(input,1),/沒有同步成功/);
+assert(auth.getPersonalContext(),'A network or RLS denial must not log out this kitchen');
+console.log('PASS: conflict, empty CAS and RLS denial fail closed without sign-out');
+const deferred=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve};};
+login('bebe','household');
+{
+ const d=deferred();
+ pending=async()=>d.promise;
+ const operation=service.list();
+ login('ariel','ariel');
+ d.resolve(response([]));
+ await assert.rejects(operation,/登入身分已變更/);
+}
+{
+ const d=deferred();
+ pending=async()=>d.promise;
+ const operation=service.publish(input,0);
+ localStorage.removeItem('family_kitchen_auth_session');
+ d.resolve(response([{...input,revision:1}]));
+ await assert.rejects(operation,/登入身分已變更/);
+}
+console.log('PASS: stale GET/POST after account switch/logout rejected');
+localStorage.removeItem('family_kitchen_auth_session');
+auth.context=null;
+await assert.rejects(service.list(),/請先登入/);
+console.log('PASS: unsigned denied without network');
