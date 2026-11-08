@@ -3,7 +3,7 @@
 -- This is a historical bootstrap snapshot. After cutover only Supabase is authoritative.
 -- Rollback: retain all existing tables and the GitHub JSON bootstrap; restore via the
 -- read-only checkpoint, and only revert app version after safe recovery of pending edits.
-begin;
+-- Executed transactionally by Supabase migration runner.
 
 -- Fail closed: do not silently discard any verified sparse nutrition correction.
 do $$
@@ -32,7 +32,9 @@ create table if not exists public.fk_ingredient_catalog (
 );
 
 alter table public.fk_ingredient_catalog enable row level security;
-revoke all on table public.fk_ingredient_catalog from anon;
+-- Supabase may grant ALL tables privileges to authenticated through ALTER DEFAULT
+-- PRIVILEGES. GRANT SELECT/UPDATE alone cannot remove INSERT/DELETE/TRUNCATE.
+revoke all on table public.fk_ingredient_catalog from public, anon, authenticated;
 grant select, update on table public.fk_ingredient_catalog to authenticated;
 
 create policy "FK members may read the official catalog"
@@ -85,7 +87,10 @@ create trigger fk_ingredient_catalog_guard
 
 -- Prevent older PWA versions from creating another effective nutrition authority.
 -- Read-only historical table is kept intact for backup and rollback inspection.
-revoke insert, update on table public.fk_shared_ingredient_nutrition from authenticated;
+-- Previous production ACL unexpectedly had ALL table privileges for authenticated,
+-- not merely the declared INSERT/UPDATE grants. Remove the complete write surface.
+revoke all on table public.fk_shared_ingredient_nutrition from authenticated;
+grant select on table public.fk_shared_ingredient_nutrition to authenticated;
 -- Avoid leaving an independent write path via inherited explicit policies.
 drop policy if exists "Insert verified shared nutrition for Bebe and Ariel" on public.fk_shared_ingredient_nutrition;
 drop policy if exists "Update verified shared nutrition for Bebe and Ariel" on public.fk_shared_ingredient_nutrition;
@@ -104,4 +109,3 @@ begin
     raise exception 'FK14 expected exactly 100 official catalog records without retired cocoa';
   end if;
 end $$;
-commit;
