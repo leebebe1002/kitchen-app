@@ -275,7 +275,8 @@ await view.copySOP();assert(copied.includes('45g'));assert(copied.includes('2條
 let records = 0;engine.recordMeal = async () => {records++;};
 await view.recordMeal();assert.equal(records,0);assert(alerts.at(-1).includes('待確認'));
 globalThis.fetch = async () => {throw Error('Incomplete nutrition must not call AI');};
-await view.calculate();assert.equal(view.aiChefAdvice.value.source,'local');
+await view.calculate();assert.equal(view.aiChefAdvice.value.source,'blocked');
+assert(view.aiChefAdvice.value.nutritionIssues.some(x=>x.id==='bacon'),'Legacy unresolved units identify the blocking ingredient');
 assert.equal(view.memberIngredients.value.bebe.find(i=>i.id==='bacon').unit,'g','Auto-balance must preserve unresolved recipe units');
 assert.equal(view.memberIngredients.value.bebe.find(i=>i.id==='bacon').amount,20);
 // The same rule applies to persisted member portions; no memory migration is required.

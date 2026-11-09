@@ -1063,8 +1063,24 @@ export default {
             isCalculated.value = true;
             revealPortions();
             logChefTiming({ phase: 'local', durationMs: Math.round(performance.now() - started) });
-            if (activeMembers.value.some(member => engine.getNutritionIssues(getMemberActiveIngredients(member).map(item => ({...item,amount:Math.max(1,Number(item.amount))}))).length)) {
-                aiChefAdvice.value = { source: 'local', portions: {}, chefComment: '營養資料待確認，已保留備料份量。' };
+            // Preserve unknown nutrition as unknown: even a currently zero-quantity
+            // selected ingredient must be checked before recommending its portion.
+            const pending = new Map();
+            for (const member of activeMembers.value) {
+                for (const item of getMemberActiveIngredients(member)) {
+                    const amount = Number(item.amount);
+                    const check = { ...item, amount: Number.isFinite(amount) ? Math.max(1, amount) : 1 };
+                    const issues = engine.getNutritionIssues([check]);
+                    if (issues.length && !pending.has(item.id)) {
+                        pending.set(item.id, { id: item.id, name: getIngredientName(item.id), reason: issues.join('；') });
+                    }
+                }
+            }
+            if (pending.size) {
+                aiChefAdvice.value = {
+                    source: 'blocked', portions: {}, nutritionIssues: [...pending.values()],
+                    chefComment: '這次未產生 AI 份量建議：選用食材有營養來源或重量換算待確認。以下只顯示料理原始／手動份量；「待分配」不是建議不吃。請核對列出的食材，或取消選用後重新計算。'
+                };
                 showChefNote.value = true;
                 return;
             }
@@ -1847,7 +1863,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>系統配比</span>
+                                <span>{{ aiChefAdvice?.source === 'blocked' ? '份量尚未計算' : '原始／手動份量' }}</span>
                             </span>
                         </div>
                         <!-- 📋 精簡正圓形複製食譜按鈕 -->
@@ -1863,14 +1879,29 @@ export default {
                     </div>
                     
                     <p v-if="isAiChefLoading" role="status" style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
-                        本地配比已可使用；AI 最多等待 20 秒。調整份量會取消這次 AI 精算。
+                        顯示目前的料理／手動份量；AI 最多等待 20 秒。調整份量會取消這次 AI 精算。
+                    </p>
+                    <div v-if="!isAiChefLoading && aiChefAdvice && aiChefAdvice.source !== 'ai'"
+                         role="status" style="font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
+                        <strong>{{ aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
+                        <div>{{ aiChefAdvice.chefComment }}</div>
+                        <div v-if="aiChefAdvice.nutritionIssues?.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                            <button v-for="problem in aiChefAdvice.nutritionIssues" :key="problem.id" class="btn-icon"
+                                    type="button" @click="openIngredientDetail(problem.id)"
+                                    :title="problem.reason" style="font-size:0.79rem;padding:5px 9px;">
+                                {{ problem.name }} · 核對資料
+                            </button>
+                        </div>
+                    </div>
+                    <p v-if="aiChefAdvice?.source !== 'ai'" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
+                        非 AI 計算結果；原始份量不代表適合目前營養目標。未分配食材需核對或手動調整。
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
                         <li v-for="item in totalIngredientsList" :key="item.id + ':' + item.unit" class="prep-ingredient-row">
                             <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
                             <span class="prep-ingredient-name">{{ item.name }}</span>
-                            <span class="prep-ingredient-amount">{{ item.amount }}{{ item.unit }}</span>
+                            <span class="prep-ingredient-amount">{{ Number(item.amount) === 0 && aiChefAdvice?.source !== 'ai' ? '待分配' : item.amount + item.unit }}</span>
                             <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" class="prep-ingredient-breakdown">
                                 (<span v-for="(b, bIdx) in item.breakdown" :key="bIdx">{{ b.memberName }} {{ b.amount }}{{ b.unit }}<span v-if="bIdx < item.breakdown.length - 1">, </span></span>)
                             </span>
@@ -1917,7 +1948,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>系統已精算</span>
+                                <span>{{ aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                         </div>
@@ -1937,8 +1968,8 @@ export default {
                              boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                          }">
                         <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between;">
-                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : '⚙️ 系統備料說明（AI 離線接管提示）：' }}</span>
-                            <span v-if="aiChefAdvice.source === 'local'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">離線接管</span>
+                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : '⚙️ 份量未完成說明：' }}</span>
+                            <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">非精算結果</span>
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                     </div>
