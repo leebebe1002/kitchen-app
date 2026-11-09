@@ -1,6 +1,6 @@
 import {
     evidenceSnapshot, completeNutrients, nutritionEvidenceIssue, labelConsistencyIssue
-} from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
+} from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
 
 const NUTRITION_FIELDS = ['unitLabel','isCount','per100g','perServing','perUnit','servingSize',
     'servingUnit','gramsPerPack','gramsPerUnit','weightBasis'];

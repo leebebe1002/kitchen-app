@@ -36,7 +36,7 @@ for (const id of ['egg','kimchi','shin_ramen']){
    Object.assign(ing,{per100g:structuredClone(info.evidence.snapshot.per100g),
       weightBasisSource:'TFDA R4400301 韓式泡菜一般值，每 100g 即食可食部'});
  } else {
-   Object.assign(ing,{name:'非油炸辛拉麵（97g）',brand:'農心',
+   Object.assign(ing,{
      weightBasisSource:'農心非油炸97g整包含麵體、調味粉與配料；不可當純麵體重量'});
  }
  ing.nutritionEvidence=structuredClone(info.evidence);
@@ -51,7 +51,6 @@ assert.equal(JSON.stringify(backup.rows),originalBytes,'The backup must remain i
 for(const id of Object.keys(updates)){
  const old=baseline[id].ingredient,n=updates[id].ingredient;
  const allowed=new Set(['per100g','perUnit','gramsPerUnit','weightBasis','weightBasisSource','nutritionEvidence']);
- if(id==='shin_ramen'){allowed.add('name');allowed.add('brand');}
  for(const k of new Set([...Object.keys(old),...Object.keys(n)]))
    if(JSON.stringify(old[k])!==JSON.stringify(n[k])) assert(allowed.has(k),id+' unexpected modification '+k);
 }
@@ -101,7 +100,7 @@ console.log('PASS three authoritative candidates, seven-ingredient ramen, three 
 
 // Production candidate and recovery backup are kept outside the repository.
 // This test is pure and reproducible, including on CI without those local files.
-const proposedPath='/Users/bebelee/Development/_archives/kitchen-app/fk21-3-catalog-rows-proposed-20261109.json';
+const proposedPath='/Users/bebelee/Development/_archives/kitchen-app/fk21-3-catalog-rows-proposed-V2-20261109.json';
 if (fs.existsSync(proposedPath)) {
  const stored=JSON.parse(fs.readFileSync(proposedPath,'utf8'));
  assert.deepEqual(Object.keys(Object.fromEntries(stored.rows.map(r=>[r.ingredient_id,r]))).sort(),

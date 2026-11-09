@@ -1,4 +1,4 @@
-import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261109_FK21_THREE_FOODS_V1';
+import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261109_FK21_THREE_FOODS_V2';
 import { normalizeIngredientName } from './IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { hasEmbeddedIngredientPhoto } from './IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 

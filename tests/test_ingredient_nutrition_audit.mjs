@@ -134,11 +134,11 @@ console.log('PASS: no-login and not-ready fail-closed');
 
 const main=fs.readFileSync('web/src/main.js','utf8');
 const html=fs.readFileSync('web/index.html','utf8');
-assert(main.includes("IngredientNutritionAudit.js?v=20261109_FK21_THREE_FOODS_V1"));
+assert(main.includes("IngredientNutritionAudit.js?v=20261109_FK21_THREE_FOODS_V2"));
 assert(main.includes('@click="checkAndOfferFk14Repair"'));
 assert(main.includes('檢查 100 項營養'));
 assert(main.includes('textarea class="account-email-input" aria-label="食材營養比對結果" readonly'));
-assert(main.includes("const appVersion = '2026.11.09.7';"));
-assert(html.includes('main.js?v=20261109_FK21_THREE_FOODS_V1'));
+assert(main.includes("const appVersion = '2026.11.09.8';"));
+assert(html.includes('main.js?v=20261109_FK21_THREE_FOODS_V2'));
 console.log('PASS: protected account UI, explicit read-only report and version chain');
 console.log('NUTRITION AUDIT ALL PASS:',calls,'checks');

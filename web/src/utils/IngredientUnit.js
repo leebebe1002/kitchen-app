@@ -1,4 +1,4 @@
-import { completeNutrients, nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
+import { completeNutrients, nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
 const countUnits = new Set(['顆', '個', '條', '包', '根', '片', '盒', '罐', '袋']);
 
 export const isCountUnit = unit => countUnits.has(unit);

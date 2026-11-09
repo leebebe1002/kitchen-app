@@ -1,7 +1,7 @@
-import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=20261109_FK21_THREE_FOODS_V1';
-import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V1';
-import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
-import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261109_FK21_THREE_FOODS_V1';
+import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=20261109_FK21_THREE_FOODS_V2';
+import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V2';
+import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
+import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261109_FK21_THREE_FOODS_V2';
 import { groupOfficialCatalogRows } from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
 
 

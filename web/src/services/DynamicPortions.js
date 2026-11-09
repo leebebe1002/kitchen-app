@@ -1,4 +1,4 @@
-import { ingredientNutritionBasis } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V1';
+import { ingredientNutritionBasis } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V2';
 
 // Use FK's existing member goals and daily log. The meal slot supplies a transparent
 // planning estimate; it does not claim to know how many meals someone will actually eat.

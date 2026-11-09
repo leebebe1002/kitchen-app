@@ -1,4 +1,4 @@
-import { completeNutrients, nutrientKeys, nutrientNumber } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
+import { completeNutrients, nutrientKeys, nutrientNumber } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
 
 const unitOf = value => {
     const text = String(value || '').trim().toLowerCase();

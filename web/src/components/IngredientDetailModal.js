@@ -1,5 +1,5 @@
-import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
-import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261109_FK21_THREE_FOODS_V1';
+import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
+import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261109_FK21_THREE_FOODS_V2';
 const { ref, reactive, computed, watch, onMounted, nextTick } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';

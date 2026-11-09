@@ -1,4 +1,4 @@
-import { officialNutritionEvidence } from './OfficialNutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
+import { officialNutritionEvidence } from './OfficialNutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
 export const nutrientKeys = ['kcal', 'protein', 'carbs', 'fat', 'sodium'];
 export const nutrientNumber = value => value === null || value === undefined || value === ''
     || typeof value === 'boolean' || !Number.isFinite(Number(value)) || Number(value) < 0 ? null : Number(value);
@@ -41,7 +41,11 @@ export function withNutritionEvidence(ingredient) {
     if (!ingredient || ingredient.nutritionEvidence) return ingredient;
     const official = officialNutritionEvidence[ingredient.id];
     if (!official) return {...ingredient,nutritionEvidence:{kind:'missing',status:'pending',note:'裝置私房食材來源待核對。'}};
-    const matches = ingredient.name === official.name && (ingredient.brand || '') === official.brand
+    // A spec-specific product (e.g. non-fried Shin Ramen) cannot be certified
+    // from an old generic record with numerically identical nutrient values.
+    // Only the canonical Supabase row carrying explicit evidence may authorize it.
+    const matches = !official.evidence.specification
+        && ingredient.name === official.name && (ingredient.brand || '') === official.brand
         && equalNutritionSnapshot(evidenceSnapshot(ingredient),official.evidence.snapshot);
     return {...ingredient, nutritionEvidence: matches ? official.evidence : {kind:'missing',status:'pending',note:'自訂值或舊快取與來源快照不同，原值保留待核對。'}};
 }

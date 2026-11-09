@@ -2409,15 +2409,15 @@ export const officialNutritionEvidence = {
           "servingUnit":"g"
         }
       ],
-      "identity": {"name":"非油炸辛拉麵（97g）","brand":"農心"},
+      "identity": {"name":"辛拉麵","brand":""},
       "snapshot": {
         "unitLabel":"g",
         "per100g":{"kcal":366,"protein":9.9,"carbs":73.8,"fat":3.5,"sodium":1939},
         "weightBasis":"dry"
       }
     },
-    "name":"非油炸辛拉麵（97g）",
-    "brand":"農心"
+    "name":"辛拉麵",
+    "brand":""
   },
   "potato_ramen": {
     "evidence": {

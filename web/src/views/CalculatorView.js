@@ -1,8 +1,8 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_THREE_FOODS_V1';
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_THREE_FOODS_V2';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
-import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V1';
+import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V1';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V2';
 
 export default {
     components: {
@@ -382,6 +382,10 @@ export default {
 
         const getIngredientName = (id) => {
             const ing = engine.getIngredientById(id);
+            // Keep the FK14 canonical identity untouched in Supabase. Reveal
+            // the authorized 97g non-fried spec only when evidence is attached.
+            if (id === 'shin_ramen' && ing?.nutritionEvidence?.specification)
+                return '非油炸辛拉麵（97g）';
             return ing ? ing.name : id;
         };
 

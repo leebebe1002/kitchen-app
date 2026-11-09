@@ -1,5 +1,5 @@
-import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V1';
-import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261109_FK21_THREE_FOODS_V1';
+import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V2';
+import { nutritionSnapshot } from './IngredientNutritionCache.js?v=20261109_FK21_THREE_FOODS_V2';
 import { normalizeIngredientName } from './IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { prepareIngredientPhotoBackup, serializeIngredientPhotos } from './IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 
