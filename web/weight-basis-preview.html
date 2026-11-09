@@ -33,7 +33,7 @@ window.fetch = (url, options = {}) => {
 };
 const [{default: Calculator}, {default: Engine}, ingredients] = await Promise.all([
     import('./src/views/CalculatorView.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1'),
-    import('./src/engine/KitchenEngine.js?v=20261109_FK14_OFFICIAL_SOURCE_RECONCILE_V1'),
+    import('./src/engine/KitchenEngine.js?v=20261109_FK14_ORPHAN_RETRY_V1'),
     fetch('../src/data/ingredients.json').then(r => r.json())
 ]);
 const engine = new Engine(); // 不呼叫 initialize 或同步。

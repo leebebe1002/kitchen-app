@@ -14,7 +14,7 @@ import {
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
 import Fk14LocalDataCoordinator from '../services/Fk14LocalDataCoordinator.js?v=20261109_FK14_OFFICIAL_SOURCE_RECONCILE_V1';
-import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
+import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_ORPHAN_RETRY_V1';
 import { recoverRecipeJournal } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
     from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';

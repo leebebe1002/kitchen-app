@@ -256,11 +256,29 @@ export class SharedRecipeCoordinator {
             const fields=[...new Set([...Object.keys(cloud),...Object.keys(recipe)])]
                 .filter(field=>!sameRecipe(cloud[field],recipe[field]));
             const blockedIds=unresolvedRecipeIngredientIds(this.engine,recipe);
+            const usageLabels={
+                recommendedProteins:'蛋白質選項',recommendedVeggies:'蔬菜選項',
+                recommendedCarbs:'主食選項',recommendedSauces:'醬料選項',
+                defaultIngredients:'預設食材'
+            };
+            const blockedContexts=blockedIds.map(ingredientId=>{
+                const fields=[];
+                for(const [key,label] of Object.entries(usageLabels)){
+                    if((recipe[key]||[]).some(item=>
+                        (typeof item==='string'?item:item?.id)===ingredientId))
+                        fields.push(label);
+                }
+                for(const [member,portions] of Object.entries(recipe.memberPortions||{})){
+                    if(Array.isArray(portions) && portions.some(item=>item?.id===ingredientId))
+                        fields.push('成員份量（'+member+'）');
+                }
+                return {id:ingredientId,fields};
+            });
             const blockedNames=blockedIds.map(ingredientId=>{
                 const food=this.engine.getIngredientById?.(ingredientId);
                 return food?.name ? food.name+'（'+ingredientId+'）':ingredientId;
             });
-            return {id,name:recipe.name,blockedIds,blockedNames,
+            return {id,name:recipe.name,blockedIds,blockedNames,blockedContexts,
                 diffs:fields.map(field=>({
                     name:labels[field] || field,
                     before:preview(cloud[field]),
@@ -309,10 +327,17 @@ export class SharedRecipeCoordinator {
                 }
             }
             const pending=Object.keys(readRecipeQueue(s).edits).length;
-            this.message=pending
-                ? pending+' 項料理仍待同步；含尚未共用的食材、版本衝突或網路失敗時會保留手機配方，其他料理可獨立同步。'
+            const legacy=this.legacyIds.length,conflicts=this.conflictIds.length;
+            const remaining=[
+                pending ? pending+' 項料理仍待同步' : '',
+                legacy ? legacy+' 項舊料理差異待補食材或核對' : '',
+                conflicts ? conflicts+' 項料理有不同雲端版本' : ''
+            ].filter(Boolean);
+            this.message=remaining.length
+                ? '料理尚未全部同步：'+remaining.join('、')
+                    +'；可能含尚未共用的食材、版本衝突或網路失敗，手機原資料保留。'
                 : '全家料理已同步 Supabase。';
-            return !deferred.length && pending===0;
+            return !deferred.length && !remaining.length;
         } finally {
             this.busy=false;
             if(this.retryLegacyAfterBusy) {

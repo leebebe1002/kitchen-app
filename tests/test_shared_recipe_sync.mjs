@@ -280,10 +280,10 @@ assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
 assert(main.includes('確認分享勾選的'));
 assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
 assert(main.includes('legacyRecipeReview.length'));
-assert(main.includes("appVersion = '2026.11.09.10'"));
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_FK14_OFFICIAL_SOURCE_RECONCILE_V1'));
+assert(main.includes("appVersion = '2026.11.09.11'"));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_FK14_ORPHAN_RETRY_V1'));
 assert(fs.readFileSync('web/src/engine/KitchenEngine.js','utf8')
-  .includes('SharedRecipeCoordinator.js?v=20261109_FK14_CUSTOM_CONFLICT_V1'));
+  .includes('SharedRecipeCoordinator.js?v=20261109_FK14_ORPHAN_RETRY_V1'));
 assert(fs.readFileSync('web/src/services/SharedRecipeCoordinator.js','utf8')
   .includes('SharedRecipeService.js?v=20261108_FK14_RECIPE_SYNC_V1'));
 console.log('PASS UI opt-in/retry and PWA singleton module version chain');

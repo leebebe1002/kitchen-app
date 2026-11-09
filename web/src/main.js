@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_OFFICIAL_SOURCE_RECONCILE_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_ORPHAN_RETRY_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261109_FK21_THREE_FOODS_V2';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.09.10';
+        const appVersion = '2026.11.09.11';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -293,7 +293,12 @@ const App = {
             const target=engine.value;
             if (!target?.recipeSync || !personalReady.value) return;
             try {
-                await target.recipeSync.sync();
+                // An offline first load can leave legacy recipe differences
+                // unstaged. sync() alone only retries the outbox; first fetch
+                // the verified current cloud and stage the eligible dishes.
+                const loaded=await target.recipeSync.load();
+                if (!loaded || target!==engine.value || !target.hasPersonalAccess()) return;
+                if (!target.recipeSync.busy) await target.recipeSync.sync();
             } catch (error) {
                 target.recipeSync.message='料理同步未完成，原資料保留：'+error.message;
             }
@@ -663,6 +668,11 @@ const App = {
                                         <strong>{{ item.name }}</strong>
                                         <small v-if="item.blockedIds.length" class="recipe-review-blocked">
                                             暫不可分享：引用尚未共用的食材 {{ item.blockedNames.join('、') }}
+                                            <span v-if="item.blockedContexts?.length" style="display:block;">
+                                                引用位置：{{ item.blockedContexts.map(ref => ref.fields.length
+                                                    ? ref.fields.join('、') + '（' + ref.id + '）'
+                                                    : '未找到欄位（' + ref.id + '）').join('；') }}
+                                            </span>
                                         </small>
                                         <small v-else>可以選擇分享，未勾選會保留在本機</small>
                                     </span>
@@ -684,7 +694,7 @@ const App = {
                         </details>
                         <button v-if="engine.recipeSync.active" class="action-sheet-row"
                             @click="retryRecipeSync" :disabled="engine.recipeSync.busy || engine.recipeSync.offline">
-                            {{ engine.recipeSync.busy ? '正在同步料理…' : '重試同步待處理料理' }}
+                            {{ engine.recipeSync.busy ? '正在同步料理…' : '重新檢查並同步料理' }}
                         </button>
                     </details>
                     <details>
