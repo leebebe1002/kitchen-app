@@ -36,10 +36,13 @@ for (const id of ['shrimp_paste','prince_noodles','bacon']) {
  assert(Object.values(item.per100g).every(n=>n===null),id);
  assert.equal(evidence[id].evidence.status,'pending');
 }
-for (const id of ['egg','century_egg','mushroom_meatball','egg_dumpling','taro_meatball','potato_ramen']) {
+for (const id of ['century_egg','mushroom_meatball','egg_dumpling','taro_meatball','potato_ramen']) {
  assert(!['g','ml'].includes(find(current,id).unitLabel),id);
  assert.equal(evidence[id].evidence.status,'pending');
 }
+assert.equal(evidence.egg.evidence.status,'estimated');
+assert.equal(evidence.egg.evidence.sources[0].ref,'TFDA:K01001');
+assert.equal(evidence.egg.evidence.snapshot.gramsPerUnit,50);
 const report=JSON.parse(fs.readFileSync('docs/audits/nutrition-2026-11-05.json'));
 assert.deepEqual(report.counts,{pending:48,estimated:52,verified:1});
 assert.equal(report.catalogSize,101);
@@ -49,7 +52,13 @@ for (const i of rows(current)) {
  assert(ev, i.id);
  assert.equal(ev.identity.name,i.name,i.id);
  assert.equal(ev.identity.brand,i.brand||'',i.id);
- assert.deepEqual(JSON.parse(JSON.stringify(ev.snapshot)),JSON.parse(JSON.stringify(evidenceSnapshot(i))),i.id);
+ if(i.id==='egg') {
+   // The historical GitHub bootstrap snapshot must remain unchanged. Only the
+   // latest Supabase authority may receive the new egg estimate, after approval.
+   assert.notDeepEqual(JSON.parse(JSON.stringify(ev.snapshot)),JSON.parse(JSON.stringify(evidenceSnapshot(i))));
+ } else {
+   assert.deepEqual(JSON.parse(JSON.stringify(ev.snapshot)),JSON.parse(JSON.stringify(evidenceSnapshot(i))),i.id);
+ }
  if (ev.status==='estimated') {
    assert.equal(ev.kind,'database');
    assert(ev.sources?.length,i.id);

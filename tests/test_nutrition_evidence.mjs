@@ -27,7 +27,13 @@ for (const row of audit.ingredients) assert.equal(report.ingredients.find(i=>i.i
 const engine = Vue.reactive(new Engine());engine.data.ingredients=structuredClone(catalog);
 for (const item of catalog) {
  const loaded=engine.getIngredientById(item.id);
- assert.deepEqual(JSON.parse(JSON.stringify(loaded.nutritionEvidence)),officialNutritionEvidence[item.id].evidence);
+ if (item.id === 'egg') {
+  // Offline historical bootstrap still carries the previous count values.
+  // It cannot silently inherit the new TFDA estimate before Supabase is updated.
+  assert.equal(loaded.nutritionEvidence.status,'pending');
+ } else {
+  assert.deepEqual(JSON.parse(JSON.stringify(loaded.nutritionEvidence)),officialNutritionEvidence[item.id].evidence);
+ }
  if (loaded.nutritionEvidence.status==='estimated') {
   assert.equal(loaded.nutritionEvidence.kind,'database');assert(loaded.nutritionEvidence.sources.length);
  }

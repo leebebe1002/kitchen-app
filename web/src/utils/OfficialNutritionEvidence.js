@@ -187,12 +187,30 @@ export const officialNutritionEvidence = {
   },
   "egg": {
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
-      "weightBasis": "unknown",
-      "note": "既有每顆值保留；蛋種、大小及單顆去殼重量未記錄，不能把每 100 g 當一顆。",
-      "sources": [],
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-09",
+      "weightBasis": "raw",
+      "note": "一般雞蛋平均值；每顆預設為去殼可食部 50 g，並非實測蛋重。保留顆數，標示估算。",
+      "sources": [
+        {
+          "ref": "TFDA:K01001",
+          "title": "雞蛋平均值",
+          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
+          "dataset": "TFDA_20",
+          "recordId": "K01001",
+          "checkedAt": "2026-11-09",
+          "basis": "生、去殼可食部每 100 g；每顆可食部 50 g 為 FK 通用估算基準",
+          "nutrients": {
+            "kcal": 135,
+            "protein": 12.7,
+            "carbs": 1.6,
+            "fat": 8.9,
+            "sodium": 138
+          }
+        }
+      ],
       "identity": {
         "name": "蛋",
         "brand": ""
@@ -200,13 +218,22 @@ export const officialNutritionEvidence = {
       "snapshot": {
         "unitLabel": "顆",
         "isCount": true,
+        "per100g": {
+          "kcal": 135,
+          "protein": 12.7,
+          "carbs": 1.6,
+          "fat": 8.9,
+          "sodium": 138
+        },
         "perUnit": {
-          "kcal": 85,
-          "protein": 6.5,
-          "carbs": 0.6,
-          "fat": 6.2,
-          "sodium": 70
-        }
+          "kcal": 67.5,
+          "protein": 6.35,
+          "carbs": 0.8,
+          "fat": 4.45,
+          "sodium": 69
+        },
+        "gramsPerUnit": 50,
+        "weightBasis": "raw"
       }
     },
     "name": "蛋",
