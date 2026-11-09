@@ -31,7 +31,8 @@ export function unresolvedRecipeIngredientIds(engine,recipe) {
             if (typeof item?.id==='string' && item.id) ids.add(item.id);
         }
     }
-    return [...ids].filter(id=>!known.has(id));
+    return [...ids].filter(id=>!known.has(id)
+        && !engine.sharedCustomCatalogRows?.has(id));
 }
 
 function sessionUserId(auth) {
@@ -57,6 +58,8 @@ export class SharedRecipeCoordinator {
         this.legacyIds=[];
         this.conflictIds=[];
         this.message='';
+        this.loadPromise=null;
+        this.retryLegacyAfterBusy=false;
     }
 
     reset() {
@@ -68,6 +71,8 @@ export class SharedRecipeCoordinator {
         this.legacyIds=[];
         this.conflictIds=[];
         this.message='';
+        this.loadPromise=null;
+        this.retryLegacyAfterBusy=false;
     }
 
     isCurrent(context,generation,owner) {
@@ -78,6 +83,14 @@ export class SharedRecipeCoordinator {
     }
 
     async load() {
+        if(this.loadPromise)return this.loadPromise;
+        const pending=this.loadInternal();
+        this.loadPromise=pending;
+        try{return await pending;}
+        finally{if(this.loadPromise===pending)this.loadPromise=null;}
+    }
+
+    async loadInternal() {
         const e=this.engine,storage=this.storage;
         if (!Array.isArray(e.recipeStaticBaseline) || !e.recipeStaticBaseline.length) {
             this.message='歷史料理母庫尚未完整載入，保留手機料理與備份，不進行同步。';
@@ -164,6 +177,34 @@ export class SharedRecipeCoordinator {
                     : '離線使用已驗證的雲端料理快取；'+pending+' 項待同步。';
             if (fromServer && !merged.conflictIds.length && pending)
                 this.sync().catch(error=>console.warn('Recipe sync:',error.message));
+            // FK #14 product rule: verified, unconflicted historic phone edits
+            // must be backed by Supabase automatically, NOT parked forever on
+            // one phone. Only allow a new recipe or unchanged rev-1 seed; never
+            // replace another device's published modification.
+            if (fromServer && merged.legacyIds.length) {
+                const safeIds=merged.legacyIds.filter(id=>{
+                    const recipe=merged.recipes.find(item=>item.id===id);
+                    const row=this.rows.get(id);
+                    const baseline=e.recipeStaticBaseline.find(item=>item.id===id);
+                    if(!recipe || unresolvedRecipeIngredientIds(e,recipe).length) return false;
+                    return !row || (row.revision===1 && baseline
+                        && sameRecipe(row.recipe,baseline));
+                });
+                if(safeIds.length && this.busy) {
+                    // Another batch may still be publishing the first safe
+                    // seven dishes. Re-check after it finishes, not forever
+                    // leave the remaining resolved recipes as phone-only.
+                    this.retryLegacyAfterBusy=true;
+                } else if(safeIds.length) {
+                    try {
+                        await this.approveLegacy(safeIds);
+                        this.message=safeIds.length+' 項已確認版本安全的舊料理自動排入同步；'
+                            +this.legacyIds.length+' 項仍待補食材或解決衝突。';
+                    }catch(error){
+                        this.message='舊料理尚未自動完成上雲，原本資料保留：'+error.message;
+                    }
+                }
+            }
             return true;
         } catch (error) {
             this.active=false;
@@ -272,7 +313,14 @@ export class SharedRecipeCoordinator {
                 ? pending+' 項料理仍待同步；含尚未共用的食材、版本衝突或網路失敗時會保留手機配方，其他料理可獨立同步。'
                 : '全家料理已同步 Supabase。';
             return !deferred.length && pending===0;
-        } finally { this.busy=false; }
+        } finally {
+            this.busy=false;
+            if(this.retryLegacyAfterBusy) {
+                this.retryLegacyAfterBusy=false;
+                Promise.resolve(this.loadPromise).then(()=>this.load())
+                    .catch(error=>console.warn('Recipe legacy retry deferred:',error.message));
+            }
+        }
     }
 
     async approveLegacy(selectedIds) {

@@ -13,7 +13,8 @@ import {
 } from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
-import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_RECIPE_REVIEW_V1';
+import Fk14LocalDataCoordinator from '../services/Fk14LocalDataCoordinator.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
+import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
 import { recoverRecipeJournal } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
     from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
@@ -68,6 +69,10 @@ export default class KitchenEngine {
         this.officialCatalogSyncing = false;
         this.recipeStaticBaseline = [];
         this.recipeSync = new SharedRecipeCoordinator(this);
+        this.sharedCustomCatalogRows = new Map();
+        this.customIngredientSync = new Fk14LocalDataCoordinator(this,{kind:'custom'});
+        this.favoriteFoodSync = new Fk14LocalDataCoordinator(this,{kind:'favorite'});
+
 
 
         this.officialIngredientById = new Map();
@@ -155,6 +160,9 @@ export default class KitchenEngine {
         await hydrateIngredientPhotos(this.data.rawIngredients, this.ingredientPhotoStore, { allowMissing: true });
         await this.loadOfficialIngredientCatalog();
         await this.loadSharedIngredientNutrition();
+        // Verified Scope precedes EVERY cloud custom merge. Shared custom food
+        // IDs must exist before any recipe referencing them may be published.
+        await this.customIngredientSync.load();
         await this.recipeSync.load();
 
         // 2. 攤平食材列表並正規化舊版通路名稱
@@ -179,6 +187,7 @@ export default class KitchenEngine {
         
         // 4. 常用料理
         this.data.favoriteFoods = this.data.rawFavoriteFoods?.favorites || [];
+        await this.favoriteFoodSync.load();
         
         // 5. 初始化庫存保護結構 (確保所有食材皆有狀態，且預設保留使用者打勾)
         if (!this.data.pantryInventory.foodStockStatus) this.data.pantryInventory.foodStockStatus = {};
@@ -216,6 +225,9 @@ export default class KitchenEngine {
         this.officialCatalogOwner = null;
         this.officialCatalogRows.clear();
         this.recipeSync.reset();
+        this.customIngredientSync.reset();
+        this.favoriteFoodSync.reset();
+        this.sharedCustomCatalogRows.clear();
         this.personalScope = null;
         this.personalRevision = null;
         this.personalContext = null;
@@ -1241,6 +1253,8 @@ export default class KitchenEngine {
 
         // Recipe edits are globally shared and journaled separately from Pantry.
         if (filename === 'dishes.json') return this.recipeSync.save(dataObj);
+        if (filename === 'favorite_foods.json')
+            return this.favoriteFoodSync.saveLocal(dataObj?.favorites);
 
         // 1. 本地即時存檔 (0 秒離線優先)
         this.safeSetLocalStorage(localKey, dataObj);
@@ -1511,6 +1525,7 @@ export default class KitchenEngine {
             }
             this.data.rawIngredients = nextRaw;
             this.data.ingredients = [...this.data.ingredients.filter(item => item.id !== replaceId), ingData];
+            this.customIngredientSync.noteSavedItem(ingData);
             return ingData;
         }
 
@@ -1566,6 +1581,10 @@ export default class KitchenEngine {
             customList.push(ingData);
             this.safeSetLocalStorage(customKey, customList);
         } catch (e) {}
+        // Uses the established saveIngredient duplicate / photo guards.
+        // In the absence of verified cloud ownership, the next login discovers
+        // this local record and stages it, without losing its existing ID.
+        this.customIngredientSync.noteSavedItem(ingData);
         return ingData;
     }
 

@@ -56,38 +56,37 @@ const service={
 };
 const coordinator=new SharedRecipeCoordinator(engine,{service,storage});
 assert(await coordinator.load());
-assert.equal(coordinator.legacyIds.length,9,'The real screenshot case should show nine legacy differences');
-assert.equal(calls.length,0,'No phone recipes auto-upload before user opt-in');
+for(let i=0;i<25 && Object.keys(readRecipeQueue(storage).edits).length;i++)
+    await new Promise(r=>setTimeout(r,0));
+assert.equal(coordinator.legacyIds.length,2,'After safe auto-sync, two private-food recipes remain');
+assert.equal(calls.length,7,'Seven verified rev-1 recipes are automatically backed up');
 assert.equal(storage.getItem(RECIPE_PRE_CUTOVER_BACKUP_KEY),cache);
 assert.equal(storage.getItem('kitchen_v2_personal_state_household'),beforeSupplies);
 
 const review=coordinator.reviewLegacy();
-assert.equal(review.length,9);
+assert.equal(review.length,2);
 assert.equal(review.filter(item=>item.blockedIds.length).length,2);
-assert.equal(review.filter(item=>!item.blockedIds.length).length,7);
+assert.equal(review.filter(item=>!item.blockedIds.length).length,0);
 assert.equal(review[0].name,source[0].name);
 assert(review[0].blockedNames[0].includes('手機私房甲'));
 assert(review[1].blockedNames[0].includes('手機私房乙'));
 assert(review[0].diffs.some(field=>field.name==='預設食材'));
 assert(review[0].diffs.some(field=>field.name==='料理步驟'));
-assert(review[2].diffs.some(field=>field.name==='料理步驟'));
-assert.equal(calls.length,0);
+assert.equal(calls.length,7);
 assert.equal(storage.getItem(RECIPE_CACHE_KEY),JSON.stringify({dishes:local}));
-console.log('PASS screenshot: nine real local-vs-cloud changes, two blocked recipes displayed by name and ingredient');
+console.log('PASS screenshot recovery: seven independent safe recipes auto synced, two blocked visible by name');
 
 await assert.rejects(()=>coordinator.approveLegacy(),/先從待確認清單選擇/);
 await assert.rejects(()=>coordinator.approveLegacy([source[0].id]),/尚未跨手機同步/);
 await assert.rejects(()=>coordinator.approveLegacy([source[2].id,source[2].id]),/選擇要分享/);
 await assert.rejects(()=>coordinator.approveLegacy(['wrong-id']),/選擇要分享/);
-assert.equal(calls.length,0);
-assert.equal(readRecipeQueue(storage).owner,null);
-console.log('PASS no implicit all-nine share, blocked ID and invalid selection cannot publish');
+assert.equal(calls.length,7);
+assert.equal(readRecipeQueue(storage).owner,owner);
+console.log('PASS blocked ID and invalid selection cannot publish');
 
-const eligible=review.filter(item=>!item.blockedIds.length).map(item=>item.id);
-assert.equal(await coordinator.approveLegacy(eligible),7);
-for(let i=0;i<25 && Object.keys(readRecipeQueue(storage).edits).length;i++)
-    await new Promise(r=>setTimeout(r,0));
-assert.equal(calls.length,7,'Only individually selected safe recipes were published');
+const eligible=source.slice(2,9).map(item=>item.id);
+await assert.rejects(()=>coordinator.approveLegacy(eligible),/先從待確認清單選擇/);
+assert.equal(calls.length,7,'Only verified unchanged-seed recipes were automatically published');
 assert.equal(coordinator.legacyIds.length,2,'Both unshared phone recipes remain reviewable');
 assert.equal(coordinator.reviewLegacy().filter(x=>x.blockedIds.length).length,2);
 assert.equal(Object.keys(readRecipeQueue(storage).edits).length,0);
@@ -95,7 +94,7 @@ assert.equal(storage.getItem('kitchen_v2_personal_state_household'),beforeSuppli
 assert.deepEqual(engine.data.rawDishes.dishes.find(x=>x.id===source[0].id),local[0]);
 assert.equal(server.find(x=>x.recipe_id===source[0].id).revision,1);
 assert.equal(server.find(x=>x.recipe_id===source[2].id).revision,2);
-console.log('PASS opt-in 7 safe recipes sync; 2 private-food recipes and Pantry stay local unchanged');
+console.log('PASS seven auto-sync safe recipes; two private-food recipes and Pantry remain unchanged');
 
 // A previously queued private-food recipe must no longer hold up a later
 // approved safe recipe. Every recipe ID has an independent result.
@@ -145,7 +144,7 @@ assert(main.includes('legacyRecipeReview'));
 assert(main.includes('v-model="selectedLegacyRecipeIds"'));
 assert(main.includes('approveLegacy(chosen)'));
 assert(main.includes('item.blockedIds.length'));
-assert(main.includes("appVersion = '2026.11.09.4'"));
+assert(main.includes("appVersion = '2026.11.09.5'"));
 assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
 assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
 console.log('PASS actual Vue selection UI requires explicit choice and shows safe vs blocked recipes');

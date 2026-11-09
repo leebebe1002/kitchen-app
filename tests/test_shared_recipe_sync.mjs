@@ -147,17 +147,14 @@ const e={
  recipeStaticBaseline:clone(base), data:{rawDishes:{dishes:[...base,custom]},dishes:[]}
 };
 const coordinator=realVue.reactive(new SharedRecipeCoordinator(e,{service,storage:persistent}));
-const loaded=await coordinator.load();assert(loaded);
-assert(coordinator.legacyIds.includes(custom.id));
-assert.equal(remote.length,base.length,'old local recipe must never be uploaded without approval');
 const protectedPersonal=JSON.stringify({shoppingList:[{targetId:'egg'}],foodCart:['fresh']});
 persistent.setItem('kitchen_v2_personal_state_household',protectedPersonal);
 persistent.setItem('kitchen_v2_personal_state_ariel',JSON.stringify({shoppingList:[]}));
-const approvedCount=await coordinator.approveLegacy([custom.id]);
-assert.equal(approvedCount,1);
+const loaded=await coordinator.load();assert(loaded);
 for(let i=0;i<12 && Object.keys(readRecipeQueue(persistent).edits).length;i++)
  await new Promise(resolve=>setTimeout(resolve,0));
-assert.equal(remote.length,base.length+1,'approved device recipe should enter cloud');
+assert.equal(coordinator.legacyIds.length,0);
+assert.equal(remote.length,base.length+1,'verified unconflicted local recipe should automatically sync');
 assert.equal(Object.keys(readRecipeQueue(persistent).edits).length,0);
 assert.equal(persistent.getItem('kitchen_v2_personal_state_household'),protectedPersonal);
 const freshStore=store();
@@ -172,7 +169,7 @@ const secondCoordinator=new SharedRecipeCoordinator(secondDevice,{service,storag
 assert(await secondCoordinator.load());
 assert(secondDevice.data.rawDishes.dishes.some(x=>x.id===custom.id));
 assert.equal(secondCoordinator.legacyIds.length,0);
-console.log('PASS 2-device shared custom recipe: safe opt-in local -> cloud -> other device; Pantry untouched');
+console.log('PASS 2-device shared custom recipe: automatic verified local -> cloud -> other device; Pantry untouched');
 
 const edited=clone(custom);edited.name+=' 新版本';
 e.data.rawDishes.dishes[e.data.rawDishes.dishes.findIndex(x=>x.id===custom.id)]=edited;
@@ -283,10 +280,10 @@ assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
 assert(main.includes('確認分享勾選的'));
 assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
 assert(main.includes('legacyRecipeReview.length'));
-assert(main.includes("appVersion = '2026.11.09.4'"));
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_ZERO_PORTIONS_V1'));
+assert(main.includes("appVersion = '2026.11.09.5'"));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_FK14_ALL_DATA_SYNC_V1'));
 assert(fs.readFileSync('web/src/engine/KitchenEngine.js','utf8')
-  .includes('SharedRecipeCoordinator.js?v=20261109_FK14_RECIPE_REVIEW_V1'));
+  .includes('SharedRecipeCoordinator.js?v=20261109_FK14_ALL_DATA_SYNC_V1'));
 assert(fs.readFileSync('web/src/services/SharedRecipeCoordinator.js','utf8')
   .includes('SharedRecipeService.js?v=20261108_FK14_RECIPE_SYNC_V1'));
 console.log('PASS UI opt-in/retry and PWA singleton module version chain');

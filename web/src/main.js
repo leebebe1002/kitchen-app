@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_RECIPE_REVIEW_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261109_ZERO_PORTIONS_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.09.4';
+        const appVersion = '2026.11.09.5';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -630,6 +630,12 @@ const App = {
                         <summary class="account-email-label">共用料理同步</summary>
                         <p class="account-copy">你在手機新增或修改的料理可與家人使用同一份配方；不會同步個人庫存、採買或家用品。原本手機的舊配方先保留，確認後才分享。</p>
                         <p class="account-message" role="status">{{ engine.recipeSync.message }}</p>
+                        <p v-if="engine.customIngredientSync" class="account-copy" role="status">
+                            私房食材：{{ engine.customIngredientSync.message }}
+                        </p>
+                        <p v-if="engine.favoriteFoodSync" class="account-copy" role="status">
+                            常用餐點：{{ engine.favoriteFoodSync.message }}
+                        </p>
                         <details v-if="legacyRecipeReview.length" class="recipe-review-panel">
                             <summary>檢視與選擇 {{ legacyRecipeReview.length }} 項手機料理差異</summary>
                             <div class="recipe-review-list">
