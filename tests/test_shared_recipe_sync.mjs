@@ -283,8 +283,8 @@ assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
 assert(main.includes('確認分享勾選的'));
 assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
 assert(main.includes('legacyRecipeReview.length'));
-assert(main.includes("appVersion = '2026.11.09.2'"));
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_SIMPLE_CALC_V1'));
+assert(main.includes("appVersion = '2026.11.09.3'"));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_CALC_SCROLL_V1'));
 assert(fs.readFileSync('web/src/engine/KitchenEngine.js','utf8')
   .includes('SharedRecipeCoordinator.js?v=20261109_FK14_RECIPE_REVIEW_V1'));
 assert(fs.readFileSync('web/src/services/SharedRecipeCoordinator.js','utf8')

@@ -56,6 +56,31 @@ async function check(name, fn) { await fn(); passes++; info(`PASS ${name}`); }
 await check('model policy, 12s request / 20s total', async () => {
     assert.equal(CHEF_MODELS.length, 2); assert.equal(CHEF_TOTAL_MS, 20000); assert.equal(CHEF_REQUEST_MS, 12000);
 });
+await check('calculate tap reveals the whiteboard and missing ingredients get a visible explanation', async () => {
+    const { view, close } = await mount();
+    const oldGetElementById = document.getElementById;
+    const scrolled = [];
+    document.getElementById = id => id === 'portions-section'
+        ? { scrollIntoView: options => scrolled.push(options) } : null;
+    try {
+        globalThis.fetch = async () => http(429);
+        await view.calculate();
+        await nextTick();
+        assert.equal(view.isCalculated.value, true);
+        assert.equal(scrolled.length, 1, 'The user should be scrolled to the results');
+        assert.equal(scrolled[0].behavior, 'smooth');
+        assert.equal(scrolled[0].block, 'start');
+        view.selectedMasterIngredients.value = [];
+        await nextTick();
+        await view.calculate();
+        assert.match(view.calculationNotice.value, /請先勾選有庫存的食材/);
+        assert.equal(scrolled.length, 1, 'Do not scroll to empty results');
+    } finally {
+        document.getElementById = oldGetElementById;
+        close();
+    }
+});
+
 await check('primary success, three members, immediate local result, memory wins, canonical nutrition', async () => {
     const { view, engine, close } = await mount();
     view.diners.value = { bebe: true, ariel: true, jason: true };

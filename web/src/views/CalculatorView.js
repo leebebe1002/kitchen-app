@@ -98,6 +98,7 @@ export default {
         const hideOutOfStock = ref(false);
         const isCalculated = ref(false);
         const isResultStale = ref(false);
+        const calculationNotice = ref('');
         
         // Record Success Modal State
         const showRecordSuccessModal = ref(false);
@@ -1030,8 +1031,28 @@ export default {
             return engine.getMemberStatusColor(member, getMemberNutrition(member));
         };
 
+        const revealPortions = () => {
+            // Vue needs one render tick to mount the result after isCalculated becomes true.
+            // Without scrolling, the result appears below the current iPhone viewport and
+            // the calculation button seems unresponsive.
+            Vue.nextTick(() => {
+                document.getElementById?.('portions-section')?.scrollIntoView?.({
+                    behavior: 'smooth', block: 'start'
+                });
+            });
+        };
+
         const calculate = async () => {
-            if (isAiChefLoading.value || activeMembers.value.length === 0) return;
+            if (isAiChefLoading.value) return;
+            if (activeMembers.value.length === 0) {
+                calculationNotice.value = '請先選擇用餐成員。';
+                return;
+            }
+            if (!selectedMasterIngredients.value.some(id => checkStock(id))) {
+                calculationNotice.value = '請先勾選有庫存的食材，再按計算。';
+                return;
+            }
+            calculationNotice.value = '';
             const started = performance.now();
             activeMembers.value.forEach(m => {
                 autoBalanceMemberPortions(m);
@@ -1040,6 +1061,7 @@ export default {
             refreshAllPortionStates();
             isResultStale.value = false;
             isCalculated.value = true;
+            revealPortions();
             logChefTiming({ phase: 'local', durationMs: Math.round(performance.now() - started) });
             if (activeMembers.value.some(member => engine.getNutritionIssues(getMemberActiveIngredients(member).map(item => ({...item,amount:Math.max(1,Number(item.amount))}))).length)) {
                 aiChefAdvice.value = { source: 'local', portions: {}, chefComment: '營養資料待確認，已保留備料份量。' };
@@ -1483,6 +1505,7 @@ export default {
 
         return {
             useHistoricalPortions, hasHistoricalPortions, selectedMasterIngredients,
+            calculationNotice,
             engine,
             selectedDish,
             memberIngredients,
@@ -1788,7 +1811,9 @@ export default {
 
                 <!-- 計算操作橫列 (右側正圓計算按鈕，原全域雙切已融入成員膠囊) -->
                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 24px;">
-                    <button class="btn-icon" @click="calculate" :disabled="isAiChefLoading" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
+                    <span v-if="calculationNotice" role="status" style="font-size:0.8rem;color:#92400E;">{{ calculationNotice }}</span>
+                    <span v-else-if="isAiChefLoading" role="status" style="font-size:0.8rem;color:var(--color-text-muted);">AI 建議計算中…</span>
+                    <button class="btn-icon" @click="calculate" :disabled="isAiChefLoading" aria-label="進行備料計算" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="4" y="2" width="16" height="20" rx="2"></rect>
                             <line x1="8" y1="6" x2="16" y2="6"></line>
@@ -1807,7 +1832,7 @@ export default {
 
             <div v-if="selectedDish && isCalculated" style="position: relative; padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));">
                 <!-- 03 PORTIONS -->
-                <div id="portions-section" class="section-title">03 PORTIONS 全家備料大白板</div>
+                <div id="portions-section" class="section-title" style="scroll-margin-top: 84px;">03 PORTIONS 全家備料大白板</div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">

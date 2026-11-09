@@ -145,7 +145,7 @@ assert(main.includes('legacyRecipeReview'));
 assert(main.includes('v-model="selectedLegacyRecipeIds"'));
 assert(main.includes('approveLegacy(chosen)'));
 assert(main.includes('item.blockedIds.length'));
-assert(main.includes("appVersion = '2026.11.09.2'"));
+assert(main.includes("appVersion = '2026.11.09.3'"));
 assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
 assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
 console.log('PASS actual Vue selection UI requires explicit choice and shows safe vs blocked recipes');
