@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_ORPHAN_RETRY_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_APPROVED_ORPHAN_CLEANUP_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261109_FK21_THREE_FOODS_V2';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.09.11';
+        const appVersion = '2026.11.09.12';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -635,6 +635,10 @@ const App = {
                         <summary class="account-email-label">共用料理同步</summary>
                         <p class="account-copy">你在手機新增或修改的料理可與家人使用同一份配方；不會同步個人庫存、採買或家用品。原本手機的舊配方先保留，確認後才分享。</p>
                         <p class="account-message" role="status">{{ engine.recipeSync.message }}</p>
+                        <p v-if="engine.recipeSync.approvedOrphanRepairMessage"
+                           class="account-copy" role="status">
+                            指定失效食材清理：{{ engine.recipeSync.approvedOrphanRepairMessage }}
+                        </p>
                         <p v-if="engine.customIngredientSync" class="account-copy" role="status">
                             私房食材：{{ engine.customIngredientSync.message }}
                         </p>

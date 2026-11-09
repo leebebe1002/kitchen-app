@@ -4,7 +4,10 @@
  */
 import sharedRecipeService, { validateRecipe } from './SharedRecipeService.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import {
-    RECIPE_CACHE_KEY, RECIPE_PRE_CUTOVER_BACKUP_KEY, readRecipeQueue,
+    removeOnlyApprovedOrphanReferences, backupApprovedOrphanRecipeReferences
+} from '../utils/Fk14ApprovedOrphanRecipeCleanup.js?v=20261109_FK14_APPROVED_ORPHAN_CLEANUP_V1';
+import {
+    RECIPE_CACHE_KEY, RECIPE_PENDING_KEY, RECIPE_PRE_CUTOVER_BACKUP_KEY, readRecipeQueue,
     readRecipeSnapshot, writeRecipeSnapshot, queueRecipeEdits, commitRecipeEdit,
     reconcileRecipes, reconcileRecipeAcknowledgements, acknowledgeRecipeEdit, sameRecipe
 } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
@@ -60,6 +63,7 @@ export class SharedRecipeCoordinator {
         this.message='';
         this.loadPromise=null;
         this.retryLegacyAfterBusy=false;
+        this.approvedOrphanRepairMessage='';
     }
 
     reset() {
@@ -73,6 +77,7 @@ export class SharedRecipeCoordinator {
         this.message='';
         this.loadPromise=null;
         this.retryLegacyAfterBusy=false;
+        this.approvedOrphanRepairMessage='';
     }
 
     isCurrent(context,generation,owner) {
@@ -167,11 +172,21 @@ export class SharedRecipeCoordinator {
             this.owner=owner;
             this.legacyIds=merged.legacyIds;
             this.conflictIds=merged.conflictIds;
+            // This explicitly approved two-ID repair applies only to Bebe's
+            // verified phone drafts, with a write-ahead backup. A failure
+            // cannot block the normal cloud catalog from remaining usable.
+            if(fromServer) {
+                try {await this.applyApprovedOrphanRecipeCleanup({beforeCache:old});}
+                catch (error) {
+                    this.approvedOrphanRepairMessage=
+                        '失效食材引用尚未移除，原料理保留：'+error.message;
+                }
+            }
             const pending=Object.keys(readRecipeQueue(storage).edits).length;
-            this.message=merged.conflictIds.length
-                ? '有 '+merged.conflictIds.length+' 項料理版本衝突，本機修改未覆寫雲端。'
-                : merged.legacyIds.length
-                  ? '已讀取全家料理；手機有 '+merged.legacyIds.length+' 項舊料理修改，請確認是否共享。'
+            this.message=this.conflictIds.length
+                ? '有 '+this.conflictIds.length+' 項料理版本衝突，本機修改未覆寫雲端。'
+                : this.legacyIds.length
+                  ? '已讀取全家料理；手機有 '+this.legacyIds.length+' 項舊料理修改，請確認是否共享。'
                   : fromServer
                     ? 'Supabase 全家料理已載入；'+pending+' 項待同步。'
                     : '離線使用已驗證的雲端料理快取；'+pending+' 項待同步。';
@@ -211,6 +226,57 @@ export class SharedRecipeCoordinator {
             this.message='料理雲端載入未完成，手機資料保留：'+error.message;
             return false;
         }
+    }
+
+    /**
+     * Bebe expressly authorized removing only two orphan ingredient IDs from
+     * brunch_set / pasta_meal. Nothing is removed from the global ingredient
+     * catalog, other recipes, or private scope data. We can only safely write
+     * after a fresh Supabase read, confirmed Bebe identity, rev-1 untouched
+     * cloud recipe and immutable local backup. Every write uses the existing
+     * atomic recipe journal and CAS publisher.
+     */
+    async applyApprovedOrphanRecipeCleanup({beforeCache=null}={}) {
+        const e=this.engine,s=this.storage,context=e.personalContext;
+        if(!this.active || this.offline || this.busy || !e.hasPersonalAccess()
+            || e.personalScope!=='household'
+            || e.mealAccess?.member!=='bebe'
+            || e.mealAccess?.identity!==context
+            || this.owner!==context?.userId) return 0;
+        const original=e.data.rawDishes?.dishes;
+        if(!Array.isArray(original)) return 0;
+        const draft=removeOnlyApprovedOrphanReferences(original);
+        const safeChanges=draft.changed.filter(({id})=>{
+            const row=this.rows.get(id);
+            const baseline=e.recipeStaticBaseline.find(item=>item.id===id);
+            return row && baseline && row.revision===1
+                && sameRecipe(row.recipe,baseline) && !this.conflictIds.includes(id);
+        });
+        if(!safeChanges.length) return 0;
+        const ids=new Set(safeChanges.map(x=>x.id));
+        const repaired=original.map(recipe=>
+            ids.has(recipe.id) ? draft.recipes.find(next=>next.id===recipe.id) : recipe);
+        const queue=readRecipeQueue(s);
+        if(queue.owner && queue.owner!==this.owner)
+            throw Error('此裝置保有其他登入者的料理修改，不執行失效引用清理。');
+        // Ensure the original data is durably recoverable before any write.
+        const expectedCache=s.getItem(RECIPE_CACHE_KEY);
+        // Preserve original variants of BOTH authorized recipes even when
+        // another device's newer version allows repairing only one today.
+        backupApprovedOrphanRecipeReferences(s,this.owner,draft.changed,{
+            beforeCache:beforeCache ?? expectedCache,
+            beforeQueue:s.getItem(RECIPE_PENDING_KEY)
+        });
+        if(!this.isCurrent(context,e.personalScopeGeneration,this.owner)
+            || s.getItem(RECIPE_CACHE_KEY)!==expectedCache)
+            throw Error('料理快取或登入狀態已改變，修復暫停；原資料備份保留。');
+        const nextData={...e.data.rawDishes,dishes:repaired};
+        await this.save(nextData);
+        const entries=safeChanges.map(x=>x.id).sort();
+        this.approvedOrphanRepairMessage='已備份並移除 '
+            +entries.length+' 道料理的指定失效食材引用；已排入安全版本同步。'
+            +' 原手機食材、其他料理及庫存未改動。';
+        return entries.length;
     }
 
     /**
