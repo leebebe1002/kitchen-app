@@ -50,7 +50,12 @@ export function validateMealLimits(engine, portions, contexts) {
         if (items.some(item => context.excludedIds.includes(item.id) && item.amount > 0)) throw new Error('AI 建議含禁用食材，已保留原份量。');
         const totals = engine.calculateNutritionForMember(items, context.member);
         for (const key of ['kcal','carbs','fat','sodium']) {
-            if (!Number.isFinite(totals[key]) || totals[key] > context.mealBudget[key] + 0.1) throw new Error('AI 建議超出本餐額度，已保留原份量。');
+            if (!Number.isFinite(totals[key]) || totals[key] > context.mealBudget[key] + 0.1) {
+                const error = new Error('AI 建議超出本餐額度，未採用原建議。');
+                error.code = 'limits';
+                error.nutrient = key;
+                throw error;
+            }
         }
     }
 }

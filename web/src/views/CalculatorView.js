@@ -1,4 +1,5 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_THREE_FOODS_V2';
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
+import { planLocalPortions } from '../services/LocalPortionPlanner.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
@@ -1100,7 +1101,7 @@ export default {
 
         const cancelChefRequest = () => {
             if (!activeChefRequest) {
-                if (aiChefAdvice.value?.source === 'ai') {
+                if (['ai', 'estimate'].includes(aiChefAdvice.value?.source)) {
                     aiChefAdvice.value = {source:'local',portions:{},chefComment:'資料或份量已調整，請重新計算以取得新的 AI 建議；手動份量仍保留。'};
                     showChefNote.value = true;
                 }
@@ -1149,6 +1150,33 @@ export default {
             if (key) await calculate();
         };
 
+        const applyPortionValues = (portions) => {
+            for (const [member, items] of Object.entries(portions)) {
+                const current = memberIngredients.value[member];
+                if (!Array.isArray(current)) continue;
+                for (const item of items) {
+                    const target = current.find(i => i.id === item.id);
+                    if (!target) continue;
+                    target.amount = item.amount;
+                    target.unit = item.unit;
+                }
+            }
+            refreshAllPortionStates();
+        };
+
+        const applyLocalEstimate = (expected, contexts, reason) => {
+            const estimate = planLocalPortions(engine, expected, contexts);
+            if (!estimate) return false;
+            activeChefRequest = null; // Do not cancel our own reactive writes.
+            applyPortionValues(estimate.portions);
+            aiChefAdvice.value = {
+                source: 'estimate', portions: estimate.portions, errReason: reason,
+                chefComment: reason + '。FK 已依食材營養與當日剩餘額度產生本機估算份量（非 Gemini 建議）。請核對實際食用份量與調味料；蛋白質不保證達標。'
+            };
+            showChefNote.value = true;
+            return true;
+        };
+
         const callAiChefAdvisor = async (started = performance.now()) => {
             if (isAiChefLoading.value || activeMembers.value.length === 0) return false;
             const request = { controller: new AbortController(), scope: engine.personalScope };
@@ -1157,6 +1185,7 @@ export default {
                 [m, getMemberActiveIngredients(m).map(i => ({ ...i }))]));
             isAiChefLoading.value = true;
             aiChefAdvice.value = null;
+            let contexts = null;
 
             try {
                 const prepareStarted = performance.now();
@@ -1174,17 +1203,18 @@ export default {
                     apiKey = engine.data.config.geminiApiKey || engine.data.config.gemini_api_key || '';
                 }
                 
+                contexts = activeMembers.value.map(member => getMealContext(member));
                 if (!apiKey || apiKey.length < 15) {
                     showChefKeyInput.value = true;
+                    if (applyLocalEstimate(expected, contexts, 'Gemini API Key 尚未設定')) return true;
                     aiChefAdvice.value = {
                         isKeyMissing: true,
-                        chefComment: "請輸入您的 Gemini API Key 即可立即啟用 AI 主廚智能精算（只需設定一次）：",
+                        chefComment: '請輸入 Gemini API Key。今日剩餘額度亦不足以安排全部選用食材的本機估算，請核對份量。',
                         portions: {}
                     };
-                    return;
+                    return false;
                 }
 
-                const contexts = activeMembers.value.map(member => getMealContext(member));
                 const prompt = buildPortionPrompt({ dish: dishName, slot: slotName, contexts, expected, engine });
 
                 apiKey = (apiKey || '').trim();
@@ -1205,20 +1235,7 @@ export default {
                 if (resultJson && resultJson.portions) {
                     // 🌟 成功獲取 AI 精算數值！覆寫至各成員的右側實際主數值！
 
-                    Object.keys(resultJson.portions).forEach(member => {
-                        const aiItems = resultJson.portions[member];
-                        if (Array.isArray(aiItems) && memberIngredients.value[member]) {
-                            aiItems.forEach(aiItem => {
-                                const target = memberIngredients.value[member].find(i => i.id === aiItem.id);
-                                if (target && typeof aiItem.amount === 'number') {
-                                    target.amount = aiItem.amount;
-                                    if (aiItem.unit) target.unit = aiItem.unit;
-                                }
-                            });
-                        }
-                    });
-
-                    refreshAllPortionStates();
+                    applyPortionValues(resultJson.portions);
                     logChefTiming({ phase: 'validateApply', durationMs: Math.round(performance.now() - validationStarted) });
                     resultJson.source = 'ai';
                     aiChefAdvice.value = resultJson;
@@ -1238,9 +1255,15 @@ export default {
                     invalid: 'AI 回傳資料不完整或不合理',
                     network: '網路連線未完成'
                 };
-                const reason = reasons[error.code] || 'AI 暫時無法完成精算';
+                const nutrientNames = { kcal: '熱量', carbs: '碳水', fat: '脂肪', sodium: '鈉' };
+                if (error.code === 'limits') {
+                    reasons.limits = 'Gemini 建議的' + (nutrientNames[error.nutrient] || '營養') + '超過本餐額度';
+                }
+                const reason = reasons[error.code] || (error.message?.includes('每日目標')
+                    ? '每日目標資料不完整' : 'Gemini 建議未通過份量驗證');
+                if (contexts && applyLocalEstimate(expected, contexts, reason)) return true;
                 aiChefAdvice.value = { source: 'local', errReason: reason,
-                    chefComment: `${reason}。已保留配方／手動份量，可繼續調整。`, portions: {} };
+                    chefComment: reason + '。今日剩餘額度不足以對全部選用食材安排有效份量，未產生估算。請核對今日紀錄、改用「剩餘」模式或取消食材；已保留原始／手動份量。', portions: {} };
                 showChefNote.value = true;
                 return false;
             } finally {
@@ -1862,6 +1885,7 @@ export default {
                                 <span>AI 優化中...</span>
                             </span>
                             <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
+                            <span v-else-if="aiChefAdvice?.source === 'estimate'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">⚖️ 本機估算配比</span>
                             <span v-else style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #E5E7EB;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -1887,7 +1911,7 @@ export default {
                     </p>
                     <div v-if="!isAiChefLoading && aiChefAdvice && aiChefAdvice.source !== 'ai'"
                          role="status" style="font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
-                        <strong>{{ aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
+                        <strong>{{ aiChefAdvice.source === 'estimate' ? '已產生本機估算份量（非 AI）' : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                         <div v-if="aiChefAdvice.nutritionIssues?.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
                             <button v-for="problem in aiChefAdvice.nutritionIssues" :key="problem.id" class="btn-icon"
@@ -1897,7 +1921,7 @@ export default {
                             </button>
                         </div>
                     </div>
-                    <p v-if="aiChefAdvice?.source !== 'ai'" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
+                    <p v-if="!['ai','estimate'].includes(aiChefAdvice?.source)" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
                         非 AI 計算結果；原始份量不代表適合目前營養目標。未分配食材需核對或手動調整。
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
@@ -1956,7 +1980,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>{{ aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
+                                <span>{{ aiChefAdvice?.source === 'estimate' ? '本機估算・請核對' : aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                         </div>
@@ -1976,7 +2000,7 @@ export default {
                              boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                          }">
                         <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between;">
-                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : '⚙️ 份量未完成說明：' }}</span>
+                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : aiChefAdvice.source === 'estimate' ? '⚖️ 本機估算說明：' : '⚙️ 份量未完成說明：' }}</span>
                             <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">非精算結果</span>
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>

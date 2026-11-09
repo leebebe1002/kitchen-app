@@ -57,7 +57,9 @@ view.selectedMasterIngredients.value=view.selectedMasterIngredients.value.filter
 await Vue.nextTick();
 await view.calculate();
 assert.notEqual(view.aiChefAdvice.value?.source,'blocked','Reliable subset should reach the regular AI path');
-assert.equal(view.aiChefAdvice.value?.isKeyMissing,true,'Fixture has no key; should show missing-key state rather than nutrition blocker');
+assert.equal(view.aiChefAdvice.value?.source,'estimate','Verified foods without a Gemini key should receive a clearly labeled local estimate');
+assert(view.getMemberActiveIngredients('bebe').every(item => item.amount > 0),'No selected ingredient may be silently left at 0g');
+assert.equal(requestCount,0,'Local estimate must not call Gemini without a key');
 renderer.render(null,root);
 Vue.compile(Calculator.template,{decodeEntities:x=>x});
 console.log('PASS: real seven-ingredient ramen: 3 evidence blockers, no false success/0g recommendation, preserved quantities, actionable photo review, no network or state writes.');

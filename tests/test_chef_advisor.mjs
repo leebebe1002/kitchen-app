@@ -115,8 +115,29 @@ for (const status of [404, 429, 503, 400, 403]) await check(`HTTP ${status} fall
     await view.calculate();
     const fallback = [404, 503].includes(status);
     assert.equal(calls, fallback ? 2 : 1);
-    assert.equal(view.aiChefAdvice.value.source, fallback ? 'ai' : 'local');
+    assert.equal(view.aiChefAdvice.value.source, fallback ? 'ai' : 'estimate');
     assert.equal(view.isAiChefLoading.value, false); close();
+});
+await check('Gemini 200 with excessive meal calories => explain budget + produce validated local estimate', async () => {
+    const { view, engine, close } = await mount();
+    globalThis.fetch = async () => {
+        const result=resultFor(view);
+        const portions=result.portions.bebe;
+        portions[0].amount=1000;
+        portions[1].amount=900;
+        return response(result);
+    };
+    await view.calculate();
+    assert.equal(view.aiChefAdvice.value.source,'estimate');
+    assert.match(view.aiChefAdvice.value.errReason,/熱量.*超過本餐額度/);
+    assert(view.getMemberActiveIngredients('bebe').every(item=>item.amount>0));
+    const context=view.getMealContext ? view.getMealContext('bebe') : null;
+    if(context) {
+        const {validateMealLimits}=await import('../web/src/services/DynamicPortions.js');
+        assert.doesNotThrow(()=>validateMealLimits(engine,{bebe:view.getMemberActiveIngredients('bebe')},[context]));
+    }
+    assert(!view.aiChefAdvice.value.chefComment.includes('AI 建議已通過營養檢查'));
+    close();
 });
 await check('primary timeout then successful fallback (accelerated request timer)', async () => {
     const { view, close } = await mount(); let calls = 0;
@@ -131,7 +152,7 @@ await check('all models fail, keep usable local portions', async () => {
     const { view, close } = await mount(); let calls = 0;
     globalThis.fetch = async () => { calls++; return http(503); };
     await view.calculate(); assert.equal(calls, 2); assert.equal(view.isCalculated.value, true);
-    assert.equal(view.aiChefAdvice.value.source, 'local'); assert(view.getMemberNutrition('bebe').kcal > 0); close();
+    assert.equal(view.aiChefAdvice.value.source, 'estimate'); assert(view.getMemberNutrition('bebe').kcal > 0); close();
 });
 for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 'negative', 'zero', 'infinite', 'huge', 'unit', 'member']) {
     await check(`reject invalid response: ${defect}, no partial application`, async () => {
@@ -154,7 +175,7 @@ for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 
             return response(result);
         };
         await view.calculate();
-        assert.equal(view.aiChefAdvice.value.source, 'local'); assert.equal(JSON.stringify(view.memberIngredients.value), before); close();
+        assert.equal(view.aiChefAdvice.value.source, 'estimate'); assert.equal(JSON.stringify(view.memberIngredients.value), before); close();
     });
 }
 for (const action of ['amount', 'edit-revert', 'dish', 'members', 'mode', 'ingredients', 'memory', 'scope', 'unmount']) {
@@ -190,7 +211,8 @@ await check('cancelled old request cannot clear newer request spinner', async ()
 });
 await check('missing key keeps local portions without requests', async () => {
     const { view, close } = await mount(); values.clear(); globalThis.fetch = () => { throw new Error('unexpected request'); };
-    await view.calculate(); assert.equal(view.isCalculated.value, true); assert.equal(view.isAiChefLoading.value, false); close();
+    await view.calculate(); assert.equal(view.isCalculated.value, true); assert.equal(view.isAiChefLoading.value, false);
+    assert.equal(view.aiChefAdvice.value.source,'estimate'); close();
 });
 await check('deadline covers hanging response body', async () => {
     globalThis.fetch = async () => ({ ok: true, status: 200, json: () => new Promise(() => {}) });
@@ -206,7 +228,7 @@ await check('real 20s timer: hung transports abort at 12s + remaining budget', a
     await pending; const elapsed = performance.now() - start;
     assert.equal(calls, 2); assert(starts[1] - starts[0] >= 11900); assert(starts[1] - starts[0] < 13000);
     assert(elapsed >= 19900 && elapsed < 21000); assert(signals.every(s => s.aborted));
-    assert.equal(view.isAiChefLoading.value, false); assert.equal(view.aiChefAdvice.value.source, 'local');
+    assert.equal(view.isAiChefLoading.value, false); assert.equal(view.aiChefAdvice.value.source, 'estimate');
     info(`MEASURE new hung API: ${Math.round(elapsed)} ms, local result available immediately`); close();
 });
 await check('before/after same 10ms mock failures', async () => {
