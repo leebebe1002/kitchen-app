@@ -6,7 +6,7 @@ import {SharedRecipeCoordinator,unresolvedRecipeIngredientIds} from '../web/src/
 import {
     RECIPE_CACHE_KEY, RECIPE_PENDING_KEY, RECIPE_SNAPSHOT_KEY,RECIPE_JOURNAL_KEY,
     readRecipeQueue,writeRecipeSnapshot,queueRecipeEdits,commitRecipeEdit,
-    recoverRecipeJournal,reconcileRecipes,reconcileRecipeAcknowledgements,acknowledgeRecipeEdit
+    recoverRecipeJournal,reconcileRecipes,reconcileRecipeAcknowledgements,acknowledgeRecipeEdit,sameRecipe
 } from '../web/src/utils/SharedRecipeState.js';
 const base=JSON.parse(fs.readFileSync('src/data/dishes.json','utf8')).dishes;
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -218,7 +218,7 @@ console.log('PASS recipes referencing device-only ingredients never break anothe
 
 // Migration seeds every original recipe, rather than maintaining GitHub
 // as an independent effective source of modified recipe content.
-const migration=fs.readFileSync('supabase/migrations/20261108152208_fk14_shared_recipe_overrides.sql','utf8');
+const migration=fs.readFileSync('supabase/migrations/20261109032524_fk14_shared_recipe_overrides.sql','utf8');
 const marker="from jsonb_array_elements('";
 const start=migration.indexOf(marker);
 const end=migration.indexOf("'::jsonb) as d;",start);
@@ -332,3 +332,60 @@ console.log('PASS UI opt-in/retry and PWA singleton module version chain');
   assert(server[0].recipe.sopSteps.includes('本機新增 SOP 步驟'));
   console.log('PASS actual Vue-reactive KitchenEngine.saveJson recipe edit preserves UI pointer and persists Supabase CAS');
 }
+
+// PostgreSQL jsonb canonicalizes EVERY nested object key order. That cannot
+// be mistaken for a content change, a duplicate PATCH, or a pending conflict.
+const postgresJsonbOrder = input => {
+    if (Array.isArray(input)) return input.map(postgresJsonbOrder);
+    if (input !== null && typeof input === 'object')
+        return Object.fromEntries(Object.keys(input).sort()
+            .map(key => [key,postgresJsonbOrder(input[key])]));
+    return input;
+};
+assert.notEqual(JSON.stringify(postgresJsonbOrder(base[0])),JSON.stringify(base[0]),
+    'Fixture must actually differ in raw object key order');
+assert(sameRecipe(postgresJsonbOrder(base[0]),base[0]));
+assert(!sameRecipe(postgresJsonbOrder({...base[0],name:'changed'}),base[0]));
+const cloudJsonb=base.map(recipe=>row(postgresJsonbOrder(recipe)));
+const reconciledJsonb=reconcileRecipes({
+    base,local:clone(base),cloudRows:cloudJsonb,
+    previousRows:cloudJsonb,queue:{owner:null,edits:{}}
+});
+assert.deepEqual(reconciledJsonb.legacyIds,[]);
+assert.deepEqual(reconciledJsonb.conflictIds,[]);
+const lostAck=store();
+lostAck.setItem(RECIPE_PENDING_KEY,JSON.stringify({
+    owner,edits:{[custom.id]:{revision:0,recipe:clone(custom)}}
+}));
+assert.equal(reconcileRecipeAcknowledgements(lostAck,owner,
+    [row(postgresJsonbOrder(custom),1)]),1);
+assert.deepEqual(readRecipeQueue(lostAck).edits,{});
+console.log('PASS real PostgreSQL JSONB field-order changes do not create false conflicts or stalled outbox');
+
+// Real initialize fetch must NOT run the old additive GitHub/local recipe
+// merge before the cloud has validated membership and built a safe backup.
+{
+  const oldFetch=globalThis.fetch;
+  const local=store();
+  globalThis.localStorage=local;
+  globalThis.window={location:{hostname:'fixture.invalid'},addEventListener(){},removeEventListener(){}};
+  const oldModified=clone(base[0]);
+  oldModified.recommendedProteins=[];
+  oldModified.defaultIngredients=[];
+  const oldSet={dishes:[oldModified,...clone(base.slice(1)),custom]};
+  const untouched=JSON.stringify(oldSet);
+  local.setItem(RECIPE_CACHE_KEY,untouched);
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({dishes:clone(base)})});
+  try {
+    const {default:RealEngine}=await import('../web/src/engine/KitchenEngine.js');
+    const model=new RealEngine({auth});
+    await model.fetchJson('dishes.json','rawDishes',{dishes:[]});
+    assert.equal(local.getItem(RECIPE_CACHE_KEY),untouched,
+      'initialization must never rewrite legacy phone recipes before a verified cloud merge');
+    assert.deepEqual(model.data.rawDishes.dishes[0].recommendedProteins,[]);
+    assert.deepEqual(model.data.rawDishes.dishes[0].defaultIngredients,[]);
+    assert(model.data.rawDishes.dishes.some(r=>r.id===custom.id));
+    assert.equal(model.recipeStaticBaseline.length,base.length);
+  } finally { globalThis.fetch=oldFetch; }
+}
+console.log('PASS legacy dish cache remains byte-identical before cloud auth; no resurrected ingredients');

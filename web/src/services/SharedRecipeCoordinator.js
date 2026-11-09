@@ -6,11 +6,11 @@ import sharedRecipeService, { validateRecipe } from './SharedRecipeService.js?v=
 import {
     RECIPE_CACHE_KEY, RECIPE_PRE_CUTOVER_BACKUP_KEY, readRecipeQueue,
     readRecipeSnapshot, writeRecipeSnapshot, queueRecipeEdits, commitRecipeEdit,
-    reconcileRecipes, reconcileRecipeAcknowledgements, acknowledgeRecipeEdit
+    reconcileRecipes, reconcileRecipeAcknowledgements, acknowledgeRecipeEdit, sameRecipe
 } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
 
 const clone = x => JSON.parse(JSON.stringify(x));
-const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+const equal = sameRecipe;
 
 export function unresolvedRecipeIngredientIds(engine,recipe) {
     // #14 deliberately does not yet synchronize private ingredients. Sharing a

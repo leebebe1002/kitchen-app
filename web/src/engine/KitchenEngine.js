@@ -467,7 +467,16 @@ export default class KitchenEngine {
                     );
                 }
 
-                if (filename === 'ingredients.json' || (isUserState && cachedData)) {
+                if (filename === 'dishes.json') {
+                    // Before Supabase confirms its exact recipes, never use the
+                    // old additive GitHub/local merge here: it can resurrect
+                    // previously removed ingredients or alter legacy drafts.
+                    // SharedRecipeCoordinator does the versioned merge AFTER
+                    // identity, backup and cloud validation are complete.
+                    if (cached && !Array.isArray(cachedData?.dishes))
+                        throw Error('原本料理快取無效，保留手機原始資料。');
+                    this.data[key] = cachedData || serverData;
+                } else if (filename === 'ingredients.json' || (isUserState && cachedData)) {
                     // 🛡️【核心保護】：使用者動態狀態 (庫存/打勾/自訂通路/飲食記錄) 優先採用手機本地，並智慧增量合併
                     const mergedData = this.mergeUserState(filename, cachedData, serverData);
                     if (filename === 'ingredients.json' && cached && !hasEmbeddedIngredientPhoto(cachedData)

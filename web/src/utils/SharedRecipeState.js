@@ -8,7 +8,17 @@ export const RECIPE_PRE_CUTOVER_BACKUP_KEY = 'kitchen_v2_shared_recipe_precutove
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const bytes = value => JSON.stringify(value);
-const same = (a,b) => bytes(a) === bytes(b);
+// PostgreSQL jsonb reorders object keys recursively, while ES Module source
+// and old localStorage preserve authoring order. Compare recipes semantically;
+// object key order is immaterial, but arrays must retain their exact order.
+export function sameRecipe(a,b) {
+    const stable = value => JSON.stringify(value, (_, item) =>
+        item && typeof item === 'object' && !Array.isArray(item)
+            ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]]))
+            : item);
+    return stable(a) === stable(b);
+}
+const same = sameRecipe;
 const version = value => Number.isSafeInteger(value) && value >= 0;
 const validOwner = owner => typeof owner === 'string' && owner.length > 3;
 
