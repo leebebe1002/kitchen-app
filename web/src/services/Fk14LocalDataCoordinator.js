@@ -26,22 +26,64 @@ const equals=(a,b)=>{
     return stable(a)===stable(b);
 };
 function authoritativeOfficialFoods(engine) {
+    // The GitHub/bootstrap map can be older than the verified Supabase catalog.
+    // Latest confirmed catalog values MUST replace historical seed values for
+    // any canonical ID. Never use a stale bootstrap to classify a local edit.
     const foods=new Map(engine.officialIngredientById || []);
     for(const [id,row] of engine.officialCatalogRows || [])
-        if(!foods.has(id) && row?.ingredient) foods.set(id,row.ingredient);
+        if(row?.ingredient?.id===id) foods.set(id,row.ingredient);
     return foods;
+}
+const effectiveNutritionFields=['unitLabel','isCount','per100g','perServing',
+    'perUnit','servingSize','servingUnit','gramsPerPack','gramsPerUnit','weightBasis'];
+function sameEffectiveNutrition(a,b){
+    if(!['per100g','perServing','perUnit'].some(field=>
+        a?.[field] && b?.[field] && typeof a[field]==='object'
+        && typeof b[field]==='object'))return false;
+    return effectiveNutritionFields.every(field=>equals(a?.[field],b?.[field]));
+}
+function isUneditedBaseline(food){
+    // This flag is created by FK when importing an official default. It is
+    // never treated as an explicit user nutrition change. A confirmed product
+    // label is stronger evidence and must never be silently replaced.
+    return food?.nutritionCache?.edited === false
+        && !(food.nutritionEvidence?.kind==='product_label'
+            && food.nutritionEvidence?.status==='verified');
 }
 
 /** Only exact ID/name equality is an automatic duplicate candidate.
  * Similar (but not exact) food names are still handled by IngredientMatcher
  * and saveIngredient's normal UI workflow, never silently rewritten here.
  */
-export function inspectCustomCollision(food,officialFoods,peers=[]) {
+export function inspectCustomCollision(food,officialFoods,peers=[],verifiedOfficialRows=null) {
     const canonical=officialFoods.get(food.id);
     if(canonical) {
-        if(equals(food,canonical))
+        // Exact duplicates are safe even against a static bootstrap. For
+        // semantic nutrition/metadata reconciliation, however, require the
+        // already-verified Supabase catalog row; historical GitHub JSON is not
+        // an authority for deciding which ingredient is the latest.
+        const verified=verifiedOfficialRows?.get(food.id);
+        const trusted=verified?.ingredient?.id===food.id
+            && Number.isSafeInteger(verified?.revision) && verified.revision>=1;
+        const sameFoodType=food.category===canonical.category;
+        const differentVerifiedBrand=food.nutritionEvidence?.kind==='product_label'
+            && food.nutritionEvidence?.status==='verified'
+            && (food.brand || '') !== (canonical.brand || '');
+        if(equals(food,canonical) || (trusted && sameFoodType
+            && !differentVerifiedBrand
+            && (sameEffectiveNutrition(food,canonical) || isUneditedBaseline(food)))) {
+            // A legacy device-local official record is not a second custom
+            // ingredient. Keep the original storage/backup unchanged and use
+            // the already-verified canonical nutrition in the calculator.
+            // Metadata (photo/store/nutritionCache) is not evidence of a newer
+            // nutrient calculation. Manual official edits use the separate
+            // revision-bound OfficialIngredientOutbox.
             return {kind:'already_official',id:food.id,name:food.name,
                 againstId:canonical.id,againstName:canonical.name};
+        }
+        // No reliable per-ingredient edit timestamp exists in these legacy
+        // records. A device cache timestamp or an ID creation timestamp cannot
+        // outrank Supabase's validated revision / official CAS.
         return {kind:'official_id',id:food.id,name:food.name,
             againstId:canonical.id,againstName:canonical.name};
     }
@@ -79,7 +121,7 @@ export class Fk14LocalDataCoordinator {
         this.engine=engine;this.service=service;this.storage=storage;this.kind=kind;
         this.rows=new Map();this.owner=null;this.ready=false;
         this.pending=0;this.message='尚未載入雲端'+kindKeys[kind].label;
-        this.busy=false;this.conflicts=[];this.conflictDetails=[];
+        this.busy=false;this.conflicts=[];this.conflictDetails=[];this.reconciledOfficialCount=0;
     }
     ownerKey(owner){return prefix+this.kind+'_snapshot_'+owner;}
     queueKey(owner){return prefix+this.kind+'_pending_'+owner;}
@@ -87,7 +129,7 @@ export class Fk14LocalDataCoordinator {
     ownerMarker(){return prefix+'favorite_first_verified_owner';}
     lastVerifiedOwnerKey(){return prefix+this.kind+'_last_verified_owner';}
     backupKey(owner){return prefix+this.kind+'_precloud_backup_'+owner;}
-    reset(){this.owner=null;this.ready=false;this.busy=false;this.rows.clear();this.pending=0;this.conflicts=[];this.conflictDetails=[];this.message='尚未載入雲端'+kindKeys[this.kind].label;}
+    reset(){this.owner=null;this.ready=false;this.busy=false;this.rows.clear();this.pending=0;this.conflicts=[];this.conflictDetails=[];this.reconciledOfficialCount=0;this.message='尚未載入雲端'+kindKeys[this.kind].label;}
     context(){
         const e=this.engine,c=e.personalContext;
         return e.hasPersonalAccess() && c?.userId && e.auth.isCurrentContext(c) ?c:null;
@@ -239,7 +281,8 @@ export class Fk14LocalDataCoordinator {
                     sameNames.get(name).push(item);
                 }
                 for(const item of all){
-                    let collision=inspectCustomCollision(item,official);
+                    let collision=inspectCustomCollision(item,official,e.data.ingredients,this.engine.officialCatalogActive && !this.engine.officialCatalogOffline
+                        ? this.engine.officialCatalogRows : null);
                     if(collision?.kind==='already_official'){
                         // Identical legacy duplicate requires no private cloud row.
                         alreadyOfficial.add(item.id);
@@ -307,13 +350,18 @@ export class Fk14LocalDataCoordinator {
             this.ready=true;
             this.conflicts=conflicts;
             this.conflictDetails=conflictDetails;
+            this.reconciledOfficialCount=e.officialCatalogActive
+                && !e.officialCatalogOffline ? alreadyOfficial.size : 0;
             if(this.kind==='custom')e.sharedCustomCatalogRows=new Map(
                 [...remote].filter(([id])=>!conflicts.includes(id) && !alreadyOfficial.has(id)));
             this.publishToEngine([...merged.values()]);
-            this.message=conflicts.length
-                ?conflicts.length+' 項私房食材需核對（原資料保留）；'
+            const legacyNote=this.kind==='custom' && this.reconciledOfficialCount
+                ?this.reconciledOfficialCount+' 筆舊官方食材已依目前驗證的 Supabase 版本對帳（原手機備份保留）；'
+                :'';
+            this.message=legacyNote+(conflicts.length
+                ?conflicts.length+' 項私房食材仍需核對；'
                     +this.pending+' 項待同步，其他項可繼續上雲。'
-                :'已載入 Supabase；'+this.pending+' 項'+kindKeys[this.kind].label+'待同步。';
+                :'已載入 Supabase；'+this.pending+' 項'+kindKeys[this.kind].label+'待同步。');
             if(this.pending)this.sync().catch(err=>{this.message='同步尚未完成：'+err.message;});
             return true;
         }catch(error){
@@ -445,7 +493,8 @@ export class Fk14LocalDataCoordinator {
                     const others=this.local(owner).filter(item=>item.id!==id)
                         .concat([...this.rows.values()]
                             .filter(row=>row.ingredient_id!==id).map(row=>row.ingredient));
-                    const collision=inspectCustomCollision(task.item,official,others);
+                    const collision=inspectCustomCollision(task.item,official,others,this.engine.officialCatalogActive && !this.engine.officialCatalogOffline
+                        ? this.engine.officialCatalogRows : null);
                     if(collision){
                         if(collision.kind==='already_official'
                             && task.revision===0 && !task.deleted){
@@ -488,11 +537,16 @@ export class Fk14LocalDataCoordinator {
                 }catch(e){blocked.push(id);}
             }
             this.pending=Object.keys(this.getQueue(owner)).length;
-            this.message=this.pending || this.conflicts.length
+            const verifiedLegacyNote=this.kind==='custom' && this.reconciledOfficialCount
+                ?'另外 '+this.reconciledOfficialCount
+                    +' 筆舊官方紀錄已對帳，不需要重複上傳；原手機資料保留。'
+                :'';
+            this.message=(this.pending || this.conflicts.length
                 ?kindKeys[this.kind].label+'：'+this.pending
                     +' 項待同步、'+this.conflicts.length
                     +' 項需核對；其餘已上雲，手機原資料保留。'
-                :kindKeys[this.kind].label+'已同步到 Supabase。';
+                :kindKeys[this.kind].label+'已同步到 Supabase。')
+                +verifiedLegacyNote;
             if(this.kind==='custom' && !this.pending
                 && typeof this.engine.recipeSync?.load==='function') {
                 // Two-phase post-custom reconciliation. The first load may

@@ -427,3 +427,129 @@ assert.equal(eIdConflict.data.ingredients.find(x=>x.id===conflictingOfficial.id)
 assert.equal(idConflictStore.getItem('kitchen_v2_custom_ingredients'),
  JSON.stringify([conflictingOfficial,nonConflicting]));
 console.log('PASS same canonical ID with different nutrition stays local, official calculation intact');
+
+// Regression: authority must be the actual verified Supabase 100-row catalog,
+// NEVER the older GitHub/bootstrap ingredient map. A newer server revision can
+// legitimately differ from the static seed, and photo/metadata differences
+// must not manufacture a new private food or block the recipe reference.
+{
+  const current=clone(staticFoods[0]);
+  current.per100g={kcal:131,protein:9,carbs:8,fat:4,sodium:35};
+  current.weightBasis='raw';
+  const oldBootstrap=clone(staticFoods[0]);
+  const localCurrent={...current,photoUrl:'https://example.org/verified.jpg',
+    preferredStore:'EC',nutritionCache:{base:{},edited:true}};
+  const s=storage();
+  s.setItem('kitchen_v2_custom_ingredients',JSON.stringify([localCurrent]));
+  remoteCustom.clear();
+  const e=mockEngine(s);
+  e.officialCatalogActive=true;
+  e.officialCatalogRows=new Map([[current.id,{
+    ingredient_id:current.id,ingredient:current,revision:3,
+    updated_at:'2026-11-09T08:57:20Z'
+  }]]);
+  const coordinator=new Fk14LocalDataCoordinator(e,{kind:'custom',service,storage:s});
+  assert(await coordinator.load());
+  assert.equal(coordinator.conflicts.length,0,
+    'A metadata-only legacy duplicate of current Supabase revision cannot be treated as a conflict');
+  assert.equal(coordinator.reconciledOfficialCount,1);
+  assert.match(coordinator.message,/1 筆舊官方/);
+  assert.equal(remoteCustom.size,0,'An official ID cannot become a second private food');
+  assert.equal(e.data.ingredients.find(x=>x.id===current.id)?.per100g?.kcal,
+    oldBootstrap.per100g?.kcal,'Private cache must not be allowed to overwrite the official/bootstrap in-memory item');
+  assert.equal(s.getItem('kitchen_v2_custom_ingredients'),JSON.stringify([localCurrent]),
+    'Legacy local material must remain byte-identical for recovery');
+  console.log('PASS verified latest Supabase catalog wins metadata-only same-ID legacy records');
+}
+// Explicitly untouched historical default may have older nutrient panels than
+// current official seed, but nutritionCache.edited=false proves it was not a
+// user-edited value. It can resolve to the newer authoritative catalog; a
+// verified product label or edited:true with genuine differences must not.
+{
+  const officialItem=clone(staticFoods[0]);
+  const legacy={...officialItem,per100g:{kcal:111,protein:9,fat:3,carbs:2,sodium:30},
+    nutritionCache:{base:{},edited:false}};
+  const local=storage();
+  local.setItem('kitchen_v2_custom_ingredients',JSON.stringify([legacy]));
+  const e=mockEngine(local);
+  e.officialCatalogActive=true;
+  e.officialCatalogRows=new Map([[officialItem.id,{
+    ingredient_id:officialItem.id,ingredient:officialItem,revision:2,
+    updated_at:'2026-11-09T08:57:20Z'
+  }]]);
+  remoteCustom.clear();
+  const coordinator=new Fk14LocalDataCoordinator(e,{kind:'custom',service,storage:local});
+  assert(await coordinator.load());
+  assert.deepEqual(coordinator.conflicts,[]);
+  assert.equal(coordinator.reconciledOfficialCount,1);
+  assert(!remoteCustom.has(officialItem.id));
+  assert.equal(local.getItem('kitchen_v2_custom_ingredients'),JSON.stringify([legacy]));
+  console.log('PASS never-edited legacy nutrition does not displace a revised official catalog');
+}
+{
+  const officialItem=clone(staticFoods[0]);
+  const userEdited={...officialItem,per100g:{kcal:9999,protein:99,carbs:0,fat:0},
+    nutritionCache:{base:{},edited:true},
+    nutritionEvidence:{kind:'product_label',status:'verified'},
+    updatedAt:'2099-01-01T00:00:00Z'};
+  const local=storage();
+  local.setItem('kitchen_v2_custom_ingredients',JSON.stringify([userEdited]));
+  const e=mockEngine(local);
+  e.officialCatalogActive=true;
+  e.officialCatalogRows=new Map([[officialItem.id,{
+    ingredient_id:officialItem.id,ingredient:officialItem,revision:2,
+    updated_at:'2026-11-09T08:57:20Z'
+  }]]);
+  remoteCustom.clear();
+  const coordinator=new Fk14LocalDataCoordinator(e,{kind:'custom',service,storage:local});
+  assert(await coordinator.load());
+  assert(coordinator.conflicts.includes(officialItem.id),
+    'Unverifiable local device timestamp must not override official nutrition');
+  assert(!remoteCustom.has(officialItem.id));
+  assert.equal(local.getItem('kitchen_v2_custom_ingredients'),JSON.stringify([userEdited]));
+  console.log('PASS unverifiable future clock and a different verified label cannot overwrite canonical nutrition');
+}
+
+// Bootstrap-only data is NOT an authority for deciding latest nutrition. In
+// particular, when the official cloud catalog has not been loaded, semantically
+// similar but different full source records must remain visible to review.
+{
+  const food=clone(staticFoods[0]);
+  const metadataOnly={...food,photoUrl:'https://example.org/device-photo.png'};
+  const store=storage();
+  store.setItem('kitchen_v2_custom_ingredients',JSON.stringify([metadataOnly]));
+  remoteCustom.clear();
+  const e=mockEngine(store);
+  e.officialCatalogActive=false;
+  // No verified current Supabase catalog row. The historical bootstrap
+  // happens to match nutritionally, but this alone cannot prove freshness.
+  e.officialCatalogRows=new Map();
+  const coordinator=new Fk14LocalDataCoordinator(e,{kind:'custom',service,storage:store});
+  assert(await coordinator.load());
+  assert(coordinator.conflicts.includes(food.id));
+  assert.equal(coordinator.reconciledOfficialCount,0);
+  assert(!remoteCustom.has(food.id));
+  console.log('PASS unverified stale bootstrap cannot masquerade as latest official data');
+}
+
+// A verified-but-offline snapshot may be older than the actual server.
+// Its cached revision cannot be used to decide which nutrition value is newer.
+{
+  const base=clone(staticFoods[0]);
+  const device={...base,photoUrl:'https://example.org/new-device-photo.png'};
+  const offline=storage();
+  offline.setItem('kitchen_v2_custom_ingredients',JSON.stringify([device]));
+  const e=mockEngine(offline);
+  e.officialCatalogActive=true;
+  e.officialCatalogOffline=true;
+  e.officialCatalogRows=new Map([[base.id,{
+    ingredient_id:base.id,ingredient:base,revision:2,updated_at:'2026-11-08T00:00:00Z'
+  }]]);
+  remoteCustom.clear();
+  const sync=new Fk14LocalDataCoordinator(e,{kind:'custom',service,storage:offline});
+  assert(await sync.load());
+  assert(sync.conflicts.includes(base.id));
+  assert.equal(sync.reconciledOfficialCount,0);
+  assert(!remoteCustom.has(base.id));
+  console.log('PASS offline old official snapshot cannot falsely claim latest-version precedence');
+}
