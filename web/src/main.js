@@ -1,16 +1,16 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
-import CalculatorView from './views/CalculatorView.js?v=20261109_ZERO_PORTIONS_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK21_THREE_FOODS_V1';
+import CalculatorView from './views/CalculatorView.js?v=20261109_FK21_THREE_FOODS_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
-import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import PantryView from './views/PantryView.js?v=20261109_FK21_THREE_FOODS_V1';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
 // Auth 與同步服務共用無版本 URL，避免建立兩份登入狀態。
 import authService from './services/FamilyAuthService.js';
 import { inspectIngredientPhotos, formatIngredientPhotoAudit } from './utils/IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1';
-import { auditIngredientNutrition, formatIngredientNutritionAudit } from './utils/IngredientNutritionAudit.js?v=20261108_FK14_WINDOW_FETCH_V1';
+import { auditIngredientNutrition, formatIngredientNutritionAudit } from './utils/IngredientNutritionAudit.js?v=20261109_FK21_THREE_FOODS_V1';
 
-import { isFk14KnownNutritionDifference } from './utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { isFk14KnownNutritionDifference } from './utils/Fk14OfficialNutritionRepair.js?v=20261109_FK21_THREE_FOODS_V1';
 
 const App = {
     components: {
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.09.6';
+        const appVersion = '2026.11.09.7';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);

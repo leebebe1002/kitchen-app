@@ -27,7 +27,7 @@ for (const row of audit.ingredients) assert.equal(report.ingredients.find(i=>i.i
 const engine = Vue.reactive(new Engine());engine.data.ingredients=structuredClone(catalog);
 for (const item of catalog) {
  const loaded=engine.getIngredientById(item.id);
- if (item.id === 'egg') {
+ if (['egg','kimchi','shin_ramen'].includes(item.id)) {
   // Offline historical bootstrap still carries the previous count values.
   // It cannot silently inherit the new TFDA estimate before Supabase is updated.
   assert.equal(loaded.nutritionEvidence.status,'pending');

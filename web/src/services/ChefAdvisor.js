@@ -1,4 +1,4 @@
-import { isCountUnit } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { isCountUnit } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V1';
 // Fixed, documented model IDs; no per-calculation model discovery.
 export const CHEF_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.8-flash'];
 export const CHEF_TOTAL_MS = 20000;
@@ -106,6 +106,10 @@ export function validateChefResult(result, expected, engine) {
             }
             seen.add(item.id);
         }
+        // User explicitly selected these ingredients. A returned zero is not
+        // a complete portion proposal and must never look like AI success.
+        // De-select an ingredient before calculating if it is not for this meal.
+        if (items.some(item => item.amount === 0)) throw chefFailure('invalid');
         // Nutrition always comes from FK's canonical data, never AI-supplied totals.
         const totals = engine.calculateNutritionForMember(items, member);
         if (Object.values(totals).some(n => !Number.isFinite(n) || n < 0)) throw chefFailure('invalid');

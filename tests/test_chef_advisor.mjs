@@ -133,7 +133,7 @@ await check('all models fail, keep usable local portions', async () => {
     await view.calculate(); assert.equal(calls, 2); assert.equal(view.isCalculated.value, true);
     assert.equal(view.aiChefAdvice.value.source, 'local'); assert(view.getMemberNutrition('bebe').kcal > 0); close();
 });
-for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 'negative', 'infinite', 'huge', 'unit', 'member']) {
+for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 'negative', 'zero', 'infinite', 'huge', 'unit', 'member']) {
     await check(`reject invalid response: ${defect}, no partial application`, async () => {
         const { view, close } = await mount(); let before;
         globalThis.fetch = async () => {
@@ -146,6 +146,7 @@ for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 
             if (defect === 'unknown') items[0].id = 'unknown';
             if (defect === 'duplicate') items[1] = { ...items[0] };
             if (defect === 'negative') items[0].amount = -1;
+            if (defect === 'zero') items[0].amount = 0;
             if (defect === 'infinite') items[0].amount = Infinity;
             if (defect === 'huge') items[0].amount = 100000;
             if (defect === 'unit') items[0].unit = '包';

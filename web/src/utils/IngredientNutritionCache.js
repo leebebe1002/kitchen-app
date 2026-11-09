@@ -1,4 +1,4 @@
-import { nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { nutritionEvidenceIssue } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
 // Historical nutrition shapes from ingredients.json at 4b6f0d0; recognition only, never calculation.
 const legacyNutrition = {
     "sous_vide_chicken": {"unitLabel":"g","per100g":{"kcal":115,"protein":23,"fat":1.5,"carbs":0,"sodium":180}},

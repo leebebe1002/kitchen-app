@@ -1,5 +1,5 @@
-import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261108_FK14_WINDOW_FETCH_V1';
-import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { auditIngredientNutrition } from '../utils/IngredientNutritionAudit.js?v=20261109_FK21_THREE_FOODS_V1';
+import { withNutritionEvidence } from '../utils/NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
 import { emptyMealState, readMealState, writeMealState } from '../services/MealLogState.js?v=20261102_FK22_MEALS_V1';
 import authService from '../services/FamilyAuthService.js';
 import CloudSyncEngine from './CloudSyncEngine.js';
@@ -22,9 +22,9 @@ import { readOfficialOutbox, stageOfficialEdit, persistOfficialCatalogEdit,
     recoverOfficialCatalogEdit, clearPublishedEntry, OFFICIAL_OUTBOX_KEY }
     from '../utils/OfficialIngredientOutbox.js?v=20261108_FK14_WINDOW_FETCH_V1';
 
-import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
-import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261108_FK14_COCOA_RETIRED_V1';
-import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference, retireFk14Cocoa, isRetiredOfficialIngredient, withoutRetiredRecipeIngredients } from '../utils/Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { sharedNutritionPayload, applySharedNutrition } from '../utils/SharedIngredientNutrition.js?v=20261109_FK21_THREE_FOODS_V1';
+import { recoverArielOfficialReset, applyArielOfficialReset } from '../utils/ArielOfficialIngredientReset.js?v=20261109_FK21_THREE_FOODS_V1';
+import { recoverFk14OfficialRepair, applyFk14OfficialRepair, isFk14KnownNutritionDifference, retireFk14Cocoa, isRetiredOfficialIngredient, withoutRetiredRecipeIngredients } from '../utils/Fk14OfficialNutritionRepair.js?v=20261109_FK21_THREE_FOODS_V1';
 
 export const OFFICIAL_CATALOG_SNAPSHOT_KEY = 'kitchen_v2_official_catalog_snapshot_v1';
 const sessionCatalogOwner = auth => {
@@ -48,10 +48,10 @@ const verifiedCatalogSnapshot = (owner, storage = localStorage) => {
 
 import { normalizeIngredientName } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 import { normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { mergeIngredientNutrition, sameNutrition } from '../utils/IngredientNutritionCache.js?v=20261109_FK21_THREE_FOODS_V1';
+import { approvedIngredientBaseline, applyIngredientBaseline, recoverIngredientBaseline, INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from '../utils/IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V1';
 import { ingredientPhotoStore, prepareIngredientPhotoBackup, hydrateIngredientPhotos, hasEmbeddedIngredientPhoto, serializeIngredientPhotos } from '../utils/IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
-import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { ingredientNutritionBasis, ingredientNutritionIssue } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V1';
 
 export default class KitchenEngine {
     constructor({ auth = authService, cloudSync, photoStore = ingredientPhotoStore } = {}) {

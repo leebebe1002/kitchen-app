@@ -1,7 +1,7 @@
-import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=20261108_FK14_COCOA_RETIRED_V1';
-import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
-import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261105_DEFAULT_ESTIMATES_V1';
-import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261108_FK14_SHARED_NUTRITION_V1';
+import { isRetiredOfficialIngredient } from './Fk14OfficialNutritionRepair.js?v=20261109_FK21_THREE_FOODS_V1';
+import { approvedIngredientBaseline } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V1';
+import { evidenceSnapshot, nutrientKeys } from './NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V1';
+import { applySharedNutrition } from './SharedIngredientNutrition.js?v=20261109_FK21_THREE_FOODS_V1';
 import { groupOfficialCatalogRows } from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';
 
 

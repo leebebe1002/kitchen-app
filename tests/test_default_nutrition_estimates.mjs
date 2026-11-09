@@ -43,6 +43,9 @@ for (const id of ['century_egg','mushroom_meatball','egg_dumpling','taro_meatbal
 assert.equal(evidence.egg.evidence.status,'estimated');
 assert.equal(evidence.egg.evidence.sources[0].ref,'TFDA:K01001');
 assert.equal(evidence.egg.evidence.snapshot.gramsPerUnit,50);
+assert.equal(evidence.kimchi.evidence.sources[0].ref,'TFDA:R4400301');
+assert.equal(evidence.shin_ramen.evidence.sources[0].ref,'NONGSHIM:SHIN-LIGHT-TW-97G');
+assert.equal(evidence.shin_ramen.evidence.identity.name,'非油炸辛拉麵（97g）');
 const report=JSON.parse(fs.readFileSync('docs/audits/nutrition-2026-11-05.json'));
 assert.deepEqual(report.counts,{pending:48,estimated:52,verified:1});
 assert.equal(report.catalogSize,101);
@@ -50,11 +53,16 @@ assert.equal(report.newBaselineChanges.length,18);
 for (const i of rows(current)) {
  const ev=evidence[i.id]?.evidence;
  assert(ev, i.id);
- assert.equal(ev.identity.name,i.name,i.id);
- assert.equal(ev.identity.brand,i.brand||'',i.id);
- if(i.id==='egg') {
-   // The historical GitHub bootstrap snapshot must remain unchanged. Only the
-   // latest Supabase authority may receive the new egg estimate, after approval.
+ if(i.id==='shin_ramen') {
+   assert.equal(ev.identity.name,'非油炸辛拉麵（97g）');
+   assert.equal(ev.identity.brand,'農心');
+ } else {
+   assert.equal(ev.identity.name,i.name,i.id);
+   assert.equal(ev.identity.brand,i.brand||'',i.id);
+ }
+ if(['egg','kimchi'].includes(i.id)) {
+   // Historical JSON is only a bootstrap; current Supabase is authoritative.
+   // Do not silently certify prior values or the unidentified ramen variant.
    assert.notDeepEqual(JSON.parse(JSON.stringify(ev.snapshot)),JSON.parse(JSON.stringify(evidenceSnapshot(i))));
  } else {
    assert.deepEqual(JSON.parse(JSON.stringify(ev.snapshot)),JSON.parse(JSON.stringify(evidenceSnapshot(i))),i.id);

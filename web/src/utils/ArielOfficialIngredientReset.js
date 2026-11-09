@@ -1,4 +1,4 @@
-import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261108_FK14_COCOA_RETIRED_V1';
+import { INGREDIENT_CACHE_KEY, CUSTOM_INGREDIENT_KEY } from './IngredientBaselineUpdate.js?v=20261109_FK21_THREE_FOODS_V1';
 import { prepareIngredientPhotoBackup, serializeIngredientPhotos } from './IngredientPhotoStore.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
 
 // A one-time, device-local adoption for Ariel's explicitly discarded OLD ingredient data.

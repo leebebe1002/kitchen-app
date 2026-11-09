@@ -1313,30 +1313,33 @@ export const officialNutritionEvidence = {
   },
   "kimchi": {
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-09",
       "weightBasis": "as_sold",
-      "note": "韓式泡菜的糖、發酵與鹽度依品牌配方不同，既有 Na800 未取得對應來源，保留。",
-      "sources": [],
-      "identity": {
-        "name": "韓式泡菜",
-        "brand": ""
-      },
+      "note": "以 TFDA 韓式泡菜一般值估算；品牌、糖量及鹽度會不同。若有該商品營養標示，應以本人拍照標示為準。",
+      "sources": [
+        {
+          "ref": "TFDA:R4400301",
+          "title": "韓式泡菜",
+          "url": "https://data.fda.gov.tw/data/opendata/export/20/json",
+          "catalogUrl": "https://data.gov.tw/dataset/8543",
+          "recordId": "R4400301",
+          "dataset": "TFDA_20",
+          "checkedAt": "2026-11-09",
+          "basis": "熟食、混合均質；每 100 g 可食部；一般值，不代表特定品牌",
+          "nutrients": {"kcal":35,"protein":2,"carbs":5.8,"fat":0.4,"sodium":487}
+        }
+      ],
+      "identity": {"name":"韓式泡菜","brand":""},
       "snapshot": {
-        "unitLabel": "g",
-        "per100g": {
-          "kcal": 32,
-          "protein": 1.6,
-          "carbs": 6,
-          "fat": 0.5,
-          "sodium": 800
-        },
-        "weightBasis": "as_sold"
+        "unitLabel":"g",
+        "per100g": {"kcal":35,"protein":2,"carbs":5.8,"fat":0.4,"sodium":487},
+        "weightBasis":"as_sold"
       }
     },
-    "name": "韓式泡菜",
-    "brand": ""
+    "name":"韓式泡菜",
+    "brand":""
   },
   "black_fungus": {
     "evidence": {
@@ -2388,30 +2391,33 @@ export const officialNutritionEvidence = {
   },
   "shin_ramen": {
     "evidence": {
-      "kind": "missing",
-      "status": "pending",
-      "checkedAt": "2026-10-28",
+      "kind": "database",
+      "status": "estimated",
+      "checkedAt": "2026-11-09",
       "weightBasis": "dry",
-      "note": "366 kcal / F3.5 類似非油炸型，但名稱只有辛拉麵；未確認油炸／非油炸與地區配方，保留。",
-      "sources": [],
-      "identity": {
-        "name": "辛拉麵",
-        "brand": ""
-      },
+      "specification": "農心非油炸辛拉麵 97g／包（麵體+調味包+配料）",
+      "note": "每 100g 為整包97g含調味粉、油及配料的同比例估算，非單獨麵體營養。只取麵體或減半調味粉時無法由整包標示精確拆分鈉；須另依實際包裝分項資料。",
+      "sources": [
+        {
+          "ref": "NONGSHIM:SHIN-LIGHT-TW-97G",
+          "title": "農心非油炸辛拉麵 97g 台灣商品營養標示（零售商轉載）",
+          "url": "https://tw.buy.yahoo.com/gdsale/gdsale.asp?gdid=8559603",
+          "checkedAt": "2026-11-09",
+          "basis": "每包 97g 含調味包：355kcal、P9.6、C71.6、F3.4、Na1881；換算每100g四捨五入",
+          "nutrients": {"kcal":355,"protein":9.6,"carbs":71.6,"fat":3.4,"sodium":1881},
+          "servingSize":97,
+          "servingUnit":"g"
+        }
+      ],
+      "identity": {"name":"非油炸辛拉麵（97g）","brand":"農心"},
       "snapshot": {
-        "unitLabel": "g",
-        "per100g": {
-          "kcal": 366,
-          "protein": 9.9,
-          "carbs": 73.8,
-          "fat": 3.5,
-          "sodium": 1939
-        },
-        "weightBasis": "dry"
+        "unitLabel":"g",
+        "per100g":{"kcal":366,"protein":9.9,"carbs":73.8,"fat":3.5,"sodium":1939},
+        "weightBasis":"dry"
       }
     },
-    "name": "辛拉麵",
-    "brand": ""
+    "name":"非油炸辛拉麵（97g）",
+    "brand":"農心"
   },
   "potato_ramen": {
     "evidence": {

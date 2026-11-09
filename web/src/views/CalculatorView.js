@@ -1,8 +1,8 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_SIMPLE_CALC_V1';
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_THREE_FOODS_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
-import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V1';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V1';
 
 export default {
     components: {
@@ -1897,6 +1897,10 @@ export default {
                         非 AI 計算結果；原始份量不代表適合目前營養目標。未分配食材需核對或手動調整。
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
+                    <p v-if="selectedMasterIngredients.includes('shin_ramen')"
+                       class="prep-ingredient-warning" role="note" style="margin:0 0 12px;line-height:1.5;">
+                        非油炸辛拉麵目前以整包 97 g（含全部調味料）估算。只秤麵體或少放調味包時，營養與鈉不能精確拆算。
+                    </p>
                     <ul style="list-style: none; padding-left: 0; margin-bottom: 16px;">
                         <li v-for="item in totalIngredientsList" :key="item.id + ':' + item.unit" class="prep-ingredient-row">
                             <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
