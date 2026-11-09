@@ -45,7 +45,7 @@ assert.equal(dialogs.length,2,dialogs);assert.match(dialogs[1],/已取代/);asse
 assert.equal(app.engine.value.getIngredientById('cocoa').brand,'新品牌');
 console.log('PASS actual App reactive Engine -> Modal replace -> real upload+personal sync -> two dialogs -> session still ready',requests.length);
 // A document refresh must preserve every stored ingredient, photo reference, scope and session.
-assert.equal(app.appVersion,'2026.11.09.1');
+assert.equal(app.appVersion,'2026.11.09.2');
 const storedBefore=JSON.stringify([...values]);await app.refreshData();
 assert.equal(new URL(refreshedURL).origin,'https://fixture.invalid');assert(new URL(refreshedURL).searchParams.has('fk_update'));
 assert.equal(JSON.stringify([...values]),storedBefore);
@@ -68,16 +68,16 @@ for(const [file, imports] of [
      ? '20261109_FK14_RECIPE_REVIEW_V1'
      : (['KitchenEngine.js','IngredientBaselineUpdate.js'].includes(name)
      ? '20261108_FK14_COCOA_RETIRED_V1'
-     : (file==='web/src/main.js' && name==='CalculatorView.js' ? '20261108_HEADER_CLEANUP_V1' : tag)));
+     : (file==='web/src/main.js' && name==='CalculatorView.js' ? '20261109_SIMPLE_CALC_V1' : tag)));
   assert(source.includes(name+'?v='+expected),file+' must load the updated '+name);
  }
 }
 
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_FK14_RECIPE_REVIEW_V1'));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_SIMPLE_CALC_V1'));
 assert(fs.readFileSync('web/src/main.js','utf8').includes('IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1'));
 const photoAuditBefore=JSON.stringify([...values]);
 await app.checkIngredientPhotos();
 assert.equal(app.photoAudit.value.busy,false);
-assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.09.1'));
+assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.09.2'));
 assert.equal(JSON.stringify([...values]),photoAuditBefore);
 vue.compile(App.template,{decodeEntities:text=>text});

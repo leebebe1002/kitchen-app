@@ -1,4 +1,4 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261105_DEFAULT_ESTIMATES_V1';
+import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_SIMPLE_CALC_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261105_DEFAULT_ESTIMATES_V1';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
@@ -176,22 +176,9 @@ export default {
             return `${year}-${month}-${day}`;
         };
 
-        const mealInputs = reactive(Object.fromEntries(['bebe','ariel','jason'].map(member => [member, {
-            weight: '', measuredOn: '', goal: '', restrictions: '', excludedIds: [], mealsRemaining: 3, confirmed: false
-        }])));
-        for (const member of ['bebe','ariel','jason']) {
-            watch(() => JSON.stringify([{...mealInputs[member],confirmed:undefined}, engine.profiles[member]]),
-                () => { mealInputs[member].confirmed = false; }, {flush:'sync'});
-        }
-        const confirmMealProfile = member => {
-            mealInputs[member].confirmed = true;
-            try { buildMealContext(engine, member, mealInputs[member], getTodayStr()); }
-            catch (error) { mealInputs[member].confirmed = false; alert(error.message); }
-        };
         watch(() => engine.personalScope, () => {
             aiChefAdvice.value = null;
             isCalculated.value = false;
-            for (const input of Object.values(mealInputs)) Object.assign(input, {weight:'', measuredOn:'', goal:'', restrictions:'', excludedIds:[], confirmed:false});
         });
         const useHistoricalPortions = member => {
             cancelChefRequest();
@@ -201,6 +188,8 @@ export default {
             }
             refreshAllPortionStates();
         };
+        const hasHistoricalPortions = member => !!findPortionEntry(member, selectedMasterIngredients.value)
+            || !!currentDish.value?.memberPortions?.[member]?.length;
 
         // 🌟 成員個別配比模式：'standard' (標準份量) vs 'remaining' (吃剩餘額度)
         const memberPortionModes = ref({
@@ -208,6 +197,8 @@ export default {
             ariel: 'standard',
             jason: 'standard'
         });
+        const getMealContext = member => buildMealContext(engine, member, getTodayStr(),
+            memberPortionModes.value[member], currentSlot.value?.id);
 
         // 手動選擇優先於自動預判：標記該成員是否已被使用者手動變更過
         const manualOverrides = ref({
@@ -1056,7 +1047,7 @@ export default {
                 return;
             }
             try {
-                activeMembers.value.forEach(member => buildMealContext(engine, member, mealInputs[member], getTodayStr(), memberPortionModes.value[member]));
+                activeMembers.value.forEach(member => getMealContext(member));
             } catch (error) {
                 aiChefAdvice.value = { source: 'local', portions: {}, chefComment: error.message + ' 目前顯示配方／手動份量，尚未產生動態建議。' };
                 showChefNote.value = true;
@@ -1083,7 +1074,7 @@ export default {
 
         // Synchronous invalidation also catches edit-and-revert before a response arrives.
         watch([selectedDish, selectedMasterIngredients, memberIngredients, diners, memberPortionModes,
-            currentSlot, mealInputs, () => engine.personalScope, () => engine.data.pantryInventory.foodStockStatus,
+            currentSlot, () => engine.personalScope, () => engine.data.pantryInventory.foodStockStatus,
             () => engine.data.ingredients, () => engine.data.dailyLogs, () => engine.profiles],
             cancelChefRequest, { deep: true, flush: 'sync' });
 
@@ -1151,8 +1142,7 @@ export default {
                     return;
                 }
 
-                const contexts = activeMembers.value.map(member => buildMealContext(engine, member,
-                    mealInputs[member], getTodayStr(), memberPortionModes.value[member]));
+                const contexts = activeMembers.value.map(member => getMealContext(member));
                 const prompt = buildPortionPrompt({ dish: dishName, slot: slotName, contexts, expected, engine });
 
                 apiKey = (apiKey || '').trim();
@@ -1492,7 +1482,7 @@ export default {
         };
 
         return {
-            mealInputs, confirmMealProfile, useHistoricalPortions, selectedMasterIngredients,
+            useHistoricalPortions, hasHistoricalPortions, selectedMasterIngredients,
             engine,
             selectedDish,
             memberIngredients,
@@ -1796,24 +1786,6 @@ export default {
                     </div>
                 </div>
 
-                <details v-for="member in activeMembers" :key="'profile-'+member" class="card" style="margin-bottom:12px;">
-                    <summary>{{ engine.profiles[member].name }} · 本餐目標與限制 {{ mealInputs[member].confirmed ? '已核對' : '待核對' }}</summary>
-                    <p>既有每日目標請先核對；資料僅留在本次畫面。點擊計算時會將本餐確認資料送至 Gemini，供份量建議。標準模式按剩餘餐數分配額度；剩餘額度模式使用全部剩餘額度。</p>
-                    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
-                        <label>目前體重 kg <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" v-model.number="mealInputs[member].weight"></label>
-                        <label>測量日期 <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="date" v-model="mealInputs[member].measuredOn"></label>
-                        <label v-for="field in [{key:'targetKcal',name:'每日熱量 kcal'},{key:'targetProtein',name:'蛋白質 g'},{key:'targetCarbs',name:'碳水 g'},{key:'targetFat',name:'脂肪 g'},{key:'targetSodium',name:'鈉 mg'}]" :key="field.key">{{ field.name }} <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" v-model.number="engine.profiles[member][field.key]"></label>
-                        <label>今日還要吃幾餐（含本餐）<input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" type="number" min="1" max="12" v-model.number="mealInputs[member].mealsRemaining"></label>
-                        <label style="grid-column:1/-1;">現階段健康／體重目標 <input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" v-model="mealInputs[member].goal"></label>
-                        <label style="grid-column:1/-1;">飲食限制（無則填無）<input style="width:100%;min-width:0;max-width:100%;box-sizing:border-box;" v-model="mealInputs[member].restrictions"></label>
-                        <fieldset style="grid-column:1/-1;">本餐不可吃的食材
-                            <label v-for="id in selectedMasterIngredients" :key="id" style="display:block;"><input type="checkbox" :value="id" v-model="mealInputs[member].excludedIds">{{ getIngredientName(id) }}</label>
-                        </fieldset>
-                    </div>
-                    <button class="btn-icon" @click="confirmMealProfile(member)">確認以上資料本餐有效</button>
-                    <button class="btn-icon" @click="useHistoricalPortions(member)">手動帶入舊份量／份量記憶</button>
-                </details>
-
                 <!-- 計算操作橫列 (右側正圓計算按鈕，原全域雙切已融入成員膠囊) -->
                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 24px;">
                     <button class="btn-icon" @click="calculate" :disabled="isAiChefLoading" style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: var(--color-primary); color: white; border: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(245, 166, 35, 0.4); cursor: pointer;" title="進行備料計算">
@@ -2020,7 +1992,12 @@ export default {
                             <span>常用份量約 {{ getPortionMemoryWarning(member).currentKcal }} kcal，超過今日剩餘額度 {{ getPortionMemoryWarning(member).remainingKcal }} kcal</span>
                         </div>
                         <!-- 按鈕區塊（居中，低視覺權重）-->
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 28px;">
+                        <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; min-height: 28px;">
+                            <button v-if="hasHistoricalPortions(member)" @click="useHistoricalPortions(member)"
+                                    type="button" class="btn-icon"
+                                    style="background:none;border:none;padding:3px 8px;color:#9CA3AF;font-size:0.8rem;cursor:pointer;">
+                                取用舊份量
+                            </button>
                             <!-- unsaved / modified -->
                             <button v-if="portionMemoryButtonState[member] !== 'saved'"
                                     @click="savePortionMemory(member)"

@@ -44,7 +44,6 @@ async function mount(component = Calculator) {
     renderer.render(h({ setup() { view = component.setup({ engine }); return () => h('div'); } }), root);
     engine.data.dishes = fixtureDishes;
     await nextTick();
-    if (view.mealInputs) for (const member of ['bebe','ariel','jason']) Object.assign(view.mealInputs[member],{weight:60,measuredOn:'2026-01-01',goal:'測試目標',restrictions:'無',confirmed:true});
     return { view, engine, close: () => renderer.render(null, root) };
 }
 const resultFor = view => ({ chefComment: '配比完成', portions: Object.fromEntries(view.activeMembers.value.map(m =>
@@ -66,7 +65,10 @@ await check('primary success, three members, immediate local result, memory wins
     let release;
     globalThis.fetch = async () => new Promise(resolve => { release = resolve; });
     const pending = view.calculate();
-    assert.equal(view.isCalculated.value, true); assert(!Calculator.template.includes('aiHudState'));
+    assert.equal(view.isCalculated.value, true);
+    assert(!Calculator.template.includes('本餐目標與限制'));
+    assert(!('mealInputs' in view),'One-tap calculation must not require profile form state');
+    assert(!Calculator.template.includes('aiHudState'));
     assert.equal(view.memberIngredients.value.bebe[0].amount, 77, 'Manual amount remains while AI is pending');
     const localJason = view.memberIngredients.value.jason[0].amount;
     assert.notEqual(localJason, 77);
