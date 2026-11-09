@@ -172,12 +172,69 @@ export class SharedRecipeCoordinator {
         }
     }
 
+    /**
+     * Read-only device-local preview. A count alone is not informed consent:
+     * list exactly what would be shared, show differences against the cloud
+     * and identify unresolved private ingredient references by name.
+     */
+    reviewLegacy() {
+        if (!this.active || !this.owner || !this.engine.hasPersonalAccess()
+            || this.engine.personalContext?.userId !== this.owner) return [];
+        const local=new Map((this.engine.data.rawDishes?.dishes || [])
+            .filter(recipe=>recipe && typeof recipe.id==='string')
+            .map(recipe=>[recipe.id,recipe]));
+        const labels={
+            name:'料理名稱',categories:'料理類別',recommendedProteins:'蛋白質選項',
+            recommendedVeggies:'蔬菜選項',recommendedCarbs:'主食選項',
+            recommendedSauces:'醬料選項',defaultIngredients:'預設食材',
+            memberPortions:'成員份量',sopSteps:'料理步驟'
+        };
+        const labelItem=item=>{
+            if (typeof item==='string') return item;
+            if (!item || typeof item!=='object') return String(item);
+            const title=item.name || item.id || item.ingredientId || JSON.stringify(item);
+            const amount=item.amount ?? item.grams ?? item.weight ?? item.quantity;
+            return amount===undefined ? String(title)
+                : title+' '+amount+(item.unit || item.unitLabel || 'g');
+        };
+        const preview=value=>{
+            if (value===undefined) return '未設定';
+            let summary;
+            if (Array.isArray(value))
+                summary=value.length ? value.map(labelItem).join('、') : '空清單';
+            else if (value && typeof value==='object')
+                summary=Object.entries(value).map(([key,item])=>key+'：'+
+                    (Array.isArray(item)?item.map(labelItem).join('、'):labelItem(item))).join('；');
+            else summary=String(value);
+            return summary.length>260 ? summary.slice(0,260)+'…（僅顯示摘要）' : summary;
+        };
+        return this.legacyIds.map(id=>{
+            const recipe=local.get(id);
+            if (!recipe) return {id,name:id,blockedIds:['料理已不在手機'],blockedNames:['料理已不在手機'],diffs:[]};
+            const cloud=this.rows.get(id)?.recipe || this.engine.recipeStaticBaseline.find(x=>x.id===id) || {};
+            const fields=[...new Set([...Object.keys(cloud),...Object.keys(recipe)])]
+                .filter(field=>!sameRecipe(cloud[field],recipe[field]));
+            const blockedIds=unresolvedRecipeIngredientIds(this.engine,recipe);
+            const blockedNames=blockedIds.map(ingredientId=>{
+                const food=this.engine.getIngredientById?.(ingredientId);
+                return food?.name ? food.name+'（'+ingredientId+'）':ingredientId;
+            });
+            return {id,name:recipe.name,blockedIds,blockedNames,
+                diffs:fields.map(field=>({
+                    name:labels[field] || field,
+                    before:preview(cloud[field]),
+                    after:preview(recipe[field])
+                }))};
+        });
+    }
+
     async sync() {
         const e=this.engine,s=this.storage;
         if (!this.active || this.offline || this.busy || !e.hasPersonalAccess()
             || this.owner!==e.personalContext.userId) return false;
         const context=e.personalContext,generation=e.personalScopeGeneration;
         this.busy=true;
+        const deferred=[];
         try {
             for (const [id,pending] of Object.entries(readRecipeQueue(s).edits)) {
                 if (!this.isCurrent(context,generation,this.owner)) return false;
@@ -185,12 +242,13 @@ export class SharedRecipeCoordinator {
                 if (unknown.length) {
                     this.message='料理已儲存在手機，但含有尚未共用的食材 ID：'
                         +unknown.join('、')+'。先保留待同步，不能讓家人收到無法計算的配方。';
-                    return false;
+                    deferred.push(id);
+                    continue; // A private-food recipe must not starve unrelated pending recipes.
                 }
                 const existing=this.rows.get(id);
                 if ((existing?.revision || 0)!==pending.revision) {
-                    this.message='其他裝置有較新的料理版本；原本手機修改仍待核對。';
-                    return false;
+                    deferred.push(id);
+                    continue; // One conflict must not block other independent recipe IDs.
                 }
                 try {
                     const row=await this.service.publish(pending.recipe,pending.revision);
@@ -200,28 +258,37 @@ export class SharedRecipeCoordinator {
                     const action=acknowledgeRecipeEdit(s,this.owner,id,pending,row);
                     this.rows.set(id,row);
                     if (action!=='confirmed') {
-                        this.message='同一料理另有修改，仍保留待同步紀錄。';
-                        return false;
+                        deferred.push(id);
+                        continue;
                     }
                 } catch (error) {
-                    this.message='手機料理已儲存，雲端待同步：'+error.message;
-                    return false;
+                    deferred.push(id);
+                    console.warn('Recipe pending for retry:',id,error.message);
+                    continue;
                 }
             }
-            this.message='全家料理已同步 Supabase。';
-            return true;
+            const pending=Object.keys(readRecipeQueue(s).edits).length;
+            this.message=pending
+                ? pending+' 項料理仍待同步；含尚未共用的食材、版本衝突或網路失敗時會保留手機配方，其他料理可獨立同步。'
+                : '全家料理已同步 Supabase。';
+            return !deferred.length && pending===0;
         } finally { this.busy=false; }
     }
 
-    async approveLegacy() {
+    async approveLegacy(selectedIds) {
         const e=this.engine,s=this.storage;
         if (!this.active || this.offline || !e.hasPersonalAccess()
             || e.personalContext.userId!==this.owner)
             throw Error('請先連網確認登入者與全家料理。');
-        if (this.conflictIds.length)
-            throw Error('有其他裝置的不同版本，請先解決衝突，不能強制覆寫。');
-        const ids=new Set(this.legacyIds);
-        if (!ids.size) return 0;
+        if (this.busy)
+            throw Error('料理仍在同步，請完成後再選擇要分享的項目。');
+        if (!Array.isArray(selectedIds) || !selectedIds.length
+            || new Set(selectedIds).size!==selectedIds.length
+            || selectedIds.some(id=>!this.legacyIds.includes(id)))
+            throw Error('請先從待確認清單選擇要分享的料理，原本資料不會自動上傳。');
+        const ids=new Set(selectedIds);
+        if (selectedIds.some(id=>this.conflictIds.includes(id)))
+            throw Error('選擇的料理已有另一台手機版本，請先解決衝突。');
         const recipes=e.data.rawDishes?.dishes || [];
         const edits=recipes.filter(recipe=>ids.has(recipe.id)).map(validateRecipe);
         if (edits.length!==ids.size) throw Error('手機料理在確認過程中已改變，請重新載入。');
@@ -234,8 +301,8 @@ export class SharedRecipeCoordinator {
             revisionById:new Map([...this.rows].map(([id,row])=>[id,row.revision]))
         });
         commitRecipeEdit(s,recipes,queue);
-        this.legacyIds=[];
-        this.message='已排入 '+edits.length+' 項經確認的舊料理，正在同步。';
+        this.legacyIds=this.legacyIds.filter(id=>!ids.has(id));
+        this.message='已排入 '+edits.length+' 項你選擇的料理；其餘舊料理仍保留本機。';
         this.sync().catch(error=>console.warn('Legacy recipes:',error.message));
         return edits.length;
     }

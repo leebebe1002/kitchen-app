@@ -1109,3 +1109,48 @@ input[type=number].no-spin {
 .account-secondary-button:disabled {
     opacity: 0.55;
 }
+
+/* FK #14: compact per-recipe review. Only explicit checked items may upload. */
+.recipe-review-panel { margin-top: 10px; }
+.recipe-review-panel > summary {
+    color: var(--color-primary-ink);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px 0;
+}
+.recipe-review-list { display: grid; gap: 10px; padding: 8px 0; }
+.recipe-review-card {
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    min-width: 0;
+}
+.recipe-review-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}
+.recipe-review-choice input {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    accent-color: var(--color-primary-ink);
+}
+.recipe-review-choice input:disabled { opacity: 0.45; }
+.recipe-review-choice strong { display: block; font-size: 14px; color: var(--color-text-main); }
+.recipe-review-choice small {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+.recipe-review-choice .recipe-review-blocked { color: var(--color-secondary); }
+.recipe-review-diff { margin: 9px 0 0 28px; font-size: 12px; }
+.recipe-review-diff > summary { cursor: pointer; color: var(--color-primary-ink); }
+.recipe-review-diff-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.recipe-review-diff-row strong { display: block; }
+.recipe-review-diff-row small { display: block; margin-top: 3px; overflow-wrap: anywhere; }

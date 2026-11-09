@@ -153,7 +153,7 @@ assert.equal(remote.length,base.length,'old local recipe must never be uploaded 
 const protectedPersonal=JSON.stringify({shoppingList:[{targetId:'egg'}],foodCart:['fresh']});
 persistent.setItem('kitchen_v2_personal_state_household',protectedPersonal);
 persistent.setItem('kitchen_v2_personal_state_ariel',JSON.stringify({shoppingList:[]}));
-const approvedCount=await coordinator.approveLegacy();
+const approvedCount=await coordinator.approveLegacy([custom.id]);
 assert.equal(approvedCount,1);
 for(let i=0;i<12 && Object.keys(readRecipeQueue(persistent).edits).length;i++)
  await new Promise(resolve=>setTimeout(resolve,0));
@@ -277,11 +277,16 @@ const main=fs.readFileSync('web/src/main.js','utf8');
 assert(main.includes('共用料理同步'));
 assert(main.includes('approveLegacyRecipes'));
 assert(main.includes('retryRecipeSync'));
-assert(main.includes('recipeSync.legacyIds.length'));
-assert(main.includes("appVersion = '2026.11.08.12'"));
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261108_FK14_RECIPE_SYNC_V1'));
+assert(main.includes('selectedLegacyRecipeIds'));
+assert(main.includes('legacyRecipeReview'));
+assert(main.includes('檢視 {{ item.diffs.length }} 個不同欄位'));
+assert(main.includes('確認分享勾選的'));
+assert(!main.includes('確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改'));
+assert(main.includes('legacyRecipeReview.length'));
+assert(main.includes("appVersion = '2026.11.09.1'"));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261109_FK14_RECIPE_REVIEW_V1'));
 assert(fs.readFileSync('web/src/engine/KitchenEngine.js','utf8')
-  .includes('SharedRecipeCoordinator.js?v=20261108_FK14_RECIPE_SYNC_V1'));
+  .includes('SharedRecipeCoordinator.js?v=20261109_FK14_RECIPE_REVIEW_V1'));
 assert(fs.readFileSync('web/src/services/SharedRecipeCoordinator.js','utf8')
   .includes('SharedRecipeService.js?v=20261108_FK14_RECIPE_SYNC_V1'));
 console.log('PASS UI opt-in/retry and PWA singleton module version chain');

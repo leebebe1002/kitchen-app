@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261108_FK14_RECIPE_SYNC_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_RECIPE_REVIEW_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261108_HEADER_CLEANUP_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.08.12';
+        const appVersion = '2026.11.09.1';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -48,6 +48,11 @@ const App = {
         const photoAudit = ref({ busy: false, text: '', message: '' });
         const nutritionAudit = ref({ busy: false, text: '', message: '' });
         const fk14Repairing = ref(false);
+        // Explicit per-recipe opt-in. Never preselect unreviewed local recipes.
+        const selectedLegacyRecipeIds = ref([]);
+        const legacyRecipeReview = computed(() =>
+            engine.value?.recipeSync?.reviewLegacy?.() || []);
+
         const canRepairFk14Nutrition = computed(() => {
             const report = nutritionAudit.value.report;
             return personalReady.value && engine.value?.personalScope === 'household'
@@ -78,6 +83,7 @@ const App = {
                     identityAttempt += 1;
                     personalReady.value = false;
                     currentUser.value = null;
+                    selectedLegacyRecipeIds.value = [];
                     personalMessage.value = authService.message;
                     identityVersion.value += 1;
                     document.body.classList.remove('modal-open');
@@ -265,11 +271,19 @@ const App = {
 
         const approveLegacyRecipes = async () => {
             const target=engine.value;
-            const count=target?.recipeSync?.legacyIds?.length || 0;
-            if (!count || !personalReady.value) return;
-            if (!confirm('這台手機有 '+count+' 項尚未同步的舊料理修改。確認後會備份並加入全家共用料理，樂樂重新載入也能看到。既有庫存、採買及照片不會共享。確定上傳？')) return;
+            if (!personalReady.value || !target?.recipeSync?.active) return;
+            const allowed=new Set(legacyRecipeReview.value
+                .filter(recipe => recipe.blockedIds.length === 0)
+                .map(recipe=>recipe.id));
+            const chosen=selectedLegacyRecipeIds.value.filter(id=>allowed.has(id));
+            if (!chosen.length) return;
+            const names=legacyRecipeReview.value.filter(recipe=>chosen.includes(recipe.id))
+                .map(recipe=>recipe.name);
+            if (!confirm('確定只分享下列 '+chosen.length+' 項料理給全家？\n'
+                +names.join('、')+'\n未勾選及引用私房食材的料理會繼續保存在這台手機。')) return;
             try {
-                await target.recipeSync.approveLegacy();
+                await target.recipeSync.approveLegacy(chosen);
+                selectedLegacyRecipeIds.value=[];
             } catch (error) {
                 target.recipeSync.message='上傳未完成，原料理保留：'+error.message;
             }
@@ -396,6 +410,8 @@ const App = {
             arielResetMessage,
             resetArielKitchen,
             approveLegacyRecipes,
+            selectedLegacyRecipeIds,
+            legacyRecipeReview,
             retryRecipeSync,
             baselineUpdating,
             baselineMessage,
@@ -614,10 +630,38 @@ const App = {
                         <summary class="account-email-label">共用料理同步</summary>
                         <p class="account-copy">你在手機新增或修改的料理可與家人使用同一份配方；不會同步個人庫存、採買或家用品。原本手機的舊配方先保留，確認後才分享。</p>
                         <p class="account-message" role="status">{{ engine.recipeSync.message }}</p>
-                        <button v-if="engine.recipeSync.legacyIds.length" class="action-sheet-row"
-                            @click="approveLegacyRecipes" :disabled="engine.recipeSync.busy">
-                            確認分享這台裝置的 {{ engine.recipeSync.legacyIds.length }} 項舊料理修改
-                        </button>
+                        <details v-if="legacyRecipeReview.length" class="recipe-review-panel">
+                            <summary>檢視與選擇 {{ legacyRecipeReview.length }} 項手機料理差異</summary>
+                            <div class="recipe-review-list">
+                                <p class="account-copy">請逐項檢查差異再勾選要分享的料理，不會預設全選。引用私房食材的料理仍保存在手機。</p>
+                            <div v-for="item in legacyRecipeReview" :key="item.id" class="recipe-review-card">
+                                <label class="recipe-review-choice">
+                                    <input type="checkbox" :value="item.id" v-model="selectedLegacyRecipeIds"
+                                        :disabled="item.blockedIds.length > 0 || engine.recipeSync.busy || engine.recipeSync.offline"
+                                        :aria-label="'分享料理：' + item.name" />
+                                    <span>
+                                        <strong>{{ item.name }}</strong>
+                                        <small v-if="item.blockedIds.length" class="recipe-review-blocked">
+                                            暫不可分享：引用尚未共用的食材 {{ item.blockedNames.join('、') }}
+                                        </small>
+                                        <small v-else>可以選擇分享，未勾選會保留在本機</small>
+                                    </span>
+                                </label>
+                                <details v-if="item.diffs.length" class="recipe-review-diff">
+                                    <summary>檢視 {{ item.diffs.length }} 個不同欄位</summary>
+                                    <div v-for="field in item.diffs" :key="field.name" class="recipe-review-diff-row">
+                                        <strong>{{ field.name }}</strong>
+                                        <small>雲端：{{ field.before }}</small>
+                                        <small>手機：{{ field.after }}</small>
+                                    </div>
+                                </details>
+                            </div>
+                            <button class="action-sheet-row" @click="approveLegacyRecipes"
+                                :disabled="!selectedLegacyRecipeIds.some(id => legacyRecipeReview.some(item => item.id === id && !item.blockedIds.length)) || engine.recipeSync.busy || engine.recipeSync.offline">
+                                確認分享勾選的 {{ selectedLegacyRecipeIds.filter(id => legacyRecipeReview.some(item => item.id === id && !item.blockedIds.length)).length }} 項料理
+                            </button>
+                            </div>
+                        </details>
                         <button v-if="engine.recipeSync.active" class="action-sheet-row"
                             @click="retryRecipeSync" :disabled="engine.recipeSync.busy || engine.recipeSync.offline">
                             {{ engine.recipeSync.busy ? '正在同步料理…' : '重試同步待處理料理' }}
