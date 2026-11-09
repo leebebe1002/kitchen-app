@@ -1,6 +1,6 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
-import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
+import KitchenEngine from './engine/KitchenEngine.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
 import CalculatorView from './views/CalculatorView.js?v=20261109_ZERO_PORTIONS_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261106_INGREDIENT_PHOTO_REOPEN_V1';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.09.5';
+        const appVersion = '2026.11.09.6';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);
@@ -636,6 +636,20 @@ const App = {
                         <p v-if="engine.favoriteFoodSync" class="account-copy" role="status">
                             常用餐點：{{ engine.favoriteFoodSync.message }}
                         </p>
+                        <details v-if="engine.customIngredientSync?.conflictDetails?.length" class="recipe-review-panel">
+                            <summary>查看 {{ engine.customIngredientSync.conflictDetails.length }} 項私房食材待核對</summary>
+                            <p class="account-copy">這些資料仍保留在手機，沒有覆寫官方食材或猜測營養值。其他沒有衝突的私房食材會獨立同步。</p>
+                            <div v-for="item in engine.customIngredientSync.conflictDetails" :key="item.id" class="recipe-review-card">
+                                <strong>{{ item.name }}（{{ item.id }}）</strong>
+                                <small class="recipe-review-blocked" style="display:block;overflow-wrap:anywhere;">
+                                    {{ item.kind === 'official_id' ? '與官方食材 ID 相同、資料不同'
+                                        : item.kind === 'official_name' ? '與官方食材同名'
+                                        : item.kind === 'remote_version' ? '與雲端較新版本不同'
+                                        : '與另一項私房食材同名' }}
+                                </small>
+                                <small style="display:block;overflow-wrap:anywhere;">對照：{{ item.againstName }}（{{ item.againstId }}）</small>
+                            </div>
+                        </details>
                         <details v-if="legacyRecipeReview.length" class="recipe-review-panel">
                             <summary>檢視與選擇 {{ legacyRecipeReview.length }} 項手機料理差異</summary>
                             <div class="recipe-review-list">

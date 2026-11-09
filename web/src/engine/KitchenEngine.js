@@ -13,8 +13,8 @@ import {
 } from '../services/PersonalKitchenState.js?v=20261102_FK16_REVISION_V1';
 import personalKitchenSyncService from '../services/PersonalKitchenSyncService.js';
 import sharedIngredientNutritionService from '../services/SharedIngredientNutritionService.js';
-import Fk14LocalDataCoordinator from '../services/Fk14LocalDataCoordinator.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
-import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
+import Fk14LocalDataCoordinator from '../services/Fk14LocalDataCoordinator.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
+import SharedRecipeCoordinator from '../services/SharedRecipeCoordinator.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
 import { recoverRecipeJournal } from '../utils/SharedRecipeState.js?v=20261108_FK14_RECIPE_SYNC_V1';
 import officialIngredientCatalogService, { groupOfficialCatalogRows, canonicalNutritionItem }
     from '../services/OfficialIngredientCatalogService.js?v=20261108_FK14_WINDOW_FETCH_V1';

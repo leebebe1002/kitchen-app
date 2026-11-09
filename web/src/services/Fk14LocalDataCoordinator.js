@@ -1,5 +1,5 @@
 import dataService, { FK14_DATASETS, sanitizeFk14Record,
-    validateFk14Rows } from './Fk14LocalDataService.js?v=20261109_FK14_ALL_DATA_SYNC_V1';
+    validateFk14Rows } from './Fk14LocalDataService.js?v=20261109_FK14_CUSTOM_CONFLICT_V1';
 import { normalizeIngredientName, findSimilarIngredients }
     from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
 
@@ -25,6 +25,37 @@ const equals=(a,b)=>{
         ? Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])) :v);
     return stable(a)===stable(b);
 };
+function authoritativeOfficialFoods(engine) {
+    const foods=new Map(engine.officialIngredientById || []);
+    for(const [id,row] of engine.officialCatalogRows || [])
+        if(!foods.has(id) && row?.ingredient) foods.set(id,row.ingredient);
+    return foods;
+}
+
+/** Only exact ID/name equality is an automatic duplicate candidate.
+ * Similar (but not exact) food names are still handled by IngredientMatcher
+ * and saveIngredient's normal UI workflow, never silently rewritten here.
+ */
+export function inspectCustomCollision(food,officialFoods,peers=[]) {
+    const canonical=officialFoods.get(food.id);
+    if(canonical) {
+        if(equals(food,canonical))
+            return {kind:'already_official',id:food.id,name:food.name,
+                againstId:canonical.id,againstName:canonical.name};
+        return {kind:'official_id',id:food.id,name:food.name,
+            againstId:canonical.id,againstName:canonical.name};
+    }
+    const exact=findSimilarIngredients(food.name,[...officialFoods.values()],food.id).exactMatch;
+    if(exact) return {kind:'official_name',id:food.id,name:food.name,
+        againstId:exact.id,againstName:exact.name};
+    const name=normalizeIngredientName(food.name);
+    const peer=peers.find(candidate=>candidate.id!==food.id
+        && normalizeIngredientName(candidate.name)===name);
+    if(peer)return {kind:'custom_name',id:food.id,name:food.name,
+        againstId:peer.id,againstName:peer.name};
+    return null;
+}
+
 function parseArray(raw,kind){
     if(raw===null)return [];
     let value;
@@ -48,7 +79,7 @@ export class Fk14LocalDataCoordinator {
         this.engine=engine;this.service=service;this.storage=storage;this.kind=kind;
         this.rows=new Map();this.owner=null;this.ready=false;
         this.pending=0;this.message='尚未載入雲端'+kindKeys[kind].label;
-        this.busy=false;this.conflicts=[];
+        this.busy=false;this.conflicts=[];this.conflictDetails=[];
     }
     ownerKey(owner){return prefix+this.kind+'_snapshot_'+owner;}
     queueKey(owner){return prefix+this.kind+'_pending_'+owner;}
@@ -56,7 +87,7 @@ export class Fk14LocalDataCoordinator {
     ownerMarker(){return prefix+'favorite_first_verified_owner';}
     lastVerifiedOwnerKey(){return prefix+this.kind+'_last_verified_owner';}
     backupKey(owner){return prefix+this.kind+'_precloud_backup_'+owner;}
-    reset(){this.owner=null;this.ready=false;this.busy=false;this.rows.clear();this.pending=0;this.conflicts=[];this.message='尚未載入雲端'+kindKeys[this.kind].label;}
+    reset(){this.owner=null;this.ready=false;this.busy=false;this.rows.clear();this.pending=0;this.conflicts=[];this.conflictDetails=[];this.message='尚未載入雲端'+kindKeys[this.kind].label;}
     context(){
         const e=this.engine,c=e.personalContext;
         return e.hasPersonalAccess() && c?.userId && e.auth.isCurrentContext(c) ?c:null;
@@ -111,13 +142,17 @@ export class Fk14LocalDataCoordinator {
             e.data.rawFavoriteFoods={favorites:list};
             return;
         }
-        // Always keep canonical official data first. Private IDs are separate,
-        // not promoted or copied into fk_ingredient_catalog.
+        // Canonical IDs may exist in old local custom caches. Never let one
+        // replace an official food in calculator memory, even while the cache
+        // and any unsent draft are preserved for later reconciliation.
+        const official=authoritativeOfficialFoods(e);
+        const privateList=list.filter(item=>!official.has(item.id));
+        const privateIds=new Set(privateList.map(item=>item.id));
         const raws=e.data.rawIngredients;
         for(const cat of ['proteins','veggies','carbs','sauces']){
-            raws[cat]=(raws[cat]||[]).filter(item =>!list.some(c=>c.id===item.id));
+            raws[cat]=(raws[cat]||[]).filter(item=>!privateIds.has(item.id));
         }
-        for(const item of list){
+        for(const item of privateList){
             (raws[item.category] ||= []).push(item);
         }
         e.data.rawIngredients=raws;
@@ -191,37 +226,60 @@ export class Fk14LocalDataCoordinator {
                     conflicts.push(id);
                 }
             }
+            const conflictDetails=[];
+            const alreadyOfficial=new Set();
             if(this.kind==='custom'){
-                const official=new Set([...e.officialIngredientById.keys(),
-                    ...(e.officialCatalogRows?.keys()||[])]);
-                const officialNames=new Map([...e.officialIngredientById.values()]
-                    .map(item=>[normalizeIngredientName(item.name),item.id]));
-                const unique=new Map();
-                for(const item of merged.values()){
-                    if(official.has(item.id)){
-                        conflicts.push(item.id);
-                        continue;
-                    }
-                    const comparison=findSimilarIngredients(item.name,
-                        [...e.officialIngredientById.values()],item.id);
-                    if(comparison.exactMatch){
-                        conflicts.push(item.id);
-                        continue;
-                    }
+                const official=authoritativeOfficialFoods(e);
+                const all=[...merged.values()];
+                const sameNames=new Map();
+                for(const item of all){
+                    if(official.has(item.id))continue; // Already handled by canonical ID.
                     const name=normalizeIngredientName(item.name);
-                    if(unique.has(name)&&unique.get(name)!==item.id)conflicts.push(item.id);
-                    unique.set(name,item.id);
+                    if(!sameNames.has(name))sameNames.set(name,[]);
+                    sameNames.get(name).push(item);
                 }
-                if(conflicts.some(id=>official.has(id)||officialNames.has(
-                    normalizeIngredientName(merged.get(id)?.name)))){
-                    // Never let a custom row with canonical identity overwrite
-                    // one of the 100 trusted official food objects.
-                    throw Error('私房食材與官方母庫存在同名或 ID 衝突；原資料保留，不能自動覆寫。');
+                for(const item of all){
+                    let collision=inspectCustomCollision(item,official);
+                    if(collision?.kind==='already_official'){
+                        // Identical legacy duplicate requires no private cloud row.
+                        alreadyOfficial.add(item.id);
+                        continue;
+                    }
+                    if(!collision){
+                        const duplicates=sameNames.get(normalizeIngredientName(item.name))||[];
+                        // When there is no previously verified custom row, do
+                        // not arbitrarily pick a local first winner and share
+                        // its nutritional values. If one is already in the
+                        // cloud, keep that row and hold the other IDs.
+                        const verified=duplicates.filter(peer=>remote.has(peer.id));
+                        if(duplicates.length>1
+                            && !(verified.length===1 && verified[0].id===item.id)) {
+                            const other=verified[0] || duplicates.find(peer=>peer.id!==item.id);
+                            collision={kind:'custom_name',id:item.id,name:item.name,
+                                againstId:other.id,againstName:other.name};
+                        }
+                    }
+                    if(collision){
+                        if(!conflicts.includes(item.id))conflicts.push(item.id);
+                        conflictDetails.push(collision);
+                    }
+                }
+                // A revision conflict is different from a name collision.
+                // Display it explicitly and keep it out of shared references.
+                for(const id of conflicts){
+                    if(conflictDetails.some(detail=>detail.id===id))continue;
+                    const item=merged.get(id);
+                    const counterpart=remote.get(id)?.ingredient;
+                    if(item)conflictDetails.push({
+                        kind:'remote_version',id,name:item.name,
+                        againstId:id,againstName:counterpart?.name || item.name
+                    });
                 }
             }
             const activeQueue={...queue};
             for(const [id,item] of localMap){
-                if(remote.has(id)||activeQueue[id]||conflicts.includes(id))continue;
+                if(remote.has(id)||activeQueue[id]||conflicts.includes(id)
+                    ||alreadyOfficial.has(id))continue;
                 // New never-uploaded item can be safely created after verified
                 // session + catalog identity; a conflict is never overwritten.
                 activeQueue[id]={item:clone(item),revision:0,deleted:false};
@@ -248,10 +306,13 @@ export class Fk14LocalDataCoordinator {
             this.owner=owner;
             this.ready=true;
             this.conflicts=conflicts;
-            if(this.kind==='custom')e.sharedCustomCatalogRows=new Map(remote);
+            this.conflictDetails=conflictDetails;
+            if(this.kind==='custom')e.sharedCustomCatalogRows=new Map(
+                [...remote].filter(([id])=>!conflicts.includes(id) && !alreadyOfficial.has(id)));
             this.publishToEngine([...merged.values()]);
             this.message=conflicts.length
-                ?conflicts.length+' 項同名或版本衝突，原資料保留，其他項可同步。'
+                ?conflicts.length+' 項私房食材需核對（原資料保留）；'
+                    +this.pending+' 項待同步，其他項可繼續上雲。'
                 :'已載入 Supabase；'+this.pending+' 項'+kindKeys[this.kind].label+'待同步。';
             if(this.pending)this.sync().catch(err=>{this.message='同步尚未完成：'+err.message;});
             return true;
@@ -379,6 +440,29 @@ export class Fk14LocalDataCoordinator {
             const blocked=[];
             for(const [id,task] of Object.entries(queue)){
                 if(!this.still(c,generation))return false;
+                if(this.kind==='custom'){
+                    const official=authoritativeOfficialFoods(this.engine);
+                    const others=this.local(owner).filter(item=>item.id!==id)
+                        .concat([...this.rows.values()]
+                            .filter(row=>row.ingredient_id!==id).map(row=>row.ingredient));
+                    const collision=inspectCustomCollision(task.item,official,others);
+                    if(collision){
+                        if(collision.kind==='already_official'
+                            && task.revision===0 && !task.deleted){
+                            // Safe ACK: an identical canonical food is already
+                            // durable in the official catalog. Preserve the
+                            // legacy local item; never send a duplicate row.
+                            const live=this.getQueue(owner);
+                            if(equals(live[id],task)){delete live[id];this.putQueue(owner,live);}
+                            continue;
+                        }
+                        if(!this.conflicts.includes(id))this.conflicts.push(id);
+                        if(!this.conflictDetails.some(detail=>detail.id===id))
+                            this.conflictDetails.push(collision);
+                        blocked.push(id);
+                        continue;
+                    }
+                }
                 const remote=this.rows.get(id);
                 if((remote?.revision||0)!==task.revision){blocked.push(id);continue;}
                 try{
@@ -404,8 +488,10 @@ export class Fk14LocalDataCoordinator {
                 }catch(e){blocked.push(id);}
             }
             this.pending=Object.keys(this.getQueue(owner)).length;
-            this.message=this.pending
-                ?this.pending+' 項資料待補同步（版本衝突或網路問題），本機保留。'
+            this.message=this.pending || this.conflicts.length
+                ?kindKeys[this.kind].label+'：'+this.pending
+                    +' 項待同步、'+this.conflicts.length
+                    +' 項需核對；其餘已上雲，手機原資料保留。'
                 :kindKeys[this.kind].label+'已同步到 Supabase。';
             if(this.kind==='custom' && !this.pending
                 && typeof this.engine.recipeSync?.load==='function') {

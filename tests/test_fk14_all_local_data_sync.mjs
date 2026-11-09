@@ -113,10 +113,14 @@ localWrong.setItem('kitchen_v2_custom_ingredients',JSON.stringify([
  {id:official.keys().next().value,name:'Malicious override',category:'proteins'}]));
 const eWrong=mockEngine(localWrong);
 const cWrong=new Fk14LocalDataCoordinator(eWrong,{kind:'custom',service,storage:localWrong});
-assert.equal(await cWrong.load(),false);
+assert.equal(await cWrong.load(),true,
+ 'Official identity conflict is isolated, not allowed to halt unrelated foods');
+assert(cWrong.conflicts.includes(official.keys().next().value));
+assert(cWrong.conflictDetails.some(x=>x.kind==='official_id'));
 assert.equal(localWrong.getItem('kitchen_v2_custom_ingredients')!==null,true);
+assert(!remoteCustom.has(official.keys().next().value));
 assert(eWrong.data.ingredients.some(x=>x.id===official.keys().next().value));
-console.log('PASS custom ingredient cannot masquerade as authoritative official ID');
+console.log('PASS custom ingredient cannot masquerade as official ID, but other foods can still sync');
 
 currentUser=contexts.bebe;
 const fStore=storage(),eFav=mockEngine(fStore);
@@ -328,3 +332,98 @@ console.log('PASS candidate migration preserves original production schema and s
  assert.equal(shared.getItem('kitchen_v2_personal_state_ariel'),arielPantry);
  console.log('PASS integrated initial device migration: 2 custom foods -> 9 recipes automatically, household/ariel pantry untouched');
 }
+
+const storeConflict=storage();
+const validSafe={id:'ing_safe_after_collision',name:'安全自製新食材',category:'veggies',per100g:{kcal:23,protein:1}};
+const officialGhost=clone(staticFoods[0]);
+const sameNameDifferentId={id:'ing_same_name_legacy',name:staticFoods[1].name,category:staticFoods[1].category};
+storeConflict.setItem('kitchen_v2_custom_ingredients',JSON.stringify([officialGhost,sameNameDifferentId,validSafe]));
+currentUser=contexts.bebe;
+remoteCustom.clear();
+const engineConflict=mockEngine(storeConflict);
+const syncConflict=new Fk14LocalDataCoordinator(engineConflict,{kind:'custom',service,storage:storeConflict});
+assert.equal(await syncConflict.load(),true,
+ 'An official-id or official-name duplicate must not block unrelated local private foods');
+for(let i=0;i<20 && syncConflict.pending;i++) await new Promise(resolve=>setTimeout(resolve,0));
+assert(remoteCustom.has(validSafe.id),'Unrelated private food should still reach cloud');
+assert(!remoteCustom.has(officialGhost.id),'Official ID must never be copied to custom catalog');
+assert(!remoteCustom.has(sameNameDifferentId.id),'Same-name different-ID food needs explicit reconciliation');
+assert(syncConflict.conflicts.includes(sameNameDifferentId.id));
+assert.equal(engineConflict.data.ingredients.filter(x=>x.id===officialGhost.id).length,1);
+assert.equal(storeConflict.getItem('kitchen_v2_custom_ingredients'),JSON.stringify([officialGhost,sameNameDifferentId,validSafe]),
+ 'Local private food cache including blocked originals remains byte-identical');
+assert.match(syncConflict.message,/私房食材/);
+console.log('PASS mixed canonical duplicate and same-name conflict allow independent safe food to sync');
+
+const twoEqualNames=[
+    {id:'ing_duplicate_a',name:'測試同名全家私房食材',category:'proteins',
+     per100g:{kcal:99,protein:7,carbs:0,fat:8}},
+    {id:'ing_duplicate_b',name:'測試同名全家私房食材',category:'proteins',
+     per100g:{kcal:200,protein:20,carbs:2,fat:9}},
+    {id:'ing_unrelated_safe',name:'測試不重複的健康食材',category:'veggies',
+     per100g:{kcal:12,protein:1,carbs:3,fat:0}}
+];
+remoteCustom.clear();
+const twoStore=storage();
+twoStore.setItem('kitchen_v2_custom_ingredients',JSON.stringify(twoEqualNames));
+const twoEngine=mockEngine(twoStore);
+const twoSync=new Fk14LocalDataCoordinator(twoEngine,{kind:'custom',service,storage:twoStore});
+assert(await twoSync.load());
+for(let i=0;i<20 && twoSync.pending;i++) await new Promise(resolve=>setTimeout(resolve,0));
+assert.deepEqual(twoSync.conflicts.sort(),['ing_duplicate_a','ing_duplicate_b'].sort(),
+ 'Both ambiguous local duplicate names must remain unshared');
+assert(!remoteCustom.has('ing_duplicate_a'));
+assert(!remoteCustom.has('ing_duplicate_b'));
+assert(remoteCustom.has('ing_unrelated_safe'));
+assert.equal(twoSync.conflictDetails.filter(x=>x.kind==='custom_name').length,2);
+assert.match(twoSync.message,/需核對/);
+assert.equal(twoStore.getItem('kitchen_v2_custom_ingredients'),JSON.stringify(twoEqualNames));
+console.log('PASS two unsynced same-name foods are BOTH protected; unrelated private food still syncs');
+
+// A stale pending custom food must not be sent even when the previous sync
+// batch was blocked; the following unrelated pending food still succeeds.
+const waiting=storage();
+waiting.setItem('kitchen_v2_custom_ingredients',JSON.stringify([
+  sameNameDifferentId,validSafe,
+  {id:'ing_new_valid_queue',name:'暫存安全新食材',category:'veggies',
+   per100g:{kcal:17,protein:3,carbs:1,fat:0}}
+]));
+const queueEngine=mockEngine(waiting);
+const queueCoordinator=new Fk14LocalDataCoordinator(queueEngine,{kind:'custom',service,storage:waiting});
+assert(await queueCoordinator.load());
+for(let i=0;i<20 && queueCoordinator.pending;i++) await new Promise(resolve=>setTimeout(resolve,0));
+assert(queueCoordinator.conflicts.includes(sameNameDifferentId.id));
+queueCoordinator.stage(contexts.bebe.userId,sameNameDifferentId,0);
+const extraLocal={id:'ing_manual_queue_safe',name:'佇列其他安全食材',category:'proteins',
+  per100g:{kcal:175,protein:12,carbs:1,fat:10}};
+queueCoordinator.stage(contexts.bebe.userId,extraLocal,0);
+assert.equal(await queueCoordinator.sync(),false,'Blocked queue must not be marked fully synced');
+assert(remoteCustom.has(extraLocal.id),'An independent safe outbox task must succeed after a conflict');
+assert(!remoteCustom.has(sameNameDifferentId.id));
+assert(queueCoordinator.getQueue(contexts.bebe.userId)[sameNameDifferentId.id]);
+assert(!queueCoordinator.getQueue(contexts.bebe.userId)[extraLocal.id]);
+assert.equal(waiting.getItem('kitchen_v2_custom_ingredients')?.includes(sameNameDifferentId.id),true);
+console.log('PASS old blocked outbox task cannot starve independent safe CAS write');
+
+// Canonical ID with different nutritional content must not be allowed to
+// shadow any official SSOT calculator reference or override the official row.
+remoteCustom.clear();
+const idConflictStore=storage();
+const conflictingOfficial={...staticFoods[0],name:'誤寫了不同名稱',per100g:{kcal:99999}};
+const nonConflicting={id:'ing_untouched_new_valid',name:'與官方不同的私房食材',category:'veggies',
+  per100g:{kcal:20,protein:2,carbs:3,fat:0}};
+idConflictStore.setItem('kitchen_v2_custom_ingredients',
+  JSON.stringify([conflictingOfficial,nonConflicting]));
+const eIdConflict=mockEngine(idConflictStore);
+const idSync=new Fk14LocalDataCoordinator(eIdConflict,{kind:'custom',service,storage:idConflictStore});
+assert(await idSync.load());
+for(let i=0;i<15 && idSync.pending;i++)await new Promise(resolve=>setTimeout(resolve,0));
+assert(idSync.conflicts.includes(conflictingOfficial.id));
+assert(idSync.conflictDetails.some(x=>x.id===conflictingOfficial.id && x.kind==='official_id'));
+assert(!remoteCustom.has(conflictingOfficial.id));
+assert(remoteCustom.has(nonConflicting.id));
+assert.equal(eIdConflict.data.ingredients.find(x=>x.id===conflictingOfficial.id).name,
+ staticFoods[0].name);
+assert.equal(idConflictStore.getItem('kitchen_v2_custom_ingredients'),
+ JSON.stringify([conflictingOfficial,nonConflicting]));
+console.log('PASS same canonical ID with different nutrition stays local, official calculation intact');
