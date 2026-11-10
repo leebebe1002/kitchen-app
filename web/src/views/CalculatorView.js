@@ -1,7 +1,8 @@
-import { buildMealContext, buildPortionPrompt, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
+import { buildMealContext, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
+import { planCulinaryMeal } from '../services/CulinaryPortionCoordinator.js?v=20261110_FK21_CULINARY_V1';
 import { planLocalPortions } from '../services/LocalPortionPlanner.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
-import { requestChef, validateChefResult, logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
+import { logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
 import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V2';
 
@@ -1215,20 +1216,18 @@ export default {
                     return false;
                 }
 
-                const prompt = buildPortionPrompt({ dish: dishName, slot: slotName, contexts, expected, engine });
-
                 apiKey = (apiKey || '').trim();
-
                 logChefTiming({ phase: 'prepare', durationMs: Math.round(performance.now() - prepareStarted) });
-                const resultJson = await requestChef({ apiKey, prompt,
-                    signal: request.controller.signal, deadline: started + CHEF_TOTAL_MS });
+                const resultJson = await planCulinaryMeal({ engine,
+                    dish: { id: currentDish.value?.id, name: dishName, slot: slotName },
+                    expected, contexts, apiKey, signal: request.controller.signal,
+                    deadline: started + CHEF_TOTAL_MS });
                 if (activeChefRequest !== request || request.controller.signal.aborted) return false;
                 if (engine.personalScope !== request.scope || localStorage.getItem(FK009_KEY) !== memoryBefore) {
                     cancelChefRequest();
                     return false;
                 }
                 const validationStarted = performance.now();
-                validateChefResult(resultJson, expected, engine);
                 validateMealLimits(engine, resultJson.portions, contexts);
                 // Release before synchronous writes, so our own application isn't an edit.
                 activeChefRequest = null;
@@ -1237,9 +1236,8 @@ export default {
 
                     applyPortionValues(resultJson.portions);
                     logChefTiming({ phase: 'validateApply', durationMs: Math.round(performance.now() - validationStarted) });
-                    resultJson.source = 'ai';
                     aiChefAdvice.value = resultJson;
-                    showChefNote.value = false;
+                    showChefNote.value = resultJson.source !== 'ai';
                     return true;
                 }
             } catch (error) {
@@ -1253,7 +1251,9 @@ export default {
                     '403': 'API Key 無效或權限不足 (403)',
                     timeout: 'AI 等待時間已達上限',
                     invalid: 'AI 回傳資料不完整或不合理',
-                    network: '網路連線未完成'
+                    network: '網路連線未完成',
+                    'culinary-invalid': 'Gemini 料理角色或審查資料未通過驗證',
+                    'culinary-no-solution': '料理比例與本餐營養額度無法同時滿足'
                 };
                 const nutrientNames = { kcal: '熱量', carbs: '碳水', fat: '脂肪', sodium: '鈉' };
                 if (error.code === 'limits') {
@@ -1261,7 +1261,13 @@ export default {
                 }
                 const reason = reasons[error.code] || (error.message?.includes('每日目標')
                     ? '每日目標資料不完整' : 'Gemini 建議未通過份量驗證');
-                if (contexts && applyLocalEstimate(expected, contexts, reason)) return true;
+                if (error.code === 'culinary-no-solution') {
+                    aiChefAdvice.value = { source: 'local', portions: {}, errReason: reason,
+                        chefComment: error.message + '。沒有刪除食材或硬湊份量；請考慮減少選用品項、改變料理或檢查餐次分配。' };
+                    showChefNote.value = true;
+                    return false;
+                }
+                if (contexts && applyLocalEstimate(expected, contexts, reason + '（料理審查未完成）')) return true;
                 aiChefAdvice.value = { source: 'local', errReason: reason,
                     chefComment: reason + '。今日剩餘額度不足以對全部選用食材安排有效份量，未產生估算。請核對今日紀錄、改用「剩餘」模式或取消食材；已保留原始／手動份量。', portions: {} };
                 showChefNote.value = true;
@@ -1884,8 +1890,8 @@ export default {
                                 <span class="apple-spinner"></span>
                                 <span>AI 優化中...</span>
                             </span>
-                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 智能配比</span>
-                            <span v-else-if="aiChefAdvice?.source === 'estimate'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">⚖️ 本機估算配比</span>
+                            <span v-else-if="aiChefAdvice && aiChefAdvice.source === 'ai'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">✨ AI 料理審查＋FK 配比</span>
+                            <span v-else-if="aiChefAdvice?.source === 'estimate'" style="font-size: 0.72rem; color: #B45309; background: #FEF3C7; padding: 2px 8px; border-radius: 10px; font-weight: 700;">{{ aiChefAdvice.reviewed === false ? '⚖️ FK 重算・待料理複核' : '⚖️ 本機估算配比' }}</span>
                             <span v-else style="font-size: 0.72rem; color: #4B5563; background: #F3F4F6; padding: 2px 8px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #E5E7EB;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -1911,7 +1917,7 @@ export default {
                     </p>
                     <div v-if="!isAiChefLoading && aiChefAdvice && aiChefAdvice.source !== 'ai'"
                          role="status" style="font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
-                        <strong>{{ aiChefAdvice.source === 'estimate' ? '已產生本機估算份量（非 AI）' : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
+                        <strong>{{ aiChefAdvice.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 已重算份量（AI 尚未二次審查）' : '已產生本機估算份量（非 AI）') : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                         <div v-if="aiChefAdvice.nutritionIssues?.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
                             <button v-for="problem in aiChefAdvice.nutritionIssues" :key="problem.id" class="btn-icon"
@@ -1969,7 +1975,7 @@ export default {
                             <button v-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
                                      @click="showChefNote = !showChefNote"
                                      style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
-                                 <span>✨ AI 建議已通過營養檢查</span>
+                                 <span>✨ 料理審查通過・FK 營養已核算</span>
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                             <!-- Local Solver State (Clickable to view takeover reason) -->
@@ -1980,7 +1986,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>{{ aiChefAdvice?.source === 'estimate' ? '本機估算・請核對' : aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
+                                <span>{{ aiChefAdvice?.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 重算・待料理複核' : '本機估算・請核對') : aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                         </div>
@@ -2001,9 +2007,10 @@ export default {
                          }">
                         <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between;">
                             <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : aiChefAdvice.source === 'estimate' ? '⚖️ 本機估算說明：' : '⚙️ 份量未完成說明：' }}</span>
-                            <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">非精算結果</span>
+                            <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ aiChefAdvice.reviewed === false ? '待料理複核' : '未通過 AI 料理審查' }}</span>
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
+                        <div v-if="aiChefAdvice.reviewReason">料理審查：{{ aiChefAdvice.reviewReason }}</div>
                     </div>
                     
                     <p v-if="engine.getNutritionIssues(getMemberActiveIngredients(member)).length" role="status" style="color: var(--color-text-muted); font-size: 0.8rem;">

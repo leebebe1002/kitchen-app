@@ -46,8 +46,19 @@ async function mount(component = Calculator) {
     await nextTick();
     return { view, engine, close: () => renderer.render(null, root) };
 }
-const resultFor = view => ({ chefComment: '配比完成', portions: Object.fromEntries(view.activeMembers.value.map(m =>
-    [m, view.getMemberActiveIngredients(m).map(i => ({ ...i, amount: i.unit === 'g' ? 60 : 1 }))])) });
+const rolesFor = view => ({
+    dishType: '家常飯', reason: '主食與蛋白質份量有界',
+    roles: [...new Map(view.activeMembers.value.flatMap(m => view.getMemberActiveIngredients(m))
+        .map(item => [item.id, item])).values()].map(i => ({
+        id: i.id, role: i.id === 'brown_rice' ? 'starch' : 'protein',
+        minAmount: 1, maxAmount: i.unit === 'g' ? (i.id === 'brown_rice' ? 140 : 180) : 3
+    }))
+});
+const reviewFor = () => ({verdict:'accept', reason:'角色和比例可行', adjustments:[]});
+const responseFor = (view, options) => {
+    const prompt = JSON.parse(options.body).contents[0].parts[0].text;
+    return response(prompt.includes('料理實用性審查員') ? reviewFor() : rolesFor(view));
+};
 const response = result => ({ ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(result) }] } }] }) });
 const http = status => ({ ok: false, status, text: async () => '' });
 let passes = 0;
@@ -87,8 +98,9 @@ await check('primary success, three members, immediate local result, memory wins
     await nextTick();
     view.memberIngredients.value.bebe[0].amount = 77;
     view.savePortionMemory('bebe');
-    let release;
-    globalThis.fetch = async () => new Promise(resolve => { release = resolve; });
+    let release, calls = 0;
+    globalThis.fetch = async (url, options) => ++calls === 1
+        ? new Promise(resolve => { release = resolve; }) : responseFor(view, options);
     const pending = view.calculate();
     assert.equal(view.isCalculated.value, true);
     assert(!Calculator.template.includes('本餐目標與限制'));
@@ -97,45 +109,42 @@ await check('primary success, three members, immediate local result, memory wins
     assert.equal(view.memberIngredients.value.bebe[0].amount, 77, 'Manual amount remains while AI is pending');
     const localJason = view.memberIngredients.value.jason[0].amount;
     assert.notEqual(localJason, 77);
-    const result = resultFor(view);
-    release(response(result)); await pending;
-    assert.equal(view.memberIngredients.value.bebe[0].amount, 60, 'Explicit memory does not override a new dynamic calculation');
-    assert.equal(view.memberIngredients.value.ariel[0].amount, 60);
-    assert.equal(view.memberIngredients.value.jason[0].amount, 60);
-    assert.deepEqual(view.getMemberNutrition('jason'), engine.calculateNutritionForMember(result.portions.jason, 'jason'));
-    assert.equal(view.aiChefAdvice.value.source, 'ai'); close();
+    release(response(rolesFor(view))); await pending;
+    assert.equal(calls, 2);
+    for (const member of ['bebe','ariel','jason']) {
+        const result = view.aiChefAdvice.value.portions[member];
+        assert(result?.every(i => i.amount > 0));
+        assert.deepEqual(view.getMemberNutrition(member), engine.calculateNutritionForMember(result, member));
+    }
+    assert.equal(view.aiChefAdvice.value.source, 'ai');
+    assert.equal(view.aiChefAdvice.value.reviewed, true); close();
 });
 for (const status of [404, 429, 503, 400, 403]) await check(`HTTP ${status} fallback policy`, async () => {
     const { view, close } = await mount(); let calls = 0;
     globalThis.fetch = async (url, options) => {
         calls++; assert(!url.includes('key=')); assert.equal(options.headers['x-goog-api-key'], fixtureKey);
         assert.equal(JSON.parse(options.body).generationConfig.thinkingConfig.thinkingLevel, 'LOW');
-        return calls === 1 ? http(status) : response(resultFor(view));
+        return calls === 1 ? http(status) : responseFor(view, options);
     };
     await view.calculate();
     const fallback = [404, 503].includes(status);
-    assert.equal(calls, fallback ? 2 : 1);
+    assert.equal(calls, fallback ? 3 : 1);
     assert.equal(view.aiChefAdvice.value.source, fallback ? 'ai' : 'estimate');
     assert.equal(view.isAiChefLoading.value, false); close();
 });
-await check('Gemini 200 with excessive meal calories => explain budget + produce validated local estimate', async () => {
+await check('Gemini 200 with excessive culinary role maximum => reject + labeled local estimate', async () => {
     const { view, engine, close } = await mount();
     globalThis.fetch = async () => {
-        const result=resultFor(view);
-        const portions=result.portions.bebe;
-        portions[0].amount=1000;
-        portions[1].amount=900;
+        const result = rolesFor(view);
+        result.roles[0].maxAmount = 1000;
         return response(result);
     };
     await view.calculate();
     assert.equal(view.aiChefAdvice.value.source,'estimate');
-    assert.match(view.aiChefAdvice.value.errReason,/熱量.*超過本餐額度/);
+    assert.match(view.aiChefAdvice.value.errReason,/料理.*未通過驗證/);
     assert(view.getMemberActiveIngredients('bebe').every(item=>item.amount>0));
-    const context=view.getMealContext ? view.getMealContext('bebe') : null;
-    if(context) {
-        const {validateMealLimits}=await import('../web/src/services/DynamicPortions.js');
-        assert.doesNotThrow(()=>validateMealLimits(engine,{bebe:view.getMemberActiveIngredients('bebe')},[context]));
-    }
+    assert.deepEqual(view.getMemberNutrition('bebe'),
+        engine.calculateNutritionForMember(view.getMemberActiveIngredients('bebe'), 'bebe'));
     assert(!view.aiChefAdvice.value.chefComment.includes('AI 建議已通過營養檢查'));
     close();
 });
@@ -144,8 +153,8 @@ await check('primary timeout then successful fallback (accelerated request timer
     const nativeTimer = globalThis.setTimeout;
     globalThis.setTimeout = (fn, ms, ...args) => nativeTimer(fn, ms === CHEF_REQUEST_MS ? 15 : ms, ...args);
     try {
-        globalThis.fetch = async () => ++calls === 1 ? new Promise(() => {}) : response(resultFor(view));
-        await view.calculate(); assert.equal(calls, 2); assert.equal(view.aiChefAdvice.value.source, 'ai');
+        globalThis.fetch = async (url, options) => ++calls === 1 ? new Promise(() => {}) : responseFor(view, options);
+        await view.calculate(); assert.equal(calls, 3); assert.equal(view.aiChefAdvice.value.source, 'ai');
     } finally { globalThis.setTimeout = nativeTimer; close(); }
 });
 await check('all models fail, keep usable local portions', async () => {
@@ -159,19 +168,19 @@ for (const defect of ['syntax', 'truncated', 'missing', 'unknown', 'duplicate', 
         const { view, close } = await mount(); let before;
         globalThis.fetch = async () => {
             before = JSON.stringify(view.memberIngredients.value);
-            const result = resultFor(view);
-            const items = result.portions.bebe;
+            const result = rolesFor(view);
+            const items = result.roles;
             if (defect === 'syntax') return { ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{oops' }] } }] }) };
             if (defect === 'truncated') return { ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: 'MAX_TOKENS' }] }) };
             if (defect === 'missing') items.pop();
             if (defect === 'unknown') items[0].id = 'unknown';
             if (defect === 'duplicate') items[1] = { ...items[0] };
-            if (defect === 'negative') items[0].amount = -1;
-            if (defect === 'zero') items[0].amount = 0;
-            if (defect === 'infinite') items[0].amount = Infinity;
-            if (defect === 'huge') items[0].amount = 100000;
-            if (defect === 'unit') items[0].unit = '包';
-            if (defect === 'member') result.portions.ariel = items;
+            if (defect === 'negative') items[0].minAmount = -1;
+            if (defect === 'zero') items[0].minAmount = 0;
+            if (defect === 'infinite') items[0].maxAmount = Infinity;
+            if (defect === 'huge') items[0].maxAmount = 100000;
+            if (defect === 'unit') items[0].role = 'invalid-role';
+            if (defect === 'member') result.dishType = 'x'.repeat(100);
             return response(result);
         };
         await view.calculate();
@@ -182,7 +191,7 @@ for (const action of ['amount', 'edit-revert', 'dish', 'members', 'mode', 'ingre
     await check(`stale response protection: ${action}`, async () => {
         const { view, engine, close } = await mount(); let release; let calls = 0;
         globalThis.fetch = async () => { calls++; return new Promise(resolve => { release = resolve; }); };
-        const pending = view.calculate(); const result = resultFor(view);
+        const pending = view.calculate(); const result = rolesFor(view);
         await view.calculate(); assert.equal(calls, 1, 'duplicate click must be ignored');
         if (action === 'amount') view.memberIngredients.value.bebe[0].amount = 91;
         if (action === 'edit-revert') { const item = view.memberIngredients.value.bebe[0]; const n = item.amount; item.amount++; item.amount = n; }
@@ -205,8 +214,12 @@ await check('cancelled old request cannot clear newer request spinner', async ()
     const old = view.calculate(); view.memberIngredients.value.bebe[0].amount++;
     const newer = view.calculate(); await old;
     assert.equal(view.isAiChefLoading.value, true);
-    releases[1](response(resultFor(view))); await newer;
-    releases[0](response(resultFor(view))); await nextTick();
+    releases[1](response(rolesFor(view)));
+    await pause(10);
+    // Review is the second request of the new calculation.
+    assert.equal(typeof releases[2], 'function');
+    releases[2](response(reviewFor())); await newer;
+    releases[0](response(rolesFor(view))); await nextTick();
     assert.equal(view.aiChefAdvice.value.source, 'ai'); close();
 });
 await check('missing key keeps local portions without requests', async () => {

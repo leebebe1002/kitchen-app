@@ -1,5 +1,5 @@
 import { ingredientNutritionBasis, isCountUnit } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V2';
-import { planLocalPortions } from './LocalPortionPlanner.js';
+import { planLocalPortions } from './LocalPortionPlanner.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 import { evaluateNutritionQuality } from './NutritionQualityEvaluator.js';
 
 const KEYS = ['kcal', 'protein', 'carbs', 'fat', 'sodium'];
@@ -20,7 +20,7 @@ const copyItems = items => items.map(({ id, amount, unit }) => ({ id, amount, un
  * All coefficients/bounds below are unvalidated PRODUCT assumptions, not medicine.
  */
 export function optimizeNutritionPortions(engine, expected, contexts, options = {}) {
-    const { gramStep = 5, maxPasses = 40, maxEvaluations = 12000 } = options;
+    const { gramStep = 5, maxPasses = 40, maxEvaluations = 12000, culinaryConstraints = null } = options;
     const assumptions = {
         experimental: true, clinicalValidation: false, gramStep,
         weights: { ...WEIGHTS }, energyRangeFactors: [0.8, 1.2], proteinMultiplier: 1,
@@ -86,6 +86,9 @@ export function optimizeNutritionPortions(engine, expected, contexts, options = 
             mealShare: context.mealShare, expectedMealsRemaining: context.expectedMealsRemaining };
         const assess = totals => evaluateNutritionQuality({ ...qualityInput, totals });
         const bounds = [];
+        if (culinaryConstraints && (typeof culinaryConstraints !== 'object' || Array.isArray(culinaryConstraints)
+            || Object.keys(culinaryConstraints).sort().join('|') !== original.map(i => i.id).sort().join('|')))
+            return fail('insufficient-data', 'Culinary constraints must match every selected canonical ID.');
         for (const item of original) {
             const ing = engine.getIngredientById(item.id);
             const basis = ingredientNutritionBasis(ing, item);
@@ -94,8 +97,13 @@ export function optimizeNutritionPortions(engine, expected, contexts, options = 
                 || (!isCountUnit(item.unit) && item.unit !== 'g'))
                 return fail('insufficient-data', `Missing canonical source/unit basis: ${item.id}.`);
             const step = isCountUnit(item.unit) ? 1 : gramStep;
-            const min = Math.max(step, Math.ceil(item.amount * 0.5 / step) * step);
-            const max = Math.floor(Math.min(item.amount * 2, isCountUnit(item.unit) ? 20 : 1000) / step) * step;
+            const limits = culinaryConstraints?.[item.id];
+            if (limits && (!Number.isFinite(limits.min) || !Number.isFinite(limits.max)
+                || limits.min <= 0 || limits.max < limits.min))
+                return fail('insufficient-data', `Invalid culinary constraints: ${item.id}.`);
+            const min = Math.max(step, Math.ceil(Math.max(item.amount * 0.5, limits?.min ?? 0) / step) * step);
+            const max = Math.floor(Math.min(item.amount * 2, isCountUnit(item.unit) ? 20 : 1000,
+                limits?.max ?? Infinity) / step) * step;
             if (min > max) return fail('infeasible', `No step-aligned amount within reference bounds: ${item.id}.`);
             bounds.push({ id: item.id, unit: item.unit, reference: item.amount, min, max, step });
         }
