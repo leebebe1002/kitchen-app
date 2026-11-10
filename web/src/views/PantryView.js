@@ -1,6 +1,7 @@
 const { ref, computed, watch } = Vue;
 import { CANONICAL_STORES, normalizeStoreName, normalizeStoreList } from '../utils/StoreNormalizer.js?v=20260926_FK004_STORE_SYNC';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V2';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261110_FK21_SOURCE_STATUS_V1';
+import { ingredientSourceStatus, INGREDIENT_SOURCE_LABELS } from '../utils/IngredientSourceStatus.js?v=20261110_FK21_SOURCE_STATUS_V1';
 
 export default {
     components: {
@@ -37,6 +38,23 @@ export default {
         // 🔍 食材關鍵字即時搜尋 (Option A)
         const showSearchInput = ref(false);
         const searchKeyword = ref('');
+        const nutritionStatusFilter = ref('pending');
+        const nutritionStatusOverview = computed(() => {
+            // The effective catalog is already loaded and merged by KitchenEngine.
+            // A read-only index must never trigger a write or copy a pantry scope.
+            const unique = new Map((engine.data.ingredients || []).map(item => [item.id, item]));
+            const entries = [...unique.values()].map(ingredient => ({
+                id: ingredient.id,
+                ingredient,
+                status: ingredientSourceStatus(ingredient)
+            }));
+            const counts = { product: 0, generic: 0, pending: 0 };
+            for (const entry of entries) counts[entry.status.code]++;
+            return { entries, counts, total: entries.length };
+        });
+        const filteredNutritionStatuses = computed(() => nutritionStatusOverview.value.entries
+            .filter(entry => entry.status.code === nutritionStatusFilter.value)
+            .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name, 'zh-TW')));
 
         const toggleSearch = () => {
             showSearchInput.value = !showSearchInput.value;
@@ -899,6 +917,10 @@ export default {
             toggleStorePicker,
             showSearchInput,
             searchKeyword,
+            nutritionStatusFilter,
+            nutritionStatusOverview,
+            filteredNutritionStatuses,
+            INGREDIENT_SOURCE_LABELS,
             toggleSearch,
             clearSearch
         };
@@ -933,6 +955,41 @@ export default {
                     收起
                 </button>
             </div>
+
+            <!-- Read-only classification of the currently effective ingredient set. -->
+            <details style="margin-bottom:18px;border:1px solid var(--color-border);border-radius:14px;background:#fff;padding:12px;">
+                <summary style="cursor:pointer;font-size:0.86rem;font-weight:700;color:var(--color-text-main);line-height:1.6;">
+                    營養資料狀態 · {{ nutritionStatusOverview.total }} 項
+                    <span style="color:#9B431B;font-size:0.78rem;">（{{ nutritionStatusOverview.counts.pending }} 項待確認）</span>
+                </summary>
+                <p style="font-size:0.74rem;color:var(--color-text-muted);line-height:1.5;margin:10px 0;">
+                    以目前載入的食材為準，包含裝置上可見的私房食材；離線時使用快取，數量可能不同。這不是庫存或採買狀態。點選品項可核對來源與營養。
+                </p>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;">
+                    <button v-for="key in ['product','generic','pending']" :key="key" type="button"
+                        :aria-pressed="nutritionStatusFilter===key"
+                        @click="nutritionStatusFilter=key"
+                        :style="{border:'1px solid var(--color-border)',borderRadius:'20px',padding:'6px 10px',fontSize:'0.78rem',fontWeight:700,
+                            background:nutritionStatusFilter===key?'#EAF4F3':'#FFFFFF',color:nutritionStatusFilter===key?'#365B56':'var(--color-text-muted)'}">
+                        {{ INGREDIENT_SOURCE_LABELS[key] }} {{ nutritionStatusOverview.counts[key] }}
+                    </button>
+                </div>
+                <div style="max-height:300px;overflow-y:auto;border-top:1px solid var(--color-border);">
+                    <button v-for="entry in filteredNutritionStatuses" :key="entry.id" type="button"
+                        @click="openFoodDetail(entry.ingredient)" :title="entry.status.reason || entry.status.label"
+                        style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 4px;border:0;border-bottom:1px solid #F3F0EB;background:transparent;text-align:left;cursor:pointer;">
+                        <span style="min-width:0;">
+                            <strong style="display:block;font-size:0.85rem;color:var(--color-text-main);">{{ entry.ingredient.name }}</strong>
+                            <small v-if="entry.status.reason" style="display:block;font-size:0.73rem;color:var(--color-text-muted);line-height:1.5;">{{ entry.status.reason }}</small>
+                        </span>
+                        <span style="font-size:0.7rem;flex-shrink:0;border-radius:15px;padding:3px 8px;"
+                            :style="{background:entry.status.code==='pending'?'#FFF1E5':'#F2F3EF',color:entry.status.code==='pending'?'#9B431B':'#365B56'}">
+                            {{ entry.status.label }}
+                        </span>
+                    </button>
+                    <p v-if="!filteredNutritionStatuses.length" style="font-size:0.8rem;color:var(--color-text-muted);">目前沒有這種狀態的食材。</p>
+                </div>
+            </details>
 
             <!-- 右側浮動快捷錨點選單 (Floating Right-Side Anchor Quick Nav) -->
             <div class="floating-quick-nav" style="position: fixed; right: 10px; top: 42%; transform: translateY(-50%); z-index: 99; display: flex; flex-direction: column; gap: 6px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 8px 6px; border-radius: 16px; border: 1.5px solid var(--color-border); box-shadow: 0 4px 14px rgba(0,0,0,0.08);">

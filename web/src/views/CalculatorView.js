@@ -4,7 +4,7 @@ import { planLocalPortions } from '../services/LocalPortionPlanner.js?v=20261109
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
-import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261109_FK21_THREE_FOODS_V2';
+import IngredientDetailModal from '../components/IngredientDetailModal.js?v=20261110_FK21_SOURCE_STATUS_V1';
 
 export default {
     components: {

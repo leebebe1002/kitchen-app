@@ -1,4 +1,5 @@
 import { labelConsistencyIssue, withNutritionEvidence, evidenceSnapshot, nutrientNumber, nutrientKeys, completeNutrients, nutritionEvidenceText } from '../utils/NutritionEvidence.js?v=20261109_FK21_THREE_FOODS_V2';
+import { ingredientSourceStatus } from '../utils/IngredientSourceStatus.js?v=20261110_FK21_SOURCE_STATUS_V1';
 import { reviewNutritionLabelOCR } from '../utils/NutritionLabelOCR.js?v=20261109_FK21_THREE_FOODS_V2';
 const { ref, reactive, computed, watch, onMounted, nextTick } = Vue;
 import { findSimilarIngredients } from '../utils/IngredientMatcher.js?v=20260918_FIX_STATE_V2';
@@ -49,6 +50,8 @@ const IngredientDetailModal = {
         const evidenceSource = ref('');
         const gramsPerUnit = ref(null);
         const sourceEvidence = computed(() => withNutritionEvidence(props.initialIngredient)?.nutritionEvidence);
+        const sourceStatus = computed(() => ingredientSourceStatus(props.initialIngredient));
+        const previewSourceStatus = computed(() => ingredientSourceStatus(previewIngredient.value));
         const sourceText = computed(() => nutritionEvidenceText(withNutritionEvidence(props.initialIngredient)));
         const photoUnitChanged = computed(() => photo.status === 'success'
             && ['g', 'ml'].includes(props.initialIngredient?.unitLabel)
@@ -825,7 +828,7 @@ const IngredientDetailModal = {
         };
 
         return {
-            evidenceConfirmed, showLabelReview, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence,
+            evidenceConfirmed, showLabelReview, evidenceSpec, evidenceBasis, evidenceUnit, evidenceSource, gramsPerUnit, sourceText, sourceEvidence, sourceStatus, previewSourceStatus,
             hasUnitNutrition, photoUnitChanged, completeNutrients,
             modalMode, previewNutritionText, previewIngredient, returnToDraft, matchCandidates, selectedTargetId, replacementTarget, replaceExisting, isSaving,
             duplicateMatch,
@@ -871,7 +874,8 @@ const IngredientDetailModal = {
                         <button class="btn-icon" aria-label="關閉" @click="$emit('close')">✕</button>
                     </div>
                     <img v-if="previewIngredient.photoUrl || previewIngredient.photo" :src="previewIngredient.photoUrl || previewIngredient.photo" alt="既有食材照片" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;">
-                    <p>品牌：{{ previewIngredient.brand || '未填寫' }}</p>
+                    <p>品牌：{{ previewIngredient.brand || '未填寫' }} · 營養資料：{{ previewSourceStatus.label }}</p>
+                    <p v-if="previewSourceStatus.reason" role="status" style="font-size:0.82rem;color:var(--color-text-muted);">{{ previewSourceStatus.reason }}</p>
                     <p>分類：{{ ({proteins:'蛋白質',veggies:'蔬菜水果',carbs:'碳水主食',sauces:'油脂／調味／其他'})[previewIngredient.category] || '其他' }} · {{ engine.checkStock(previewIngredient.id) ? '有庫存' : '無庫存' }}</p>
                     <p>通路：{{ (previewIngredient.preferredStores || [previewIngredient.preferredStore || '全聯']).join('、') }}</p>
                     <p>{{ previewIngredient.perUnit ? '每 ' + (previewIngredient.unitLabel || '單位') : '每 100 ' + (previewIngredient.unitLabel || 'g') }}</p>
@@ -912,6 +916,17 @@ const IngredientDetailModal = {
                     </button>
                     
                     <button class="btn-icon" @click="$emit('close')" style="border: none; font-size: 1.1rem; padding: 4px 8px; color: var(--color-text-muted);">✕</button>
+                </div>
+
+                <div v-if="modalMode === 'edit'" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                    <span role="status" style="font-size:0.76rem;font-weight:700;padding:4px 10px;border-radius:20px;"
+                        :style="{background:sourceStatus.code==='pending'?'#FFF1E5':sourceStatus.code==='product'?'#EAF4F3':'#F2F3EF',
+                            color:sourceStatus.code==='pending'?'#9B431B':'#365B56'}">
+                        {{ sourceStatus.label }}
+                    </span>
+                    <span v-if="sourceStatus.reason" style="font-size:0.76rem;line-height:1.5;color:var(--color-text-muted);">
+                        {{ sourceStatus.reason }}
+                    </span>
                 </div>
 
                 <div v-if="modalMode === 'create' && matchCandidates.length" style="margin-bottom:14px; padding:12px; background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; font-size:0.8rem;">
@@ -1098,12 +1113,14 @@ const IngredientDetailModal = {
                 <div class="card" style="margin-bottom:12px;flex-shrink:0;display:grid;gap:10px;font-size:0.85rem;line-height:1.5;">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                         <span style="color:var(--color-text-muted);">營養來源</span>
-                        <strong role="status" style="font-size:0.85rem;color:var(--color-text-main);">{{ sourceText }}</strong>
+                        <strong role="status" style="font-size:0.78rem;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;"
+                            :style="{background:sourceStatus.code==='pending'?'#FFF1E5':sourceStatus.code==='product'?'#EAF4F3':'#F2F3EF', color:sourceStatus.code==='pending'?'#9B431B':'#365B56'}">{{ sourceStatus.label }}</strong>
                     </div>
                     <details style="border-top:1px solid var(--color-border);padding-top:8px;">
                         <summary style="cursor:pointer;color:var(--color-text-muted);">查看來源與計算說明</summary>
                         <div style="display:grid;gap:8px;margin-top:10px;color:var(--color-text-muted);font-size:0.8rem;">
                             <p>一般食材採官方估算；有產品標示時可用照片核對。空白不代表 0。</p>
+                            <p v-if="sourceStatus.reason" role="status">需要補正：{{ sourceStatus.reason }}</p>
                             <p v-if="sourceEvidence">{{ sourceEvidence.note }} · {{ sourceEvidence.checkedAt || '日期待確認' }}</p>
                             <p v-if="modalMode === 'edit' && engine.getNutritionIssues([{ id: form.id, amount: 1 }]).length">
                                 {{ engine.getNutritionIssues([{ id: form.id, amount: 1 }]).join('；') }}
