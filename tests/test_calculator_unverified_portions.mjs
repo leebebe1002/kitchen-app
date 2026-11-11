@@ -69,6 +69,24 @@ assert.equal(nativeAlerts,0,'Pending foods must use a non-modal inline notice, n
 assert.equal(view.aiChefAdvice.value?.source,'partial','Attempting to record must not destroy the partial portion estimate');
 assert(Calculator.template.includes('meal-record-review'),'Inline review must be visible in the result');
 assert(Calculator.template.includes('待核對 '),'FAB button should display its actual pending state');
+// Exactly one prominent review appears inside the family totals card, not
+// above it or again in the personal portion card.
+const content=Calculator.template;
+const totalStart=content.indexOf('全家總備料 ({{ totalPortions }} 人份)');
+const memberStart=content.indexOf('04 MEMBER CARDS');
+const reviewStart=content.indexOf('meal-record-review');
+assert(totalStart>=0 && reviewStart>totalStart && memberStart>reviewStart,
+    'Review panel must be inside family total, before personal cards');
+assert.equal(content.split('meal-record-review').length-1,1,
+    'Only one rendered review anchor exists in template');
+assert(!content.includes('整餐營養總量待確認（'),
+    'Remove duplicate member-level explanatory paragraph');
+assert(content.includes("!['partial', 'blocked'].includes(aiChefAdvice?.source)"),
+    'Partial and blocked states must not generate the member status badge');
+assert(content.includes("!['partial', 'blocked'].includes(aiChefAdvice.source)"),
+    'Member detail should not render a duplicate orange explanation');
+assert(content.includes("!['ai','estimate','partial','blocked'].includes(aiChefAdvice?.source)"),
+    'Do not repeat family review directly below the retained yellow notice');
 assert(Calculator.template.includes('部分份量已估算'));
 assert(Calculator.template.includes('待確認'));
 assert(Calculator.template.includes('openIngredientDetail(problem.id)'));

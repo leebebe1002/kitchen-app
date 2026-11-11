@@ -1420,7 +1420,8 @@ export default {
                 // portion estimate exists. Point to the already-visible review
                 // list, while still refusing to store incomplete nutrition.
                 if (recordPendingItems.value.length) {
-                    Vue.nextTick(() => document.getElementById?.('meal-record-review')?.scrollIntoView?.({
+                    Vue.nextTick(() => (document.getElementById?.('meal-record-review')
+                        || document.getElementById?.('portions-section'))?.scrollIntoView?.({
                         behavior: 'smooth', block: 'start'
                     }));
                     return;
@@ -1933,18 +1934,6 @@ export default {
             <div v-if="selectedDish && isCalculated" style="position: relative; padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));">
                 <!-- 03 PORTIONS -->
                 <div id="portions-section" class="section-title" style="scroll-margin-top: 84px;">03 PORTIONS 全家備料大白板</div>
-                <div v-if="recordPendingItems.length" id="meal-record-review" role="status"
-                     style="scroll-margin-top:84px;margin-bottom:14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;color:#92400E;font-size:0.84rem;line-height:1.6;">
-                    <strong>這餐有 {{ recordPendingItems.length }} 項營養資料待確認，尚不能記錄完整營養</strong>
-                    <p style="margin:5px 0 8px;">其他已確認食材仍可查看部分備料克數。若實際沒有使用下列食材，可以取消選用再重新計算；若有使用，請先核對產品營養標示。</p>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                        <button v-for="problem in recordPendingItems" :key="problem.id" type="button"
-                                class="btn-icon" @click="openIngredientDetail(problem.id)"
-                                style="font-size:0.8rem;padding:5px 9px;color:#92400E;">
-                            {{ problem.name }}・核對
-                        </button>
-                    </div>
-                </div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1978,20 +1967,22 @@ export default {
                     <p v-if="isAiChefLoading" role="status" style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.5;">
                         顯示目前的料理／手動份量；AI 最多等待 20 秒。調整份量會取消這次 AI 精算。
                     </p>
-                    <div v-if="!isAiChefLoading && aiChefAdvice && aiChefAdvice.source !== 'ai'"
-                         role="status" style="font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
-                        <strong>{{ aiChefAdvice.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 已重算份量（AI 尚未二次審查）' : '已產生本機估算份量（非 AI）') : aiChefAdvice.source === 'partial' ? '部分食材已估算・整餐待確認' : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
-                        <div>{{ aiChefAdvice.chefComment }}</div>
-                        <div v-if="aiChefAdvice.nutritionIssues?.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-                            <button v-for="problem in aiChefAdvice.nutritionIssues" :key="problem.id" class="btn-icon"
+                    <div v-if="!isAiChefLoading && (recordPendingItems.length || (aiChefAdvice && aiChefAdvice.source !== 'ai'))"
+                         :id="recordPendingItems.length ? 'meal-record-review' : null"
+                         role="status" style="scroll-margin-top:84px;font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
+                        <strong>{{ recordPendingItems.length ? '部分食材已估算・整餐待確認' : aiChefAdvice?.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 已重算份量（AI 尚未二次審查）' : '已產生本機估算份量（非 AI）') : '尚未取得 AI 份量建議' }}</strong>
+                        <div v-if="recordPendingItems.length">有 {{ recordPendingItems.length }} 項食材的營養來源或重量換算待核對；其他已確認食材僅供部分備料參考，尚不能記錄完整營養。</div>
+                        <div v-else>{{ aiChefAdvice?.chefComment }}</div>
+                        <div v-if="recordPendingItems.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                            <button v-for="problem in recordPendingItems" :key="problem.id" class="btn-icon"
                                     type="button" @click="openIngredientDetail(problem.id)"
-                                    :title="problem.reason" style="font-size:0.79rem;padding:5px 9px;">
+                                    style="font-size:0.79rem;padding:5px 9px;">
                                 {{ problem.name }} · 核對資料
                             </button>
                         </div>
                     </div>
-                    <p v-if="!['ai','estimate'].includes(aiChefAdvice?.source)" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
-                        {{ aiChefAdvice?.source === 'partial' ? '以下只對營養資料已確認的食材估算克數；待確認食材未計入本餐目標，整餐尚未精算完成。' : '非 AI 計算結果；原始份量不代表適合目前營養目標。尚未分配的食材需核對或手動調整。' }}
+                    <p v-if="!['ai','estimate','partial','blocked'].includes(aiChefAdvice?.source)" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
+                        非 AI 計算結果；原始份量不代表適合目前營養目標。尚未分配的食材需核對或手動調整。
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <p v-if="selectedMasterIngredients.includes('shin_ramen')"
@@ -2035,14 +2026,14 @@ export default {
                         <!-- ✨ AI vs Local Status Indicator -->
                         <div>
                             <!-- AI Success / Advisor State -->
-                            <button v-if="aiChefAdvice && aiChefAdvice.source === 'ai'" 
+                            <button v-if="!recordPendingItems.length && aiChefAdvice && aiChefAdvice.source === 'ai'"
                                      @click="showChefNote = !showChefNote"
                                      style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
                                  <span>✨ 料理審查通過・FK 營養已核算</span>
                                  <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                             <!-- Local Solver State (Clickable to view takeover reason) -->
-                            <button v-else 
+                            <button v-else-if="!recordPendingItems.length && !['partial', 'blocked'].includes(aiChefAdvice?.source)"
                                     @click="showChefNote = !showChefNote"
                                     style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #92400E; background: #FEF3C7; padding: 3px 10px; border-radius: 12px; border: 1px solid #FDE68A; cursor: pointer; transition: all 0.2s ease; white-space: nowrap;">
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2056,7 +2047,7 @@ export default {
                     </div>
 
                     <!-- Expandable Chef Note Box (Collapsible) -->
-                    <div v-if="member === activeMembers[0] && showChefNote && aiChefAdvice && aiChefAdvice.chefComment"
+                    <div v-if="member === activeMembers[0] && showChefNote && aiChefAdvice && aiChefAdvice.chefComment && !['partial', 'blocked'].includes(aiChefAdvice.source)"
                          :style="{
                              marginBottom: '14px',
                              background: aiChefAdvice.source === 'ai' ? '#FFFDF8' : '#FFFBEB',
@@ -2076,11 +2067,8 @@ export default {
                         <div v-if="aiChefAdvice.reviewReason">料理審查：{{ aiChefAdvice.reviewReason }}</div>
                     </div>
                     
-                    <p v-if="getSelectedNutritionIssues(member).length" role="status" style="color: var(--color-text-muted); font-size: 0.8rem;">
-                        整餐營養總量待確認（{{ getSelectedNutritionIssues(member).map(item => getIngredientName(item.id)).join('、') }}），已核對食材僅提供部分份量參考。
-                    </p>
-                    <!-- Status Tags -->
-                    <div v-else style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">
+                    <!-- Full nutrition status tags appear only when every selected food is verified. -->
+                    <div v-if="!getSelectedNutritionIssues(member).length" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">
                         <span class="status-tag" :class="getMemberStatus(member).kcal">
                             {{ statusIcon(getMemberStatus(member).kcal) }} 熱量: {{ getMemberNutrition(member).kcal }}k
                         </span>
