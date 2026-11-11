@@ -1769,9 +1769,11 @@ export default class KitchenEngine {
             }
         });
 
-        // Round to 1 decimal place
+        // Round once after summing all foods. Protect exact half-tenths from IEEE-754
+        // error so equivalent units (e.g. 65 g versus one 65 g pack) agree.
         Object.keys(total).forEach(k => {
-            total[k] = Math.round(total[k] * 10) / 10;
+            const bias = Number.EPSILON * Math.max(1, Math.abs(total[k])) * 4;
+            total[k] = Math.round((total[k] + bias) * 10) / 10;
         });
 
         return total;

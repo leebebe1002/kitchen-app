@@ -138,7 +138,7 @@ assert(main.includes("IngredientNutritionAudit.js?v=20261109_FK21_THREE_FOODS_V2
 assert(main.includes('@click="checkAndOfferFk14Repair"'));
 assert(main.includes('檢查 100 項營養'));
 assert(main.includes('textarea class="account-email-input" aria-label="食材營養比對結果" readonly'));
-assert(main.includes("const appVersion = '2026.11.10.2';"));
-assert(html.includes('main.js?v=20261110_FK21_SOURCE_STATUS_V1'));
+assert(main.includes("const appVersion = '2026.11.11.1';"));
+assert(html.includes('main.js?v=20261111_FK21_ROUNDING_V1'));
 console.log('PASS: protected account UI, explicit read-only report and version chain');
 console.log('NUTRITION AUDIT ALL PASS:',calls,'checks');
