@@ -57,4 +57,16 @@ assert.equal(planLocalPortions(engine,{bebe:blocked},[contexts[0]]),null);
 const excluded=structuredClone(contexts[0]);
 excluded.excludedIds=['egg'];
 assert.equal(planLocalPortions(engine,{bebe:expected.bebe},[excluded]),null);
-console.log('PASS: 7-ingredient ramen + 3-member safe local estimate; count guards, daily nutrition budgets, impossible and stale inputs reject; no persisted data changes.');
+// Real sodium-dense seasonings start from culinary-scale quantities, not
+// a giant 15 g generic sauce portion reduced only until it meets the ceiling.
+const saltExpected = { bebe: [
+ { id:'greens', amount:100, unit:'g' },
+ { id:'smoked_sea_salt', amount:0, unit:'g' }
+]};
+assert.deepEqual(engine.getNutritionIssues(saltExpected.bebe.map(x=>({...x,amount:Math.max(1,x.amount)}))), []);
+const saltPlan = planLocalPortions(engine,saltExpected,[contexts[0]]);
+assert(saltPlan);
+assert.equal(saltPlan.portions.bebe.find(x=>x.id==='smoked_sea_salt').amount,1,
+ 'Unspecified concentrated salt must not receive 3+ grams as a fallback');
+assert.doesNotThrow(()=>validateMealLimits(engine,saltPlan.portions,[contexts[0]]));
+console.log('PASS: 7-ingredient ramen, 3-member safe local estimate, high-sodium salt defaults, count guards, impossible and stale inputs; no persisted data changes.');

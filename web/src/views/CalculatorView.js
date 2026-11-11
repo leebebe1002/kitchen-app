@@ -1,6 +1,6 @@
 import { buildMealContext, validateMealLimits } from '../services/DynamicPortions.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
-import { planCulinaryMeal } from '../services/CulinaryPortionCoordinator.js?v=20261110_FK21_CULINARY_V1';
-import { planLocalPortions } from '../services/LocalPortionPlanner.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
+import { planCulinaryMeal } from '../services/CulinaryPortionCoordinator.js?v=20261111_FK21_PARTIAL_V1';
+import { planLocalPortions } from '../services/LocalPortionPlanner.js?v=20261111_FK21_SALT_DEFAULT_V1';
 const { ref, reactive, computed, watch, onMounted, onUnmounted } = Vue;
 import { logChefTiming, CHEF_TOTAL_MS } from '../services/ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
 import WeightBasisBadge, { getWeightBasis, weightBasisText } from '../components/WeightBasisBadge.js?v=20261028_WEIGHT_BASIS_V2';
@@ -1029,6 +1029,17 @@ export default {
             alert(`🎉 成功新增【${name}】並加入本道料理！`);
         };
 
+        // A selected 0 g ingredient still needs a verified nutrition basis before
+        // FK can label the whole meal as calculated.
+        const needsNutritionReview = item => {
+            const amount = Number(item.amount);
+            return engine.getNutritionIssues([{
+                ...item, amount: Number.isFinite(amount) ? Math.max(1, amount) : 1
+            }]).length > 0;
+        };
+        const getSelectedNutritionIssues = member => getMemberActiveIngredients(member)
+            .filter(needsNutritionReview);
+
         const getMemberNutrition = (member) => {
             return engine.calculateNutritionForMember(getMemberActiveIngredients(member), member);
         };
@@ -1083,9 +1094,36 @@ export default {
                 }
             }
             if (pending.size) {
+                // Fail closed for the WHOLE meal, but estimate the verified subset
+                // so valid foods do not misleadingly appear to have missing data.
+                // Unknown foods are NOT sent to Gemini, not counted as zero, and
+                // their existing/manual amounts are never overwritten.
+                const known = Object.fromEntries(activeMembers.value.map(member => [
+                    member, getMemberActiveIngredients(member)
+                        .filter(item => !pending.has(item.id)).map(item => ({ ...item }))
+                ]));
+                let partial = null;
+                let estimateReason = '';
+                if (activeMembers.value.every(member => known[member].length)) {
+                    try {
+                        const contexts = activeMembers.value.map(member => getMealContext(member));
+                        partial = planLocalPortions(engine, known, contexts);
+                        if (!partial) estimateReason = '當餐營養額度不足，無法為其餘食材安全估算份量。';
+                    } catch (error) {
+                        estimateReason = '個人目標或當日紀錄無法建立份量額度，請核對設定。';
+                    }
+                } else {
+                    estimateReason = '目前沒有可單獨計算的已確認食材。';
+                }
+                aiChefAdvice.value = null; // Do not invalidate our own reactive edits.
+                if (partial) applyPortionValues(partial.portions);
                 aiChefAdvice.value = {
-                    source: 'blocked', portions: {}, nutritionIssues: [...pending.values()],
-                    chefComment: '這次未產生 AI 份量建議：選用食材有營養來源或重量換算待確認。以下只顯示料理原始／手動份量；「待分配」不是建議不吃。請核對列出的食材，或取消選用後重新計算。'
+                    source: partial ? 'partial' : 'blocked',
+                    portions: partial?.portions || {},
+                    nutritionIssues: [...pending.values()],
+                    chefComment: partial
+                        ? `已為有可靠營養資料的食材估算份量；另有 ${pending.size} 項需核對，原始／手動份量保留。這是部分備料參考，不是整餐營養精算或 AI 料理審查；未知食材未計入額度，請勿把本結果當成完整飲食建議。`
+                        : `有 ${pending.size} 項食材待核對；${estimateReason} 已保留原始／手動份量，整餐尚未完成計算。`
                 };
                 showChefNote.value = true;
                 return;
@@ -1102,7 +1140,7 @@ export default {
 
         const cancelChefRequest = () => {
             if (!activeChefRequest) {
-                if (['ai', 'estimate'].includes(aiChefAdvice.value?.source)) {
+                if (['ai', 'estimate', 'partial'].includes(aiChefAdvice.value?.source)) {
                     aiChefAdvice.value = {source:'local',portions:{},chefComment:'資料或份量已調整，請重新計算以取得新的 AI 建議；手動份量仍保留。'};
                     showChefNote.value = true;
                 }
@@ -1308,8 +1346,10 @@ export default {
                 const breakdown = activeMembers.value.length > 1 && item.breakdown.length
                     ? `（${item.breakdown.map(b => `${b.memberName} ${b.amount}${b.unit}`).join('、')}）`
                     : '';
-                const pending = engine.getNutritionIssues([item]).length ? '（營養換算待確認）' : '';
-                return `${weightBasisText(engine.getIngredientById(item.id), item.unit)}${item.name}：${item.amount}${item.unit}${breakdown}${pending}`;
+                const pending = needsNutritionReview(item);
+                const amountText = pending && !(Number(item.amount) > 0)
+                    ? '待確認' : `${item.amount}${item.unit}`;
+                return `${weightBasisText(engine.getIngredientById(item.id), item.unit)}${item.name}：${amountText}${breakdown}${pending ? '（營養資料待確認，非已核算份量）' : ''}`;
             });
             const lines = [
                 `${currentDish.value.name}｜全家總備料（${totalPortions.value} 人份）`,
@@ -1373,7 +1413,8 @@ export default {
             try {
                 cancelChefRequest();
                 if (!currentDish.value) return;
-                const issues = activeMembers.value.flatMap(member => engine.getNutritionIssues(getMemberActiveIngredients(member)));
+                const issues = activeMembers.value.flatMap(member => getSelectedNutritionIssues(member)
+                    .flatMap(item => engine.getNutritionIssues([{ ...item, amount: Math.max(1, Number(item.amount) || 0) }])));
                 if (issues.length) {
                     alert(`營養資料待確認，請先確認後再記錄：\n${[...new Set(issues)].join('\n')}`);
                     return;
@@ -1605,6 +1646,8 @@ export default {
             currentSopSteps,
             getMemberNutrition,
             getMemberStatus,
+            needsNutritionReview,
+            getSelectedNutritionIssues,
             getDefaultAmount,
             getIngredientName,
             checkStock,
@@ -1897,7 +1940,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>{{ aiChefAdvice?.source === 'blocked' ? '份量尚未計算' : '原始／手動份量' }}</span>
+                                <span>{{ aiChefAdvice?.source === 'partial' ? '部分份量已估算' : aiChefAdvice?.source === 'blocked' ? '份量尚未計算' : '原始／手動份量' }}</span>
                             </span>
                         </div>
                         <!-- 📋 精簡正圓形複製食譜按鈕 -->
@@ -1917,7 +1960,7 @@ export default {
                     </p>
                     <div v-if="!isAiChefLoading && aiChefAdvice && aiChefAdvice.source !== 'ai'"
                          role="status" style="font-size:0.83rem;line-height:1.55;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px;margin-bottom:14px;">
-                        <strong>{{ aiChefAdvice.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 已重算份量（AI 尚未二次審查）' : '已產生本機估算份量（非 AI）') : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
+                        <strong>{{ aiChefAdvice.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 已重算份量（AI 尚未二次審查）' : '已產生本機估算份量（非 AI）') : aiChefAdvice.source === 'partial' ? '部分食材已估算・整餐待確認' : aiChefAdvice.source === 'blocked' ? '尚未完成份量計算' : '尚未取得 AI 份量建議' }}</strong>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                         <div v-if="aiChefAdvice.nutritionIssues?.length" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
                             <button v-for="problem in aiChefAdvice.nutritionIssues" :key="problem.id" class="btn-icon"
@@ -1928,7 +1971,7 @@ export default {
                         </div>
                     </div>
                     <p v-if="!['ai','estimate'].includes(aiChefAdvice?.source)" style="font-size:0.8rem;color:var(--color-text-muted);margin:0 0 10px;">
-                        非 AI 計算結果；原始份量不代表適合目前營養目標。未分配食材需核對或手動調整。
+                        {{ aiChefAdvice?.source === 'partial' ? '以下只對營養資料已確認的食材估算克數；待確認食材未計入本餐目標，整餐尚未精算完成。' : '非 AI 計算結果；原始份量不代表適合目前營養目標。尚未分配的食材需核對或手動調整。' }}
                     </p>
                     <p class="weight-basis-legend">生＝生重・熟＝熟重・乾＝乾重・即＝即食／販售狀態・？＝重量基準待確認・空心圓＝計數</p>
                     <p v-if="selectedMasterIngredients.includes('shin_ramen')"
@@ -1939,11 +1982,11 @@ export default {
                         <li v-for="item in totalIngredientsList" :key="item.id + ':' + item.unit" class="prep-ingredient-row">
                             <weight-basis-badge :ingredient="engine.getIngredientById(item.id)" :unit="item.unit" />
                             <span class="prep-ingredient-name">{{ item.name }}</span>
-                            <span class="prep-ingredient-amount">{{ Number(item.amount) === 0 && aiChefAdvice?.source !== 'ai' ? '待分配' : item.amount + item.unit }}</span>
+                            <span class="prep-ingredient-amount">{{ needsNutritionReview(item) ? (Number(item.amount) > 0 ? item.amount + item.unit + '・待確認' : '待確認') : Number(item.amount) === 0 && aiChefAdvice?.source !== 'ai' ? '尚未分配' : item.amount + item.unit }}</span>
                             <span v-if="activeMembers.length > 1 && item.breakdown.length > 0" class="prep-ingredient-breakdown">
                                 (<span v-for="(b, bIdx) in item.breakdown" :key="bIdx">{{ b.memberName }} {{ b.amount }}{{ b.unit }}<span v-if="bIdx < item.breakdown.length - 1">, </span></span>)
                             </span>
-                            <span v-if="engine.getNutritionIssues([item]).length" class="prep-ingredient-warning">營養換算待確認，請核對份量</span>
+                            <span v-if="needsNutritionReview(item)" class="prep-ingredient-warning">營養來源或單位待核對</span>
                         </li>
                     </ul>
 
@@ -1986,7 +2029,7 @@ export default {
                                     <circle cx="12" cy="12" r="3"></circle>
                                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                                 </svg>
-                                <span>{{ aiChefAdvice?.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 重算・待料理複核' : '本機估算・請核對') : aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
+                                <span>{{ aiChefAdvice?.source === 'estimate' ? (aiChefAdvice.reviewed === false ? 'FK 重算・待料理複核' : '本機估算・請核對') : aiChefAdvice?.source === 'partial' ? '部分份量估算・整餐待確認' : aiChefAdvice?.source === 'blocked' ? '營養資料待核對' : '尚無 AI 建議' }}</span>
                                 <span style="font-size: 0.7rem;">{{ showChefNote ? '∧' : '∨' }}</span>
                             </button>
                         </div>
@@ -2006,15 +2049,15 @@ export default {
                              boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                          }">
                         <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; font-size: 0.78rem; display: flex; align-items: center; justify-content: space-between;">
-                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : aiChefAdvice.source === 'estimate' ? '⚖️ 本機估算說明：' : '⚙️ 份量未完成說明：' }}</span>
-                            <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ aiChefAdvice.reviewed === false ? '待料理複核' : '未通過 AI 料理審查' }}</span>
+                            <span>{{ aiChefAdvice.source === 'ai' ? '💬 十一粒 AI 主廚點評：' : aiChefAdvice.source === 'estimate' ? '⚖️ 本機估算說明：' : aiChefAdvice.source === 'partial' ? '⚖️ 部分備料參考：' : '⚙️ 份量未完成說明：' }}</span>
+                            <span v-if="aiChefAdvice.source !== 'ai'" style="font-size: 0.7rem; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ aiChefAdvice.source === 'partial' ? '部分估算・未做 AI 料理審查' : aiChefAdvice.reviewed === false ? '待料理複核' : '未通過 AI 料理審查' }}</span>
                         </div>
                         <div>{{ aiChefAdvice.chefComment }}</div>
                         <div v-if="aiChefAdvice.reviewReason">料理審查：{{ aiChefAdvice.reviewReason }}</div>
                     </div>
                     
-                    <p v-if="engine.getNutritionIssues(getMemberActiveIngredients(member)).length" role="status" style="color: var(--color-text-muted); font-size: 0.8rem;">
-                        營養總量待確認：{{ engine.getNutritionIssues(getMemberActiveIngredients(member)).join('；') }}
+                    <p v-if="getSelectedNutritionIssues(member).length" role="status" style="color: var(--color-text-muted); font-size: 0.8rem;">
+                        整餐營養總量待確認（{{ getSelectedNutritionIssues(member).map(item => getIngredientName(item.id)).join('、') }}），已核對食材僅提供部分份量參考。
                     </p>
                     <!-- Status Tags -->
                     <div v-else style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.75rem;">

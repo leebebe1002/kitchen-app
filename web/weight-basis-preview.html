@@ -32,7 +32,7 @@ window.fetch = (url, options = {}) => {
     return readOnlyFetch(url, options);
 };
 const [{default: Calculator}, {default: Engine}, ingredients] = await Promise.all([
-    import('./src/views/CalculatorView.js?v=20261110_FK21_SOURCE_STATUS_V1'),
+    import('./src/views/CalculatorView.js?v=20261111_FK21_PARTIAL_V1'),
     import('./src/engine/KitchenEngine.js?v=20261109_FK14_APPROVED_ORPHAN_CLEANUP_V1'),
     fetch('../src/data/ingredients.json').then(r => r.json())
 ]);

@@ -1,6 +1,6 @@
 import { requestChef, chefFailure } from './ChefAdvisor.js?v=20261109_FK21_THREE_FOODS_V2';
-import { optimizeNutritionPortions } from './NutritionPortionOptimizer.js?v=20261110_FK21_CULINARY_V1';
-import { planLocalPortions } from './LocalPortionPlanner.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
+import { optimizeNutritionPortions } from './NutritionPortionOptimizer.js?v=20261111_FK21_SALT_DEFAULT_V1';
+import { planLocalPortions } from './LocalPortionPlanner.js?v=20261111_FK21_SALT_DEFAULT_V1';
 import { validateMealLimits } from './DynamicPortions.js?v=20261109_FK21_ESTIMATE_FALLBACK_V1';
 import { isCountUnit } from '../utils/IngredientUnit.js?v=20261109_FK21_THREE_FOODS_V2';
 

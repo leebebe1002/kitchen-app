@@ -1,7 +1,7 @@
 const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick } = Vue;
 
 import KitchenEngine from './engine/KitchenEngine.js?v=20261111_FK21_ROUNDING_V1';
-import CalculatorView from './views/CalculatorView.js?v=20261110_FK21_SOURCE_STATUS_V1';
+import CalculatorView from './views/CalculatorView.js?v=20261111_FK21_PARTIAL_V1';
 import TrackerView from './views/TrackerView.js?v=20261105_INGREDIENT_PHOTO_AUTH_V1';
 import PantryView from './views/PantryView.js?v=20261110_FK21_SOURCE_STATUS_V1';
 import ShoppingView from './views/ShoppingView.js?v=20260926_FK004_STORE_SYNC';
@@ -21,7 +21,7 @@ const App = {
     },
     setup() {
         const currentTab = ref('calculator'); // 'calculator', 'tracker', 'pantry', 'shopping'
-        const appVersion = '2026.11.11.1';
+        const appVersion = '2026.11.11.2';
         const engine = ref(null);
         const isLoading = ref(true);
         const error = ref(null);

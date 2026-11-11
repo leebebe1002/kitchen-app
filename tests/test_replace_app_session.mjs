@@ -45,7 +45,7 @@ assert.equal(dialogs.length,2,dialogs);assert.match(dialogs[1],/已取代/);asse
 assert.equal(app.engine.value.getIngredientById('cocoa').brand,'新品牌');
 console.log('PASS actual App reactive Engine -> Modal replace -> real upload+personal sync -> two dialogs -> session still ready',requests.length);
 // A document refresh must preserve every stored ingredient, photo reference, scope and session.
-assert.equal(app.appVersion,'2026.11.11.1');
+assert.equal(app.appVersion,'2026.11.11.2');
 const storedBefore=JSON.stringify([...values]);await app.refreshData();
 assert.equal(new URL(refreshedURL).origin,'https://fixture.invalid');assert(new URL(refreshedURL).searchParams.has('fk_update'));
 assert.equal(JSON.stringify([...values]),storedBefore);
@@ -69,8 +69,8 @@ for(const [file, imports] of [
       || ((file === 'web/src/views/PantryView.js' || file === 'web/src/views/CalculatorView.js')
          && name === 'IngredientDetailModal.js');
   const expected = (file==='web/src/main.js' && name==='CalculatorView.js')
-      ? '20261110_FK21_SOURCE_STATUS_V1'
-      : (file==='web/weight-basis-preview.html' && name==='CalculatorView.js') ? '20261110_FK21_SOURCE_STATUS_V1'
+      ? '20261111_FK21_PARTIAL_V1'
+      : (file==='web/weight-basis-preview.html' && name==='CalculatorView.js') ? '20261111_FK21_PARTIAL_V1'
       : ((file==='web/src/main.js' && name==='PantryView.js') || (name==='IngredientDetailModal.js')) ? '20261110_FK21_SOURCE_STATUS_V1'
       : name==='KitchenEngine.js' ? (file==='web/src/main.js'
           ? '20261111_FK21_ROUNDING_V1' : '20261109_FK14_APPROVED_ORPHAN_CLEANUP_V1')
@@ -81,11 +81,11 @@ for(const [file, imports] of [
  }
 }
 
-assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261111_FK21_ROUNDING_V1'));
+assert(fs.readFileSync('web/index.html','utf8').includes('main.js?v=20261111_FK21_PARTIAL_V1'));
 assert(fs.readFileSync('web/src/main.js','utf8').includes('IngredientPhotoAudit.js?v=20261107_PHOTO_AUDIT_COMPACT_V1'));
 const photoAuditBefore=JSON.stringify([...values]);
 await app.checkIngredientPhotos();
 assert.equal(app.photoAudit.value.busy,false);
-assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.11.1'));
+assert(app.photoAudit.value.text.startsWith('FK 食材照片檢查 2026.11.11.2'));
 assert.equal(JSON.stringify([...values]),photoAuditBefore);
 vue.compile(App.template,{decodeEntities:text=>text});

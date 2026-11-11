@@ -24,7 +24,10 @@ export function planLocalPortions(engine, expected, contexts) {
             // Use smaller *starting* portions for high-sodium gram ingredients,
             // so a standard lunch does not consume nearly all daily sodium.
             // This is a planning heuristic, not a new per-meal hard limit.
-            const defaultGrams = sodiumPerUnit > 10 ? Math.min(usualGrams,30)
+            // Pure salt and similarly concentrated sodium seasonings must not
+            // default to 15 g just because the daily sodium cap permits it.
+            const defaultGrams = sodiumPerUnit > 100 ? 1
+                : sodiumPerUnit > 10 ? Math.min(usualGrams,30)
                 : sodiumPerUnit > 3 ? Math.min(usualGrams,25) : usualGrams;
             const proposed = supplied > 0 ? supplied : count ? 1 : defaultGrams;
             const amount = count ? Math.max(1, Math.min(20, Math.round(proposed)))
