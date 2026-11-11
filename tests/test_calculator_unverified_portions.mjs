@@ -58,10 +58,17 @@ for(const id of ['pork_shoulder','cabbage','tofu','broccoli']){
 assert.equal(view.aiChefAdvice.value.portions.bebe.length,4,'partial result excludes all unknown foods');
 assert.equal(view.getSelectedNutritionIssues('bebe').length,3,'zero-quantity pending still blocks whole-meal totals');
 assert.equal(requestCount,0,'Partial calculation must not call Gemini API');
-let savedMeals=0;
+let savedMeals=0, nativeAlerts=0;
 engine.recordMeal=async()=>{savedMeals++;};
+globalThis.alert=()=>{nativeAlerts++;};
+assert.deepEqual(view.recordPendingItems.value.map(x=>x.id).sort(),['egg','kimchi','shin_ramen'].sort(),
+    'The record button must communicate all pending items before being tapped');
 await view.recordMeal();
 assert.equal(savedMeals,0,'Even selected unverified foods at 0g must block recording a partial meal');
+assert.equal(nativeAlerts,0,'Pending foods must use a non-modal inline notice, not a blocking iPhone alert');
+assert.equal(view.aiChefAdvice.value?.source,'partial','Attempting to record must not destroy the partial portion estimate');
+assert(Calculator.template.includes('meal-record-review'),'Inline review must be visible in the result');
+assert(Calculator.template.includes('待核對 '),'FAB button should display its actual pending state');
 assert(Calculator.template.includes('部分份量已估算'));
 assert(Calculator.template.includes('待確認'));
 assert(Calculator.template.includes('openIngredientDetail(problem.id)'));

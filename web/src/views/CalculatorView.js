@@ -1039,6 +1039,10 @@ export default {
         };
         const getSelectedNutritionIssues = member => getMemberActiveIngredients(member)
             .filter(needsNutritionReview);
+        const recordPendingItems = computed(() => [...new Map(
+            activeMembers.value.flatMap(member => getSelectedNutritionIssues(member))
+                .map(item => [item.id, { id: item.id, name: getIngredientName(item.id) }])
+        ).values()]);
 
         const getMemberNutrition = (member) => {
             return engine.calculateNutritionForMember(getMemberActiveIngredients(member), member);
@@ -1411,14 +1415,17 @@ export default {
             if (savingMeals) return;
             savingMeals = true;
             try {
-                cancelChefRequest();
                 if (!currentDish.value) return;
-                const issues = activeMembers.value.flatMap(member => getSelectedNutritionIssues(member)
-                    .flatMap(item => engine.getNutritionIssues([{ ...item, amount: Math.max(1, Number(item.amount) || 0) }])));
-                if (issues.length) {
-                    alert(`營養資料待確認，請先確認後再記錄：\n${[...new Set(issues)].join('\n')}`);
+                // Do not trap the iPhone in a native alert when only a partial
+                // portion estimate exists. Point to the already-visible review
+                // list, while still refusing to store incomplete nutrition.
+                if (recordPendingItems.value.length) {
+                    Vue.nextTick(() => document.getElementById?.('meal-record-review')?.scrollIntoView?.({
+                        behavior: 'smooth', block: 'start'
+                    }));
                     return;
                 }
+                cancelChefRequest();
                 const now = new Date();
                 const dateStr = now.toISOString().split('T')[0];
                 const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
@@ -1648,6 +1655,7 @@ export default {
             getMemberStatus,
             needsNutritionReview,
             getSelectedNutritionIssues,
+            recordPendingItems,
             getDefaultAmount,
             getIngredientName,
             checkStock,
@@ -1925,6 +1933,18 @@ export default {
             <div v-if="selectedDish && isCalculated" style="position: relative; padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));">
                 <!-- 03 PORTIONS -->
                 <div id="portions-section" class="section-title" style="scroll-margin-top: 84px;">03 PORTIONS 全家備料大白板</div>
+                <div v-if="recordPendingItems.length" id="meal-record-review" role="status"
+                     style="scroll-margin-top:84px;margin-bottom:14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;color:#92400E;font-size:0.84rem;line-height:1.6;">
+                    <strong>這餐有 {{ recordPendingItems.length }} 項營養資料待確認，尚不能記錄完整營養</strong>
+                    <p style="margin:5px 0 8px;">其他已確認食材仍可查看部分備料克數。若實際沒有使用下列食材，可以取消選用再重新計算；若有使用，請先核對產品營養標示。</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        <button v-for="problem in recordPendingItems" :key="problem.id" type="button"
+                                class="btn-icon" @click="openIngredientDetail(problem.id)"
+                                style="font-size:0.8rem;padding:5px 9px;color:#92400E;">
+                            {{ problem.name }}・核對
+                        </button>
+                    </div>
+                </div>
                 <div class="card" style="margin-bottom: 24px; background: #fffdf8; border: 1px solid var(--color-primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -2193,12 +2213,17 @@ export default {
                     </svg>
                     <span>重設</span>
                 </button>
-                <button class="btn-primary accent" @click="recordMeal" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <button class="btn-primary" :class="{accent: !recordPendingItems.length}" @click="recordMeal"
+                        :aria-label="recordPendingItems.length ? ('查看 ' + recordPendingItems.length + ' 項待核對食材') : '記錄餐點'"
+                        :style="{
+                            display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',
+                            ...(recordPendingItems.length ? {background:'#FFFBEB',color:'#92400E',border:'1px solid #FDE68A'} : {})
+                        }">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 20h9"></path>
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
-                    <span>紀錄</span>
+                    <span>{{ recordPendingItems.length ? ('待核對 ' + recordPendingItems.length + ' 項') : '紀錄' }}</span>
                 </button>
             </div>
             </div>

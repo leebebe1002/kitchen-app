@@ -207,7 +207,7 @@ console.log('PASS unauthorized other recipe references are untouched');
 
 const main=fs.readFileSync('web/src/main.js','utf8');
 assert(main.includes('recipeSync.approvedOrphanRepairMessage'));
-assert(main.includes("appVersion = '2026.11.11.2'"));
+assert(main.includes("appVersion = '2026.11.11.3'"));
 const engine=fs.readFileSync('web/src/engine/KitchenEngine.js','utf8');
 assert(engine.includes('SharedRecipeCoordinator.js?v=20261109_FK14_APPROVED_ORPHAN_CLEANUP_V1'));
 const coordinator=fs.readFileSync('web/src/services/SharedRecipeCoordinator.js','utf8');
