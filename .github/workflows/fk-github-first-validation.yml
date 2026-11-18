@@ -1,0 +1,49 @@
+name: FK GitHub-first validation pilot
+
+on:
+  push:
+    branches:
+      - experiment/github-first-ci-20261118
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Syntax and static-data checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate Python syntax
+        run: python3 -m py_compile server.py update_ingredients.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          find web/src -type f -name '*.js' \
+            -exec sh -c 'for file do node --check "$file" || exit 1; done' sh {} +
+
+      - name: Validate JSON data structure
+        run: |
+          python3 - <<'PY'
+          import glob
+          import json
+
+          for path in glob.glob('src/data/*.json') + glob.glob('web/*.json'):
+              with open(path, encoding='utf-8') as source:
+                  json.load(source)
+          PY
