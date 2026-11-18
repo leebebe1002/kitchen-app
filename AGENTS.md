@@ -61,10 +61,16 @@ find web/src -type f -name '*.js' \
 python3 -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in glob.glob('src/data/*.json') + glob.glob('web/*.json')]"
 ```
 
+## GitHub-first（FK 專屬）
+
+- **與本機工作的邊界**：可從遠端最新 `main` 建立隔離分支修改；須先查核相關本機分支／Worktree 的未提交變更與其他 Agent 工作，不能認為遠端 `main` 已包含那些成果，也不得為同步而覆蓋本機工作。
+- **雲端測試與預覽**：`experiment/github-first-ci-20261118` 的 GitHub Actions 成功只證明該分支的 Python／JavaScript 語法與 JSON 結構檢查可執行；新分支或 PR 必須核實 Workflow 觸發條件、實際 CI 結果及任務專屬回歸測試，不假定已具備獨立 UI 預覽。
+- **正式發布**：FK 目前以 GitHub Pages 從 `main` 的儲存庫根目錄發布；實作前再次核對現行設定。隔離分支的 Commit 不代表正式部署，正式 Merge 仍依中央規範另行授權。功能、營養資料與 Supabase 的變更不得以文件或語法測試取代必要驗收。
+
 ## 修改、驗收與交接
 
 - 不得為了整理程式碼改動 production 行為；跨資料層、scope、localStorage key、Supabase schema／RLS 或 merge policy 的變更必須先列出影響範圍。
 - 資料寫入路徑的修改至少驗證：`household`、`ariel`、本機無登入、遠端空白、遠端已有資料、舊 cache 與重複食材 reference。
 - 未經要求不修改 `docs/PRD.md`、`docs/DATA_SCHEMA.md`、`docs/DESIGN_SYSTEM.md`；發現明確錯誤或落差時只回報並等待決定。
 - 重大架構決策寫入 `docs/decisions/`；一般實作細節留於 Git commit / PR 即可。
-- **Handoff 規則**：正常交付依已授權範圍完成驗收、Commit 與 Issue 更新；Commit 必須先取得 Bebe 事前明確授權，不得為了達成 clean working tree 而擅自處理本次任務以外的既有變更。中途被迫換工具時使用 Issue comment / Draft PR / 臨時 `NEXT.md`（接手完成後立即刪除），嚴禁建立永久 `HANDOFF.md`。
+- **協作與交接**：派工、自動推進、獨立驗收、集中人類驗收、本機 Commit、Issue 更新及 Push／部署授權，統一依中央核心規範第 4–6 節；不得將本機 Commit 再設為逐次核准關卡。中途確需換工具且脈絡不足時，使用 Issue comment／Draft PR／臨時 `NEXT.md`，不建立永久 `HANDOFF.md`；接續完成後將臨時檔列入待清理項目，刪除依中央規範取得明確同意，不自動刪除。
