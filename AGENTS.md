@@ -64,7 +64,7 @@ python3 -c "import glob, json; [json.load(open(f, encoding='utf-8')) for f in gl
 ## GitHub-first（FK 專屬）
 
 - **與本機工作的邊界**：可從遠端最新 `main` 建立隔離分支修改；須先查核相關本機分支／Worktree 的未提交變更與其他 Agent 工作，不能認為遠端 `main` 已包含那些成果，也不得為同步而覆蓋本機工作。
-- **雲端測試與預覽**：`experiment/github-first-ci-20261118` 的 GitHub Actions 成功只證明該分支的 Python／JavaScript 語法與 JSON 結構檢查可執行；新分支或 PR 必須核實 Workflow 觸發條件、實際 CI 結果及任務專屬回歸測試，不假定已具備獨立 UI 預覽。
+- **實驗性 CI 與必要驗收**：`experiment/github-first-ci-20261118` 的 GitHub Actions 成功只證明實驗分支可執行 Python／JavaScript 語法及 JSON 結構檢查；該 Workflow 未導入 `main`，也不是 FK 新任務的必要流程。不因 GitHub-first 增加 Workflow 或重複已驗證的測試；仍須依本檔驗證標準由可執行環境完成必要測試。分支／PR 的 CI、UI 預覽若未實際提供，不得假稱已通過。
 - **正式發布**：FK 目前以 GitHub Pages 從 `main` 的儲存庫根目錄發布；實作前再次核對現行設定。隔離分支的 Commit 不代表正式部署，正式 Merge 仍依中央規範另行授權。功能、營養資料與 Supabase 的變更不得以文件或語法測試取代必要驗收。
 
 ## 修改、驗收與交接
